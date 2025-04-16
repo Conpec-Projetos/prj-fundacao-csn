@@ -1,0 +1,41 @@
+Oiiii!!! Aqui é o Henrique de novo!
+
+    Então, não sei se vocês já viram tailwind/typescript então não vou descrever muito aqui.
+O melhor jeito que eu aprendi foi experimentando. Pega uma tela vazia e começa a encher ela de div,
+de mistura de código com typescript. Tenta usar o que você sabe e não sabe, copia o que eu fiz.
+
+    Se vocês quiserem inserir variáveis/funções do typescript no corpo do html, basta colocar {}. 
+A função map permite que você modularize um componente do html e então crie ele para cada item das
+lista, é muito útil.
+
+    Usem o gpt, ele sabe muito. Mas não copiem ein... tentem entender o que ele fala e implementem do
+seu jeito. To de olho...
+
+    Boa sorte pra vocês, se precisarem de ajuda podem falar cmg, eu sou um folgado, to disponivel qualquer
+hora no whatsapp. Não exitem em chamar. E falem com o Totor e com a Karen tmb, eles vão atrás da resposta pra 
+vocês.
+
+Desejo do bom e do melhor pra vocês, time!
+    Marcha!
+
+--------------------------Dicionário tira dúvidas!-------------------------------
+    const router = useRouter(); permite que usemos o comando: router.push("tela")
+para navegar para a tela destino.
+
+    const [variável, setVariável] useState<tipo>(valor inicial); declara variáveis.
+Deve utilizar ele em vez do comando "let" para variáveis que devem manter seu valor
+mesmo depois do site recompilar.
+
+    useEffect( () => {
+        código
+    }, [variáveis])
+    roda o código toda vez que há uma mudança em alguma das variáveis.
+
+    {lista.map((objeto, index) => {
+        <div>
+            Blablabla
+        <div/>
+    })}
+    Uma coisa que eu usei bastante foi a função map. Ela pega cada item de uma lista e
+retorna um componente de html diferente.
+
