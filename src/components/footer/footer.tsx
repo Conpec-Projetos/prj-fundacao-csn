@@ -1,3 +1,4 @@
+"use client";
 import { useRouter } from "next/navigation";
 
 export default function Footer(){
@@ -61,7 +62,7 @@ export default function Footer(){
                         font-bold"
                     >Contato</h1>
                     
-                    <h1>(19) 98765-4321</h1>
+                    <h1>(xx) xxxxx-xxxx</h1>
                     <h1>contato@email.com</h1>
                 </div>
             </div>
