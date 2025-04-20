@@ -1,0 +1,355 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { FaFileAlt, FaClipboardCheck, FaEdit, FaExclamationCircle, FaInfoCircle } from 'react-icons/fa';
+import Header from '@/components/header/header';
+import Footer from '@/components/footer/footer';
+
+// Componente de card para projeto
+// Define the Project type
+interface Project {
+  id: number;
+  name: string;
+  institution: string;
+  status: string;
+  value: string;
+  incentiveLaw: string;
+  progress: number;
+  pendingForm: boolean;
+}
+
+const ProjectCard = ({ project }: { project: Project }) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+  
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'approved': return 'Aprovado';
+      case 'pending': return 'Em análise';
+      case 'rejected': return 'Não aprovado';
+      case 'in_progress': return 'Em andamento';
+      default: return 'Desconhecido';
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-bold text-lg text-[#292944]">{project.name}</h3>
+          <p className="text-gray-500 text-sm mb-2">{project.institution}</p>
+        </div>
+        <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
+          {getStatusText(project.status)}
+        </span>
+      </div>
+      
+      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <p className="text-gray-500">Valor aprovado:</p>
+          <p className="font-medium">{project.value}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Lei de incentivo:</p>
+          <p className="font-medium">{project.incentiveLaw}</p>
+        </div>
+      </div>
+      
+      <div className="mt-4 flex justify-between items-center">
+        <div className="flex items-center">
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div 
+              className="bg-[#b37b97] h-2.5 rounded-full" 
+              style={{ width: `${project.progress}%` }}
+            ></div>
+          </div>
+          <span className="ml-2 text-sm text-gray-500">{project.progress}%</span>
+        </div>
+        <Link href={`/projetos/${project.id}`} className="text-[#b37b97] hover:underline text-sm">
+          Ver detalhes
+        </Link>
+      </div>
+      
+      {project.pendingForm && (
+        <div className="mt-4 p-3 bg-yellow-50 rounded-lg flex items-center">
+          <FaExclamationCircle className="text-yellow-500 mr-2" />
+          <p className="text-sm text-yellow-700">
+            Formulário de acompanhamento pendente
+            <Link href={`/formulario/${project.id}`} className="ml-2 text-[#b37b97] hover:underline">
+              Preencher agora
+            </Link>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Componente de notificação
+interface NotificationProps {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  time: string;
+}
+
+const Notification = ({ notification }: { notification: NotificationProps }) => {
+  const getIconByType = (type: string) => {
+    switch (type) {
+      case 'form': return <FaEdit className="text-blue-500" />;
+      case 'approval': return <FaClipboardCheck className="text-green-500" />;
+      case 'info': return <FaInfoCircle className="text-purple-500" />;
+      default: return <FaInfoCircle className="text-gray-500" />;
+    }
+  };
+
+  return (
+    <div className="flex items-start p-4 border-b border-gray-100 hover:bg-gray-50">
+      <div className="mr-4">
+        {getIconByType(notification.type)}
+      </div>
+      <div className="flex-1">
+        <p className="font-medium text-gray-800">{notification.title}</p>
+        <p className="text-sm text-gray-500">{notification.message}</p>
+      </div>
+      <div className="text-xs text-gray-400 whitespace-nowrap">
+        {notification.time}
+      </div>
+    </div>
+  );
+};
+
+export default function ExternalUserHomePage() {
+  const [userName, setUserName] = useState('João Silva');
+  const [currentTime, setCurrentTime] = useState('');
+  const [greeting, setGreeting] = useState('');
+  
+  // Dados de exemplo para projetos e notificações
+  const userProjects = [
+    { 
+      id: 1, 
+      name: "Esporte na Comunidade", 
+      institution: "Associação Viva Esporte", 
+      status: "approved", 
+      value: "R$ 250.000,00", 
+      incentiveLaw: "Lei de Incentivo ao Esporte",
+      progress: 65,
+      pendingForm: true
+    },
+    { 
+      id: 2, 
+      name: "Música para Todos", 
+      institution: "Associação Viva Esporte", 
+      status: "in_progress", 
+      value: "R$ 180.000,00", 
+      incentiveLaw: "Lei de Incentivo à Cultura",
+      progress: 30,
+      pendingForm: false
+    },
+    { 
+      id: 3, 
+      name: "Saúde na Terceira Idade", 
+      institution: "Associação Viva Esporte", 
+      status: "pending", 
+      value: "R$ 320.000,00", 
+      incentiveLaw: "Lei da Pessoa Idosa",
+      progress: 10,
+      pendingForm: false
+    }
+  ];
+  
+  const notifications = [
+    {
+      id: 1,
+      type: 'form',
+      title: 'Formulário pendente',
+      message: 'O formulário de acompanhamento do projeto "Esporte na Comunidade" está pendente.',
+      time: '2h atrás'
+    },
+    {
+      id: 2,
+      type: 'approval',
+      title: 'Projeto aprovado',
+      message: 'Seu projeto "Música para Todos" foi aprovado! Parabéns!',
+      time: '1d atrás'
+    },
+    {
+      id: 3,
+      type: 'info',
+      title: 'Lembrete de prazo',
+      message: 'O prazo para envio do relatório final do projeto "Saúde na Terceira Idade" é em 15 dias.',
+      time: '3d atrás'
+    }
+  ];
+  
+  useEffect(() => {
+    // Atualizar data e hora
+    const updateDateTime = () => {
+      const now = new Date();
+      const options: Intl.DateTimeFormatOptions = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      setCurrentTime(now.toLocaleDateString('pt-BR', options));
+      
+      // Definir saudação com base na hora do dia
+      const hour = now.getHours();
+      if (hour < 12) setGreeting('Bom dia');
+      else if (hour < 18) setGreeting('Boa tarde');
+      else setGreeting('Boa noite');
+    };
+    
+    updateDateTime();
+    const timer = setInterval(updateDateTime, 60000);
+    
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-8">
+        {/* Seção de boas-vindas */}
+        <div className="bg-white-off rounded-lg shadow-md p-6 mb-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-[#292944]">{greeting}, {userName}!</h1>
+              <p className="text-gray-500">{currentTime}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Meus projetos</p>
+              <p className="text-2xl font-bold text-[#b15265]">{userProjects.length}</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Layout principal */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Coluna de projetos */}
+          <div className="lg:col-span-2">
+            <div className="bg-white-off rounded-lg shadow-md p-6 mb-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-[#292944]">Meus Projetos</h2>
+                <Link href="/projetos/novo" className="px-4 py-2 bg-[#b37b97] text-white rounded-lg hover:bg-[#a06a86] transition-colors">
+                  Novo Projeto
+                </Link>
+              </div>
+              
+              <div className="space-y-6">
+                {userProjects.map(project => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </div>
+              
+              <div className="mt-6 text-center">
+                <Link href="/meus-projetos" className="text-[#b37b97] hover:underline">
+                  Ver todos os projetos
+                </Link>
+              </div>
+            </div>
+            
+            {/* Guia rápido */}
+            <div className="bg-white-off rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-bold mb-4 text-[#292944]">Guia Rápido</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <h3 className="font-medium text-[#b15265] mb-2">Como submeter um projeto</h3>
+                  <p className="text-sm text-gray-600">Aprenda o passo a passo para submeter um novo projeto para avaliação.</p>
+                  <a href="#" className="text-sm text-[#b37b97] hover:underline mt-2 inline-block">Ler mais</a>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <h3 className="font-medium text-[#b15265] mb-2">Preenchendo o formulário de acompanhamento</h3>
+                  <p className="text-sm text-gray-600">Saiba como preencher corretamente o formulário de acompanhamento do projeto.</p>
+                  <a href="#" className="text-sm text-[#b37b97] hover:underline mt-2 inline-block">Ler mais</a>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <h3 className="font-medium text-[#b15265] mb-2">Leis de incentivo</h3>
+                  <p className="text-sm text-gray-600">Conheça as principais leis de incentivo e como elas funcionam.</p>
+                  <a href="#" className="text-sm text-[#b37b97] hover:underline mt-2 inline-block">Ler mais</a>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <h3 className="font-medium text-[#b15265] mb-2">Dúvidas frequentes</h3>
+                  <p className="text-sm text-gray-600">Encontre respostas para as perguntas mais comuns sobre projetos e submissões.</p>
+                  <a href="#" className="text-sm text-[#b37b97] hover:underline mt-2 inline-block">Ler mais</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Coluna lateral */}
+          <div className="lg:col-span-1">
+            {/* Notificações */}
+            <div className="bg-white-off rounded-lg shadow-md p-6 mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-[#292944]">Notificações</h2>
+                <span className="bg-[#b15265] text-white text-xs rounded-full px-2 py-1">
+                  {notifications.length}
+                </span>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {notifications.map(notification => (
+                  <Notification key={notification.id} notification={notification} />
+                ))}
+              </div>
+              <div className="mt-4 text-center">
+                <a href="#" className="text-sm text-[#b37b97] hover:underline">
+                  Ver todas as notificações
+                </a>
+              </div>
+            </div>
+            
+            {/* Ações rápidas */}
+            <div className="bg-white-off rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-bold mb-4 text-[#292944]">Ações Rápidas</h2>
+              <div className="space-y-3">
+                <Link href="/formulario/pendente" className="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+                  <div className="bg-yellow-100 p-3 rounded-full mr-4">
+                    <FaEdit className="text-yellow-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Formulários Pendentes</h3>
+                    <p className="text-sm text-gray-500">Complete formulários de acompanhamento</p>
+                  </div>
+                </Link>
+                <Link href="/meus-projetos" className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                  <div className="bg-blue-100 p-3 rounded-full mr-4">
+                    <FaClipboardCheck className="text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Todos os Projetos</h3>
+                    <p className="text-sm text-gray-500">Visualize todos os seus projetos</p>
+                  </div>
+                </Link>
+                <Link href="/projetos/novo" className="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                  <div className="bg-green-100 p-3 rounded-full mr-4">
+                    <FaFileAlt className="text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Novo Projeto</h3>
+                    <p className="text-sm text-gray-500">Submeta um novo projeto</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+      
+      <Footer />
+    </div>
+  );
+}
