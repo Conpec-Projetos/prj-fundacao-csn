@@ -1,9 +1,10 @@
+'use client';
 // ❌ DO NOT add "use client" here — it's a server component
 import Header from "@/components/header/header";
 import Footer from "@/components/footer/footer";
 import BarChart from "@/components/chart/barchartClient";
-import PieChart from "@/components/chart/piechartClient";
-import BrazilMap from "@/components/map/mapBrazil";
+import PieChart from "@/components/chart/piechartClient";       
+import MapaBrasilWrapper from '@/components/map/mapaBrasil'; // Adjusted the import path to match the correct file name
 import { useState } from "react";
 
 export default function DashboardPage() {
@@ -125,9 +126,22 @@ export default function DashboardPage() {
                 </section>
 
                 <section className=" h-210 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white-off rounded-xl shadow-sm p-5">
-                    <div className="h-200 w-full lg:w-[100%] bg-white rounded-lg shadow-md p-3">
-                        <BrazilMap data={estadosData} />                  
-                    </div>
+                <div className="w-1/2">
+                    <MapaBrasilWrapper
+                        width="100%"
+                        height="500px"
+                        fillColor="#6b7280"
+                        strokeColor="#374151"
+                        options={{
+                        states: {
+                            SP: { fillColor: "#6b7280" },
+                            MG: { fillColor: "#000000" },
+                            RJ: { fillColor: "#6b7280" },
+                        },
+                        }}
+                        onClick={(state) => console.log(`Clicked on state: ${state}`)}
+                    />
+                    </div>   
                     <div className="h-200 w-full p-3">
                         <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
                         <BarChart

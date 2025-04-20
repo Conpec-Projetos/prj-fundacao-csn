@@ -179,7 +179,7 @@ export default function BarChart({
         ticks: { display: true },
       },
     },
-    animation: false,
+    animation: {},
   };
 
   return (
