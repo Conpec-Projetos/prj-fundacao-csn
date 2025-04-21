@@ -153,8 +153,8 @@ export default function BarChart({
 
   const options: ChartOptions<'bar'> = {
     responsive: true,
-    indexAxis: horizontal ? 'y' : 'x',
-    maintainAspectRatio: false, // <--- this is required
+    indexAxis: horizontal ? 'y' : 'x', // Define a direção do gráfico ( se ele for horizontal ou)
+    maintainAspectRatio: false, // isso precisa para que ele se ajuste ao tamanho do contêiner 
     layout: {
       padding: {
         bottom: 80 // Space for the icons
