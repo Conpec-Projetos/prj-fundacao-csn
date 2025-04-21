@@ -1,11 +1,9 @@
-'use client';
 // ❌ DO NOT add "use client" here — it's a server component
 import Header from "@/components/header/header";
 import Footer from "@/components/footer/footer";
 import BarChart from "@/components/chart/barchartClient";
-import PieChart from "@/components/chart/piechartClient";       
-import MapaBrasilWrapper from '@/components/map/mapaBrasil'; // Adjusted the import path to match the correct file name
-import { useState } from "react";
+import PieChart from "@/components/chart/piechartClient";  
+import BrazilMap from "@/components/map/brazilMap";  
 
 export default function DashboardPage() {
     // Sample data for charts
@@ -61,7 +59,35 @@ export default function DashboardPage() {
         labels: ["BA", "SP", "MG", "TO", "CE", "AM", "RO", "GO", "PB", "AL", "MS", "RR", "MA", "PA", "PR", "SC"],
         values: [95, 120, 105, 75, 60, 45, 30, 55, 40, 35, 25, 15, 20, 10, 5, 50]
     };
-
+    const mapData = {
+        SP: 46290,
+        RJ: 17200,
+        MG: 21170,
+        BA: 14930,
+        TO: 1600,
+        CE: 2000,
+        AM: 3900,
+        RO: 2000,
+        GO: 3000,
+        PB: 1500,   
+        AL: 1200,
+        MS: 1000,
+        RR: 800,
+        MA: 700,
+        PA: 600,
+        PR: 500,
+        SC: 400,    
+        AC: 400,
+        DF: 400,
+        ES: 400,
+        MT: 400,
+        RN: 400,
+        SE: 400,
+        PI: 400,
+        PE: 400,
+        RS: 400,
+        AP: 400,      
+      };
     //começo do código em si
     return (
         <div className="flex flex-col min-h-screen bg-white text-blue-fcsn">
@@ -125,24 +151,11 @@ export default function DashboardPage() {
                     </div>
                 </section>
 
-                <section className=" h-210 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white-off rounded-xl shadow-sm p-5">
-                <div className="w-1/2">
-                    <MapaBrasilWrapper
-                        width="100%"
-                        height="500px"
-                        fillColor="#6b7280"
-                        strokeColor="#374151"
-                        options={{
-                        states: {
-                            SP: { fillColor: "#6b7280" },
-                            MG: { fillColor: "#000000" },
-                            RJ: { fillColor: "#6b7280" },
-                        },
-                        }}
-                        onClick={(state) => console.log(`Clicked on state: ${state}`)}
-                    />
-                    </div>   
-                    <div className="h-200 w-full p-3">
+                <section className="h-150 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white-off rounded-xl shadow-sm p-5"> 
+                    <div>
+                        <BrazilMap data={mapData} />
+                    </div>
+                    <div className="h-150 w-full p-3">
                         <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
                         <BarChart
                             title=""
