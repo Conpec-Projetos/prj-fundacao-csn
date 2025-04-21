@@ -47,7 +47,7 @@ export default function DashboardPage() {
       'ODS 16: Paz, Justiça e Instituições Eficazes',
       'ODS 17: Parcerias e Meios de Implementação'
     ],
-    data: [120, 150, 180, 90, 110, 70, 130, 160, 140, 100, 85, 95, 75, 65, 115, 105, 125],
+    values: [120, 150, 180, 90, 110, 70, 130, 160, 140, 100, 85, 95, 75, 65, 115, 105, 125],
     colors: [
       '#E5243B', '#DDA63A', '#4C9F38', '#C5192D', '#FF3A21', '#26BDE2', 
       '#FCC30B', '#A21942', '#FD6925', '#DD1367', '#FD9D24', '#BF8B2E',
@@ -56,37 +56,37 @@ export default function DashboardPage() {
   };
     // Sample Estados de Atuação data
     const estadosData = {
-        labels: ["BA", "SP", "MG", "TO", "CE", "AM", "RO", "GO", "PB", "AL", "MS", "RR", "MA", "PA", "PR", "SC"],
-        values: [95, 120, 105, 75, 60, 45, 30, 55, 40, 35, 25, 15, 20, 10, 5, 50]
+        labels: ["BA","SP","MG","TO","CE","RO","GO","PB","AL","MS","RN","MA", "PA", "PR", "SC", "RJ", "RR", "AC", "DF", "ES", "MT", "SE", "PI", "PE", "RS", "AP"],
+        values: [95,   90, 45, 75,  60,  45,  30,  55,  40,  35,  25,  15,  20,   10,    5,   50,   10,   30,   40,   40,   40,   10, 10, 20, 60, 10]
     };
     const mapData = {
-        SP: 46290,
-        RJ: 17200,
-        MG: 21170,
-        BA: 14930,
-        TO: 1600,
-        CE: 2000,
-        AM: 3900,
-        RO: 2000,
-        GO: 3000,
-        PB: 1500,   
-        AL: 1200,
-        MS: 1000,
-        RR: 800,
-        MA: 700,
-        PA: 600,
-        PR: 500,
-        SC: 400,    
-        AC: 400,
-        DF: 400,
-        ES: 400,
-        MT: 400,
-        RN: 400,
-        SE: 400,
-        PI: 400,
-        PE: 400,
-        RS: 400,
-        AP: 400,      
+        SP: 90,
+        RJ: 50,
+        MG: 45,
+        BA: 95,
+        TO: 75,
+        CE: 60,
+        AM: 39,
+        RO: 45,
+        GO: 30,
+        PB: 55,   
+        AL: 40,
+        MS: 35,
+        RR: 10,
+        MA: 15,
+        PA: 20,
+        PR: 10,
+        SC: 5,    
+        AC: 30,
+        DF: 40,
+        ES: 40,
+        MT: 40,
+        RN: 25,
+        SE: 10,
+        PI: 10,
+        PE: 60,
+        RS: 30,
+        AP: 45,   
       };
     //começo do código em si
     return (
@@ -141,8 +141,8 @@ export default function DashboardPage() {
                     <div className="h-100 w-full">
                     <BarChart
                         title=""
-                        data={estadosData.values} 
-                        labels={estadosData.labels} 
+                        data={odsData.values} 
+                        labels={odsData.labels} 
                         colors={['#b37b97']}
                         horizontal={false}
                         useIcons={true}
@@ -151,12 +151,13 @@ export default function DashboardPage() {
                     </div>
                 </section>
 
-                <section className="h-150 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white-off rounded-xl shadow-sm p-5"> 
-                    <div>
+                <section className="h-250 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white-off rounded-xl shadow-sm p-5"> 
+                <h2 className=" absolute text-xl font-bold mb-4">Estados de atuação</h2>
+                    <div className="h-250 w-full p-3">
                         <BrazilMap data={mapData} />
                     </div>
-                    <div className="h-150 w-full p-3">
-                        <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
+                    <div className="h-250 w-full p-3">
+
                         <BarChart
                             title=""
                             data={estadosData.values}
