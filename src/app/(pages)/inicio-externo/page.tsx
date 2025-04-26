@@ -173,7 +173,7 @@ export default function ExternalUserHomePage() {
     <div className="min-h-screen bg-white">
       <Header />
       
-      <main className="container px-4 p-10 md:mx-20">
+      <main className="flex flex-col px-4 p-10 md:mx-20">
         {/* Seção de boas-vindas */}
         <div className="flex justify-between items-center mb-8">
           <div>
