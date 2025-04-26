@@ -44,7 +44,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
           <h3 className="font-bold text-lg text-[#292944]">{project.name}</h3>
           <p className="text-gray-500 text-sm mb-2">{project.institution}</p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
+        <span className={`px-3 py-1 rounded-full whitespace-nowrap text-xs ${getStatusColor(project.status)}`}>
           {getStatusText(project.status)}
         </span>
       </div>
