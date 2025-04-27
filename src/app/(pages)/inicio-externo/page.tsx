@@ -44,7 +44,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
           <h3 className="font-bold text-lg text-[#292944]">{project.name}</h3>
           <p className="text-gray-500 text-sm mb-2">{project.institution}</p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
+        <span className={`px-3 py-1 rounded-full whitespace-nowrap text-xs ${getStatusColor(project.status)}`}>
           {getStatusText(project.status)}
         </span>
       </div>
@@ -173,7 +173,7 @@ export default function ExternalUserHomePage() {
     <div className="min-h-screen bg-white">
       <Header />
       
-      <main className="container mx-12 px-4 p-10 mx-12 md:mx-20">
+      <main className="flex flex-col px-4 p-10 md:mx-20">
         {/* Seção de boas-vindas */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -187,9 +187,9 @@ export default function ExternalUserHomePage() {
         </div>
         
         {/* Layout principal */}
-        <div className="grid grid-cols-2 lg:grid-cols-2 gap-8"> 
+        <div className="grid gap-8 md:grid-cols-2"> 
           {/* Coluna principal*/}
-          <div className="bg-white-off rounded-lg shadow-md p-6 mb-8">
+          <div className="bg-white-off rounded-lg shadow-md p-6 mb-8 order-2 md:order-1">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-[#292944]">Meus Projetos</h2>
               <Link href="/projetos/novo" className="px-4 py-2 bg-[#b37b97] text-white rounded-lg hover:bg-[#a06a86] transition-colors">
@@ -211,7 +211,7 @@ export default function ExternalUserHomePage() {
           </div>
 
             {/* Ações rápidas */}
-            <div className="bg-white-off rounded-lg shadow-md p-6 h-80">
+            <div className="bg-white-off rounded-lg shadow-md p-6 h-80 order-1 md:order-2">
               <h2 className="text-xl font-bold mb-4 text-[#292944]">Ações Rápidas</h2>
               <div className="space-y-3">
                 <Link href="/formulario/pendente" className="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
