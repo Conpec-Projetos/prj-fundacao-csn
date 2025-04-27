@@ -187,9 +187,9 @@ export default function ExternalUserHomePage() {
         </div>
         
         {/* Layout principal */}
-        <div className="grid gap-8 md:grid-cols-2"> 
+        <div className=""> 
           {/* Coluna principal*/}
-          <div className="bg-white-off rounded-lg shadow-md p-6 mb-8 order-2 md:order-1">
+          <div className="bg-white-off rounded-lg shadow-md p-6 mb-8">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-[#292944]">Meus Projetos</h2>
               <Link href="/projetos/novo" className="px-4 py-2 bg-[#b37b97] text-white rounded-lg hover:bg-[#a06a86] transition-colors">
@@ -209,32 +209,6 @@ export default function ExternalUserHomePage() {
               </Link>
             </div>
           </div>
-
-            {/* Ações rápidas */}
-            <div className="bg-white-off rounded-lg shadow-md p-6 h-80 order-1 md:order-2">
-              <h2 className="text-xl font-bold mb-4 text-[#292944]">Ações Rápidas</h2>
-              <div className="space-y-3">
-                <Link href="/formulario/pendente" className="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
-                  <div className="bg-yellow-100 p-3 rounded-full mr-4">
-                    <FaEdit className="text-yellow-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Formulários Pendentes</h3>
-                    <p className="text-sm text-gray-500">Complete formulários de acompanhamento</p>
-                  </div>
-                </Link>
-                <Link href="/projetos/novo" className="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                  <div className="bg-green-100 p-3 rounded-full mr-4">
-                    <FaFileAlt className="text-green-600" />
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium">Novo Projeto</h3>
-                    <p className="text-sm text-gray-500">Submeta um novo projeto</p>
-                  </div>
-                </Link>
-              </div>
-            </div>
         </div>
       </main>
   
