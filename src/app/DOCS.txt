@@ -39,3 +39,7 @@ mesmo depois do site recompilar.
     Uma coisa que eu usei bastante foi a função map. Ela pega cada item de uma lista e
 retorna um componente de html diferente.
 
+//Karen aqui
+toda página deve ter uma margem md:mx-20
+os títulos são 2xl
+

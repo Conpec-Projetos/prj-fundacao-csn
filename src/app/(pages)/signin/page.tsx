@@ -125,7 +125,7 @@ export default function Signin(){
                             <label className="
                                 h-1/6
                                 text-lg text-blue-fcsn font-bold"
-                            >Senha</label>
+                            >bom garoto</label>
                             
                             <div className="
                                 w-full 
