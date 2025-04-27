@@ -142,10 +142,6 @@ export default function BarChart({
           : generateGradientColors(data, colors[0]),
         borderWidth: 1,
         borderRadius: 8,
-        // Ajuste do gráfico com barras bem grossas
-        barThickness: useIcons ? 70 : 30, // Barras mais grossas
-        categoryPercentage: useIcons ? 0.7 : 0.1, // Usar mais espaço horizontal
-        barPercentage: useIcons ? 1.0 : 0.9, // Barras ocupando todo o espaço horizontal
 
       },
     ],

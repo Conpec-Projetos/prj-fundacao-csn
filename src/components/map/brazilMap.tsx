@@ -41,6 +41,8 @@ const stateNames: Record<string, string> = {
 export default function BrazilMap({ data }: BrazilMapProps) {
   const mapRef = useRef<SVGSVGElement>(null);
   const [hoveredState, setHoveredState] = useState<string | null>(null); // Track hovered state
+  
+
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -64,9 +66,16 @@ export default function BrazilMap({ data }: BrazilMapProps) {
         state.style.fill = fillColor;
 
         // Add hover event listeners
-        state.addEventListener('mouseenter', () => setHoveredState(stateCode));
-        state.addEventListener('mouseleave', () => setHoveredState(null));
-        }
+        state.addEventListener('mouseenter', () => {
+          setHoveredState(stateCode);
+          state.style.fill = 'blue'; // Highlight color when hovered
+        });
+        
+        state.addEventListener('mouseleave', () => {
+          setHoveredState(null);
+          state.style.fill = fillColor; // Revert to original color
+        });
+      }
     });
 
     return () => {
@@ -87,8 +96,8 @@ export default function BrazilMap({ data }: BrazilMapProps) {
         <div
           className="absolute bg-white text-black p-4 rounded shadow-lg border border-gray-300"
           style={{
-            top: '10px', // Adjust position as needed
-            left: '10px', // Adjust position as needed
+            top: '50px', // Adjust position as needed
+            left: '50px', // Adjust position as needed
             minWidth: '150px', // Make the tooltip larger
           }}
         >

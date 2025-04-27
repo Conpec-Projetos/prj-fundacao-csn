@@ -16,9 +16,9 @@ interface MetricCardProps {
 
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, color }) => (
   <div className="bg-white-off rounded-lg shadow-md p-6 flex flex-col items-center justify-center">
-    <div className={`text-${color} text-3xl mb-2`}>{icon}</div>
+    <div className={`text-${color} text-2xl mb-2`}>{icon}</div>
     <h3 className="text-xl text-blue-fcsn font-medium mb-1">{title}</h3>
-    <p className="text-2xl font-bold">{value}</p>
+    <p className="text-xl font-bold">{value}</p>
   </div>
 );
 
@@ -91,19 +91,15 @@ export default function AdminHomePage() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white text-blue-fcsn">
+    <div className="flex flex-col min-h-screen bg-white text-blue-fcsn ">
       <Header />
       
-      <main className="flex flex-col gap-8 p-10 mx-12 md:mx-40">
+      <main className="flex flex-col gap-8 p-10 mx-12 md:mx-20">
         {/* Seção de boas-vindas */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-blue-fcsn">{greeting}, {userName}!</h1>
+              <h1 className="text-xl md:text-2xl font-bold text-blue-fcsn">{greeting}, {userName}!</h1>
               <p className="text-gray-500">{currentTime}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-blue-fcsn">Projetos pendentes</p>
-              <p className="text-2xl font-bold text-white-off">{pendingProjects.length}</p>
             </div>
           </div>
 
@@ -128,7 +124,7 @@ export default function AdminHomePage() {
             color="purple-600"
           />
           <MetricCard 
-            title="Organizações Envolvidas" 
+            title="Organizações" 
             value="750" 
             icon={<FaFileAlt />} 
             color="yellow-600"

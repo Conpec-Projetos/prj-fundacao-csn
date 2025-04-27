@@ -7,12 +7,12 @@ import BrazilMap from "@/components/map/brazilMap";
 
 export default function DashboardPage() {
     // Sample data for charts
-  const segmentData = {
+    const segmentData = {
     labels: ["Cultura", "Esporte", "Pessoa Idosa", "Criança e Adolescente", "Saúde"],
     values: [250, 180, 120, 150, 100]
-  };
+    };
     // Sample Lei de Incentivo data
-  const incentiveData = {
+    const incentiveData = {
     labels: [
       "Lei de Incentivo à Cultura",
       "PROAC",
@@ -25,9 +25,9 @@ export default function DashboardPage() {
       "ICMS"
     ],
     values: [200, 150, 120, 100, 80, 60, 40, 30, 20]
-  };
+    };
   // ODS Sample Data
-  const odsData = {
+    const odsData = {
     labels: [
       'ODS 1: Erradicação da Pobreza',
       'ODS 2: Fome Zero',
@@ -53,12 +53,13 @@ export default function DashboardPage() {
       '#FCC30B', '#A21942', '#FD6925', '#DD1367', '#FD9D24', '#BF8B2E',
       '#3F7E44', '#0A97D9', '#56C02B', '#00689D', '#19486A'
     ]
-  };
+    };
     // Sample Estados de Atuação data
     const estadosData = {
         labels: ["BA","SP","MG","TO","CE","RO","GO","PB","AL","MS","RN","MA", "PA", "PR", "SC", "RJ", "RR", "AC", "DF", "ES", "MT", "SE", "PI", "PE", "RS", "AP"],
         values: [95,   90, 45, 75,  60,  45,  30,  55,  40,  35,  25,  15,  20,   10,    5,   50,   10,   30,   40,   40,   40,   10, 10, 20, 60, 10]
     };
+    // Sample data for the map
     const mapData = {
         SP: 90,
         RJ: 50,
@@ -87,52 +88,53 @@ export default function DashboardPage() {
         PE: 60,
         RS: 30,
         AP: 45,   
-      };
+    };
+    
     //começo do código em si
     return (
         <div className="flex flex-col min-h-screen bg-white text-blue-fcsn">
             <Header />
-            <main className="flex flex-col gap-8 p-10 mx-12 md:mx-40">
-                <h1 className="text-3xl md:text-4xl font-bold">Dashboard</h1>  
+            <main className="flex flex-col gap-5 p-1 mx-12 md:mx-20">
+                <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>  
                 <section className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right"> 
                     <div className="bg-white-off rounded-xl shadow-sm p-5">
                         <div className="mb-2">
-                            <h1 className="text-xl text-blue-fcsn font-light">Valor total investido em projetos</h1>  
+                            <h1 className="text-lg text-blue-fcsn font-light">Valor total investido em projetos</h1>  
                         </div>
-                        <h1 className="text-3xl text-blue-fcsn font-bold">R$9.173.461.815,00</h1>
+                        <h1 className="text-2xl text-blue-fcsn font-bold">R$9.173.461.815,00</h1>
                     </div>
                     <div className="bg-white-off rounded-xl shadow-sm p-4">
                         <div className="mb-2">
-                            <h1 className="text-xl text-blue-fcsn font-light">Maior Aporte</h1>  
+                            <h1 className="text-lg text-blue-fcsn font-light">Maior Aporte</h1>  
                         </div>
-                        <h1 className= "text-3xl text-blue-fcsn font-bold">R$530.000,00</h1>
+                        <h1 className= "text-2xl text-blue-fcsn font-bold">R$530.000,00</h1>
                         <h1 className="text-base text-blue-fcsn font-light">Investido em Projeto X</h1>   
                     </div>
                 </section>       
 
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
                     <div className="bg-white-off rounded-xl shadow-sm p-3">
-                        <p className="text-2xl font-bold">800</p>
+                        <p className="text-xl font-bold">800</p>
                         <h2 className="text-lg">Projetos no total</h2>
                     </div>
                     <div className="bg-white-off rounded-xl shadow-sm p-3">
-                        <p className="text-2xl font-bold">7000</p>                       
+                        <p className="text-xl font-bold">7000</p>                       
                         <h2 className="text-lg">Beneficiários diretos</h2>
                     </div>
                     <div className="bg-white-off rounded-xl shadow-sm p-3">
-                        <p className="text-2xl font-bold">15000</p>
+                        <p className="text-xl font-bold">15000</p>
                         <h2 className="text-lg">Beneficiários indiretos</h2>
                     </div>
                     <div className="bg-white-off rounded-xl shadow-sm p-3">
-                        <p className="text-2xl font-bold">750</p>
+                        <p className="text-xl font-bold">750</p>
                         <h2 className="text-lg">Organizações envolvidas</h2>
                     </div>
                     <div className="bg-white-off rounded-xl shadow-sm p-3">
-                        <p className="text-2xl font-bold">13</p>
+                        <p className="text-xl font-bold">13</p>
                         <h2 className="text-lg">Estados atendidos</h2>
                     </div>
                     <div className="bg-white-off rounded-xl shadow-sm p-3">
-                        <p className="text-2xl font-bold">714</p>
+                        <p className="text-xl font-bold">714</p>
                         <h2 className="text-lg">Municípios atendidos</h2>
                     </div>
                 </section>
@@ -152,7 +154,7 @@ export default function DashboardPage() {
                 </section>
 
                 <section className="h-250 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white-off rounded-xl shadow-sm p-5"> 
-                <h2 className=" absolute text-xl font-bold mb-4">Estados de atuação</h2>
+                <h2 className=" absolute text-2xl font-bold mb-4">Estados de atuação</h2>
                     <div className="h-250 w-full p-3">
                         <BrazilMap data={mapData} />
                     </div>
