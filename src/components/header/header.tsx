@@ -6,7 +6,7 @@ export default function Header(){
     const router = useRouter();
     return(
     <header
-        className="flex flex-col justify-center w-screen h-[10vh] bg-blue-fcsn">
+        className="flex flex-col justify-center w-full h-[10vh] bg-blue-fcsn">
         
         <div className="flex flex-row justify-evenly w-[85%] text-xl sm:w-3/4 lg:w-1/2 lg:text-2xl text-white font-bold">
             
