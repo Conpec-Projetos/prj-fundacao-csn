@@ -15,21 +15,20 @@ interface TextProps{
 export const NormalInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
-            flex flex-row
-            justify-between
-            items-center">
-                        
+            flex flex-col
+            justify-between">
+
             <h1 className="
-                w-1/4
-                text-xl text-blue-fcsn font-bold"
+                w-full
+                text-md sm:text-lg text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
             <input
                 type="text"
                 onChange={(event) => {props.setAttribute(event.target.value)}}
                 className="
-                    w-[700px]
-                    h-[53px]
+                    w-90%
+                    h-[4vh]
                     bg-white
                     rounded-sm
                     border-1 border-blue-fcsn
@@ -43,11 +42,11 @@ export const NormalInput: React.FC<TextProps> = (props) => {
 export const LongInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
-            flex flex-col justify-between items-start
-            h-[230px]">
+            flex flex-col justify-between
+            h-[35vh] sm:h-[20vh]">
                         
             <h1 className="
-                w-[700px]
+                w-90%
                 text-xl text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
@@ -56,7 +55,7 @@ export const LongInput: React.FC<TextProps> = (props) => {
                 onChange={(event) => {props.setAttribute(event.target.value)}}
                 className="
                     w-full
-                    h-[190px]
+                    h-full
                     bg-white    
                     rounded-sm
                     border-1 border-blue-fcsn
@@ -86,18 +85,21 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
     return(
 
         <div className="
-            flex flex-col justify-between items-start 
-            h-[10vh]">
+            flex flex-col justify-between
+            h-[25vh] sm:h-[10vh]">
                         
             <h1 className="
-                w-[700px] 
-                text-xl text-blue-fcsn font-bold"
-            >{props.text}</h1>
+            w-full
+            text-xl 
+            ext-blue-fcsn font-bold">
+                {props.text}
+            </h1>
             
             <div className="
-                flex flex-row justify-evenly
+                border-red-500 border-2 
                 w-full
-                h-[50px]">
+                justify-items-start
+                grid grid-cols-2">
 
                 {props.list.map((string, index) => (
                     
@@ -156,10 +158,13 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
 export const LeiSelect: React.FC<HorizontalProps> = (props) => {
     return(
         <div className="
-            flex flex-row justify-start items-center">
+            flex flex-col
+            bg-red-500
+            w-90%
+            justify-start
+            items-start">
                         
             <h1 className="
-                w-[300px] 
                 text-xl text-blue-fcsn font-bold"
             >{ props.text }</h1>
 
@@ -169,8 +174,8 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
                     props.setAttribute( Number(event.target.value) );
                 }}
                 className="
-                    w-[600px]
-                    h-[40px]
+                    w-full
+                    h-[5vh]
                     bg-white
                     border-blue-fcsn border-1
                     cursor-pointer 

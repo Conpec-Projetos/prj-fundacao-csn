@@ -125,14 +125,17 @@ export default function forms_acompanhamento(){
                 text-blue-fcsn text-7xl font-bold"
             >
                 <h1 className="
-                    w-4/5
+                    bg-red-500
+                    text-center
+                    w-full md:w-4/5
+                    text-xl lg:text-5xl
                 ">Acompanhamento de projetos</h1>
             </div>
             
             <form 
                 className="
                     flex flex-col justify-center items-center
-                    w-4/7
+                    w-9/10
                     h-11/12
                     bg-white-off
                     rounded-sm
@@ -142,7 +145,7 @@ export default function forms_acompanhamento(){
 
                 <div className="
                     flex flex-col justify-around
-                    w-9/10
+                    w-11/12
                     h-23/24">
                 {/* Nome da instituição */}
                     <NormalInput
