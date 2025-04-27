@@ -86,7 +86,7 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
 
         <div className="
             flex flex-col justify-between
-            h-[25vh] sm:h-[10vh]">
+            h-min">
                         
             <h1 className="
             w-full
@@ -99,7 +99,8 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
                 border-red-500 border-2 
                 w-full
                 justify-items-start
-                grid grid-cols-2">
+                grid grid-cols-2 md:grid-cols-4
+                text-wrap">
 
                 {props.list.map((string, index) => (
                     
@@ -159,7 +160,6 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
     return(
         <div className="
             flex flex-col
-            bg-red-500
             w-90%
             justify-start
             items-start">
