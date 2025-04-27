@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { Geist, Geist_Mono } from "next/font/google"; //importa as fontes do google
+import "./globals.css";     //arquivo de estilos globais
+import Header from "@/components/header/header"; // Import the Header component
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +28,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+      <Header />
+      <div className="pt-[10vh]">
+          {children}
+        </div>
       </body>
     </html>
   );

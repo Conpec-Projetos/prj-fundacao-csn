@@ -116,7 +116,6 @@ export default function forms_acompanhamento(){
             h-[600vh]
             overflow-scroll">
             
-            <Header></Header>
             
             <div className="
                 flex flex-col justify-center items-center
