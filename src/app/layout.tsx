@@ -1,7 +1,9 @@
+// Importing necessary modules and components
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google"; //importa as fontes do google
 import "./globals.css";     //arquivo de estilos globais
-import Header from "@/components/header/header"; // Import the Header component
+import Header from "@/components/header/header"; // Import the Header 
+import HeaderWrapper from "@/components/header/headerWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,15 +25,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-      <Header />
-      <div className="pt-[10vh]">
-          {children}
-        </div>
+        {/* Wrap children with HeaderWrapper */}
+        <HeaderWrapper>{children}</HeaderWrapper>
       </body>
     </html>
   );

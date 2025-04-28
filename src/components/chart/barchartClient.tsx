@@ -76,7 +76,7 @@ export default function BarChart({
   title,
   data,
   labels,
-  colors = ['#b37b97'],
+  colors = ['pink-fcsn'],
   useIcons = false,
   horizontal = false,
 }: BarChartProps) {
