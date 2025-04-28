@@ -58,7 +58,6 @@ export default function TodosProjetos(){
     ]
     return(
         <div className="flex flex-col min-h-screen">
-            <Header />
             <main className="flex flex-1 flex-col px-4 sm:px-8 md:px-20 lg:px-32 py-4 gap-y-10 ">
                 {/* Cabeçalho */}
                 <section>
