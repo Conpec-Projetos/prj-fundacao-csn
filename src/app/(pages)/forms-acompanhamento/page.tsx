@@ -110,7 +110,7 @@ export default function forms_acompanhamento(){
 
 
     return(
-        <main className="
+        <main className="'
             flex flex-col justify-between items-center
             w-screen
             h-[600vh]
@@ -118,24 +118,25 @@ export default function forms_acompanhamento(){
             
             
             <div className="
-                flex flex-col justify-center items-center
+                flex flex-col items-center content-center
                 w-full
-                h-[10vh]
+                h-[20vh]
                 text-blue-fcsn text-7xl font-bold"
             >
                 <h1 className="
-                    bg-red-500
-                    text-center
-                    w-full md:w-4/5
-                    text-xl lg:text-5xl
+                    flex flex-col content-center justify-center text-center items-center
+                    w-3/4
+                    h-full
+                    text-wrap
+                    text-3xl lg:text-5xl
                 ">Acompanhamento de projetos</h1>
             </div>
             
             <form 
                 className="
                     flex flex-col justify-center items-center
-                    w-9/10
-                    h-11/12
+                    w-9/10 md:w-3/5
+                    h-[560vh] md:h-11/12
                     bg-white-off
                     rounded-sm
                     shadow-md shadow-black"
