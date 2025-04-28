@@ -15,10 +15,10 @@ interface MetricCardProps {
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, color }) => (
-  <div className="bg-white-off rounded-lg shadow-md p-6 flex flex-col items-center justify-center">
+  <div className="bg-white-off rounded-lg shadow-md p-6 flex flex-col items-center justify-center h-full">
     <div className={`text-${color} text-2xl mb-2`}>{icon}</div>
-    <h3 className="text-xl text-blue-fcsn font-medium mb-1">{title}</h3>
-    <p className="text-xl font-bold">{value}</p>
+    <h3 className="text-lg sm:text-xl text-blue-fcsn font-medium mb-1 text-center sm:whitespace-nowrap">{title}</h3>
+    <p className="text-sm lg:text-xl whitespace-nowrap font-bold">{value}</p>
   </div>
 );
 
@@ -91,9 +91,9 @@ export default function AdminHomePage() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white text-blue-fcsn ">
+    <div className="flex flex-col min-h-screen bg-white text-blue-fcsn">
       
-      <main className="flex flex-col grid-cols-2 gap-8 p-10 mx-12 md:mx-20">
+      <main className="flex flex-col grid-cols-2 gap-8 p-8 sm:mx-12 md:mx-20">
         {/* Seção de boas-vindas */}
           <div className="flex justify-between items-center">
             <div>
@@ -104,44 +104,48 @@ export default function AdminHomePage() {
         
         {/*Projetos Pendentes e Seção de métricas*/}
           {/* Grid de métricas */}
-          <div className="flex flex-row gap-4 items-start">
-            <section className="flex flex-col w-[30%] grid-rows-2 gap-4 order-2">
-              <div>
-                <MetricCard
-                title="Total de Projetos" 
-                value="800" 
-                icon={<FaClipboardList />} 
-                color="blue-600"
-                />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <section className="grid grid-rows-2 sm:flex sm:flex-col sm:w-[35%] gap-4 order-1 sm:order-2">
+              <div className="grid grid-cols-2 sm:flex row-start-1 sm:flex-col gap-4">
+                <div className="col-start-1">
+                  <MetricCard
+                  title="Total de Projetos" 
+                  value="800" 
+                  icon={<FaClipboardList />} 
+                  color="blue-600"
+                  />
+                </div>
+                <div className="col-start-2">
+                  <MetricCard 
+                  title="Valor Total Investido" 
+                  value="R$ 9.173.461.815,00" 
+                  icon={<FaChartPie />} 
+                  color="green-600"
+                  />
+                </div>
               </div>
-              <div>
-                <MetricCard 
-                title="Valor Total Investido" 
-                value="R$ 9.173.461.815,00" 
-                icon={<FaChartPie />} 
-                color="green-600"
-                />
-              </div>
-              <div>
-                <MetricCard 
-                  title="Estados Atendidos" 
-                  value="13" 
-                  icon={<FaMapMarkedAlt />} 
-                  color="purple-600"
-                />
-              </div>
-              <div>
-                <MetricCard 
-                  title="Organizações" 
-                  value="750" 
-                  icon={<FaFileAlt />} 
-                  color="yellow-600"
-                />
+              <div className="grid grid-cols-2 sm:flex row-start-2 sm:flex-col gap-4">
+                <div className="col-start-1">
+                  <MetricCard 
+                    title="Estados Atendidos" 
+                    value="13" 
+                    icon={<FaMapMarkedAlt />} 
+                    color="purple-600"
+                  />
+                </div>
+                <div className="col-start-2">
+                  <MetricCard 
+                    title="Organizações" 
+                    value="750" 
+                    icon={<FaFileAlt />} 
+                    color="yellow-600"
+                  />
+                </div>
               </div>
             </section>
 
-        {/* Seção de projetos pendentes */}
-            <section className="w-[70%] gap-4">
+            {/* Seção de projetos pendentes */}
+            <section className="w-full sm:w-[65%] gap-4 order-2 sm:order-1">
               <div className="bg-white-off rounded-lg shadow-md p-6 h-full">
                 <div className="flex justify-between items-center mb-1">
                   <h2 className="text-xl font-bold text-[#292944]">Projetos Pendentes</h2>
