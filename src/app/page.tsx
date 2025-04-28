@@ -92,7 +92,6 @@ export default function AdminHomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white text-blue-fcsn ">
-      <Header />
       
       <main className="flex flex-col grid-cols-2 gap-8 p-10 mx-12 md:mx-20">
         {/* Seção de boas-vindas */}
