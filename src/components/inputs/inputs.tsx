@@ -4,6 +4,8 @@ import { useState, SetStateAction, Dispatch, useEffect } from "react";
 import { State, City, ICity } from "country-state-city";
 import { Upload } from "lucide-react";
 import { toast } from "sonner"
+import { Input } from "@/components/ui/input"
+
 
 // Props são como parâmetros, atributos. Como uma classe
 interface TextProps{
@@ -15,22 +17,23 @@ interface TextProps{
 export const NormalInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
-            flex flex-col
-            justify-between">
+            flex flex-col md:flex-row
+            justify-between items-center">
 
             <h1 className="
+                bg-yellow-200
                 w-full
-                text-md sm:text-lg text-blue-fcsn font-bold"
+                text-lg sm:text-xl md:text-2xl lg:3xl text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
             <input
                 type="text"
                 onChange={(event) => {props.setAttribute(event.target.value)}}
                 className="
-                    w-90%
-                    h-[4vh]
+                    w-full
+                    h-[5vh]
                     bg-white
-                    rounded-sm
+                    rounded-[1vh]
                     border-1 border-blue-fcsn
                     transition-all duration-300
                     focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
@@ -46,8 +49,9 @@ export const LongInput: React.FC<TextProps> = (props) => {
             h-[35vh] sm:h-[20vh]">
                         
             <h1 className="
-                w-90%
-                text-xl text-blue-fcsn font-bold"
+                w-full
+                text-lg sm:text-xl md:text-2xl lg:3xl
+                text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
             <textarea
@@ -96,10 +100,10 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
             </h1>
             
             <div className="
-                border-red-500 border-2 
                 w-full
                 justify-items-start
-                grid grid-cols-2 md:grid-cols-4
+                grid grid-cols-2 md:grid-cols-5
+                gap-[1vw]
                 text-wrap">
 
                 {props.list.map((string, index) => (
