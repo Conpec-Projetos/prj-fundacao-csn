@@ -93,7 +93,7 @@ export default function AdminHomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-white text-blue-fcsn">
       
-      <main className="flex flex-col grid-cols-2 gap-8 p-8 sm:mx-12 md:mx-20">
+      <main className="flex flex-col gap-8 p-8 flex-1 sm:mx-12 md:mx-20">
         {/* Seção de boas-vindas */}
           <div className="flex justify-between items-center">
             <div>
@@ -105,7 +105,7 @@ export default function AdminHomePage() {
         {/*Projetos Pendentes e Seção de métricas*/}
           {/* Grid de métricas */}
           <div className="flex flex-col sm:flex-row gap-4">
-            <section className="grid grid-rows-2 sm:flex sm:flex-col sm:w-[35%] gap-4 order-1 sm:order-2">
+            <section className="grid grid-rows-2 sm:flex sm:flex-col sm:w-[35%] gap-2 sm:gap-4 order-1 sm:order-2">
               <div className="grid grid-cols-2 sm:flex row-start-1 sm:flex-col gap-4">
                 <div className="col-start-1">
                   <MetricCard
