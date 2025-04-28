@@ -17,8 +17,8 @@ interface MetricCardProps {
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, color }) => (
   <div className="bg-white-off rounded-lg shadow-md p-6 flex flex-col items-center justify-center h-full">
     <div className={`text-${color} text-2xl mb-2`}>{icon}</div>
-    <h3 className="text-lg sm:text-xl text-blue-fcsn font-medium mb-1 text-center sm:whitespace-nowrap">{title}</h3>
-    <p className="text-sm lg:text-xl whitespace-nowrap font-bold">{value}</p>
+    <h3 className="text-lg md:text-xl text-blue-fcsn font-medium mb-1 text-center sm:whitespace-nowrap">{title}</h3>
+    <p className="text-md md:text-xl whitespace-nowrap font-bold">{value}</p>
   </div>
 );
 
@@ -105,8 +105,8 @@ export default function AdminHomePage() {
         {/*Projetos Pendentes e Seção de métricas*/}
           {/* Grid de métricas */}
           <div className="flex flex-col sm:flex-row gap-4">
-            <section className="grid grid-rows-2 sm:flex sm:flex-col sm:w-[35%] gap-2 sm:gap-4 order-1 sm:order-2">
-              <div className="grid grid-cols-2 sm:flex row-start-1 sm:flex-col gap-4">
+            <section className="grid grid-rows-2 gap-y-4 sm:flex sm:flex-col sm:w-[35%] order-1 sm:order-2">
+              <div className="grid grid-cols-2 sm:flex row-start-1 gap-4 sm:flex-col">
                 <div className="col-start-1">
                   <MetricCard
                   title="Total de Projetos" 
@@ -118,7 +118,7 @@ export default function AdminHomePage() {
                 <div className="col-start-2">
                   <MetricCard 
                   title="Valor Total Investido" 
-                  value="R$ 9.173.461.815,00" 
+                  value="R$987.654.321,00" 
                   icon={<FaChartPie />} 
                   color="green-600"
                   />
