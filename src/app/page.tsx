@@ -15,10 +15,10 @@ interface MetricCardProps {
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, color }) => (
-  <div className="bg-white-off rounded-lg shadow-md p-6 flex flex-col items-center justify-center">
+  <div className="bg-white-off rounded-lg shadow-md p-6 flex flex-col items-center justify-center h-full">
     <div className={`text-${color} text-2xl mb-2`}>{icon}</div>
-    <h3 className="text-xl text-blue-fcsn font-medium mb-1">{title}</h3>
-    <p className="text-xl font-bold">{value}</p>
+    <h3 className="text-lg md:text-xl text-blue-fcsn font-medium mb-1 text-center sm:whitespace-nowrap">{title}</h3>
+    <p className="text-md md:text-xl whitespace-nowrap font-bold">{value}</p>
   </div>
 );
 
@@ -91,9 +91,9 @@ export default function AdminHomePage() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white text-blue-fcsn ">
+    <div className="flex flex-col grow min-h-[90vh] bg-white text-blue-fcsn">
       
-      <main className="flex flex-col gap-8 p-10 mx-12 md:mx-20">
+      <main className="flex flex-col gap-8 p-8 flex-1 sm:mx-12 md:mx-20">
         {/* Seção de boas-vindas */}
           <div className="flex justify-between items-center">
             <div>
@@ -101,85 +101,66 @@ export default function AdminHomePage() {
               <p className="text-gray-500">{currentTime}</p>
             </div>
           </div>
-
-        {/* Grid de métricas */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard 
-            title="Total de Projetos" 
-            value="800" 
-            icon={<FaClipboardList />} 
-            color="blue-600"
-          />
-          <MetricCard 
-            title="Valor Total Investido" 
-            value="R$ 9.173.461.815,00" 
-            icon={<FaChartPie />} 
-            color="green-600"
-          />
-          <MetricCard 
-            title="Estados Atendidos" 
-            value="13" 
-            icon={<FaMapMarkedAlt />} 
-            color="purple-600"
-          />
-          <MetricCard 
-            title="Organizações" 
-            value="750" 
-            icon={<FaFileAlt />} 
-            color="yellow-600"
-          />
-        </section>
         
-        {/* Seção de Ações Rápidas e Projetos Pendentes*/}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-1">
-          {/* Ações Rápidas */}
-          <div className="bg-white-off rounded-lg shadow-md p-6 h-full">
-            <h2 className="text-xl font-bold mb-2 text-blue-fcsn">Ações Rápidas</h2>
-            <div className="flex flex-col gap-4 h-full">
-              <Link href="/dashboard" className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                <div className="bg-blue-100 p-3 rounded-full mr-4">
-                  <FaChartPie className="text-blue-600 text-lg" />
+        {/*Projetos Pendentes e Seção de métricas*/}
+          {/* Grid de métricas */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <section className="grid grid-rows-2 gap-y-4 sm:flex sm:flex-col sm:w-[35%] order-1 sm:order-2">
+              <div className="grid grid-cols-2 sm:flex row-start-1 gap-4 sm:flex-col">
+                <div className="col-start-1">
+                  <MetricCard
+                  title="Total de Projetos" 
+                  value="800" 
+                  icon={<FaClipboardList />} 
+                  color="blue-600"
+                  />
                 </div>
-                <div>
-                  <h3 className="font-medium">Dashboard Completo</h3>
-                  <p className="text-sm text-gray-500">Visualize todas as métricas</p>
+                <div className="col-start-2">
+                  <MetricCard 
+                  title="Valor Total Investido" 
+                  value="R$987.654.321,00" 
+                  icon={<FaChartPie />} 
+                  color="green-600"
+                  />
                 </div>
-              </Link>
-              <Link href="/projetos/pendentes" className="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
-                <div className="bg-yellow-100 p-3 rounded-full mr-4">
-                  <FaExclamationTriangle className="text-yellow-600 text-lg" />
+              </div>
+              <div className="grid grid-cols-2 sm:flex row-start-2 sm:flex-col gap-4">
+                <div className="col-start-1">
+                  <MetricCard 
+                    title="Estados Atendidos" 
+                    value="13" 
+                    icon={<FaMapMarkedAlt />} 
+                    color="purple-600"
+                  />
                 </div>
-                <div>
-                  <h3 className="font-medium">Aprovar Projetos</h3>
-                  <p className="text-sm text-gray-500">Avalie projetos pendentes</p>
+                <div className="col-start-2">
+                  <MetricCard 
+                    title="Organizações" 
+                    value="750" 
+                    icon={<FaFileAlt />} 
+                    color="yellow-600"
+                  />
                 </div>
-              </Link>
-              <Link href="/projetos/aprovados" className="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                <div className="bg-green-100 p-3 rounded-full mr-4">
-                  <FaCheckCircle className="text-green-600 text-lg" />
+              </div>
+            </section>
+
+            {/* Seção de projetos pendentes */}
+            <section className="w-full sm:w-[65%] gap-4 order-2 sm:order-1">
+              <div className="bg-white-off rounded-lg shadow-md p-6 h-full">
+                <div className="flex justify-between items-center mb-1">
+                  <h2 className="text-xl font-bold text-[#292944]">Projetos Pendentes</h2>
+                  <Link href="/projetos/pendentes" className="text-sm text-[#b37b97] hover:underline">
+                    Ver todos
+                  </Link>
                 </div>
-                <div>
-                  <h3 className="font-medium">Projetos Aprovados</h3>
-                  <p className="text-sm text-gray-500">Veja os projetos em andamento</p>
+                <div className="space-y-4">
+                  {pendingProjects.map((project) => (
+                    <PendingProjectCard key={project.id} project={project} />
+                  ))}
                 </div>
-              </Link>
-            </div>
+              </div>
+            </section>
           </div>
-          {/* Projetos Pendentes */}
-          <div className="bg-white-off rounded-lg shadow-md p-6 h-full">
-            <div className="flex justify-between items-center mb-1">
-              <h2 className="text-xl font-bold text-[#292944]">Projetos Pendentes</h2>
-              <Link href="/projetos/pendentes" className="text-sm text-[#b37b97] hover:underline">
-                Ver todos
-              </Link>
-            </div>
-            <div className="space-y-4">
-              {pendingProjects.map((project) => (
-                <PendingProjectCard key={project.id} project={project} />
-              ))}
-            </div>
-          </div>
-        </section>      
       </main>
       
       <Footer />
