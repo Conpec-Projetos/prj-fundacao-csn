@@ -144,20 +144,22 @@ export default function DashboardPage() {
                 {/* Section 2: ODS Chart */}
                 <section className="bg-white-off rounded-xl shadow-sm p-5">
                     <h2 className="text-2xl font-bold mb-5">Objetivos de Desenvolvimento Sustentável</h2>
-                    <div className="h-96 w-full">
-                        <BarChart
-                            title=""
-                            data={odsData.values} 
-                            labels={odsData.labels} 
-                            colors={['#b37b97']}
-                            horizontal={false}
-                            useIcons={true}
-                        />
+                    <div className="w-full sm:overflow-x-auto md:overflow-x-hidden">
+                        <div className="h-96 min-w-[600]px md:min-w-0">
+                            <BarChart
+                                title=""
+                                data={odsData.values} 
+                                labels={odsData.labels} 
+                                colors={['#b37b97']}
+                                horizontal={false}
+                                useIcons={true}
+                            />
+                        </div>
                     </div>
                 </section>
                 {/* Section 3: Map and Chart */}
-                <section className="grid grid-cols-1 lg:grid-cols-2 md:grid-cols-2 gap-4 bg-white-off rounded-xl shadow-sm p-5">
-                    <div className="flex flex-col">
+                <section className="grid grid-cols-2 gap-4 bg-white-off rounded-xl shadow-sm p-5">
+                    <div className="flex flex-col sm:overflow-x-auto md:overflow-x-hidden">
                         <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
                             <div className="lg:h-120 md:h-100 sm:h-80 w-full p-3">
                                 <BrazilMap data={mapData} />
@@ -182,11 +184,11 @@ export default function DashboardPage() {
                     <div className="bg-white-off rounded-xl shadow-sm p-10">
                         <h2 className="text-2xl font-bold mb-4">Segmento do projeto</h2>
                         <div className="h-120">
-                        <PieChart 
-                        data={segmentData.values} 
-                        labels={segmentData.labels} 
-                        colors={['#e74c3c','#8e44ad','#39c2e0','#2ecc40','#f1c40f']}
-                    />
+                            <PieChart 
+                            data={segmentData.values} 
+                            labels={segmentData.labels} 
+                            colors={['#e74c3c','#8e44ad','#39c2e0','#2ecc40','#f1c40f']}
+                            />
                         </div>
                     </div>
                     <div className="bg-white-off rounded-xl shadow-sm p-5 h-full flex flex-col">
