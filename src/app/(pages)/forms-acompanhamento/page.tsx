@@ -113,40 +113,44 @@ export default function forms_acompanhamento(){
         <main className="'
             flex flex-col justify-between items-center
             w-screen
-            h-[600vh]
+            h-[dvh]
             overflow-scroll">
             
             
             <div className="
-                flex flex-col items-center content-center
+                flex flex-col items-center justify-center
                 w-full
-                h-[20vh]
+                h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh]
                 text-blue-fcsn text-7xl font-bold"
             >
                 <h1 className="
-                    flex flex-col content-center justify-center text-center items-center
-                    w-3/4
-                    h-full
+                    text-center
+                    w-fit
                     text-wrap
-                    text-3xl lg:text-5xl
+                    text-4xl sm:text-5xl lg:text-6xl xl:text-7xl
+                    transition-all duration-500 ease-in-out
                 ">Acompanhamento de projetos</h1>
             </div>
             
             <form 
                 className="
-                    flex flex-col justify-center items-center
-                    w-9/10 md:w-3/5
-                    h-[560vh] md:h-11/12
-                    bg-white-off
-                    rounded-sm
-                    shadow-md shadow-black"
+                    flex flex-col justify-center items-center 
+                    w-9/10 sm:w-85/100 md:w-8/10 lg:w-85/100 xl:w-auto 
+                    h-92/100
+                    mb-20
+                    bg-white-off 
+                    rounded-sm 
+                    shadow-md shadow-black
+                    overflow-auto
+                    transition-all duration-500 ease-in-out"
                 onSubmit={(event) => handleSubmit(event)}>
                 
 
                 <div className="
                     flex flex-col justify-around
                     w-11/12
-                    h-23/24">
+                    h-23/24
+                    my-10">
                 {/* Nome da instituição */}
                     <NormalInput
                         text="Nome da instituição:"
@@ -453,17 +457,19 @@ export default function forms_acompanhamento(){
                 </div>
                     
                 <div className="
-                    h-1/50
+                    flex items-start
                     w-full">
                     <button 
                         className="
-                            w-1/4 
-                            h-3/4 
+                            w-[15dvw] min-w-[150px] max-w-6x'/20
+                            h-[9dvh] min-h[90px] max-h-[150px]
                             bg-blue-fcsn 
-                            rounded-lg 
-                            text-3xl font-bold text-white 
+                            rounded-[10px]
+                            text-3xl lg:text-4xl font-bold
+                            text-white
+                            transition-all duration-500 ease-in-out
                             cursor-pointer 
-                            mx-13"
+                            ml-[3dvw] mb-20"
                     >Enviar</button>
                 </div>
             </form>
