@@ -452,8 +452,8 @@ interface DateProps{
 export const DateInputs: React.FC<DateProps> = (props) => {
     return(
         <div className="
-            flex flex-row justify-start items-center
-            w-3/4
+            flex flex-row flex-wrap justify-start items-center
+            w-full
             py-3">
 
             <h1 className="
@@ -464,6 +464,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
 
             <div className="
                 flex flex-row justify-evenly items-center
+                pr-4
                 w-1/2">
 
                 <input 
@@ -480,7 +481,10 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
                         text-center"/>
 
-                <h1 className="text-xl">a</h1>
+                <h1 className="
+                text-xl
+                px-2"
+                >a</h1>
                 <input
 
                     type="date" 
