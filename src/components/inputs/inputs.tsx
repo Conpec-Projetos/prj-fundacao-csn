@@ -17,27 +17,27 @@ interface TextProps{
 export const NormalInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
-            flex flex-col md:flex-row
-            justify-between items-center">
+            grid grid-rows-2 lg:grid-cols-[auto_1fr]
+            gap-y-2 md:gap-x-4
+            items-center">
 
             <h1 className="
-                bg-yellow-200
-                w-full
-                text-lg sm:text-xl md:text-2xl lg:3xl text-blue-fcsn font-bold"
+            text-3xl sm:text-2xl md:text-xl lg:lg
+            text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
             <input
-                type="text"
-                onChange={(event) => {props.setAttribute(event.target.value)}}
-                className="
-                    w-full
-                    h-[5vh]
-                    bg-white
-                    rounded-[1vh]
-                    border-1 border-blue-fcsn
-                    transition-all duration-300
-                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
-                    px-3"/>
+            type="text"
+            onChange={(event) => {props.setAttribute(event.target.value)}}
+            className="
+                w-full
+                h-[7vh]
+                bg-white
+                rounded-[10px]
+                border-1 border-blue-fcsn
+                transition-all duration-300
+                focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
+                px-3"/>
         </div>
     );
 }
@@ -46,11 +46,11 @@ export const LongInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
             flex flex-col justify-between
-            h-[35vh] sm:h-[20vh]">
+            h-[30vh]">
                         
             <h1 className="
                 w-full
-                text-lg sm:text-xl md:text-2xl lg:3xl
+                text-3xl sm:text-2xl md:text-xl lg:lg
                 text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
@@ -61,7 +61,7 @@ export const LongInput: React.FC<TextProps> = (props) => {
                     w-full
                     h-full
                     bg-white    
-                    rounded-sm
+                    rounded-[10px]
                     border-1 border-blue-fcsn
                     transition-all duration-300
                     focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
@@ -94,15 +94,15 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
                         
             <h1 className="
             w-full
-            text-xl 
-            ext-blue-fcsn font-bold">
+            text-3xl sm:text-2xl md:text-xl lg:lg
+            text-blue-fcsn font-bold">
                 {props.text}
             </h1>
             
             <div className="
                 w-full
                 justify-items-start
-                grid grid-cols-2 md:grid-cols-5
+                grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5
                 gap-[1vw]
                 text-wrap">
 
@@ -164,12 +164,13 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
     return(
         <div className="
             flex flex-col
-            w-90%
+            w-full
             justify-start
             items-start">
                         
             <h1 className="
-                text-xl text-blue-fcsn font-bold"
+                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
             >{ props.text }</h1>
 
             <select 
@@ -183,7 +184,7 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
                     bg-white
                     border-blue-fcsn border-1
                     cursor-pointer 
-                    rounded-md 
+                    rounded-[10px]
                     transition-all duration-300 
                     focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl 
                     px-5">
@@ -218,7 +219,8 @@ export const NumberInput: React.FC<NumberProps> = (props) => {
             flex flex-row justify-start items-center">
                         
             <h1 className="
-                text-xl text-blue-fcsn font-bold"
+                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
             <div className="
@@ -237,7 +239,7 @@ export const NumberInput: React.FC<NumberProps> = (props) => {
                         w-[75px] 
                         h-[53px] 
                         bg-white 
-                        rounded-sm 
+                        rounded-[10px] 
                         border-1 border-blue-fcsn 
                         transition-all duration-300 
                         focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
@@ -266,7 +268,8 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
             py-2">
             
             <h1 className="
-                text-xl text-blue-fcsn font-bold"
+                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
             >{ props.text }</h1>
 
             <div className="
@@ -274,7 +277,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 w-3/5 
                 h-full 
                 border-[1px] border-blue-fcsn 
-                rounded-md">
+                rounded-[10px]">
 
                 <select 
                     defaultValue={""}
@@ -288,7 +291,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                         bg-white 
                         cursor-pointer 
                         pl-5 
-                        rounded-md">
+                        rounded-[10px]">
                     
                     <option 
                         disabled 
@@ -308,7 +311,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 <div className="
                     h-full 
                     bg-white 
-                    rounded-md 
+                    rounded-[10px] 
                     overflow-y-scroll">
                     
                     {props.estados.map((estado, index) => (
@@ -355,7 +358,8 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
             py-2">
             
             <h1 className="
-                text-xl text-blue-fcsn font-bold"
+                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
             <div className="
@@ -363,7 +367,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 h-full 
                 flex flex-col justify-center 
                 border-[1px] border-blue-fcsn 
-                rounded-md">
+                rounded-[10px]">
 
                 <select 
                     defaultValue={""} 
@@ -376,7 +380,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                         bg-white 
                         cursor-pointer 
                         pl-5 
-                        rounded-md">
+                        rounded-[10px]">
                     
                     <option 
                         disabled 
@@ -410,7 +414,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 <div className="
                     h-full 
                     bg-white 
-                    rounded-md 
+                    rounded-[10px] 
                     overflow-y-scroll">
                    
                     {props.cidades.map((cidade, index) => (
@@ -446,7 +450,8 @@ export const DateInputs: React.FC<DateProps> = (props) => {
 
             <h1 className="
                 w-[320px] 
-                text-xl text-blue-fcsn font-bold"
+                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
             >{ props.text }</h1>
 
             <div className="
@@ -462,7 +467,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         bg-white 
                         cursor-text 
                         border-1 border-blue-fcsn 
-                        rounded-md 
+                        rounded-[10px] 
                         transition-all duration-300 
                         focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
                         text-center"/>
@@ -478,7 +483,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         bg-white 
                         cursor-text 
                         border-1 border-blue-fcsn 
-                        rounded-md 
+                        rounded-[10px]
                         transition-all duration-300 
                         focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
                         text-center"/>
@@ -502,7 +507,8 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
             flex flex-row justify-start items-center">
                         
             <h1 className="
-                text-xl text-blue-fcsn font-bold"
+                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
             >{ props.text }</h1>
 
             <div className="
@@ -515,7 +521,7 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
                         bg-white 
                         border-blue-fcsn border-1 
                         cursor-pointer 
-                        rounded-md 
+                        rounded-[10px] 
                         transition-aLL duration-300 
                         focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl 
                         px-5">
@@ -556,51 +562,57 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
     
     return(
         <div className="
-            flex flex-col justify-between items-start 
-            h-[230px]">
-                        
+            flex flex-col justify-between items-start
+            gap-y-2">
+                
             <h1 className="
-                w-[850px] 
-                text-xl text-blue-fcsn font-bold"
+            w-full
+            text-3xl sm:text-2xl md:text-xl lg:lg
+            text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
-            <div className="flex flex-col">
+            <div className="
+            flex flex-col
+            gap-y-2">
+            
+            {props.list.map((string, index) => (
+                <div 
+                key={index} 
+                className="
+                flex flex-row
+                gap-y-2">
                 
-                {props.list.map((string, index) => (
-                    <div 
-                        key={index} 
-                        className="flex flex-row">
-                        
-                        <div className="
-                            w-[40px]
-                            flex flex-col justify-center items-center">
-                            
-                            <input 
-                                type="checkbox" 
-                                checked = {props.attribute[index]} 
-                                onChange={() => {
-                                    let new_array = [...props.attribute];
-                                    new_array[index] = !props.attribute[index];
-                                    if(countODS(new_array) < 4)
-                                        // NÃO PODE SELECIONAR MAIS QUE 4
-                                        // TODO: se a pessoa tenta clicar em um a mais do que quatro
-                                        // em vez de rejeitar, desseleciona um antigo que ela pressionou
-                                        // e muda pro atual. Acho mais UX...
-                                        props.setAttribute(new_array);
-                                    else
-                                        toast.error("Selecione no máximo 3");
-                                }} 
-                                className="
-                                    w-[20px] 
-                                    h-[20px] 
-                                    focus:ring focus:ring-blue-fcsn accent-blue-fcsn 
-                                    cursor-pointer"/>
-                        </div>
-                        <h1 className="
-                            text-xl text-blue-fcsn"
-                        >{"ODS " + (index + 1) + ": " + string}</h1>
-                    </div>
-                ))}
+                <div className="
+                    flex flex-col justify-center items-center
+                    w-[3vw]
+                    gap-y-2">
+                    
+                    <input 
+                    type="checkbox" 
+                    checked = {props.attribute[index]} 
+                    onChange={() => {
+                        let new_array = [...props.attribute];
+                        new_array[index] = !props.attribute[index];
+                        if(countODS(new_array) < 4)
+                        // NÃO PODE SELECIONAR MAIS QUE 4
+                        // TODO: se a pessoa tenta clicar em um a mais do que quatro
+                        // em vez de rejeitar, desseleciona um antigo que ela pressionou
+                        // e muda pro atual. Acho mais UX...
+                        props.setAttribute(new_array);
+                        else
+                        toast.error("Selecione no máximo 3");
+                    }} 
+                    className="
+                        w-[20px] 
+                        h-[20px]
+                        focus:ring focus:ring-blue-fcsn accent-blue-fcsn 
+                        cursor-pointer"/>
+                </div>
+                <h1 className="
+                    text-xl text-blue-fcsn"
+                >{"ODS " + (index + 1) + ": " + string}</h1>
+                </div>
+            ))}
             </div>
         </div>
     );
@@ -634,7 +646,8 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 flex flex-row justify-start items-center">
                 
                 <h1 className="
-                    text-xl text-blue-fcsn font-bold"
+                    text-3xl sm:text-2xl md:text-xl lg:lg
+                    text-blue-fcsn font-bold"
                 >{ props.text }</h1>
 
                 <label className="
@@ -644,7 +657,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                     text-center text-xl font-sembold text-blue-fcsn 
                     border-1 border-blue-fcsn 
                     cursor-pointer 
-                    rounded-md 
+                    rounded-[7px] 
                     mx-5 
                     relative"
                     >Adicionar Arquivo
@@ -667,7 +680,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 h-[400px]
                 bg-white 
                 border-1 border-blue-fcsn
-                rounded-md
+                rounded-t-[10px]
                 overflow-x-scroll">
                 
                 <div 
@@ -689,7 +702,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                                 className="
                                     w-[400px] 
                                     h-[300px] 
-                                    ursor-pointer"/>
+                                    cursor-pointer"/>
                         </div>
                     ))}
                 </div>
