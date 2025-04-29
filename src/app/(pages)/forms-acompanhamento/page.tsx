@@ -112,9 +112,10 @@ export default function forms_acompanhamento(){
     return(
         <main className="'
             flex flex-col justify-between items-center
-            w-screen
+            w-[screen]
             h-[dvh]
-            overflow-scroll">
+            overflow-hidden
+            no-scrollbar">
             
             
             <div className="
@@ -125,7 +126,7 @@ export default function forms_acompanhamento(){
             >
                 <h1 className="
                     text-center
-                    w-fit
+                    w-[90dvw]
                     text-wrap
                     text-4xl sm:text-5xl lg:text-6xl xl:text-7xl
                     transition-all duration-500 ease-in-out
@@ -135,13 +136,14 @@ export default function forms_acompanhamento(){
             <form 
                 className="
                     flex flex-col justify-center items-center 
-                    w-9/10 sm:w-85/100 md:w-8/10 lg:w-85/100 xl:w-auto 
-                    h-92/100
+                    w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw]
+                    h-90/100
                     mb-20
                     bg-white-off 
                     rounded-sm 
                     shadow-md shadow-black
-                    overflow-auto
+                    overflow-hidden
+                    no-scrollbar
                     transition-all duration-500 ease-in-out"
                 onSubmit={(event) => handleSubmit(event)}>
                 
@@ -184,15 +186,15 @@ export default function forms_acompanhamento(){
                         text="Lei de incentivo do projeto:"
                         list={[
                             "Lei de Incentivo à Cultura",
-                            "PROAC – Programa de Ação Cultural",
+                            "PROAC - Programa de Ação Cultural",
                             "FIA - Lei Fundo para a Infância e Adolescência", 
                             "LIE - Lei de Incentivo ao Esporte", 
                             "Lei da Pessoa Idosa", 
-                            "Pronas – Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência", 
+                            "Pronas - Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência", 
                             "Pronon - Programa Nacional de Apoio à Atenção Oncológica", 
-                            "Promac – Programa de Incentivo à Cultura do Município de São Paulo", 
-                            "ICMS – MG Imposto sobre Circulação de Mercadoria e Serviços", 
-                            "ICMS – RJ Imposto sobre Circulação de Mercadoria e Serviços", 
+                            "Promac - Programa de Incentivo à Cultura do Município de São Paulo", 
+                            "ICMS - MG Imposto sobre Circulação de Mercadoria e Serviços", 
+                            "ICMS - RJ Imposto sobre Circulação de Mercadoria e Serviços", 
                             "PIE - Lei Paulista de Incentivo ao Esporte"
                         ]}
                         attribute={ lei }
@@ -396,6 +398,7 @@ export default function forms_acompanhamento(){
                 {/* ODSs: */}
                     <VerticalSelects 
                         text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
+                        subtext="Selecione até 3 opções."
                         list={[
                             "Erradicação da Pobreza",
                             "Fome Zero e Agricultura Sustentável",

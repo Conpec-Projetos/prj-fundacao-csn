@@ -17,12 +17,13 @@ interface TextProps{
 export const NormalInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
-            grid grid-rows-2 lg:grid-cols-[auto_1fr]
-            gap-y-2 md:gap-x-4
+            grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr]
+            md:gap-x-4
+            py-3
             items-center">
 
             <h1 className="
-            text-3xl sm:text-2xl md:text-xl lg:lg
+            text-xl md:text-xl lg:lg
             text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
@@ -46,11 +47,12 @@ export const LongInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
             flex flex-col justify-between
-            h-[30vh]">
+            h-[30vh]
+            py-3">
                         
             <h1 className="
                 w-full
-                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-xl md:text-xl lg:lg
                 text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
@@ -90,11 +92,12 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
 
         <div className="
             flex flex-col justify-between
-            h-min">
+            h-min
+            py-3">
                         
             <h1 className="
             w-full
-            text-3xl sm:text-2xl md:text-xl lg:lg
+            text-xl md:text-xl lg:lg
             text-blue-fcsn font-bold">
                 {props.text}
             </h1>
@@ -114,7 +117,7 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
                             flex flex-row justify-center items-center">
 
                         <div className="
-                            flex flex-col justify-center
+                            flex flex-col justify-center items-center
                             w-[30px]
                             h-[30px]">
 
@@ -150,8 +153,9 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
                             </button>
                         </div>
 
-                        <h1 className=
-                            "text-blue-fcsn text-xl"
+                        <h1 className="
+                            text-md
+                            text-blue-fcsn"
                         >{ string }</h1>
                     </div>
                 ))}
@@ -163,13 +167,15 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
 export const LeiSelect: React.FC<HorizontalProps> = (props) => {
     return(
         <div className="
-            flex flex-col
+            grid grid-rows-2 md:grid-rows-none md:grid-cols-[auto_1fr]
+            md:gap-x-4
             w-full
-            justify-start
-            items-start">
+            py-3
+            justify-center
+            items-center">
                         
             <h1 className="
-                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-xl md:text-xl lg:lg
                 text-blue-fcsn font-bold"
             >{ props.text }</h1>
 
@@ -179,8 +185,8 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
                     props.setAttribute( Number(event.target.value) );
                 }}
                 className="
-                    w-full
-                    h-[5vh]
+                    w-full md:max-w-[270px]
+                    h-[5vh] min-h-[45px] max-h-[70px]
                     bg-white
                     border-blue-fcsn border-1
                     cursor-pointer 
@@ -216,10 +222,11 @@ interface NumberProps{
 export const NumberInput: React.FC<NumberProps> = (props) => {
     return(
         <div className="
-            flex flex-row justify-start items-center">
+            flex flex-row justify-start items-center
+            py-3">
                         
             <h1 className="
-                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-xl md:text-xl lg:lg
                 text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
@@ -265,10 +272,10 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
         <div className="
             flex flex-row justify-between items-start 
             h-[200px] 
-            py-2">
+            py-3">
             
             <h1 className="
-                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-xl md:text-xl lg:lg
                 text-blue-fcsn font-bold"
             >{ props.text }</h1>
 
@@ -355,10 +362,10 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
         <div className="
             flex flex-row justify-between items-start 
             h-[200px] 
-            py-2">
+            py-3">
             
             <h1 className="
-                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-xl md:text-xl lg:lg
                 text-blue-fcsn font-bold"
             >{ props.text }</h1>
             
@@ -446,11 +453,12 @@ export const DateInputs: React.FC<DateProps> = (props) => {
     return(
         <div className="
             flex flex-row justify-start items-center
-            w-3/4">
+            w-3/4
+            py-3">
 
             <h1 className="
                 w-[320px] 
-                text-3xl sm:text-2xl md:text-xl lg:lg
+                text-xl md:text-xl lg:lg
                 text-blue-fcsn font-bold"
             >{ props.text }</h1>
 
@@ -504,40 +512,44 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
     return(
 
         <div className="
-            flex flex-row justify-start items-center">
-                        
+            flex flex-row justify-start items-center
+            w-full
+            py-3">
+                
             <h1 className="
-                text-3xl sm:text-2xl md:text-xl lg:lg
-                text-blue-fcsn font-bold"
+            text-xl md:text-xl lg:lg
+            text-blue-fcsn font-bold"
             >{ props.text }</h1>
 
             <div className="
-                flex flex-col justify-center items-center
-                w-1/4">
-                <select
-                    defaultValue={""}
-                    className="
-                        h-[35px] 
-                        bg-white 
-                        border-blue-fcsn border-1 
-                        cursor-pointer 
-                        rounded-[10px] 
-                        transition-aLL duration-300 
-                        focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl 
-                        px-5">
+            flex flex-col justify-center items-start
+            mr-4">
+            <select
+                defaultValue={""}
+                className="
+                w-full max-w-[250px] min-w-[185px]
+                h-[8dvh] max-h-[45px]
+                ml-4
+                bg-white 
+                border-blue-fcsn border-1 
+                cursor-pointer 
+                rounded-[5px] 
+                transition-all duration-300 
+                focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl 
+                px-5">
 
-                    <option 
-                        disabled 
-                        value={""}
-                    >Escolha uma opção</option>
+                <option 
+                disabled 
+                value={""}
+                >Escolha uma opção</option>
 
-                    {props.list.map((string, index) => (
-                        <option 
-                            key={index} 
-                            value={index}
-                        >{string}</option>
-                    ))}
-                </select>    
+                {props.list.map((string, index) => (
+                <option 
+                    key={index} 
+                    value={index}
+                >{string}</option>
+                ))}
+            </select>    
             </div>
         </div>
     );
@@ -545,6 +557,7 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
 
 interface VerticalProps{
     text: string;
+    subtext: string;
     list: string[];
     attribute: boolean[];
     setAttribute: Dispatch<SetStateAction<boolean[]>>;
@@ -563,13 +576,18 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
     return(
         <div className="
             flex flex-col justify-between items-start
+            py-3
             gap-y-2">
                 
             <h1 className="
             w-full
-            text-3xl sm:text-2xl md:text-xl lg:lg
+            text-xl md:text-xl lg:lg
             text-blue-fcsn font-bold"
             >{ props.text }</h1>
+
+                <p className="
+                text-blue-fcsn"
+                >{ props.subtext }</p>
             
             <div className="
             flex flex-col
@@ -580,7 +598,7 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
                 key={index} 
                 className="
                 flex flex-row
-                gap-y-2">
+                gap-x-2 md:gap-x-0 gap-y-2">
                 
                 <div className="
                     flex flex-col justify-center items-center
@@ -638,15 +656,16 @@ export const FileInput: React.FC<FileProps> = (props) => {
     
     return(
         <div className="
-            flex flex-col justify-around items-center 
-            h-[500px]">
+            flex flex-col justify-around items-center
+            h-[30dvh]
+            py-3">
 
             <div className="
                 w-full 
                 flex flex-row justify-start items-center">
                 
                 <h1 className="
-                    text-3xl sm:text-2xl md:text-xl lg:lg
+                    text-xl md:text-xl lg:lg
                     text-blue-fcsn font-bold"
                 >{ props.text }</h1>
 
@@ -658,8 +677,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                     border-1 border-blue-fcsn 
                     cursor-pointer 
                     rounded-[7px] 
-                    mx-5 
-                    relative"
+                    mx-5"
                     >Adicionar Arquivo
 
                     <input 
@@ -677,7 +695,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
             <div className="
                 flex flex-col justify-center items-start
                 w-full
-                h-[400px]
+                h-[20dvh]
                 bg-white 
                 border-1 border-blue-fcsn
                 rounded-t-[10px]

@@ -55,8 +55,11 @@
     margin: 0;
   }
 
-
   .no-spinner {
     -moz-appearance: textfield;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
