@@ -91,7 +91,7 @@ export default function AdminHomePage() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white text-blue-fcsn">
+    <div className="flex flex-col grow min-h-[90vh] bg-white text-blue-fcsn">
       
       <main className="flex flex-col gap-8 p-8 flex-1 sm:mx-12 md:mx-20">
         {/* Seção de boas-vindas */}
