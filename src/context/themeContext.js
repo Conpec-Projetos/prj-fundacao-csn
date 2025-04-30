@@ -9,10 +9,11 @@ export function ThemeProvider({ children }) {
     
     useEffect(() => {
     const savedMode = localStorage.getItem("displayMode");
-    if (!savedMode) {
-        localStorage.setItem("displayMode", "light");
-    } else {
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (savedMode) {
         setDarkMode(savedMode === 'dark');
+    } else {
+        setDarkMode(systemDark);
     }
     }, []);
 
