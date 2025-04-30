@@ -463,7 +463,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
             >{ props.text }</h1>
 
             <div className="
-                flex flex-row justify-evenly items-center
+                flex flex-row justify-start items-center
                 pr-4
                 w-1/2">
 
