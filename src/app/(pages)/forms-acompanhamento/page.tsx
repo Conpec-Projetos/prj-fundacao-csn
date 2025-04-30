@@ -464,15 +464,15 @@ export default function forms_acompanhamento(){
                     w-full">
                     <button 
                         className="
-                            w-[15dvw] min-w-[150px] max-w-6x'/20
-                            h-[9dvh] min-h[90px] max-h-[150px]
+                            w-[15dvw] min-w-[150px] max-w-[290px]
+                            h-[9dvh] min-h-[50px] max-h-[75px]
                             bg-blue-fcsn 
-                            rounded-[10px]
+                            rounded-[7px]
                             text-3xl lg:text-4xl font-bold
                             text-white
                             transition-all duration-500 ease-in-out
                             cursor-pointer 
-                            ml-[3dvw] mb-20"
+                            ml-[3dvw] mb-10"
                     >Enviar</button>
                 </div>
             </form>
