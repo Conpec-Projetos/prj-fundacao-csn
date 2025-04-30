@@ -9,6 +9,7 @@ import { toast } from "sonner"
 interface TextProps{
     text: string;
     attribute: string;
+    isNotMandatory: boolean;
     setAttribute: Dispatch<SetStateAction<string>>;
 }
 
@@ -17,11 +18,10 @@ export const NormalInput: React.FC<TextProps> = (props) => {
         <div className="
             flex flex-col
             justify-between">
-
             <h1 className="
                 w-full
                 text-md sm:text-lg text-blue-fcsn font-bold"
-            >{ props.text }</h1>
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <input
                 type="text"
