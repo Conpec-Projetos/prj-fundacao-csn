@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FaClipboardList, FaChartPie, FaMapMarkedAlt, FaFileAlt, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import Header from '@/components/header/header';
 import Footer from '@/components/footer/footer';
+import { useTheme } from '@/context/ThemeContext';
 
 // Componente de card para métricas
 interface MetricCardProps {
@@ -55,6 +56,7 @@ export default function AdminHomePage() {
   const [userName, setUserName] = useState('Administrador');
   const [currentTime, setCurrentTime] = useState('');
   const [greeting, setGreeting] = useState('');
+  const { darkMode } = useTheme();
   
   // Dados de exemplo para as métricas
   const pendingProjects: Project[] = [
@@ -91,7 +93,7 @@ export default function AdminHomePage() {
   }, []);
 
   return (
-    <div className="flex flex-col grow min-h-[90vh] bg-white text-blue-fcsn">
+    <div className={`flex flex-col grow min-h-[90vh] bg-white text-blue-fcsn ${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
       
       <main className="flex flex-col gap-8 p-8 flex-1 sm:mx-12 md:mx-20">
         {/* Seção de boas-vindas */}
