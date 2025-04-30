@@ -32,9 +32,9 @@ export const NormalInput: React.FC<TextProps> = (props) => {
             onChange={(event) => {props.setAttribute(event.target.value)}}
             className="
                 w-full
-                h-[7vh]
+                h-[6dvh]
                 bg-white
-                rounded-[10px]
+                rounded-[7px]
                 border-1 border-blue-fcsn
                 transition-all duration-300
                 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
@@ -47,7 +47,7 @@ export const LongInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
             flex flex-col justify-between
-            h-[30vh]
+            h-[23dvh]
             py-3">
                         
             <h1 className="
@@ -63,7 +63,7 @@ export const LongInput: React.FC<TextProps> = (props) => {
                     w-full
                     h-full
                     bg-white    
-                    rounded-[10px]
+                    rounded-[7px]
                     border-1 border-blue-fcsn
                     transition-all duration-300
                     focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
@@ -103,10 +103,10 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
             </h1>
             
             <div className="
-                w-full
-                justify-items-start
                 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5
-                gap-[1vw]
+                justify-items-start lg:justify-items-center
+                w-full
+                gap-y-2 lg:gap-x-5
                 text-wrap">
 
                 {props.list.map((string, index) => (
@@ -114,7 +114,8 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
                     <div
                         key={index} 
                         className="
-                            flex flex-row justify-center items-center">
+                            flex flex-row justify-center items-center
+                            w-fit">
 
                         <div className="
                             flex flex-col justify-center items-center
@@ -154,6 +155,7 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
                         </div>
 
                         <h1 className="
+                            w-fit
                             text-md
                             text-blue-fcsn"
                         >{ string }</h1>
@@ -190,7 +192,7 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
                     bg-white
                     border-blue-fcsn border-1
                     cursor-pointer 
-                    rounded-[10px]
+                    rounded-[7px]
                     transition-all duration-300 
                     focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl 
                     px-5">
@@ -244,9 +246,9 @@ export const NumberInput: React.FC<NumberProps> = (props) => {
                     }}
                     className="
                         w-[75px] 
-                        h-[53px] 
+                        h-[50px] 
                         bg-white 
-                        rounded-[10px] 
+                        rounded-[7px] 
                         border-1 border-blue-fcsn 
                         transition-all duration-300 
                         focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
@@ -284,7 +286,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 w-3/5 
                 h-full 
                 border-[1px] border-blue-fcsn 
-                rounded-[10px]">
+                rounded-[7px]">
 
                 <select 
                     defaultValue={""}
@@ -298,7 +300,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                         bg-white 
                         cursor-pointer 
                         pl-5 
-                        rounded-[10px]">
+                        rounded-[7px]">
                     
                     <option 
                         disabled 
@@ -318,7 +320,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 <div className="
                     h-full 
                     bg-white 
-                    rounded-[10px] 
+                    rounded-[7px] 
                     overflow-y-scroll">
                     
                     {props.estados.map((estado, index) => (
@@ -374,7 +376,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 h-full 
                 flex flex-col justify-center 
                 border-[1px] border-blue-fcsn 
-                rounded-[10px]">
+                rounded-[7px]">
 
                 <select 
                     defaultValue={""} 
@@ -387,7 +389,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                         bg-white 
                         cursor-pointer 
                         pl-5 
-                        rounded-[10px]">
+                        rounded-[7px]">
                     
                     <option 
                         disabled 
@@ -421,7 +423,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 <div className="
                     h-full 
                     bg-white 
-                    rounded-[10px] 
+                    rounded-[7px] 
                     overflow-y-scroll">
                    
                     {props.cidades.map((cidade, index) => (
@@ -476,7 +478,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         bg-white 
                         cursor-text 
                         border-1 border-blue-fcsn 
-                        rounded-[10px] 
+                        rounded-[7px] 
                         transition-all duration-300 
                         focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
                         text-center"/>
@@ -495,7 +497,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         bg-white 
                         cursor-text 
                         border-1 border-blue-fcsn 
-                        rounded-[10px]
+                        rounded-[7px]
                         transition-all duration-300 
                         focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
                         text-center"/>
@@ -590,6 +592,7 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
             >{ props.text }</h1>
 
                 <p className="
+                text-lg
                 text-blue-fcsn"
                 >{ props.subtext }</p>
             
@@ -665,7 +668,8 @@ export const FileInput: React.FC<FileProps> = (props) => {
             py-3">
 
             <div className="
-                w-full 
+                w-full
+                md:text-nowrap
                 flex flex-row justify-start items-center">
                 
                 <h1 className="
@@ -674,10 +678,10 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 >{ props.text }</h1>
 
                 <label className="
-                    w-1/3 
-                    h-full 
+                    w-[10dvw] max-w-[180px] min-w-[100px] md:min-w-[160px]
+                    min-h-[30px] max-h-[60px]
                     bg-white 
-                    text-center text-xl font-sembold text-blue-fcsn 
+                    justify-center text-center text-lg font-sembold text-blue-fcsn 
                     border-1 border-blue-fcsn 
                     cursor-pointer 
                     rounded-[7px] 
