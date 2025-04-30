@@ -110,43 +110,49 @@ export default function forms_acompanhamento(){
 
 
     return(
-        <main className="
+        <main className="'
             flex flex-col justify-between items-center
-            w-screen
-            h-[600vh]
-            overflow-scroll">
+            w-[screen]
+            h-[dvh]
+            overflow-hidden
+            no-scrollbar">
             
-            <Header></Header>
             
             <div className="
-                flex flex-col justify-center items-center
+                flex flex-col items-center justify-center
                 w-full
-                h-[10vh]
+                h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh]
                 text-blue-fcsn text-7xl font-bold"
             >
                 <h1 className="
-                    bg-red-500
                     text-center
-                    w-full md:w-4/5
-                    text-xl lg:text-5xl
+                    w-[90dvw]
+                    text-wrap
+                    text-4xl sm:text-5xl lg:text-6xl xl:text-7xl
+                    transition-all duration-500 ease-in-out
                 ">Acompanhamento de projetos</h1>
             </div>
             
             <form 
                 className="
-                    flex flex-col justify-center items-center
-                    w-9/10
-                    h-11/12
-                    bg-white-off
-                    rounded-sm
-                    shadow-md shadow-black"
+                    flex flex-col justify-center items-center 
+                    w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw]
+                    h-90/100
+                    mb-20
+                    bg-white-off 
+                    rounded-sm 
+                    shadow-md shadow-black
+                    overflow-hidden
+                    no-scrollbar
+                    transition-all duration-500 ease-in-out"
                 onSubmit={(event) => handleSubmit(event)}>
                 
 
                 <div className="
                     flex flex-col justify-around
                     w-11/12
-                    h-23/24">
+                    h-23/24
+                    my-10">
                 {/* Nome da instituição */}
                     <NormalInput
                         text="Nome da instituição:"
@@ -180,15 +186,15 @@ export default function forms_acompanhamento(){
                         text="Lei de incentivo do projeto:"
                         list={[
                             "Lei de Incentivo à Cultura",
-                            "PROAC – Programa de Ação Cultural",
+                            "PROAC - Programa de Ação Cultural",
                             "FIA - Lei Fundo para a Infância e Adolescência", 
                             "LIE - Lei de Incentivo ao Esporte", 
                             "Lei da Pessoa Idosa", 
-                            "Pronas – Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência", 
+                            "Pronas - Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência", 
                             "Pronon - Programa Nacional de Apoio à Atenção Oncológica", 
-                            "Promac – Programa de Incentivo à Cultura do Município de São Paulo", 
-                            "ICMS – MG Imposto sobre Circulação de Mercadoria e Serviços", 
-                            "ICMS – RJ Imposto sobre Circulação de Mercadoria e Serviços", 
+                            "Promac - Programa de Incentivo à Cultura do Município de São Paulo", 
+                            "ICMS - MG Imposto sobre Circulação de Mercadoria e Serviços", 
+                            "ICMS - RJ Imposto sobre Circulação de Mercadoria e Serviços", 
                             "PIE - Lei Paulista de Incentivo ao Esporte"
                         ]}
                         attribute={ lei }
@@ -392,6 +398,7 @@ export default function forms_acompanhamento(){
                 {/* ODSs: */}
                     <VerticalSelects 
                         text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
+                        subtext="Selecione até 3 opções."
                         list={[
                             "Erradicação da Pobreza",
                             "Fome Zero e Agricultura Sustentável",
@@ -453,17 +460,19 @@ export default function forms_acompanhamento(){
                 </div>
                     
                 <div className="
-                    h-1/50
+                    flex items-start
                     w-full">
                     <button 
                         className="
-                            w-1/4 
-                            h-3/4 
+                            w-[15dvw] min-w-[150px] max-w-[290px]
+                            h-[9dvh] min-h-[50px] max-h-[75px]
                             bg-blue-fcsn 
-                            rounded-lg 
-                            text-3xl font-bold text-white 
+                            rounded-[7px]
+                            text-3xl lg:text-4xl font-bold
+                            text-white
+                            transition-all duration-500 ease-in-out
                             cursor-pointer 
-                            mx-13"
+                            ml-[3dvw] mb-10"
                     >Enviar</button>
                 </div>
             </form>
