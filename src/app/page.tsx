@@ -12,14 +12,21 @@ interface MetricCardProps {
   title: string;
   value: string;
   icon: React.ReactNode;
-  color: string;
+  color: 'blue' | 'green' | 'purple' | 'yellow';
+}
+
+const colorMap = { 
+  blue: 'text-blue-600',
+  green: 'text-green-600',
+  purple: 'text-purple-600',
+  yellow: 'text-yellow-600',
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, color }) => (
   <div className="bg-white-off rounded-lg shadow-md p-6 flex flex-col items-center justify-center h-full">
-    <div className={`text-${color} text-2xl mb-2`}>{icon}</div>
+    <div className={`${colorMap[color]} text-2xl mb-2`}>{icon}</div>
     <h3 className="text-lg md:text-xl text-blue-fcsn font-medium mb-1 text-center sm:whitespace-nowrap">{title}</h3>
-    <p className="text-md md:text-xl whitespace-nowrap font-bold">{value}</p>
+    <p className="text-md md:text-xl whitespace-nowrap font-bold text-blue-fcsn">{value}</p>
   </div>
 );
 
@@ -33,19 +40,19 @@ interface Project {
 }
 
 const PendingProjectCard: React.FC<{ project: Project }> = ({ project }) => (
-  <div className="bg-white rounded-lg shadow-md p-4 mb-3 hover:bg-gray-50 transition-colors">
+  <div className="bg-white dark:bg-blue-fcsn3 rounded-lg shadow-md p-4 mb-3 hover:bg-slate-50 dark:hover:bg-blue-fcsn2 transition-colors">
     <div className="flex justify-between items-center">
-      <h3 className="font-medium text-blue-fcsn">{project.name}</h3>
+      <h3 className="font-medium text-blue-fcsn dark:text-white">{project.name}</h3>
       <span className={`px-2 py-1 rounded-full text-xs ${
         project.status === 'urgent' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
       }`}>
         {project.status === 'urgent' ? 'Urgente' : 'Pendente'}
       </span>
     </div>
-    <p className="text-sm text-gray-500 mt-1">{project.institution}</p>
+    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{project.institution}</p>
     <div className="flex justify-between mt-3">
-      <span className="text-sm text-gray-500">Submetido: {project.submittedDate}</span>
-      <Link href={`/projetos/${project.id}`} className="text-sm text-blue-600 hover:underline">
+      <span className="text-sm text-gray-500 dark:text-gray-400">Submetido: {project.submittedDate}</span>
+      <Link href={`/projetos/${project.id}`} className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
         Ver detalhes
       </Link>
     </div>
@@ -93,13 +100,13 @@ export default function AdminHomePage() {
   }, []);
 
   return (
-    <div className={`flex flex-col grow min-h-[90vh] bg-white text-blue-fcsn ${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
+    <div className={`flex flex-col grow min-h-[90vh] ${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
       
-      <main className="flex flex-col gap-8 p-8 flex-1 sm:mx-12 md:mx-20">
+      <main className="flex flex-col gap-8 p-8 flex-1 sm:mx-12 md:mx-20"> 
         {/* Seção de boas-vindas */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-blue-fcsn">{greeting}, {userName}!</h1>
+              <h1 className="text-xl md:text-2xl font-bold">{greeting}, {userName}!</h1>
               <p className="text-gray-500">{currentTime}</p>
             </div>
           </div>
@@ -114,7 +121,7 @@ export default function AdminHomePage() {
                   title="Total de Projetos" 
                   value="800" 
                   icon={<FaClipboardList />} 
-                  color="blue-600"
+                  color="blue"
                   />
                 </div>
                 <div className="col-start-2">
@@ -122,7 +129,7 @@ export default function AdminHomePage() {
                   title="Valor Total Investido" 
                   value="R$987.654.321,00" 
                   icon={<FaChartPie />} 
-                  color="green-600"
+                  color="green"
                   />
                 </div>
               </div>
@@ -132,7 +139,7 @@ export default function AdminHomePage() {
                     title="Estados Atendidos" 
                     value="13" 
                     icon={<FaMapMarkedAlt />} 
-                    color="purple-600"
+                    color="purple"
                   />
                 </div>
                 <div className="col-start-2">
@@ -140,7 +147,7 @@ export default function AdminHomePage() {
                     title="Organizações" 
                     value="750" 
                     icon={<FaFileAlt />} 
-                    color="yellow-600"
+                    color="yellow"
                   />
                 </div>
               </div>
@@ -150,7 +157,7 @@ export default function AdminHomePage() {
             <section className="w-full sm:w-[65%] gap-4 order-2 sm:order-1">
               <div className="bg-white-off rounded-lg shadow-md p-6 h-full">
                 <div className="flex justify-between items-center mb-1">
-                  <h2 className="text-xl font-bold text-[#292944]">Projetos Pendentes</h2>
+                  <h2 className="text-xl font-bold text-blue-fcsn">Projetos Pendentes</h2>
                   <Link href="/projetos/pendentes" className="text-sm text-[#b37b97] hover:underline">
                     Ver todos
                   </Link>
