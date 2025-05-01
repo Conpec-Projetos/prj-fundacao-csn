@@ -6,7 +6,13 @@
   --foreground: #171717;
 }
 .dark header {
-  @apply bg-slate-600 text-white;
+  @apply bg-blue-fcsn2;
+}
+.dark footer {
+  @apply bg-blue-fcsn2;
+}
+.dark {
+  @apply bg-blue-fcsn text-white-off;
 }
 
 @theme inline {
@@ -15,6 +21,9 @@
   --color-white-off: #f2f2ea;
   --color-red-fcsn: #b15265;
   --color-blue-fcsn: #292944;
+  --color-blue-fcsn2: #3E3E57;
+  --color-blue-fcsn3: #515168;
+  --color-purple-light: #EDE0E6;
   --color-pink-fcsn: #b37b97;
   --color-yellow-fcsn: #f0b404;
   --font-sans: var(--font-geist-sans);
