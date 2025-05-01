@@ -3,7 +3,8 @@ import Footer from "@/components/footer/footer";
 import Header from "@/components/header/header";
 import { useState } from "react";
 import {
-    NormalInput, 
+    NormalInput,
+    ShortInput,
     LongInput,
     NumberInput,
     HorizontalSelects,
@@ -20,36 +21,63 @@ import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
 import { collection, doc, getDocs, updateDoc, addDoc, arrayUnion } from "firebase/firestore";
 import { db, storage } from "@/firebase/firebase-config";
 import { formsAcompanhamentoData } from "@/firebase/schema/entities";
+import { set } from "zod";
+enum Publico {
+    Crianças = "Crianças",
+    Adolescentes = "Adolescentes",
+    Jovens = "Jovens",
+    Adultos = "Adultos",
+    Idosos = "Idosos",
+    Outros= ""
+}
 
+interface VerticalProps{
+    text: string;
+    subtext: string;
+    list: string[];
+    attribute: string[];
+    setAttribute: Dispatch<SetStateAction<string[]>>;
+}
 
 export default function forms_acompanhamento(){
 
     const [nome,setNome] = useState<string>("");
     const [cnpj,setCnpj] = useState<string>("");
-    const [representanteLegal,setRepresentanteLegal] = useState<string>("");
+    const [representante_legal,setRepresentanteLegal] = useState<string>("");
     const [telefone,setTelefone] = useState<string>("");
-    const [email,setEmail] = useState<string>("");
-    const [positivos,setPositivos] = useState<string>("");
-    const [negativos,setNegativos] = useState<string>("");
-    const [atencao,setAtencao] = useState<string>("");
-    const [especificacoes,setEspecificacoes] = useState<string>("");
-    const [contrapartidas,setContrapartidas] = useState<string>("");
-    const [website,setWebsite] = useState<string>("");
-    const [links,setLinks] = useState<string>("");
-    const [executadas,setExecutadas] = useState<string>("");
-    const [relato,setRelato] = useState<string>("");
-    const [ambito,setAmbito] = useState<number>(0);
-    const [segmento,setSegmento] = useState<number>(0);
-    const [lei,setLei] = useState<number>(0);
+    const [email_replegal,setEmailRepLegal] = useState<string>("");
+    const [email_responsavel,setEmailResponsavel] = useState<string>("");
+    const [cep,setCep] = useState<string>("");
+    const [endereco,setEndereco] = useState<string>("");
+    const [numero,setNumero] = useState<string>("");
+    const [complemento,setComplemento] = useState<string>("");
+    const [cidade,setCidade] = useState<string>("");
+    const [estado,setEstado] = useState<string>("");
+    const [nome_projeto,setNomeProjeto] = useState<string>("");
+    const [link,setLink] = useState<string>("");
+    const [valor_aprovado,setValorAprovado] = useState<string>("");
+    const [valor_apto,setValorApto] = useState<string>("");
     const [dataComeco,setDataComeco] = useState<string>("");
     const [dataFim,setDataFim] = useState<string>("");
-    const [beneficiarios,setBeneficiarios] = useState<number[]>(Array(2).fill(0));
-    const [dei,setDei] = useState<boolean>(false);
-    const [etnias, setEtnias] = useState<number[]>(Array(12).fill(0));
-    const [ODS,setODS] = useState<boolean[]>(Array(17).fill(false));
+    const [diario_oficial,setDiarioOficial] = useState<File[]>([]);
+    const [banco,setBanco] = useState<string>("");
+    const [agencia,setAgencia] = useState<string>("");
+    const [conta_corrente,setContaCorrente] = useState<string>("");
+    const [area_atuacao,setAreaAtuacao] = useState<string>("");
+    const [publico, setPublico] = useState<string[]>([]);
+    const [ODS, setODS] = useState<string[]>([]);
+    const [descricao,setDescricao] = useState<string>("");
+    const [apresentacao,setApresentacao] = useState<File[]>([]);
+    const [num_publico,setNumPublico] = useState<string>("");
     const [estados, setEstados] = useState<string[]>([]);
     const [cidades, setCidades] = useState<string[]>([]);
-    const [fotos,setFotos] = useState<File[]>([]);
+    const [qtde_estados,setQtdeEstados] = useState<string>("");
+    const [qtde_municipios,setQtdeMunicipios] = useState<string>("");
+    const [lei,setLei] = useState<number>(0);
+    const [numero_aprovacao,setNumeroAprovacao] = useState<string>("");
+    const [contrapartidas,setContrapartidas] = useState<string>("");
+    const [observacoes,setObservacoes] = useState<string>("");
+    
 
     const uploadFiles = async (files: FileList) => {
         const fileURLs = [];
@@ -113,42 +141,49 @@ export default function forms_acompanhamento(){
 
 
     return(
-        <main className="
+        <main className="'
             flex flex-col justify-between items-center
-            w-screen
-            h-[600vh]
-            overflow-scroll">
+            w-[screen]
+            h-[dvh]
+            overflow-hidden
+            no-scrollbar">
             
-            <Header></Header>
             
             <div className="
-                flex flex-col justify-center items-center
+                flex flex-col items-center justify-center
                 w-full
-                h-[10vh]
+                h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh]
                 text-blue-fcsn text-7xl font-bold"
             >
                 <h1 className="
                     text-center
-                    w-full md:w-4/5
-                    text-xl lg:text-5xl
-                ">Inscrição de projeto</h1>
+                    w-[90dvw]
+                    text-wrap
+                    text-4xl sm:text-5xl lg:text-6xl xl:text-7xl
+                    transition-all duration-500 ease-in-out
+                ">Inscrição de Projeto</h1>
             </div>
             
             <form 
                 className="
-                    flex flex-col justify-center items-center
-                    w-9/10
-                    h-11/12
-                    bg-white-off
-                    rounded-sm
-                    shadow-md shadow-black"
+                    flex flex-col justify-center items-center 
+                    w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw]
+                    h-90/100
+                    mb-20
+                    bg-white-off 
+                    rounded-sm 
+                    shadow-md shadow-black
+                    overflow-hidden
+                    no-scrollbar
+                    transition-all duration-500 ease-in-out"
                 onSubmit={(event) => handleSubmit(event)}>
                 
 
                 <div className="
                     flex flex-col justify-around
                     w-11/12
-                    h-23/24">
+                    h-23/24
+                    my-10">
                 {/* Nome da instituição */}
                     <NormalInput
                         text="Nome da instituição:"
@@ -168,7 +203,7 @@ export default function forms_acompanhamento(){
                 {/* Representante legal */}
                     <NormalInput
                         text="Representante legal:"
-                        attribute={ representanteLegal }
+                        attribute={ representante_legal }
                         setAttribute={ setRepresentanteLegal }
                         isNotMandatory={false}
                     ></NormalInput>
@@ -184,201 +219,193 @@ export default function forms_acompanhamento(){
                 {/* Email do representante legal */}
                 <NormalInput
                         text="E-mail do representante legal:"
-                        attribute={ email }
-                        setAttribute={ setEmail }
+                        attribute={ email_replegal }
+                        setAttribute={ setEmailRepLegal }
                         isNotMandatory={false}
                     ></NormalInput>
 
-                {/* Pontos negtivos do prj */}
-                    <LongInput
-                        text="Pontos negativos do projeto:" 
-                        attribute={ negativos }
-                        setAttribute={ setNegativos }
-                    ></LongInput>
+                {/* Email do responsável */}
+                <NormalInput
+                        text="E-mail da pessoa responsável por passar informações para a Fundação:"
+                        attribute={ email_responsavel }
+                        setAttribute={ setEmailResponsavel }
+                        isNotMandatory={false}
+                    ></NormalInput>
 
-                {/* Pontos de atenção do prj */}
-                    <LongInput
-                        text="Pontos de atenção do projeto:"
-                        attribute={ atencao }
-                        setAttribute={ setAtencao }
-                    ></LongInput>
+                {/* CEP */}
+                <NormalInput
+                        text="CEP:"
+                        attribute={ cep }
+                        setAttribute={ setCep }
+                        isNotMandatory={false}
+                    ></NormalInput>
+
+                {/* Endereço */}
+                <NormalInput
+                        text="Endereço:"
+                        attribute={ endereco }
+                        setAttribute={ setEndereco }
+                        isNotMandatory={false}
+                    ></NormalInput>
+
+                <div className="flex flex-row h-full w-full justify-between items-center">
+                    {/* Número */}
+                    <ShortInput
+                            text="Número:"
+                            attribute={ numero }
+                            setAttribute={ setNumero }
+                            isNotMandatory={false}
+                        ></ShortInput>
+
+                    {/* Complemento */}
+                    <NormalInput
+                            text="Complemento:"
+                            attribute={ complemento }
+                            setAttribute={ setComplemento }
+                            isNotMandatory={true}
+                        ></NormalInput>
+                </div>
                 
-                {/* Ambito de desenvolvimento do prj */}
-                    <HorizontalSelects
-                        text="Âmbito de desenvolvimento do projeto:"
-                        list={[
-                            "Nacional",
-                            "Estadual",
-                            "Municipal"
-                        ]}
-                        attribute={ ambito }
-                        setAttribute={ setAmbito }
-                    ></HorizontalSelects>
+                <div className="flex flex-row h-full w-full justify-between items-center">
+                    {/* Cidade */}
+                    <NormalInput
+                            text="Cidade:"
+                            attribute={ cidade }
+                            setAttribute={ setCidade }
+                            isNotMandatory={false}
+                        ></NormalInput>
 
-                {/* Estados onde ele atua: */}
-                    <EstadoInput
-                        text="Estados onde o projeto atua:"
-                        estados={ estados }
-                        setEstados={ setEstados }
-                        cidades={ cidades }
-                        setCidades={ setCidades }
-                    ></EstadoInput>
+                    {/* Estado */}
+                    <ShortInput
+                            text="Estado:"
+                            attribute={ estado }
+                            setAttribute={ setEstado}
+                            isNotMandatory={false}
+                        ></ShortInput>
+                </div>
 
-                {/* Municipios onde ele atua: */}
-                    <CidadeInput
-                        text="Municípios onde o projeto atua:"
-                        estados={ estados }
-                        setEstados={ setEstados }
-                        cidades={ cidades }
-                        setCidades={ setCidades }
-                    ></CidadeInput>
+                {/* Nome do Projeto */}
+                <NormalInput
+                        text="Nome do Projeto:"
+                        attribute={ nome_projeto }
+                        setAttribute={ setNomeProjeto }
+                        isNotMandatory={false}
+                    ></NormalInput>
 
-                {/* Especificações do territorio de atuação do prj: */}
-                    <LongInput
-                        text="Especificações do territorio de atuação do projeto:"
-                        attribute={ especificacoes }
-                        setAttribute={ setEspecificacoes }
-                    ></LongInput>
+                {/* Link para website */}
+                <NormalInput
+                        text="Link para website:"
+                        attribute={ link }
+                        setAttribute={ setLink }
+                        isNotMandatory={false}
+                    ></NormalInput>
 
-                {/* Periodo de execução do prj: */}
-                    <DateInputs
-                        text="Período de execução do projeto:" 
+                {/* Valor Aprovado */}
+                <NumberInput
+                        text="Valor aprovado:"
+                        attribute={ valor_aprovado }
+                        setAttribute={ setValorAprovado }
+                        isNotMandatory={false}
+                    ></NumberInput>
+
+                {/* Valor Apto a Captar */}
+                <NumberInput
+                        text="Valor apto a captar:"
+                        attribute={ valor_apto }
+                        setAttribute={ setValorApto }
+                        isNotMandatory={false}
+                    ></NumberInput>
+
+                {/* Período de Captação */}
+                <DateInputs
+                        text="Período de captação:" 
                         firstAttribute={ dataComeco } 
                         setFirstAttribute={ setDataComeco } 
                         secondAttribute={ dataFim } 
                         setSecondAttribute={ setDataFim }
                     ></DateInputs>
 
-                {/* Contrapartidas do projeto: */}
-                    <LongInput 
-                        text="Contrapartidas do projeto:" 
-                        attribute={ contrapartidas } 
-                        setAttribute={ setContrapartidas }
+                {/* Diário Oficial */}
+                <FileInput 
+                        text={"Diário Oficial:"}
+                        files={diario_oficial}
+                        setFiles={setDiarioOficial}
+                    ></FileInput>
+
+                {/* Banco */}
+                <NormalInput
+                        text="Banco:"
+                        attribute={ banco }
+                        setAttribute={ setBanco }
+                        isNotMandatory={false}
+                    ></NormalInput>
+
+                <div className="flex flex-row h-full w-full justify-between items-center">
+                    {/* Agência */}
+                    <NormalInput
+                            text="Agência"
+                            attribute={ agencia }
+                            setAttribute={ setAgencia }
+                            isNotMandatory={false}
+                        ></NormalInput>
+
+                    {/* Conta Corrente */}
+                    <NormalInput
+                            text="Conta Corrente:"
+                            attribute={ conta_corrente }
+                            setAttribute={ setContaCorrente }
+                            isNotMandatory={false}
+                        ></NormalInput>
+                </div>
+
+                {/* Área de atuação */}
+                <HorizontalSelects
+                        text="Área de atuação:"
+                        list={[
+                            "Cultura", 
+                            "Esporte", 
+                            "Pessoa Idosa", 
+                            "Criança e Adolescente", 
+                            "Saúde"
+                        ]}
+                        attribute={ area_atuacao }
+                        setAttribute={ setAreaAtuacao }
+                    ></HorizontalSelects>
+
+                {/* Breve descrição do projeto */}
+                <LongInput
+                        text="Breve descrição do projeto:"
+                        attribute={ descricao }
+                        setAttribute={ setDescricao }
+                        isNotMandatory={false}
                     ></LongInput>
 
-                {/* Numero total de beneficiários diretos: */}
-                    <NumberInput 
-                        text="Número total de beneficiários diretos no projeto:" 
-                        index={0}
-                        attribute={ beneficiarios }
-                        setAttribute={ setBeneficiarios }
-                    ></NumberInput>
-                
-                {/* Numero total de beneficiários indiretos: */}
-                    <NumberInput 
-                        text="Número total de beneficiários indiretos no projeto:" 
-                        index={1}
-                        attribute={ beneficiarios }
-                        setAttribute={ setBeneficiarios }
-                    ></NumberInput>
+                {/* Apresentação do projeto */}
+                <FileInput 
+                        text={"Apresentação do projeto:"}
+                        files={apresentacao}
+                        setFiles={setApresentacao}
+                    ></FileInput>
 
-                {/* Adota politicas de diversidade?: */}
-                    <YesNoInput 
-                        text="Sua instituição adota políticas de diversidade?" 
-                        list={["Sim", "Não"]}
-                        attribute={ dei }
-                        setAttribute={ setDei }
-                    ></YesNoInput>
-
-                {/* Amarelas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Amarelas na sua instituição:" 
-                        index={0}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* Brancas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Brancas na sua instituição:" 
-                        index={1}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* Indígenas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Indígenas na sua instituição:" 
-                        index={2}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* Pardas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Pardas na sua instituição:" 
-                        index={3}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* Pretas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Pretas na sua instituição:" 
-                        index={4}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* Mulher cis: */}
-                    <NumberInput 
-                        text="Quantidade de Mulheres Cisgênero na sua instituição:" 
-                        index={5}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* Mulher trans: */}
-                    <NumberInput 
-                        text="Quantidade de Mulheres Transgênero na sua instituição:" 
-                        index={6}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* Homem cis: */}
-                    <NumberInput 
-                        text="Quantidade de Homens Cisgênero na sua instituição:" 
-                        index={7}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* Homem trans: */}
-                    <NumberInput 
-                        text="Quantidade de Homens Transgênero na sua instituição:" 
-                        index={8}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* NBs: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Não-Binárias na sua instituição:" 
-                        index={9}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* PCDs: */}
-                    <NumberInput 
-                        text="Quantidade de Pessoas Com Deficiência (PCD) na sua instituição:" 
-                        index={10}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
-
-                {/* LGBTs: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas da comunidade LGBTQIA+ na sua instituição:" 
-                        index={11}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                    ></NumberInput>
+                {/* Público beneficiado */}
+                <VerticalSelects 
+                        text="Público beneficiado:"
+                        list={[
+                            "Crianças",
+                            "Adolescentes",
+                            "Jovens",
+                            "Adultos",
+                            "Idosos",
+                            "Outros:"
+                        ]}
+                        attribute={ publico }
+                        setAttribute={ setPublico }
+                    ></VerticalSelects>
 
                 {/* ODSs: */}
-                    <VerticalSelects 
+                <VerticalSelects 
                         text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
+                        subtext="Selecione até 3 opções."
                         list={[
                             "Erradicação da Pobreza",
                             "Fome Zero e Agricultura Sustentável",
@@ -400,41 +427,97 @@ export default function forms_acompanhamento(){
                         ]}
                         attribute={ ODS }
                         setAttribute={ setODS }
+                        isNotMandatory={false}
+                        maxSelect={3}
                     ></VerticalSelects>
 
-                {/* Relato de um beneficiário: */}
-                    <LongInput 
-                        text="Breve relato de um beneficiário do projeto:" 
-                        attribute={ relato } 
-                        setAttribute={ setRelato }
-                    ></LongInput>
+                {/* Número de público direto que será impactado */}
+                <NumberInput
+                        text="Número de público direto que será impactado:"
+                        attribute={ num_publico }
+                        setAttribute={ setNumPublico }
+                        isNotMandatory={false}
+                    ></NumberInput>
 
-                {/* Cinco fotos: */}
-                    <FileInput 
-                        text={"Cinco fotos das atividades do projeto:"}
-                        files={fotos}
-                        setFiles={setFotos}
-                    ></FileInput>
+                {/* Quantidade de estados onde o projeto atua */}
+                <NumberInput
+                        text="Quantidade de estados onde o projeto atua:"
+                        attribute={ qtde_estados }
+                        setAttribute={ setQtdeEstados }
+                        isNotMandatory={false}
+                    ></NumberInput>
 
-                {/* Links para as website: */}
-                    <NormalInput 
-                        text="Link para website:" 
-                        attribute={ website } 
-                        setAttribute={ setWebsite }
+                {/* Estados onde o projeto atua */}
+                <EstadoInput
+                        text="Estados onde o projeto atua:"
+                        estados={ estados }
+                        setEstados={ setEstados }
+                        cidades={ cidades }
+                        setCidades={ setCidades }
+                        isNotMandatory={false}
+                    ></EstadoInput>
+
+                {/* Quantidade de municípios onde o projeto atua */}
+                <NumberInput
+                        text="Quantidade de municípios onde o projeto atua:"
+                        attribute={ qtde_municipios }
+                        setAttribute={ setQtdeMunicipios }
+                        isNotMandatory={false}
+                    ></NumberInput>
+
+                {/* Municípios onde o projeto atua */}
+                <CidadeInput
+                        text="Municípios onde o projeto atua:"
+                        estados={ estados }
+                        setEstados={ setEstados }
+                        cidades={ cidades }
+                        setCidades={ setCidades }
+                        isNotMandatory={false}
+                    ></CidadeInput>
+
+                {/* Lei de incentivo do projeto */}
+                <LeiSelect
+                        text="Lei de incentivo do projeto:"
+                        list={[
+                            "Lei de Incentivo à Cultura",
+                            "PROAC - Programa de Ação Cultural",
+                            "FIA - Lei Fundo para a Infância e Adolescência", 
+                            "LIE - Lei de Incentivo ao Esporte", 
+                            "Lei da Pessoa Idosa", 
+                            "Pronas - Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência", 
+                            "Pronon - Programa Nacional de Apoio à Atenção Oncológica", 
+                            "Promac - Programa de Incentivo à Cultura do Município de São Paulo", 
+                            "ICMS - MG Imposto sobre Circulação de Mercadoria e Serviços", 
+                            "ICMS - RJ Imposto sobre Circulação de Mercadoria e Serviços", 
+                            "PIE - Lei Paulista de Incentivo ao Esporte"
+                        ]}
+                        attribute={ lei }
+                        setAttribute={ setLei }
+                        isNotMandatory={false}
+                    ></LeiSelect>
+
+                {/* Número de aprovação do projeto por lei */}
+                <NormalInput
+                        text="Número de aprovação do projeto por lei:"
+                        attribute={ numero_aprovacao }
+                        setAttribute={ setNumeroAprovacao }
+                        isNotMandatory={false}
                     ></NormalInput>
 
-                {/* Links para as redes sociais */}
-                    <LongInput 
-                        text="Links para as redes sociais:" 
-                        attribute={ links } 
-                        setAttribute={ setLinks }
+                {/* Contrapartida */}
+                <LongInput
+                        text="Contrapartidas:"
+                        attribute={ contrapartidas }
+                        setAttribute={ setContrapartidas }
+                        isNotMandatory={false}
                     ></LongInput>
 
-                {/* Contrapartidas apresentadas e executadas: */}
-                    <LongInput 
-                        text="Contrapartidas apresentadas e contrapartidas executadas:" 
-                        attribute={ executadas } 
-                        setAttribute={ setExecutadas }
+                {/* Observações */}
+                <LongInput
+                        text="Observações:"
+                        attribute={ observacoes }
+                        setAttribute={ setObservacoes }
+                        isNotMandatory={false}
                     ></LongInput>
                     
                 </div>
