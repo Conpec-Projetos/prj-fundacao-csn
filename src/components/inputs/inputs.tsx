@@ -44,6 +44,35 @@ export const NormalInput: React.FC<TextProps> = (props) => {
     );
 }
 
+export const ShortInput: React.FC<TextProps> = (props) => {
+    return(
+        <div className="
+            grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr]
+            md:gap-x-4
+            py-3
+            items-center">
+
+            <h1 className="
+            text-xl md:text-xl lg:lg
+            text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
+            
+            <input
+            type="text"
+            onChange={(event) => {props.setAttribute(event.target.value)}}
+            className="
+                w-[12dvh]
+                h-[6dvh]
+                bg-white
+                rounded-[7px]
+                border-1 border-blue-fcsn
+                transition-all duration-300
+                focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
+                px-3"/>
+        </div>
+    );
+}
+
 export const LongInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
