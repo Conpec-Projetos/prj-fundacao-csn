@@ -14,7 +14,9 @@ import {
     LeiSelect,
     YesNoInput,
     FileInput,
-    CidadeInput
+    CidadeInput,
+    GrowInput,
+    FileInputBlank
     } from "@/components/inputs/inputs";
 import { Toaster } from "sonner";
 import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
@@ -209,7 +211,7 @@ export default function forms_acompanhamento(){
                     ></NormalInput>
 
                 {/* Telefone do representante legal */}
-                <NormalInput
+                    <NormalInput
                         text="Telefone do representante legal:"
                         attribute={ telefone }
                         setAttribute={ setTelefone }
@@ -217,7 +219,7 @@ export default function forms_acompanhamento(){
                     ></NormalInput>
                         
                 {/* Email do representante legal */}
-                <NormalInput
+                    <NormalInput
                         text="E-mail do representante legal:"
                         attribute={ email_replegal }
                         setAttribute={ setEmailRepLegal }
@@ -225,7 +227,7 @@ export default function forms_acompanhamento(){
                     ></NormalInput>
 
                 {/* Email do responsável */}
-                <NormalInput
+                    <NormalInput
                         text="E-mail da pessoa responsável por passar informações para a Fundação:"
                         attribute={ email_responsavel }
                         setAttribute={ setEmailResponsavel }
@@ -233,7 +235,7 @@ export default function forms_acompanhamento(){
                     ></NormalInput>
 
                 {/* CEP */}
-                <NormalInput
+                    <NormalInput
                         text="CEP:"
                         attribute={ cep }
                         setAttribute={ setCep }
@@ -241,14 +243,14 @@ export default function forms_acompanhamento(){
                     ></NormalInput>
 
                 {/* Endereço */}
-                <NormalInput
+                    <NormalInput
                         text="Endereço:"
                         attribute={ endereco }
                         setAttribute={ setEndereco }
                         isNotMandatory={false}
                     ></NormalInput>
 
-                <div className="flex flex-row h-full w-full justify-between items-center">
+                <div className="flex flex-row h-full w-full justify-between items-center gap-5">
                     {/* Número */}
                     <ShortInput
                             text="Número:"
@@ -258,22 +260,22 @@ export default function forms_acompanhamento(){
                         ></ShortInput>
 
                     {/* Complemento */}
-                    <NormalInput
+                    <GrowInput
                             text="Complemento:"
                             attribute={ complemento }
                             setAttribute={ setComplemento }
                             isNotMandatory={true}
-                        ></NormalInput>
+                        ></GrowInput>
                 </div>
                 
-                <div className="flex flex-row h-full w-full justify-between items-center">
+                <div className="flex flex-row h-full w-full justify-between items-center gap-5">
                     {/* Cidade */}
-                    <NormalInput
+                    <GrowInput
                             text="Cidade:"
                             attribute={ cidade }
                             setAttribute={ setCidade }
                             isNotMandatory={false}
-                        ></NormalInput>
+                        ></GrowInput>
 
                     {/* Estado */}
                     <ShortInput
@@ -285,7 +287,7 @@ export default function forms_acompanhamento(){
                 </div>
 
                 {/* Nome do Projeto */}
-                <NormalInput
+                    <NormalInput
                         text="Nome do Projeto:"
                         attribute={ nome_projeto }
                         setAttribute={ setNomeProjeto }
@@ -293,7 +295,7 @@ export default function forms_acompanhamento(){
                     ></NormalInput>
 
                 {/* Link para website */}
-                <NormalInput
+                    <NormalInput
                         text="Link para website:"
                         attribute={ link }
                         setAttribute={ setLink }
@@ -301,7 +303,7 @@ export default function forms_acompanhamento(){
                     ></NormalInput>
 
                 {/* Valor Aprovado */}
-                <NumberInput
+                    <NumberInput
                         text="Valor aprovado:"
                         attribute={ valor_aprovado }
                         setAttribute={ setValorAprovado }
@@ -309,7 +311,7 @@ export default function forms_acompanhamento(){
                     ></NumberInput>
 
                 {/* Valor Apto a Captar */}
-                <NumberInput
+                    <NumberInput
                         text="Valor apto a captar:"
                         attribute={ valor_apto }
                         setAttribute={ setValorApto }
@@ -317,49 +319,59 @@ export default function forms_acompanhamento(){
                     ></NumberInput>
 
                 {/* Período de Captação */}
-                <DateInputs
+                    <DateInputs
                         text="Período de captação:" 
                         firstAttribute={ dataComeco } 
                         setFirstAttribute={ setDataComeco } 
                         secondAttribute={ dataFim } 
                         setSecondAttribute={ setDataFim }
+                        isNotMandatory={false}
                     ></DateInputs>
 
                 {/* Diário Oficial */}
-                <FileInput 
+                    <FileInputBlank 
                         text={"Diário Oficial:"}
                         files={diario_oficial}
                         setFiles={setDiarioOficial}
-                    ></FileInput>
-
-                {/* Banco */}
-                <NormalInput
-                        text="Banco:"
-                        attribute={ banco }
-                        setAttribute={ setBanco }
                         isNotMandatory={false}
-                    ></NormalInput>
+                    ></FileInputBlank>
 
-                <div className="flex flex-row h-full w-full justify-between items-center">
-                    {/* Agência */}
-                    <NormalInput
-                            text="Agência"
-                            attribute={ agencia }
-                            setAttribute={ setAgencia }
+                <h1 className="mt-5
+                text-xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
+                >Dados Bancários</h1>
+                
+                <div className="flex flex-col ml-7 mr-7">
+                    {/* Banco */}
+                        <NormalInput
+                            text="Banco:"
+                            attribute={ banco }
+                            setAttribute={ setBanco }
                             isNotMandatory={false}
                         ></NormalInput>
 
-                    {/* Conta Corrente */}
-                    <NormalInput
-                            text="Conta Corrente:"
-                            attribute={ conta_corrente }
-                            setAttribute={ setContaCorrente }
-                            isNotMandatory={false}
-                        ></NormalInput>
+                    <div className="flex flex-row h-full w-full justify-between items-center">
+                        {/* Agência */}
+                        <NormalInput
+                                text="Agência"
+                                attribute={ agencia }
+                                setAttribute={ setAgencia }
+                                isNotMandatory={false}
+                            ></NormalInput>
+
+                        {/* Conta Corrente */}
+                        <NormalInput
+                                text="Conta Corrente:"
+                                attribute={ conta_corrente }
+                                setAttribute={ setContaCorrente }
+                                isNotMandatory={false}
+                            ></NormalInput>
+                    </div>
                 </div>
+                
 
                 {/* Área de atuação */}
-                <HorizontalSelects
+                    <HorizontalSelects
                         text="Área de atuação:"
                         list={[
                             "Cultura", 
@@ -373,7 +385,7 @@ export default function forms_acompanhamento(){
                     ></HorizontalSelects>
 
                 {/* Breve descrição do projeto */}
-                <LongInput
+                    <LongInput
                         text="Breve descrição do projeto:"
                         attribute={ descricao }
                         setAttribute={ setDescricao }
@@ -381,29 +393,78 @@ export default function forms_acompanhamento(){
                     ></LongInput>
 
                 {/* Apresentação do projeto */}
-                <FileInput 
+                    <FileInputBlank 
                         text={"Apresentação do projeto:"}
                         files={apresentacao}
                         setFiles={setApresentacao}
-                    ></FileInput>
+                        isNotMandatory={false}
+                    ></FileInputBlank>
 
                 {/* Público beneficiado */}
-                <VerticalSelects 
-                        text="Público beneficiado:"
-                        list={[
-                            "Crianças",
-                            "Adolescentes",
-                            "Jovens",
-                            "Adultos",
-                            "Idosos",
-                            "Outros:"
-                        ]}
-                        attribute={ publico }
-                        setAttribute={ setPublico }
-                    ></VerticalSelects>
+                <div className="
+                    flex flex-col justify-between items-start
+                    py-3
+                    gap-y-2">
+                        
+                    <h1 className="
+                    w-full
+                    text-xl md:text-xl lg:lg
+                    text-blue-fcsn font-bold"
+                    >Público beneficiado: <span className="text-[#B15265]">*</span></h1>
+                    
+                    <div className="flex flex-col gap-y-2 text-xl">
+
+                            <div className="flex flex-row gap-1 items-center">  
+                                <input 
+                                type="checkbox" 
+                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                <p>Crianças</p>
+                            </div>
+
+                            <div className="flex flex-row gap-1 items-center">  
+                                <input 
+                                type="checkbox" 
+                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                <p>Adolescentes</p>
+                            </div> 
+
+                            <div className="flex flex-row gap-1 items-center">  
+                                <input 
+                                type="checkbox" 
+                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                <p>Jovens</p>
+                            </div> 
+
+                            <div className="flex flex-row gap-1 items-center">  
+                                <input 
+                                type="checkbox" 
+                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                <p>Adultos</p>
+                            </div> 
+
+                            <div className="flex flex-row gap-1 items-center">  
+                                <input 
+                                type="checkbox" 
+                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                <p>Idosos</p>
+                            </div>
+
+                            <div className="flex flex-row gap-1 items-center w-96
+                            ">  
+                                <input 
+                                type="checkbox" 
+                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                <div className=" flex flex-row gap-3 items-center">
+                                    <p>Outro:</p>
+                                    <input type="text" className="bg-white w-3/4 h-[4dvh] rounded-[7px] border-1 border-blue-fcsn transition-all duration-300 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+                                </div>
+                            </div> 
+                    
+                    </div>
+                </div>
 
                 {/* ODSs: */}
-                <VerticalSelects 
+                    <VerticalSelects 
                         text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
                         subtext="Selecione até 3 opções."
                         list={[
@@ -432,7 +493,7 @@ export default function forms_acompanhamento(){
                     ></VerticalSelects>
 
                 {/* Número de público direto que será impactado */}
-                <NumberInput
+                    <NumberInput
                         text="Número de público direto que será impactado:"
                         attribute={ num_publico }
                         setAttribute={ setNumPublico }
@@ -440,7 +501,7 @@ export default function forms_acompanhamento(){
                     ></NumberInput>
 
                 {/* Quantidade de estados onde o projeto atua */}
-                <NumberInput
+                    <NumberInput
                         text="Quantidade de estados onde o projeto atua:"
                         attribute={ qtde_estados }
                         setAttribute={ setQtdeEstados }
@@ -448,7 +509,7 @@ export default function forms_acompanhamento(){
                     ></NumberInput>
 
                 {/* Estados onde o projeto atua */}
-                <EstadoInput
+                    <EstadoInput
                         text="Estados onde o projeto atua:"
                         estados={ estados }
                         setEstados={ setEstados }
@@ -458,7 +519,7 @@ export default function forms_acompanhamento(){
                     ></EstadoInput>
 
                 {/* Quantidade de municípios onde o projeto atua */}
-                <NumberInput
+                    <NumberInput
                         text="Quantidade de municípios onde o projeto atua:"
                         attribute={ qtde_municipios }
                         setAttribute={ setQtdeMunicipios }
@@ -466,7 +527,7 @@ export default function forms_acompanhamento(){
                     ></NumberInput>
 
                 {/* Municípios onde o projeto atua */}
-                <CidadeInput
+                    <CidadeInput
                         text="Municípios onde o projeto atua:"
                         estados={ estados }
                         setEstados={ setEstados }
@@ -476,7 +537,7 @@ export default function forms_acompanhamento(){
                     ></CidadeInput>
 
                 {/* Lei de incentivo do projeto */}
-                <LeiSelect
+                    <LeiSelect
                         text="Lei de incentivo do projeto:"
                         list={[
                             "Lei de Incentivo à Cultura",
@@ -497,7 +558,7 @@ export default function forms_acompanhamento(){
                     ></LeiSelect>
 
                 {/* Número de aprovação do projeto por lei */}
-                <NormalInput
+                    <NormalInput
                         text="Número de aprovação do projeto por lei:"
                         attribute={ numero_aprovacao }
                         setAttribute={ setNumeroAprovacao }
@@ -505,7 +566,7 @@ export default function forms_acompanhamento(){
                     ></NormalInput>
 
                 {/* Contrapartida */}
-                <LongInput
+                    <LongInput
                         text="Contrapartidas:"
                         attribute={ contrapartidas }
                         setAttribute={ setContrapartidas }
@@ -513,27 +574,37 @@ export default function forms_acompanhamento(){
                     ></LongInput>
 
                 {/* Observações */}
-                <LongInput
+                    <LongInput
                         text="Observações:"
                         attribute={ observacoes }
                         setAttribute={ setObservacoes }
                         isNotMandatory={false}
                     ></LongInput>
                     
+
+                <div className="flex flex-row gap-2 items-center">
+                    <input type="checkbox" className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                    <p className="text-xl">Eu declaro ter lido e concordado com os termos de uso e a política de privacidade<span className="text-[#B15265]"> *</span></p>
                 </div>
+                
+                </div>
+
+                
                     
                 <div className="
-                    h-1/50
+                    flex items-start
                     w-full">
                     <button 
                         className="
-                            w-1/4 
-                            h-3/4 
+                            w-[15dvw] min-w-[150px] max-w-[290px]
+                            h-[9dvh] min-h-[50px] max-h-[75px]
                             bg-blue-fcsn 
-                            rounded-lg 
-                            text-3xl font-bold text-white 
+                            rounded-[7px]
+                            text-3xl lg:text-4xl font-bold
+                            text-white
+                            transition-all duration-500 ease-in-out
                             cursor-pointer 
-                            mx-13"
+                            ml-[3dvw] mb-10"
                     >Enviar</button>
                 </div>
             </form>
