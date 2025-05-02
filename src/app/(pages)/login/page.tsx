@@ -33,7 +33,7 @@ export default function Login() {
         register,
         handleSubmit,
         formState: {  isSubmitting },
-      } = useForm<FormFields>({ resolver: zodResolver(schema) });
+    } = useForm<FormFields>({ resolver: zodResolver(schema) });
     // declara o formulário
 
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
@@ -51,181 +51,106 @@ export default function Login() {
         catch (error) {
             toast.error('Senha ou e-mail incorreto.');
         }
-      };
+    };
     
     return (
         //classname="flex justify item h w color"
-        <main className="
-            flex flex-col justify-between items-center
-            w-screen
-            h-screen
-            bg-pink-fcsn">
+        <main className="flex flex-col justify-between items-center min-h-screen w-full bg-pink-fcsn dark:bg-blue-fcsn">
 
             <Toaster richColors closeButton/>
     
             <form
             onSubmit={handleSubmit(onSubmit)}
-            className="
-                flex flex-col justify-start items-center
-                xl:w-[1100px] md:w-6/7 w-4/5
-                h-2/3
-                bg-white-off
-                rounded-md 
-                shadow-blue-fcsn shadow-md">
+            className="flex flex-col justify-between w-full max-w-[1100px] h-auto min-h-[600px] my-4 md:my-8 bg-white-off dark:bg-blue-fcsn2 rounded-md shadow-blue-fcsn shadow-md">
                 {/*Quadrado branco*/}
 
-                <div className="
-                    flex flex-col justify-center items-center
-                    h-1/3">
-    
+                <div className="flex flex-col justify-center items-center h-[200px] md:h-[250px] gap-6">
                     <Image
                         src={ logo }
                         alt="csn-logo"
-                        className="
-                            h-[300px]"></Image>
+                        className=""
+                        priority
+                    />
                     {/*logo Fundação CSN*/}
 
-                    <div className="
-                        flex flex-row justify-center items-center
-                        h-1/4
-                        text-blue-fcsn font-bold text-4xl"
-                    >Fazer Login</div>
-
+                    <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-4">
+                        Fazer Login
+                    </div>
                 </div>
 
                 {/*INPUTS*/}
-                <div className="
-                    flex flex-col items-center
-                    w-full
-                    h-1/3">
+                <div className="flex flex-col items-center w-full space-y-4 md:space-y-6 px-4 md:px-8">
 
                     {/* INPUT DE EMAIL */}
-                    <div className="
-                        flex flex-col justify-around
-                        xl:w-2/3 lg:w-3/4 md:w-4/5 w-5/6
-                        h-1/2">
-
-                        <label className="
-                            h-1/6
-                            text-lg text-blue-fcsn font-bold"
-                        >Email</label>
+                    <div className="w-full max-w-[600px]">
+                        <label className="text-lg text-blue-fcsn dark:text-white-off font-bold mb-2">
+                            Email
+                        </label>
                         
                         <input
                             type="email"
                             {...register('email')}
-                            className="
-                                w-full
-                                h-4/7
-                                bg-white
-                                rounded-xl border-1 border-blue-fcsn
-                                transition-all duration-300
-                                focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
-                                px-3"/>
+                            className="w-full h-12 md:h-14 bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn transition-all duration-300 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-4"
+                        />
                     </div>
                     
 
                     {/* INPUT DE SENHA */}
-                    <div className="
-                        flex flex-col justify-around
-                        xl:w-2/3 lg:w-3/4 md:w-4/5 w-5/6
-                        h-1/2">
-
-                        <label className="
-                            h-1/6
-                            text-lg text-blue-fcsn font-bold"
-                        >Senha</label>
+                    <div className="w-full max-w-[600px]">
+                        <label className="text-lg text-blue-fcsn dark:text-white-off font-bold mb-2">
+                            Senha
+                        </label>
                         
-                        <div className="
-                            h-4/7
-                            w-full
-                            relative">
+                        <div className="relative w-full">
                             <input
                                 type={visible ? "text" : "password"}
                                 {...register('password')}
-                                className="
-                                    w-full
-                                    h-full
-                                    bg-white
-                                    rounded-xl border-1 border-blue-fcsn
-                                    transition-all duration-300
-                                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
-                                    px-3"/>
+                                className="w-full h-12 md:h-14 bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn transition-all duration-300 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-4 pr-10"
+                            />
                             <button
-                                className="
-                                    absolute
-                                    cursor-pointer
-                                    text-gray-400
-                                    right-1/24
-                                    bottom-1/2
-                                    translate-y-1/2" 
-                                
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400"
                                 onClick={(event) => {
                                     event.preventDefault();
                                     setVisible(prev => !prev);
                                 }}>
-                                    {visible ? <Eye/> : <EyeOff/>}
+                                    {visible ? <Eye size={20}/> : <EyeOff size={20}/>}
                             </button>
                         </div>
                     </div>
 
 
-                    <div className="
-                        flex flex-row justify-between
-                        xl:w-2/3 lg:w-3/4 md:w-4/5 w-5/6">
-
-                        <div className="
-                            flex flex-row justify-start
-                            w-2/3">
-
-                            <h1 className="
-                                text-blue-fcsn"
-                            >Ainda não tem uma conta?</h1>
+                    <div className="flex flex-col sm:flex-row justify-between w-full max-w-[600px] gap-4">
+                        <div className="flex items-center">
+                            <h1>Ainda não tem uma conta?</h1>
                             
                             <button
                                 onClick={(event) => {
                                     event.preventDefault();
                                     router.push("./signin");
                                 }}
-                                className="
-                                    mx-1
-                                    underline
-                                    cursor-pointer
-                                    text-pink-fcsn"
+                                className="text-pink-fcsn dark:text-pink-light hover:text-[#A25D80] hover:dark:text-pink-light2 mx-1 underline cursor-pointer"
                                 >Cadastre-se aqui.</button>
                         </div>
 
                         <button
-                            className="
-                                underline
-                                cursor-pointer
-                                text-pink-fcsn"
+                            className="text-pink-fcsn dark:text-pink-light hover:text-[#A25D80] hover:dark:text-pink-light2 mx-1 underline cursor-pointer"
                             >Esqueceu a senha?</button>
                         {/* TODO: IMPLEMENTAR ESQUECEU A SENHA */}
                     </div>
                 </div>
 
-                <div className="
-                    flex justify-center items-center
-                    w-full
-                    h-1/3">
+                <div className="flex justify-center items-center w-full py-8">
                     {/* botao de entrar */}
                     <button
                         disabled={isSubmitting}
                         type="submit"
-                        className="
-                            w-[250px]
-                            h-[55px]
-                            bg-blue-fcsn
-                            rounded-xl
-                            text-white text-2xl font-bold
-                            cursor-pointer">
+                        className="w-full max-w-[250px] h-12 md:h-14 bg-blue-fcsn rounded-xl text-white text-lg md:text-xl font-bold cursor-pointer hover:bg-blue-fcsn2 dark:hover:bg-[#202037] transition-colors">
                         {isSubmitting ? "Carregando..." : "Entrar"}
                     </button>
                 </div>
-                
             </form>
 
-            <Footer></Footer>
+            <Footer/>
         </main>
     );
 }
