@@ -279,6 +279,7 @@ interface NumberProps{
     text: string;
     index: number;
     attribute: number[];
+    isNotMandatory: boolean;
     setAttribute: Dispatch<SetStateAction<number[]>>;
 }
 
