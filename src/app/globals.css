@@ -6,10 +6,10 @@
   --foreground: #171717;
 }
 .dark header {
-  @apply bg-blue-fcsn2;
+  @apply bg-blue-fcsn2 text-white-off;
 }
 .dark footer {
-  @apply bg-blue-fcsn2;
+  @apply bg-blue-fcsn2 text-white-off;
 }
 .dark {
   @apply bg-blue-fcsn text-white-off;
@@ -25,6 +25,7 @@
   --color-blue-fcsn3: #515168;
   --color-purple-light: #EDE0E6;
   --color-pink-fcsn: #b37b97;
+  --color-pink-light: #FF99CA;
   --color-yellow-fcsn: #f0b404;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
