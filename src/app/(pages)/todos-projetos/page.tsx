@@ -2,97 +2,442 @@
 
 import Footer from "@/components/footer/footer";
 import Header from "@/components/header/header";
-import { FaCheckCircle, FaSearch, FaSpinner, FaTimesCircle } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { FaCaretDown, FaCheckCircle, FaFilter, FaSearch, FaSpinner, FaTimesCircle } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
+
+// Barra de pesquisa
 
 // Interface (base) para cada projeto
 interface ProjectProps {
-    id: number;
-    name: string;
-    status: 'aprovado' | 'pendente' | 'reprovado';
-    value: string;
-    incentiveLaw: string;
-    description: string;
-    ODS: { id: number; src: string }[];
+  id: number;
+  name: string;
+  status: 'aprovado' | 'pendente' | 'reprovado';
+  value: number;
+  incentiveLaw: string;
+  description: string;
+  ODS: { id: number, numberODS: number, src: string }[];
 }
 
 // Componente Project
 const Project: React.FC<ProjectProps> = ({ id, name, status, value, incentiveLaw, description, ODS}) => (
-  <div className="bg-white-off rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 md:1/2 sm:1/4 ">
-    <section className="flex flex-col col-span-2 mr-4">
+  <div className="bg-white-off rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 md:1/2 sm:1/4">
+    <section className="flex flex-col col-span-2 mr-2">
         <div className="flex flex-row gap-2 mb-2">
-            <h2>{name}</h2>
-            <div>
+            <div className="text-2xl font-bold">{name}</div>
+            <div className="mt-1">
             {status === 'aprovado' && (
-                  <FaCheckCircle color="green" />
-                )}
-                {status === 'pendente' && (
-                  <FaClockRotateLeft color="DarkOrange" />
-                )}
-                {status === 'reprovado' && (
-                  <FaTimesCircle color="red" />
-                )}
+              <FaCheckCircle color="green" size={22}  />
+            )}
+            {status === 'pendente' && (
+              <FaClockRotateLeft color="DarkOrange" size={22} />
+            )}
+            {status === 'reprovado' && (
+              <FaTimesCircle color="red" size={22}/>
+            )}
             </div>
         </div>
-        <p className="mb-2">{value}</p>
-        <div className=" bg-pink-fcsn rounded-2xl px-4 py-2 size-fit text-center mb-2">{incentiveLaw}</div>
-        <p className="mr-10 text-justify">{description}</p>
+
+        <p className="mb-2 text-lg"> {value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
+        <div className=" bg-pink-fcsn rounded-2xl px-4 py-2 size-fit text-base text-center mb-2 text-white ">{incentiveLaw}</div>
+        <p className="mr-2 mt-3 text-base text-justify">{description}</p>
     </section>
+
     <section className="flex flex-wrap justify-center items-center gap-x-2 gap-y-1  col-span-1">
     {ODS.map((img) => (
-        <img key={img.id} src={img.src} alt={`ODS ${id}`} className="w-20 h-20" />
+        <img key={img.id} src={img.src} alt={`ODS ${id}`} className="w-28 h-28" />
       ))}
     </section>
   </div>
 );
 
-export default function TodosProjetos(){
+interface Filters {
+  status: {situation: string, state: boolean}[];
+  value: {initialValue: number, finalValue: number | undefined, state: boolean}[];
+  incentiveLaw: {law: string, state: boolean}[];
+  ODS: {numberODS: number, state: boolean}[];
+}
 
+export default function TodosProjetos(){
     // Array de todos os projetos (usado com exemplo)
     // AllProjects é do tipo ProjectProps
     const AllProjects: ProjectProps[] =
     [
-        {id: 1, name: "Projeto A", status: 'aprovado', value: "R$: 9.990,99", incentiveLaw: "cultura", description: "popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, comes from a line in section 1.10.32.The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested. Sections 1.10.32 and 1.10.33 from by Cicero are also reproduced in their exact original form, accompanied by English versions from the 1914 translation by H. Rackham.", ODS: [{id: 1, src: "/ods/ods1.png"}, {id: 2, src: "/ods/ods2.png"}, {id: 3, src: "/ods/ods3.png"}, {id: 4, src: "/ods/ods4.png"}, {id: 5, src: "/ods/ods5.png"}, {id: 6, src: "/ods/ods6.png"}, {id: 7, src: "/ods/ods7.png"}, {id: 8, src: "/ods/ods8.png"}, {id: 9, src: "/ods/ods9.png"}, {id: 10, src: "/ods/ods10.png"}]},
-        {id: 2, name: "Projeto B", status: 'reprovado', value: "R$: 10.990,99", incentiveLaw: "esporte", description: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Obcaecati, neque accusamus? Fugit ipsum error nihil maiores dolorem numquam assumenda provident eos suscipit quia debitis libero, exercitationem reprehenderit repudiandae voluptas consequuntur." , ODS: [{id: 11, src: "/ods/ods11.png"}, {id: 12, src: "/ods/ods12.png"}, {id: 13, src: "/ods/ods13.png"}]},
-        {id: 3, name: "Projeto C", status: 'pendente', value: "R$: 7.500,99", incentiveLaw: "saude", description: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).", ODS: [{id: 14, src: "/ods/ods14.png"}, {id: 15, src: "/ods/ods15.png"}, {id: 16, src: "/ods/ods16.png"}, {id: 17, src: "/ods/ods17.png"}]}
+        {id: 1, name: "Cultura", status: 'aprovado', value: 9990.99, incentiveLaw: "cultura", description: "popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, comes from a line in section 1.10.32.The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for those interested. Sections 1.10.32 and 1.10.33 from by Cicero are also reproduced in their exact original form, accompanied by English versions from the 1914 translation by H. Rackham.", ODS: [{id: 1, numberODS:1, src: "/ods/ods1.png"}, {id: 2, numberODS:2, src: "/ods/ods2.png"}, {id: 3, numberODS:3, src: "/ods/ods3.png"}]},
+        {id: 2, name: "Esporte", status: 'reprovado', value:  10990.99, incentiveLaw: "esporte", description: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Obcaecati, neque accusamus? Fugit ipsum error nihil maiores dolorem numquam assumenda provident eos suscipit quia debitis libero, exercitationem reprehenderit repudiandae voluptas consequuntur." , ODS: [{id: 4, numberODS:1, src: "/ods/ods1.png"}, {id: 5, numberODS:12, src: "/ods/ods12.png"}, {id: 6,numberODS:13, src: "/ods/ods13.png"}]},
+        {id: 3, name: "Saude", status: 'pendente', value: 7500.99, incentiveLaw: "saude", description: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).", ODS: [{id: 7, numberODS:14, src: "/ods/ods14.png"}, {id: 8, numberODS:16, src: "/ods/ods16.png"}, {id: 9, numberODS:17, src: "/ods/ods17.png"}]},
+        {id: 4, name: "eduacaco", status: 'reprovado', value:  10990.99, incentiveLaw: "educação", description: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Obcaecati, neque accusamus? Fugit ipsum error nihil maiores dolorem numquam assumenda provident eos suscipit quia debitis libero, exercitationem reprehenderit repudiandae voluptas consequuntur." , ODS: [{id: 10, numberODS:11, src: "/ods/ods11.png"}, {id: 11, numberODS:11 , src: "/ods/ods11.png"}, {id: 12, numberODS:13, src: "/ods/ods13.png"}]},
+        {id: 5, name: "adolescente", status: 'pendente', value: 7000.99, incentiveLaw: "criança e adolescente", description: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Obcaecati, neque accusamus? Fugit ipsum error nihil maiores dolorem numquam assumenda provident eos suscipit quia debitis libero, exercitationem reprehenderit repudiandae voluptas consequuntur." , ODS: [{id: 13, numberODS:11, src: "/ods/ods11.png"}, {id: 14, numberODS:12, src: "/ods/ods12.png"}]},
+        {id: 6, name: "Projeto F", status: 'aprovado', value: 10000.99, incentiveLaw: "esporte", description: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Obcaecati, neque accusamus? Fugit ipsum error nihil maiores dolorem numquam assumenda provident eos suscipit quia debitis libero, exercitationem reprehenderit repudiandae voluptas consequuntur." , ODS: [{id: 15,numberODS:11, src: "/ods/ods11.png"}]}
+    
     ]
+    // Use state para controlar a pesquisa. Inicialmente estara vazio, mudará a cada inserção de caracter
+    const [search, setSearch]= useState("");
+    // Vamos filtar pelo nome para usar na barra de pesquisa
+    const resSearch = AllProjects.filter(project => project.name.toLowerCase().startsWith(search.toLowerCase()))
+
+    // Filtros
+    const [isOpen, setIsOpen] = useState(false);
+    const [filteredProjects, setFilteredProjects] = useState<ProjectProps[]>([]);
+    const [ctrl, setctrl] = useState(false);
+    const [filters, setFilters] = useState<Filters>({
+      status: [
+        {situation: 'aprovado', state: false},
+        {situation: 'pendente', state: false},
+        {situation: 'reprovado', state: false}
+      ],
+      value: [
+        {initialValue: 0, finalValue: 1000, state: false},
+        {initialValue: 1000, finalValue: 100000, state: false},
+        {initialValue: 100000, finalValue: 1000000, state: false},
+        {initialValue: 1000000, finalValue: undefined, state: false}
+      ],
+      incentiveLaw: [
+        {law: 'cultura', state: false},
+        {law: 'proac', state: false},
+        {law: 'criança e adolescente', state: false},
+      ],
+      ODS: [
+        {numberODS: 1, state: false},
+        {numberODS: 2, state: false},
+        {numberODS: 3, state: false},
+        {numberODS: 4, state: false},
+        {numberODS: 5, state: false},
+        {numberODS: 6, state: false},
+        {numberODS: 7, state: false},
+        {numberODS: 8, state: false},
+        {numberODS: 9, state: false},
+        {numberODS: 10, state: false},
+        {numberODS: 11, state: false},
+        {numberODS: 12, state: false},
+        {numberODS: 13, state: false},
+        {numberODS: 14, state: false},
+        {numberODS: 15, state: false},
+        {numberODS: 16, state: false},
+        {numberODS: 17, state: false}
+      ]
+    });
+
+    {/*o prevFilters é o estado anterior, passado como argumento para uma função de atualização de estado do React. */}
+
+    function situationFilters(situacao: string){
+      setFilters(prevFilters => ({
+        ...prevFilters,
+        status: prevFilters.status.map(item =>
+          item.situation === situacao
+            ? { ...item, state: !item.state }
+            : item
+        )
+      }));
+    }
+
+    function valueFilters(value1: number, value2: number | undefined){
+      setFilters(prevFilters => ({
+        ...prevFilters,
+        value: prevFilters.value.map(item =>
+          item.initialValue === value1 && item.finalValue === value2
+            ? { ...item, state: !item.state }
+            : item
+        )
+      }));
+    }
+
+    function incentiveLawFilters(law: string){
+      setFilters(prevFilters => ({
+        ...prevFilters,
+        incentiveLaw: prevFilters.incentiveLaw.map(item =>
+          item.law === law
+            ? { ...item, state: !item.state }
+            : item
+        )
+      }));
+    }
+
+    function ODSFilters(number: number){
+      setFilters(prevFilters => ({
+        ...prevFilters,
+        ODS: prevFilters.ODS.map(item =>
+          item.numberODS === number
+            ? { ...item, state: !item.state }
+            : item
+        )
+      }));
+    }
+    
+    function applyFilters() {
+      const activeStatus = filters.status.filter(f => f.state).map(f => f.situation);
+      const activeValues = filters.value.filter(f => f.state);
+      const activeLaws = filters.incentiveLaw.filter(f => f.state).map(f => f.law);
+      const activeODS = filters.ODS.filter(f => f.state).map(f => f.numberODS);
+    
+      const filtered = AllProjects.filter(project => {
+        const matchStatus =
+          activeStatus.length === 0 || activeStatus.includes(project.status);
+    
+        const matchValue =
+          activeValues.length === 0 ||
+          activeValues.some(
+            range =>
+              project.value >= range.initialValue &&
+              (range.finalValue === undefined || project.value < range.finalValue)
+          );
+    
+        const matchLaw =
+          activeLaws.length === 0 || activeLaws.includes(project.incentiveLaw);
+    
+        const matchODS =
+          activeODS.length === 0 ||
+          project.ODS.some(ods => activeODS.includes(ods.numberODS));
+    
+        return matchStatus && matchValue && matchLaw && matchODS;
+      });
+
+      setFilteredProjects(filtered);
+      setctrl(true);
+      if (filtered.length > 0) {
+        setSearch("");
+      }
+    }
+
+    function clearFilters() {
+      setFilters(prevFilters => ({
+        status: prevFilters.status.map(item => ({ ...item, state: false })),
+        value: prevFilters.value.map(item => ({ ...item, state: false })),
+        incentiveLaw: prevFilters.incentiveLaw.map(item => ({ ...item, state: false })),
+        ODS: prevFilters.ODS.map(item => ({ ...item, state: false })),
+      }));
+      setFilteredProjects([]);
+      setctrl(false);
+    }
+  
+
     return(
-        <div className="flex flex-col min-h-screen">
-            <main className="flex flex-1 flex-col px-4 sm:px-8 md:px-20 lg:px-32 py-4 gap-y-10 ">
-                {/* Cabeçalho */}
-                <section>
-                    <h1 className="text-xl md:text-3xl font-bold text-blue-fcsn mt-3">Projetos</h1>
-                    <div  className="flex flex-row gap-x-4 mt-3">
-                        <div className="bg-white-off p-2 rounded-lg shadow-md">
-                            <FaSearch size={24} />
-                        </div>
-                    
+    <div className="flex flex-col min-h-screen">
+      <main className="flex flex-1 flex-col px-4 sm:px-8 md:px-20 lg:px-32 py-4 gap-y-10 ">
+        {/* Cabeçalho */}
+        <section>
+          <h1 className="text-xl md:text-3xl font-bold text-blue-fcsn mt-3">Projetos</h1>
+
+          {/* Barra de pesquisa*/}
+          <div  className="flex flex-row gap-x-4 mt-3">
+            <div className="bg-white-off p-2 rounded-lg shadow-md">
+              <FaSearch size={24} />
+            </div>      
+            <input
+              type="text"
+              placeholder="Pesquisar..."
+              className="bg-white-off px-3 flex-1 rounded-lg shadow-md"
+              value={search}
+              // A cada mudança (inserção de caracter mudaremos nossa variavel)
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Filtros*/}
+          <div className="flex flex-row gap-x-4 mt-3">
+            <div className="bg-white-off p-2 rounded-lg shadow-md">
+              <FaFilter size={24} />
+            </div>
+
+          <div
+            onMouseEnter={() => setIsOpen(true)}
+            onMouseLeave={() => setIsOpen(false)}
+            className="relative"
+            >
+            {/* secao para passarmos o mouse e aparecer o dropdown */}
+            <div className="bg-white-off p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center gap-2"> Aplique filtros <FaCaretDown /> </div>
+              {/* Dropdown */}
+              {isOpen && (
+                <div className="absolute top-full left-0 w-200 bg-white p-2 rounded shadow-md z-10">
+                  <p className="text-2xl text-blue-fcsn font-bold">Filtros</p>
+
+                  <p className="py-2 text-xl">Situação</p>
+                   
+                      <label className="flex items-center space-x-2 cursor-pointer">
                         <input
-                            type="text"
-                            placeholder="Pesquisar..."
-                            className="bg-white-off px-3 flex-1 rounded-lg shadow-md"
+                          type="checkbox"
+                          checked={filters.status.find(f => f.situation === 'aprovado')?.state || false}
+                          onChange={() => situationFilters('aprovado')}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                         />
-                        
-                    </div>
+                        <span>Aprovado</span>
+                      </label>
+                    
+                  
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.status.find(f => f.situation === 'pendente')?.state || false}
+                          onChange={() => situationFilters('pendente')}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <span>Pendente</span>
+                      </label>
+              
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.status.find(f => f.situation === 'reprovado')?.state || false}
+                          onChange={() => situationFilters('reprovado')}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <span>Reprovado</span>
+                      </label>
+                 
 
-                </section>
+                  
+                  <p className="py-2 text-xl">Valor</p>
 
-                <section>
-                {AllProjects.map((project) => (
-                  <Project 
-                    key={project.id}
-                    id={project.id}
-                    name={project.name}
-                    status={project.status}
-                    value={project.value}
-                    incentiveLaw={project.incentiveLaw}
-                    description={project.description}
-                    ODS={project.ODS}
-                  />
-                ))}  
-              </section>
-            </main>
-            <Footer />
-        </div>
-    );
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.value.find(f => f. initialValue === 0 && f.finalValue === 1000)?.state || false}
+                          onChange={() => valueFilters(0, 1000)}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <span>De R$ 0,00 a R$ 1.000,00</span>
+                      </label>
+                    
+                  
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          onChange={() => valueFilters(1000, 100000)}
+                          checked={filters.value.find(f => f. initialValue === 1000 && f.finalValue === 100000)?.state || false}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                       <span>De R$ 1.000,00 a R$ 100.000,00</span>
+                      </label>
+              
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.value.find(f => f. initialValue === 100000 && f.finalValue === 1000000)?.state || false}
+                          onChange={() => valueFilters(100000, 1000000)}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                         <span>De R$ 100.000,00 a R$ 1.000.000,00</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.value.find(f => f. initialValue === 1000000 && f.finalValue === undefined)?.state || false}
+                          onChange={() => valueFilters(1000000, undefined)}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                         <span>Acima de R$ 1.000.000,00</span>
+                      </label>
+                 
+                  <p className="py-2 text-xl">Lei de incentivo</p>
+
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.incentiveLaw.find(f => f.law === 'cultura')?.state || false}
+                          onChange={() => incentiveLawFilters('cultura')}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <span>Lei de Incentivo à Cultura</span>
+                      </label>
+                    
+                  
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          onChange={() => incentiveLawFilters('proac')}
+                          checked={filters.incentiveLaw.find(f => f.law === 'proac')?.state || false}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                       <span>PROAC – Programa de Ação Cultural</span>
+                      </label>
+              
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.incentiveLaw.find(f => f.law === 'criança e adolescente')?.state || false}
+                          onChange={() => incentiveLawFilters('criança e adolescente')}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                         <span>FIA - Lei Fundo para a Infância e Adolescência</span>
+                      </label>
+
+                  <p className="py-2 text-xl">Objetivos de Desenvolvimento Sustentável (ODS)</p>
+                  
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.ODS.find(f => f.numberODS === 1)?.state || false}
+                          onChange={() => ODSFilters(1)}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <span>ODS 1: Erradicação da Pobreza</span>
+                      </label>
+                    
+                  
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.ODS.find(f => f.numberODS === 2)?.state || false}
+                          onChange={() => ODSFilters(2)}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                       <span>ODS 2: Fome Zero e Agricultura Sustentável</span>
+                      </label>
+              
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.ODS.find(f => f.numberODS === 3)?.state || false}
+                          onChange={() => ODSFilters(3)}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                         <span>ODS 3: Saúde e Bem-estar</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.ODS.find(f => f.numberODS === 11)?.state || false}
+                          onChange={() => ODSFilters(11)}
+                          className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                         <span>ODS 11: Educação de qualidade</span>
+                      </label>
+
+                    <button className="bg-blue-fcsn rounded-lg p-2 text-white mt-8 mb-3 ml-2 cursor-pointer" onClick={() => applyFilters()}>Aplicar filtros</button>
+                    <button className="bg-blue-fcsn rounded-lg p-2 text-white mt-8 ml-4 mb-3 cursor-pointer" onClick={() => clearFilters()}>Limpe os filtros</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section>
+          {search ? (
+            resSearch.length > 0 ? (
+              resSearch.map(project => (
+                <Project key={project.id} {...project} />
+              ))
+            ) : (
+              <p className="text-blue-fcsn text-xl" >Nenhum projeto encontrado com esse nome.</p>
+            )
+          ) : ctrl === true ? (
+            filteredProjects.length > 0 ? (
+              filteredProjects.map(project => (
+                <Project key={project.id} {...project} />
+              ))
+            ) : (
+              <p className="text-blue-fcsn text-xl">Nenhum projeto encontrado com esse(s) filtro(s).</p>
+            )
+          ): (
+            AllProjects.map(project => (
+              <Project key={project.id} {...project} />
+            ))
+          )}
+        </section>
+
+      </main>
+    
+      <Footer />
+    </div>
+  );
 }
