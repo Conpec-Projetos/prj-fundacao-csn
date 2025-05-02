@@ -152,7 +152,7 @@ export default function Login() {
                                     px-3"/>
                             <button
                                 className="
-                                    absolute
+                                    zabsolute
                                     cursor-pointer
                                     text-gray-400
                                     right-1/24

@@ -4,38 +4,101 @@ import { useState, SetStateAction, Dispatch, useEffect } from "react";
 import { State, City, ICity } from "country-state-city";
 import { Upload } from "lucide-react";
 import { toast } from "sonner"
+import { Input } from "@/components/ui/input"
+
 
 // Props são como parâmetros, atributos. Como uma classe
 interface TextProps{
     text: string;
     attribute: string;
+    isNotMandatory: boolean;
     setAttribute: Dispatch<SetStateAction<string>>;
 }
 
 export const NormalInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
-            flex flex-row
-            justify-between
+            grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr]
+            md:gap-x-4
+            py-3
             items-center">
-                        
+
             <h1 className="
-                w-1/4
-                text-xl text-blue-fcsn font-bold"
-            >{ props.text }</h1>
+            text-xl md:text-xl lg:lg
+            text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <input
-                type="text"
-                onChange={(event) => {props.setAttribute(event.target.value)}}
-                className="
-                    w-[700px]
-                    h-[53px]
-                    bg-white
-                    rounded-sm
-                    border-1 border-blue-fcsn
-                    transition-all duration-300
-                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
-                    px-3"/>
+            type="text"
+            onChange={(event) => {props.setAttribute(event.target.value)}}
+            className="
+                w-full
+                h-[6dvh]
+                bg-white
+                rounded-[7px]
+                border-1 border-blue-fcsn
+                transition-all duration-300
+                focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
+                px-3"/>
+        </div>
+    );
+}
+
+export const GrowInput: React.FC<TextProps> = (props) => {
+    return(
+        <div className="
+            grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr]
+            md:gap-x-4
+            py-3
+            items-center
+            grow">
+
+            <h1 className="
+            text-xl md:text-xl lg:lg
+            text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
+            
+            <input
+            type="text"
+            onChange={(event) => {props.setAttribute(event.target.value)}}
+            className="
+                w-full
+                h-[6dvh]
+                bg-white
+                rounded-[7px]
+                border-1 border-blue-fcsn
+                transition-all duration-300
+                focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
+                px-3"/>
+        </div>
+    );
+}
+
+export const ShortInput: React.FC<TextProps> = (props) => {
+    return(
+        <div className="
+            grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr]
+            md:gap-x-4
+            py-3
+            items-center">
+
+            <h1 className="
+            text-xl md:text-xl lg:lg
+            text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
+            
+            <input
+            type="text"
+            onChange={(event) => {props.setAttribute(event.target.value)}}
+            className="
+                w-[12dvh]
+                h-[6dvh]
+                bg-white
+                rounded-[7px]
+                border-1 border-blue-fcsn
+                transition-all duration-300
+                focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
+                px-3"/>
         </div>
     );
 }
@@ -43,22 +106,24 @@ export const NormalInput: React.FC<TextProps> = (props) => {
 export const LongInput: React.FC<TextProps> = (props) => {
     return(
         <div className="
-            flex flex-col justify-between items-start
-            h-[230px]">
+            flex flex-col justify-between
+            h-[23dvh]
+            py-3">
                         
             <h1 className="
-                w-[700px]
-                text-xl text-blue-fcsn font-bold"
-            >{ props.text }</h1>
+                w-full
+                text-xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <textarea
                 spellCheck="false"
                 onChange={(event) => {props.setAttribute(event.target.value)}}
                 className="
                     w-full
-                    h-[190px]
+                    h-full
                     bg-white    
-                    rounded-sm
+                    rounded-[7px]
                     border-1 border-blue-fcsn
                     transition-all duration-300
                     focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
@@ -73,6 +138,7 @@ interface HorizontalProps{
     text: string;
     list: string[];
     attribute: number;
+    isNotMandatory: boolean;
     setAttribute: Dispatch<SetStateAction<number>>;
 }
 
@@ -86,28 +152,34 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
     return(
 
         <div className="
-            flex flex-col justify-between items-start 
-            h-[10vh]">
+            flex flex-col justify-between
+            h-min
+            py-3">
                         
             <h1 className="
-                w-[700px] 
-                text-xl text-blue-fcsn font-bold"
-            >{props.text}</h1>
+            w-full
+            text-xl md:text-xl lg:lg
+            text-blue-fcsn font-bold">
+                {props.text} {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
+            </h1>
             
             <div className="
-                flex flex-row justify-evenly
+                grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5
+                justify-items-start lg:justify-items-center
                 w-full
-                h-[50px]">
+                gap-y-2 lg:gap-x-5
+                text-wrap">
 
                 {props.list.map((string, index) => (
                     
                     <div
                         key={index} 
                         className="
-                            flex flex-row justify-center items-center">
+                            flex flex-row justify-center items-center
+                            w-fit">
 
                         <div className="
-                            flex flex-col justify-center
+                            flex flex-col justify-center items-center
                             w-[30px]
                             h-[30px]">
 
@@ -143,8 +215,10 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
                             </button>
                         </div>
 
-                        <h1 className=
-                            "text-blue-fcsn text-xl"
+                        <h1 className="
+                            w-fit
+                            text-md
+                            text-blue-fcsn"
                         >{ string }</h1>
                     </div>
                 ))}
@@ -156,25 +230,30 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
 export const LeiSelect: React.FC<HorizontalProps> = (props) => {
     return(
         <div className="
-            flex flex-row justify-start items-center">
+            grid grid-rows-2 md:grid-rows-none md:grid-cols-[auto_1fr]
+            md:gap-x-4
+            w-full
+            py-3
+            justify-center
+            items-center">
                         
             <h1 className="
-                w-[300px] 
-                text-xl text-blue-fcsn font-bold"
-            >{ props.text }</h1>
+                text-xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
             <select 
                 defaultValue={""}
                 onChange={(event) => {
                     props.setAttribute( Number(event.target.value) );
-                }}
+                    {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}}}
                 className="
-                    w-[600px]
-                    h-[40px]
+                    w-full md:max-w-[270px]
+                    h-[5vh] min-h-[45px] max-h-[70px]
                     bg-white
                     border-blue-fcsn border-1
                     cursor-pointer 
-                    rounded-md 
+                    rounded-[7px]
                     transition-all duration-300 
                     focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl 
                     px-5">
@@ -200,17 +279,20 @@ interface NumberProps{
     text: string;
     index: number;
     attribute: number[];
+    isNotMandatory: boolean;
     setAttribute: Dispatch<SetStateAction<number[]>>;
 }
 
 export const NumberInput: React.FC<NumberProps> = (props) => {
     return(
         <div className="
-            flex flex-row justify-start items-center">
+            flex flex-row justify-start items-center
+            py-3">
                         
             <h1 className="
-                text-xl text-blue-fcsn font-bold"
-            >{ props.text }</h1>
+                text-xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <div className="
                 w-[120px]
@@ -226,9 +308,9 @@ export const NumberInput: React.FC<NumberProps> = (props) => {
                     }}
                     className="
                         w-[75px] 
-                        h-[53px] 
+                        h-[50px] 
                         bg-white 
-                        rounded-sm 
+                        rounded-[7px] 
                         border-1 border-blue-fcsn 
                         transition-all duration-300 
                         focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
@@ -243,7 +325,8 @@ export const NumberInput: React.FC<NumberProps> = (props) => {
 interface LocationProps{
     text: string;
     estados: string[];
-    cidades: string[]
+    cidades: string[];
+    isNotMandatory: boolean;
     setEstados: Dispatch<SetStateAction<string[]>>;
     setCidades: Dispatch<SetStateAction<string[]>>;
 }
@@ -254,18 +337,19 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
         <div className="
             flex flex-row justify-between items-start 
             h-[200px] 
-            py-2">
+            py-3">
             
             <h1 className="
-                text-xl text-blue-fcsn font-bold"
-            >{ props.text }</h1>
+                text-xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
             <div className="
                 flex flex-col justify-center
                 w-3/5 
                 h-full 
                 border-[1px] border-blue-fcsn 
-                rounded-md">
+                rounded-[7px]">
 
                 <select 
                     defaultValue={""}
@@ -279,7 +363,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                         bg-white 
                         cursor-pointer 
                         pl-5 
-                        rounded-md">
+                        rounded-[7px]">
                     
                     <option 
                         disabled 
@@ -299,7 +383,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 <div className="
                     h-full 
                     bg-white 
-                    rounded-md 
+                    rounded-[7px] 
                     overflow-y-scroll">
                     
                     {props.estados.map((estado, index) => (
@@ -343,18 +427,19 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
         <div className="
             flex flex-row justify-between items-start 
             h-[200px] 
-            py-2">
+            py-3">
             
             <h1 className="
-                text-xl text-blue-fcsn font-bold"
-            >{ props.text }</h1>
+                text-xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <div className="
                 w-3/5
                 h-full 
                 flex flex-col justify-center 
                 border-[1px] border-blue-fcsn 
-                rounded-md">
+                rounded-[7px]">
 
                 <select 
                     defaultValue={""} 
@@ -367,7 +452,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                         bg-white 
                         cursor-pointer 
                         pl-5 
-                        rounded-md">
+                        rounded-[7px]">
                     
                     <option 
                         disabled 
@@ -401,7 +486,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 <div className="
                     h-full 
                     bg-white 
-                    rounded-md 
+                    rounded-[7px] 
                     overflow-y-scroll">
                    
                     {props.cidades.map((cidade, index) => (
@@ -423,6 +508,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
 
 interface DateProps{
     text: string;
+    isNotMandatory: boolean;
     firstAttribute: string;
     setFirstAttribute: Dispatch<SetStateAction<string>>;
     secondAttribute: string;
@@ -432,16 +518,18 @@ interface DateProps{
 export const DateInputs: React.FC<DateProps> = (props) => {
     return(
         <div className="
-            flex flex-row justify-start items-center
-            w-3/4">
+            flex flex-row flex-wrap justify-start items-center
+            w-full
+            py-3
+            gap-5">
 
-            <h1 className="
-                w-[320px] 
-                text-xl text-blue-fcsn font-bold"
-            >{ props.text }</h1>
+            <h1 className=" 
+                text-xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
             <div className="
-                flex flex-row justify-evenly items-center
+                flex flex-row justify-start items-center       
                 w-1/2">
 
                 <input 
@@ -453,12 +541,15 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         bg-white 
                         cursor-text 
                         border-1 border-blue-fcsn 
-                        rounded-md 
+                        rounded-[7px] 
                         transition-all duration-300 
                         focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
                         text-center"/>
 
-                <h1 className="text-xl">a</h1>
+                <h1 className="
+                text-xl
+                px-2"
+                >a</h1>
                 <input
 
                     type="date" 
@@ -469,7 +560,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         bg-white 
                         cursor-text 
                         border-1 border-blue-fcsn 
-                        rounded-md 
+                        rounded-[7px]
                         transition-all duration-300 
                         focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
                         text-center"/>
@@ -483,6 +574,7 @@ interface YesNoProps{
     text: string;
     list: string[];
     attribute: boolean;
+    isNotMandatory: boolean;
     setAttribute: Dispatch<SetStateAction<boolean>>; 
 }
 
@@ -490,39 +582,44 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
     return(
 
         <div className="
-            flex flex-row justify-start items-center">
-                        
+            flex flex-row justify-start items-center
+            w-full
+            py-3">
+                
             <h1 className="
-                text-xl text-blue-fcsn font-bold"
-            >{ props.text }</h1>
+            text-xl md:text-xl lg:lg
+            text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
             <div className="
-                flex flex-col justify-center items-center
-                w-1/4">
-                <select
-                    defaultValue={""}
-                    className="
-                        h-[35px] 
-                        bg-white 
-                        border-blue-fcsn border-1 
-                        cursor-pointer 
-                        rounded-md 
-                        transition-aLL duration-300 
-                        focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl 
-                        px-5">
+            flex flex-col justify-center items-start
+            mr-4">
+            <select
+                defaultValue={""}
+                className="
+                w-full max-w-[250px] min-w-[185px]
+                h-[8dvh] max-h-[45px]
+                ml-4
+                bg-white 
+                border-blue-fcsn border-1 
+                cursor-pointer 
+                rounded-[5px] 
+                transition-all duration-300 
+                focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl 
+                px-5">
 
-                    <option 
-                        disabled 
-                        value={""}
-                    >Escolha uma opção</option>
+                <option 
+                disabled 
+                value={""}
+                >Escolha uma opção</option>
 
-                    {props.list.map((string, index) => (
-                        <option 
-                            key={index} 
-                            value={index}
-                        >{string}</option>
-                    ))}
-                </select>    
+                {props.list.map((string, index) => (
+                <option 
+                    key={index} 
+                    value={index}
+                >{string}</option>
+                ))}
+            </select>    
             </div>
         </div>
     );
@@ -530,8 +627,10 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
 
 interface VerticalProps{
     text: string;
+    subtext: string;
     list: string[];
     attribute: boolean[];
+    isNotMandatory: boolean;
     setAttribute: Dispatch<SetStateAction<boolean[]>>;
 }
 
@@ -547,51 +646,63 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
     
     return(
         <div className="
-            flex flex-col justify-between items-start 
-            h-[230px]">
-                        
-            <h1 className="
-                w-[850px] 
-                text-xl text-blue-fcsn font-bold"
-            >{ props.text }</h1>
-            
-            <div className="flex flex-col">
+            flex flex-col justify-between items-start
+            py-3
+            gap-y-2">
                 
-                {props.list.map((string, index) => (
-                    <div 
-                        key={index} 
-                        className="flex flex-row">
-                        
-                        <div className="
-                            w-[40px]
-                            flex flex-col justify-center items-center">
-                            
-                            <input 
-                                type="checkbox" 
-                                checked = {props.attribute[index]} 
-                                onChange={() => {
-                                    let new_array = [...props.attribute];
-                                    new_array[index] = !props.attribute[index];
-                                    if(countODS(new_array) < 4)
-                                        // NÃO PODE SELECIONAR MAIS QUE 4
-                                        // TODO: se a pessoa tenta clicar em um a mais do que quatro
-                                        // em vez de rejeitar, desseleciona um antigo que ela pressionou
-                                        // e muda pro atual. Acho mais UX...
-                                        props.setAttribute(new_array);
-                                    else
-                                        toast.error("Selecione no máximo 3");
-                                }} 
-                                className="
-                                    w-[20px] 
-                                    h-[20px] 
-                                    focus:ring focus:ring-blue-fcsn accent-blue-fcsn 
-                                    cursor-pointer"/>
-                        </div>
-                        <h1 className="
-                            text-xl text-blue-fcsn"
-                        >{"ODS " + (index + 1) + ": " + string}</h1>
-                    </div>
-                ))}
+            <h1 className="
+            w-full
+            text-xl md:text-xl lg:lg
+            text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
+
+                <p className="
+                text-lg
+                text-blue-fcsn"
+                >{ props.subtext }</p>
+            
+            <div className="
+            flex flex-col
+            gap-y-2">
+            
+            {props.list.map((string, index) => (
+                <div 
+                key={index} 
+                className="
+                flex flex-row
+                gap-x-2 md:gap-x-0 gap-y-2">
+                
+                <div className="
+                    flex flex-col justify-center items-center
+                    w-[3vw]
+                    gap-y-2">
+                    
+                    <input 
+                    type="checkbox" 
+                    checked = {props.attribute[index]} 
+                    onChange={() => {
+                        let new_array = [...props.attribute];
+                        new_array[index] = !props.attribute[index];
+                        if(countODS(new_array) < 4)
+                        // NÃO PODE SELECIONAR MAIS QUE 4
+                        // TODO: se a pessoa tenta clicar em um a mais do que quatro
+                        // em vez de rejeitar, desseleciona um antigo que ela pressionou
+                        // e muda pro atual. Acho mais UX...
+                        props.setAttribute(new_array);
+                        else
+                        toast.error("Selecione no máximo 3");
+                    }} 
+                    className="
+                        w-[20px] 
+                        h-[20px]
+                        focus:ring focus:ring-blue-fcsn accent-blue-fcsn 
+                        cursor-pointer"/>
+                </div>
+                <h1 className="
+                    text-xl text-blue-fcsn"
+                >{"ODS " + (index + 1) + ": " + string}</h1>
+                </div>
+            ))}
             </div>
         </div>
     );
@@ -600,6 +711,7 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
 interface FileProps{
     text: string;
     files: File[];
+    isNotMandatory: boolean;
     setFiles: Dispatch<SetStateAction<File[]>>;
 }
 
@@ -617,28 +729,35 @@ export const FileInput: React.FC<FileProps> = (props) => {
     
     return(
         <div className="
-            flex flex-col justify-around items-center 
-            h-[500px]">
+            flex flex-col justify-around items-center
+            h-[30dvh]
+            py-3">
 
             <div className="
-                w-full 
+                w-full
+                md:text-nowrap
                 flex flex-row justify-start items-center">
                 
                 <h1 className="
-                    text-xl text-blue-fcsn font-bold"
-                >{ props.text }</h1>
+                    text-xl md:text-xl lg:lg
+                    text-blue-fcsn font-bold"
+                >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
+                <div></div>
                 <label className="
-                    w-1/3 
-                    h-full 
+                    w-[35dvw] max-w-[250px] min-w-[100px] md:min-w-[160px]
+                    min-h-[30px] max-h-[60px] sm:w-[40dvw] md:w-[25dvw] lg:w-[20dvw]
                     bg-white 
-                    text-center text-xl font-sembold text-blue-fcsn 
+                    justify-center text-center text-lg font-sembold text-blue-fcsn 
                     border-1 border-blue-fcsn 
                     cursor-pointer 
-                    rounded-md 
-                    mx-5 
-                    relative"
-                    >Adicionar Arquivo
+                    rounded-[7px] 
+                    mx-5"
+                    >
+                        <div className="flex flex-row items-center gap-3">
+                            <Upload className="text-blue-fcsn"></Upload>
+                            <p>Adicionar Arquivo</p>
+                        </div>
 
                     <input 
                         type="file" 
@@ -655,10 +774,10 @@ export const FileInput: React.FC<FileProps> = (props) => {
             <div className="
                 flex flex-col justify-center items-start
                 w-full
-                h-[400px]
+                h-[20dvh]
                 bg-white 
                 border-1 border-blue-fcsn
-                rounded-md
+                rounded-t-[10px]
                 overflow-x-scroll">
                 
                 <div 
@@ -680,12 +799,68 @@ export const FileInput: React.FC<FileProps> = (props) => {
                                 className="
                                     w-[400px] 
                                     h-[300px] 
-                                    ursor-pointer"/>
+                                    cursor-pointer"/>
                         </div>
                     ))}
                 </div>
             </div>
         </div>
+    );
+}
+
+export const FileInputBlank: React.FC<FileProps> = (props) => {
+    const [fileSize, setFileSize] = useState<number>(0)
+    
+    useEffect(() => {
+        let len: number = 0;
+        for(const file in props.files){
+            len += 1;
+        }
+        setFileSize(len);
+    }, [props.files]);
+    // Lista de arquivo não tem len... tive que fazer eu mesmo
+    
+    return(
+        
+
+            <div className="
+                w-full
+                md:text-nowrap
+                flex flex-row justify-start items-center">
+                
+                <h1 className="
+                    text-xl md:text-xl lg:lg
+                    text-blue-fcsn font-bold"
+                >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
+
+                <label className="
+                    w-[35dvw] max-w-[250px] min-w-[100px] md:min-w-[160px]
+                    min-h-[30px] max-h-[60px] sm:w-[40dvw] md:w-[25dvw] lg:w-[20dvw]
+                    bg-white 
+                    justify-center text-center text-lg font-sembold text-blue-fcsn 
+                    border-1 border-blue-fcsn 
+                    cursor-pointer 
+                    rounded-[7px] 
+                    mx-5"
+                    >
+
+                        <div className="flex flex-row items-center gap-3 w-full justify-center">
+                            <Upload className="text-blue-fcsn"></Upload>
+                            <p>Adicionar Arquivo</p>
+                        </div>
+
+                    <input 
+                        type="file" 
+                        className="hidden" 
+                        onChange={(event) => {
+                            const files = event.target.files
+                            if(files){
+                                props.setFiles(prev => [...prev, ...Array.from(files)]);
+                            }
+                        }}/>
+                </label>
+            </div>
+       
     );
 }
 // 712 linhas po, vai ver é bom colocar em arquivos diferentes
