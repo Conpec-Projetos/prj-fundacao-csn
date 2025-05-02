@@ -100,7 +100,7 @@ export default function AdminHomePage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-xl md:text-2xl font-bold">{greeting}, {userName}!</h1>
-              <p className="text-gray-500">{currentTime}</p>
+              <p className="text-gray-500 dark:text-gray-300">{currentTime}</p>
             </div>
           </div>
         
