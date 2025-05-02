@@ -23,7 +23,7 @@ export default function Signin(){
                         p-4 md:p-8"
                 onSubmit={(event) => event.preventDefault()}>
                 
-                {/* Logo and Title Section */}
+                {/* Logo */}
                 <div className="flex flex-col justify-center items-center h-auto py-4">
                     <Image
                         src={logo}
