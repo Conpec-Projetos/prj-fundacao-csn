@@ -91,9 +91,9 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
     return(
 
         <div className="
-            flex flex-col justify-between
+            flex flex-col justify-center
             h-min
-            py-3">
+            py-6">
                         
             <h1 className="
             w-full
@@ -104,9 +104,9 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
             
             <div className="
                 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5
-                justify-items-start lg:justify-items-center
+                justify-items-start
                 w-full
-                gap-y-2 lg:gap-x-5
+                gap-y-2 lg:gap-x-4
                 text-wrap">
 
                 {props.list.map((string, index) => (
@@ -616,7 +616,7 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
                     type="checkbox" 
                     checked = {props.attribute[index]} 
                     onChange={() => {
-                        let new_array = [...props.attribute];
+                        const new_array = [...props.attribute];
                         new_array[index] = !props.attribute[index];
                         if(countODS(new_array) < 4)
                         // NÃO PODE SELECIONAR MAIS QUE 4
