@@ -108,7 +108,9 @@ export default function Login() {
                                 className="w-full h-12 md:h-14 bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn transition-all duration-300 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-4 pr-10"
                             />
                             <button
+
                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400"
+
                                 onClick={(event) => {
                                     event.preventDefault();
                                     setVisible(prev => !prev);
