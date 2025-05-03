@@ -2,7 +2,7 @@
 
 import Footer from "@/components/footer/footer";
 import { useState } from "react";
-import { FaCaretDown, FaCheckCircle, FaFilter, FaSearch, FaTimesCircle } from "react-icons/fa";
+import { FaCaretDown, FaCheckCircle, FaFilter, FaMoneyBillAlt, FaSearch, FaTimesCircle } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
 
 
@@ -103,7 +103,7 @@ export default function TodosProjetos(){
         {law: 'FIA', state: false},
         {law: 'LIE', state: false},
         {law: 'IDOSO', state: false},
-        {law: 'PROANAS', state: false},
+        {law: 'PRONAS', state: false},
         {law: 'PRONON', state: false},
         {law: 'PROMAC', state: false},
         {law: 'ICMS-MG', state: false},
@@ -270,10 +270,10 @@ export default function TodosProjetos(){
           // O dropdown será exibido enquanto estivermos com o mouse em cima dele
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
-            className="relative"
+            className="relative z-10"
             >
             {/* seção para passarmos o mouse e aparecer o dropdown */}
-            <div className="bg-white-off p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center gap-2"> Aplique filtros <FaCaretDown /> </div>
+            <div className="bg-white-off p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center gap-2"> Aplicar filtros <FaCaretDown /> </div>
               {/* Dropdown */}
               {isOpen && (
                 <div className="absolute top-full left-0 w-200 bg-white p-2 pl-4 rounded shadow-md z-10">
@@ -286,7 +286,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.status.find(f => f.situation === 'aprovado')?.state || false}
                         onChange={() => situationFilters('aprovado')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>Aprovado</span>
                     </label>
@@ -296,7 +296,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.status.find(f => f.situation === 'pendente')?.state || false}
                         onChange={() => situationFilters('pendente')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>Pendente</span>
                     </label>
@@ -306,7 +306,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.status.find(f => f.situation === 'reprovado')?.state || false}
                         onChange={() => situationFilters('reprovado')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>Reprovado</span>
                     </label>
@@ -320,7 +320,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.value.find(f => f. initialValue === 0 && f.finalValue === 1000)?.state || false}
                         onChange={() => valueFilters(0, 1000)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>De R$ 0,00 a R$ 1.000,00</span>
                     </label>
@@ -330,7 +330,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         onChange={() => valueFilters(1000.01, 100000)}
                         checked={filters.value.find(f => f. initialValue === 1000.01 && f.finalValue === 100000)?.state || false}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>De R$ 1.000,01 a R$ 100.000,00</span>
                     </label>
@@ -340,7 +340,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.value.find(f => f. initialValue === 100000.01 && f.finalValue === 1000000)?.state || false}
                         onChange={() => valueFilters(100000.01, 1000000)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                         <span>De R$ 100.000,01 a R$ 1.000.000,00</span>
                     </label>
@@ -350,7 +350,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.value.find(f => f. initialValue === 1000000.01 && f.finalValue === undefined)?.state || false}
                         onChange={() => valueFilters(1000000.01, undefined)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                         <span>Acima de R$ 1.000.000,01</span>
                     </label>
@@ -362,7 +362,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.incentiveLaw.find(f => f.law === 'CULTURA')?.state || false}
                         onChange={() => incentiveLawFilters('CULTURA')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>Lei de Incentivo à Cultura</span>
                     </label>
@@ -372,7 +372,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         onChange={() => incentiveLawFilters('PROAC')}
                         checked={filters.incentiveLaw.find(f => f.law === 'PROAC')?.state || false}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>PROAC – Programa de Ação Cultural</span>
                     </label>
@@ -382,7 +382,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.incentiveLaw.find(f => f.law === 'FIA')?.state || false}
                         onChange={() => incentiveLawFilters('FIA')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                         <span>FIA - Lei Fundo para a Infância e Adolescência</span>
                     </label>
@@ -392,7 +392,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.incentiveLaw.find(f => f.law === 'LIE')?.state || false}
                         onChange={() => incentiveLawFilters('LIE')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>LIE - Lei de Incentivo ao Esporte</span>
                     </label>
@@ -402,7 +402,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         onChange={() => incentiveLawFilters('IDOSO')}
                         checked={filters.incentiveLaw.find(f => f.law === 'IDOSO')?.state || false}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>Lei da Pessoa Idosa</span>
                     </label>
@@ -412,7 +412,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.incentiveLaw.find(f => f.law === 'PRONAS')?.state || false}
                         onChange={() => incentiveLawFilters('PRONAS')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>Pronas – Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência</span>
                     </label>
@@ -422,7 +422,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.incentiveLaw.find(f => f.law === 'PRONON')?.state || false}
                         onChange={() => incentiveLawFilters('PRONON')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>Pronon -Programa Nacional de Apoio à Atenção Oncológica</span>
                     </label>
@@ -432,7 +432,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.incentiveLaw.find(f => f.law === 'PROMAC')?.state || false}
                         onChange={() => incentiveLawFilters('PROMAC')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>Promac – Programa de Incentivo à Cultura do Município de São Paulo</span>
                     </label>
@@ -442,7 +442,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         onChange={() => incentiveLawFilters('ICMS-MG')}
                         checked={filters.incentiveLaw.find(f => f.law === 'ICMS-MG')?.state || false}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ICMS – MG Imposto sobre Circulação de Mercadoria e Serviços</span>
                     </label>
@@ -452,7 +452,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.incentiveLaw.find(f => f.law === 'ICMS-RJ')?.state || false}
                         onChange={() => incentiveLawFilters('ICMS-RJ')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ICMS – RJ Imposto sobre Circulação de Mercadoria e Serviços</span>
                     </label>
@@ -462,7 +462,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.incentiveLaw.find(f => f.law === 'PIE')?.state || false}
                         onChange={() => incentiveLawFilters('PIE')}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>PIE - Lei Paulista de Incentivo ao Esporte</span>
                     </label>
@@ -474,7 +474,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 1)?.state || false}
                         onChange={() => ODSFilters(1)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 1: Erradicação da Pobreza</span>
                     </label>
@@ -484,7 +484,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 2)?.state || false}
                         onChange={() => ODSFilters(2)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 2: Fome Zero e Agricultura Sustentável</span>
                     </label>
@@ -494,7 +494,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 3)?.state || false}
                         onChange={() => ODSFilters(3)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 3: Saúde e Bem-estar</span>
                     </label>
@@ -504,7 +504,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 4)?.state || false}
                         onChange={() => ODSFilters(4)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 4: Educação de qualidade</span>
                     </label>
@@ -514,7 +514,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 5)?.state || false}
                         onChange={() => ODSFilters(5)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 5: Igualdade de Gênero</span>
                     </label>
@@ -524,7 +524,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 6)?.state || false}
                         onChange={() => ODSFilters(6)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 6: Agua potável e Saneamento</span>
                     </label>
@@ -534,7 +534,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 7)?.state || false}
                         onChange={() => ODSFilters(7)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 7: Energia Acessível e Limpa</span>
                     </label>
@@ -544,7 +544,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 8)?.state || false}
                         onChange={() => ODSFilters(8)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 8: Trabalho decente e Crescimento Econômico</span>
                     </label>
@@ -554,7 +554,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 9)?.state || false}
                         onChange={() => ODSFilters(9)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 9: Indústria, Inovação e Infraestrutura</span>
                     </label>
@@ -564,7 +564,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 10)?.state || false}
                         onChange={() => ODSFilters(10)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 10: Redução das Desigualdades</span>
                     </label>
@@ -574,7 +574,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 11)?.state || false}
                         onChange={() => ODSFilters(11)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 11: Cidades e Comunidades Sustentáveis</span>
                     </label>
@@ -584,7 +584,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 12)?.state || false}
                         onChange={() => ODSFilters(12)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 12: Consumo e Produção Responsáveis</span>
                     </label>
@@ -594,7 +594,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 13)?.state || false}
                         onChange={() => ODSFilters(13)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 13: Ação contra a Mudança Global do Clima</span>
                     </label>
@@ -604,7 +604,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 14)?.state || false}
                         onChange={() => ODSFilters(14)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 14: Vida na Água</span>
                     </label>
@@ -614,7 +614,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 15)?.state || false}
                         onChange={() => ODSFilters(15)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 15: Vida Terrestre</span>
                     </label>
@@ -624,7 +624,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 16)?.state || false}
                         onChange={() => ODSFilters(16)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 16: Paz, Justiça e Instituições Eficazes</span>
                     </label>
@@ -634,7 +634,7 @@ export default function TodosProjetos(){
                         type="checkbox"
                         checked={filters.ODS.find(f => f.numberODS === 17)?.state || false}
                         onChange={() => ODSFilters(17)}
-                        className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-5 h-5 text-blue-fcsn rounded border-gray-300"
                       />
                       <span>ODS 17: Parcerias e Meios de Implementação</span>
                     </label>
