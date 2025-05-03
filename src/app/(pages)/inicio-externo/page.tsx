@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaFileAlt, FaClipboardCheck, FaEdit, FaExclamationCircle, FaInfoCircle } from 'react-icons/fa';
-import Header from '@/components/header/header';
 import Footer from '@/components/footer/footer';
+import { useTheme } from '@/context/ThemeContext';
 
 // Componente de card para projeto
 // Define the Project type
@@ -21,9 +21,9 @@ interface Project {
 const ProjectCard = ({ project }: { project: Project }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'approved': return 'bg-green-100 dark:bg-green-500 text-green-800 dark:text-white';
+      case 'pending': return 'bg-yellow-100 dark:bg-yellow-500 text-yellow-800 dark:text-white';
+      case 'rejected': return 'bg-red-100 dark:bg-red-500 text-red-800 dark:text-white';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -38,11 +38,11 @@ const ProjectCard = ({ project }: { project: Project }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow">
+    <div className="bg-white dark:bg-blue-fcsn3 rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="font-bold text-lg text-[#292944]">{project.name}</h3>
-          <p className="text-gray-500 text-sm mb-2">{project.institution}</p>
+          <h3 className="font-bold text-lg text-blue-fcsn dark:text-white-off">{project.name}</h3>
+          <p className="text-gray-500 dark:text-gray-300 text-sm mb-2">{project.institution}</p>
         </div>
         <span className={`px-3 py-1 rounded-full whitespace-nowrap text-xs ${getStatusColor(project.status)}`}>
           {getStatusText(project.status)}
@@ -51,27 +51,27 @@ const ProjectCard = ({ project }: { project: Project }) => {
 
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
         <div>
-          <p className="text-gray-500">Valor aprovado:</p>
-          <p className="font-medium">{project.value}</p>
+          <p className="text-gray-500 dark:text-gray-300">Valor aprovado:</p>
+          <p className="font-medium dark:text-white-off">{project.value}</p>
         </div>
         <div>
-          <p className="text-gray-500">Lei de incentivo:</p>
+          <p className="text-gray-500 dark:text-gray-300">Lei de incentivo:</p>
           <p className="font-medium">{project.incentiveLaw}</p>
         </div>
       </div>
 
       <div className="mt-4 flex justify-between items-center">
-        <Link href={`/projetos/${project.id}`} className="text-[#b37b97] hover:underline text-sm">
+        <Link href={`/projetos/${project.id}`} className="text-pink-fcsn dark:text-pink-light hover:underline text-sm">
           Ver detalhes
         </Link>
       </div>
       
       {project.pendingForm && (
-        <div className="mt-4 p-3 bg-yellow-50 rounded-lg flex items-center">
+        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-200 rounded-lg flex items-center">
           <FaExclamationCircle className="text-yellow-500 mr-2" />
-          <p className="text-sm text-yellow-700">
+          <p className="text-sm text-yellow-700 ">
             Formulário de acompanhamento pendente
-            <Link href={`/formulario/${project.id}`} className="ml-2 text-[#b37b97] hover:underline">
+            <Link href={`/formulario/${project.id}`} className="ml-2 text-pink-fcsn hover:underline">
               Preencher agora
             </Link>
           </p>
@@ -86,6 +86,7 @@ export default function ExternalUserHomePage() {
   const [userName, setUserName] = useState('João Silva');   //exemplo de usuário externo
   const [currentTime, setCurrentTime] = useState('');
   const [greeting, setGreeting] = useState('');
+  const { darkMode } = useTheme();
   
   // Dados de exemplo para projetos e notificações
   const userProjects = [
@@ -170,27 +171,27 @@ export default function ExternalUserHomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">      
+    <div className={`min-h-screen ${darkMode ? "dark" : ""}`} >      
       <main className="flex flex-col px-4 p-10 md:mx-20">
         {/* Seção de boas-vindas */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-[#292944]">{greeting}, {userName}!</h1>
-            <p className="text-gray-500">{currentTime}</p>
+            <h1 className="text-2xl font-bold">{greeting}, {userName}!</h1>
+            <p className="text-gray-500 dark:text-gray-300">{currentTime}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-500">Meus projetos</p>
-            <p className="text-2xl font-bold text-[#b15265]">{userProjects.length}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-300">Meus projetos</p>
+            <p className="text-2xl font-bold text-pink-fcsn dark:text-pink-light">{userProjects.length}</p>
           </div>
         </div>
         
         {/* Layout principal */}
-        <div className="grid gap-8 md:grid-cols-2"> 
+        <div className=""> 
           {/* Coluna principal*/}
-          <div className="bg-white-off rounded-lg shadow-md p-6 mb-8 order-2 md:order-1">
+          <div className="bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 mb-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-[#292944]">Meus Projetos</h2>
-              <Link href="/projetos/novo" className="px-4 py-2 bg-[#b37b97] text-white rounded-lg hover:bg-[#a06a86] transition-colors">
+              <h2 className="text-xl font-bold text-blue-fcsn dark:text-white-off">Meus Projetos</h2>
+              <Link href="/projetos/novo" className="px-4 py-2 bg-pink-fcsn dark:bg-pink-light2 text-white-off rounded-lg hover:bg-[#a06a86] transition-colors duration-200">
                 Novo Projeto
               </Link>
             </div>
@@ -202,37 +203,11 @@ export default function ExternalUserHomePage() {
             </div>
             
             <div className="mt-6 text-center">
-              <Link href="/meus-projetos" className="text-pink-fcsn hover:underline">
+              <Link href="/meus-projetos" className="text-pink-fcsn dark:text-pink-light hover:underline">
                 Ver todos os projetos
               </Link>
             </div>
           </div>
-
-            {/* Ações rápidas */}
-            <div className="bg-white-off rounded-lg shadow-md p-6 h-80 order-1 md:order-2">
-              <h2 className="text-xl font-bold mb-4 text-[#292944]">Ações Rápidas</h2>
-              <div className="space-y-3">
-                <Link href="/formulario/pendente" className="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
-                  <div className="bg-yellow-100 p-3 rounded-full mr-4">
-                    <FaEdit className="text-yellow-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Formulários Pendentes</h3>
-                    <p className="text-sm text-gray-500">Complete formulários de acompanhamento</p>
-                  </div>
-                </Link>
-                <Link href="/projetos/novo" className="flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                  <div className="bg-green-100 p-3 rounded-full mr-4">
-                    <FaFileAlt className="text-green-600" />
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium">Novo Projeto</h3>
-                    <p className="text-sm text-gray-500">Submeta um novo projeto</p>
-                  </div>
-                </Link>
-              </div>
-            </div>
         </div>
       </main>
   
