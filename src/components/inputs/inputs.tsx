@@ -635,43 +635,53 @@ interface VerticalProps{
 }
 
 export const VerticalSelects: React.FC<VerticalProps> = (props) => {
-    function countODS(ods: boolean[]){
-        let count = 0;
-        for(const item of ods)
-            if(item) count++;
+    // Acompanha a ordem de seleção
+    const [selectionOrder, setSelectionOrder] = useState<number[]>([]);
+
+    const handleCheckboxChange = (index: number) => {
+        const new_array = [...props.attribute];
         
-        return count;
-    }
-    // Vê quantos itens são verdadeiros no array de booleanos
-    
+        if (new_array[index]) {
+            // Se deschecar alguma caixa, remove essa da ordem armazenada e atualiza a array
+            new_array[index] = false;
+            setSelectionOrder(prev => prev.filter(i => i !== index));
+            props.setAttribute(new_array);
+        } else {
+            // Se checar alguma caixa
+            if (selectionOrder.length < 3) {
+                // Se tem menos de 3 caixas checadas, apenas adiciona
+                new_array[index] = true;
+                setSelectionOrder(prev => [...prev, index]);
+                props.setAttribute(new_array);
+            } else {
+                // Se já tem 3 caixas checadas, desseleciona a primeira checada e checa a que foi clicada
+                const firstChecked = selectionOrder[0];
+                new_array[firstChecked] = false;
+                new_array[index] = true;
+                setSelectionOrder(prev => [...prev.slice(1), index]); // Atualiza a ordem
+                props.setAttribute(new_array);
+            }
+        }
+    };
+
     return(
         <div className="
             flex flex-col justify-between items-start
             py-3
             gap-y-2">
-                
             <h1 className="
             w-full
             text-xl md:text-xl lg:lg
             text-blue-fcsn font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
-                <p className="
-                text-lg
-                text-blue-fcsn"
-                >{ props.subtext }</p>
+            <p className="text-lg text-blue-fcsn">{ props.subtext }</p>
             
-            <div className="
-            flex flex-col
-            gap-y-2">
-            
+            <div className="flex flex-col gap-y-2">
             {props.list.map((string, index) => (
                 <div 
                 key={index} 
-                className="
-                flex flex-row
-                gap-x-2 md:gap-x-0 gap-y-2">
-                
+                className="flex flex-row gap-x-2 md:gap-x-0 gap-y-2">
                 <div className="
                     flex flex-col justify-center items-center
                     w-[3vw]
@@ -679,28 +689,17 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
                     
                     <input 
                     type="checkbox" 
-                    checked = {props.attribute[index]} 
-                    onChange={() => {
-                        const new_array = [...props.attribute];
-                        new_array[index] = !props.attribute[index];
-                        if(countODS(new_array) < 4)
-                        // NÃO PODE SELECIONAR MAIS QUE 4
-                        // TODO: se a pessoa tenta clicar em um a mais do que quatro
-                        // em vez de rejeitar, desseleciona um antigo que ela pressionou
-                        // e muda pro atual. Acho mais UX...
-                        props.setAttribute(new_array);
-                        else
-                        toast.error("Selecione no máximo 3");
-                    }} 
+                    checked={props.attribute[index]} 
+                    onChange={() => handleCheckboxChange(index)}
                     className="
                         w-[20px] 
                         h-[20px]
                         focus:ring focus:ring-blue-fcsn accent-blue-fcsn 
                         cursor-pointer"/>
                 </div>
-                <h1 className="
-                    text-xl text-blue-fcsn"
-                >{"ODS " + (index + 1) + ": " + string}</h1>
+                <h1 className="text-xl text-blue-fcsn">
+                    {"ODS " + (index + 1) + ": " + string}
+                </h1>
                 </div>
             ))}
             </div>
