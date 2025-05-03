@@ -716,93 +716,115 @@ interface FileProps{
 
 export const FileInput: React.FC<FileProps> = (props) => {
     const [fileSize, setFileSize] = useState<number>(0)
+    const [isDragging, setIsDragging] = useState(false);
     
     useEffect(() => {
-        let len: number = 0;
-        for(const file in props.files){
-            len += 1;
-        }
-        setFileSize(len);
+        setFileSize(props.files.length);
     }, [props.files]);
-    // Lista de arquivo não tem len... tive que fazer eu mesmo
+
+    const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = Array.from(e.dataTransfer.files);
+        if(files?.length > 0) {
+            props.setFiles(prev => [...prev, ...files]);
+        }
+    };
     
     return(
         <div className="
-            flex flex-col justify-around items-center
-            h-[30dvh]
-            py-3">
+            grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr]
+            md:gap-x-4
+            py-3
+            items-center">
 
-            <div className="
-                w-full
-                md:text-nowrap
-                flex flex-row justify-start items-center">
-                
-                <h1 className="
-                    text-xl md:text-xl lg:lg
-                    text-blue-fcsn font-bold"
-                >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
+            <h1 className="
+                text-xl md:text-xl lg:lg
+                text-blue-fcsn font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
-                <div></div>
-                <label className="
-                    w-[35dvw] max-w-[250px] min-w-[100px] md:min-w-[160px]
-                    min-h-[30px] max-h-[60px] sm:w-[40dvw] md:w-[25dvw] lg:w-[20dvw]
+            <label 
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`
+                    w-full
+                    flex flex-col items-center justify-center
+                    min-h-[100px]
                     bg-white 
-                    justify-center text-center text-lg font-sembold text-blue-fcsn 
-                    border-1 border-blue-fcsn 
-                    cursor-pointer 
-                    rounded-[7px] 
-                    mx-5"
-                    >
-                        <div className="flex flex-row items-center gap-3">
-                            <Upload className="text-blue-fcsn"></Upload>
-                            <p>Adicionar Arquivo</p>
-                        </div>
-
-                    <input 
-                        type="file" 
-                        className="hidden" 
-                        onChange={(event) => {
-                            const files = event.target.files
-                            if(files){
-                                props.setFiles(prev => [...prev, ...Array.from(files)]);
-                            }
-                        }}/>
-                </label>
-            </div>
-            
-            <div className="
-                flex flex-col justify-center items-start
-                w-full
-                h-[20dvh]
-                bg-white 
-                border-1 border-blue-fcsn
-                rounded-t-[10px]
-                overflow-x-scroll">
+                    border-1 border-blue-fcsn
+                    rounded-[7px]
+                    cursor-pointer
+                    transition-all
+                    ${isDragging ? 'border-blue-400 border-dashed bg-blue-50' : 'hover:bg-gray-50'}
+                    p-4
+                `}>
+                <input 
+                    type="file" 
+                    className="hidden" 
+                    multiple
+                    onChange={(event) => {
+                        const files = event.target.files;
+                        if(files){
+                            props.setFiles(prev => [...prev, ...Array.from(files)]);
+                        }
+                    }}
+                />
                 
-                <div 
-                    style={{ width: `${420 * fileSize}px` }}
-                    // Tailwind não suporta tamanhos variáveis, tive que usar css... 
-                    className="
-                        flex flex-row justify-around items-center">
-                            
-                    {props.files.map((file, index) => (
-                        <div key={index}>
-                            <img 
-                                src={URL.createObjectURL(file)} 
-                                // Cria uma imagem para o arquivo que você fez upload
-                                alt={"image " + (index + 1)} 
-                                onClick={(event) => {
-                                    event.preventDefault();
-                                    props.setFiles(prev => prev.filter(item => item !== file));
-                                }} 
+                {fileSize === 0 ? (
+                    <div className="flex flex-col items-center gap-2 text-blue-fcsn">
+                        <Upload className="w-8 h-8" />
+                        <p className="text-center text-gray-400">
+                            {isDragging ? 'Solte os arquivos aqui' : 'Clique ou arraste arquivos aqui'}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="w-full space-y-2">
+                        {props.files.map((file, index) => (
+                            <div 
+                                key={index}
                                 className="
-                                    w-[400px] 
-                                    h-[300px] 
-                                    cursor-pointer"/>
-                        </div>
-                    ))}
-                </div>
-            </div>
+                                    flex flex-row justify-between items-center
+                                    w-full
+                                    py-2
+                                    px-4
+                                    hover:bg-gray-100
+                                    rounded-md
+                                    group">
+                                <span className="text-blue-fcsn">{file.name}</span>
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        props.setFiles(prev => prev.filter((_, i) => i !== index));
+                                    }}
+                                    className="
+                                        text-red-500
+                                        opacity-0 group-hover:opacity-100
+                                        transition-opacity
+                                        cursor-pointer
+                                        hover:text-red-700">
+                                    Remover
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </label>
         </div>
     );
 }
