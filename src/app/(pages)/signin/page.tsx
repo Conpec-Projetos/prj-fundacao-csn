@@ -6,11 +6,14 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation"
 import {toast, Toaster} from "sonner"
+import { useTheme } from "@/context/ThemeContext";
+import darkLogo from "@/assets/fcsn-logo-dark.svg"
 
 export default function Signin(){
     const router = useRouter();
     const [visibleFirst, setVisibleFirst] = useState(false);
     const [visibleSecond, setVisibleSecond] = useState(false);
+    const { isDarkMode } = useTheme()
 
     return(
         <main className="flex flex-col justify-between items-center w-screen min-h-screen bg-pink-fcsn dark:bg-blue-fcsn">
@@ -26,7 +29,7 @@ export default function Signin(){
                 {/* Logo */}
                 <div className="flex flex-col justify-center items-center h-auto py-4">
                     <Image
-                        src={logo}
+                        src={isDarkMode ? logo : darkLogo}
                         alt="csn-logo"
                         className=""
                         priority
