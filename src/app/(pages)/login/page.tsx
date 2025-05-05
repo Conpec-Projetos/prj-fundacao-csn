@@ -11,6 +11,8 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { useTheme } from "@/context/ThemeContext";
+import darkLogo from "@/assets/fcsn-logo-dark.svg"
 
 // zod é uma biblioteca para validar parâmetros, no caso o schema
 const schema = z.object({
@@ -26,6 +28,8 @@ type FormFields = z.infer<typeof schema>;
 
 export default function Login() {
     const router = useRouter();
+
+    const { isDarkMode } = useTheme()
 
     const [visible, setVisible] = useState<boolean>(false);
 
@@ -66,7 +70,7 @@ export default function Login() {
 
                 <div className="flex flex-col justify-center items-center h-[200px] md:h-[250px] gap-6">
                     <Image
-                        src={ logo }
+                        src={ isDarkMode ? logo : darkLogo}
                         alt="csn-logo"
                         className=""
                         priority
