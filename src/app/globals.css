@@ -1,7 +1,21 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+.dark header {
+  @apply bg-blue-fcsn2 text-white-off;
+}
+.dark footer {
+  @apply bg-blue-fcsn2 text-white-off;
+}
+.dark {
+  @apply bg-blue-fcsn text-white-off;
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -9,7 +23,12 @@
   --color-white-off: #f2f2ea;
   --color-red-fcsn: #b15265;
   --color-blue-fcsn: #292944;
+  --color-blue-fcsn2: #3E3E57;
+  --color-blue-fcsn3: #515168;
+  --color-purple-light: #EDE0E6;
   --color-pink-fcsn: #b37b97;
+  --color-pink-light: #FF99CA;
+  --color-pink-light2: #DE7DAD;
   --color-yellow-fcsn: #f0b404;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
