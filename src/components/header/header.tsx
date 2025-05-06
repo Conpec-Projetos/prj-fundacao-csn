@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { Sun, Moon } from 'lucide-react';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme } from '@/context/themeContext';
 
 
 
