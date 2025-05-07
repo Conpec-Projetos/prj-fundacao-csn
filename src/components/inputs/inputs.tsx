@@ -25,7 +25,7 @@ export const NormalInput: React.FC<TextProps> = (props) => {
 
             <h1 className="
             text-xl md:text-xl lg:lg
-            text-blue-fcsn font-bold"
+            text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <input
@@ -34,7 +34,7 @@ export const NormalInput: React.FC<TextProps> = (props) => {
             className="
                 w-full
                 h-[6dvh]
-                bg-white
+                bg-white dark:bg-blue-fcsn3
                 rounded-[7px]
                 border-1 border-blue-fcsn
                 transition-all duration-300
@@ -55,7 +55,7 @@ export const GrowInput: React.FC<TextProps> = (props) => {
 
             <h1 className="
             text-xl md:text-xl lg:lg
-            text-blue-fcsn font-bold"
+            text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <input
@@ -64,7 +64,7 @@ export const GrowInput: React.FC<TextProps> = (props) => {
             className="
                 w-full
                 h-[6dvh]
-                bg-white
+                bg-white dark:bg-blue-fcsn3
                 rounded-[7px]
                 border-1 border-blue-fcsn
                 transition-all duration-300
@@ -84,7 +84,7 @@ export const ShortInput: React.FC<TextProps> = (props) => {
 
             <h1 className="
             text-xl md:text-xl lg:lg
-            text-blue-fcsn font-bold"
+            text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <input
@@ -93,7 +93,7 @@ export const ShortInput: React.FC<TextProps> = (props) => {
             className="
                 w-[12dvh]
                 h-[6dvh]
-                bg-white
+                bg-white dark:bg-blue-fcsn3
                 rounded-[7px]
                 border-1 border-blue-fcsn
                 transition-all duration-300
@@ -113,7 +113,7 @@ export const LongInput: React.FC<TextProps> = (props) => {
             <h1 className="
                 w-full
                 text-xl md:text-xl lg:lg
-                text-blue-fcsn font-bold"
+                text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <textarea
@@ -122,7 +122,7 @@ export const LongInput: React.FC<TextProps> = (props) => {
                 className="
                     w-full
                     h-full
-                    bg-white    
+                    bg-white dark:bg-blue-fcsn3
                     rounded-[7px]
                     border-1 border-blue-fcsn
                     transition-all duration-300
@@ -159,7 +159,7 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
             <h1 className="
             w-full
             text-xl md:text-xl lg:lg
-            text-blue-fcsn font-bold">
+            text-blue-fcsn dark:text-white-off font-bold">
                 {props.text} {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </h1>
             
@@ -191,7 +191,7 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
                             className="
                                 w-[20px]
                                 h-[20px]
-                                bg-white
+                                bg-white 
                                 cursor-pointer
                                 rounded-full
                                 border-1">
@@ -218,7 +218,7 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
                         <h1 className="
                             w-fit
                             text-md
-                            text-blue-fcsn"
+                            text-blue-fcsn dark:text-white-off"
                         >{ string }</h1>
                     </div>
                 ))}
@@ -239,7 +239,7 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
                         
             <h1 className="
                 text-xl md:text-xl lg:lg
-                text-blue-fcsn font-bold"
+                text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
             <select 
@@ -250,7 +250,7 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
                 className="
                     w-full md:max-w-[270px]
                     h-[5vh] min-h-[45px] max-h-[70px]
-                    bg-white
+                    bg-white dark:bg-blue-fcsn3
                     border-blue-fcsn border-1
                     cursor-pointer 
                     rounded-[7px]
@@ -291,7 +291,7 @@ export const NumberInput: React.FC<NumberProps> = (props) => {
                         
             <h1 className="
                 text-xl md:text-xl lg:lg
-                text-blue-fcsn font-bold"
+                text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <div className="
@@ -309,7 +309,7 @@ export const NumberInput: React.FC<NumberProps> = (props) => {
                     className="
                         w-[75px] 
                         h-[50px] 
-                        bg-white 
+                        bg-white dark:bg-blue-fcsn3
                         rounded-[7px] 
                         border-1 border-blue-fcsn 
                         transition-all duration-300 
@@ -341,7 +341,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
             
             <h1 className="
                 text-xl md:text-xl lg:lg
-                text-blue-fcsn font-bold"
+                text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
             <div className="
@@ -360,7 +360,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                     }}} 
                     className="
                         h-1/4 
-                        bg-white 
+                        bg-white dark:bg-blue-fcsn3
                         cursor-pointer 
                         pl-5 
                         rounded-[7px]">
@@ -382,9 +382,9 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 
                 <div className="
                     h-full 
-                    bg-white 
+                    bg-white dark:bg-blue-fcsn3 
                     rounded-[7px] 
-                    overflow-y-scroll">
+                    overflow-y-auto overflow-hidden scrollbar-thin">
                     
                     {props.estados.map((estado, index) => (
                         <button
@@ -431,7 +431,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
             
             <h1 className="
                 text-xl md:text-xl lg:lg
-                text-blue-fcsn font-bold"
+                text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <div className="
@@ -449,7 +449,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                     }}} 
                     className="
                         h-1/4 
-                        bg-white 
+                        bg-white dark:bg-blue-fcsn3
                         cursor-pointer 
                         pl-5 
                         rounded-[7px]">
@@ -485,9 +485,9 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 
                 <div className="
                     h-full 
-                    bg-white 
+                    bg-white dark:bg-blue-fcsn3
                     rounded-[7px] 
-                    overflow-y-scroll">
+                    overflow-y-auto overflow-hidden scrollbar-thin">
                    
                     {props.cidades.map((cidade, index) => (
                         <button 
