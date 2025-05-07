@@ -1,7 +1,7 @@
 'use client';
 import Footer from "@/components/footer/footer";
 import Header from "@/components/header/header";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import {
     NormalInput,
     ShortInput,
