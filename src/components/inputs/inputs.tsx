@@ -635,21 +635,40 @@ interface VerticalProps{
 }
 
 export const VerticalSelects: React.FC<VerticalProps> = (props) => {
-    function countODS(ods: boolean[]){
-        let count = 0;
-        for(const item of ods)
-            if(item) count++;
+    // Acompanha a ordem de seleção
+    const [selectionOrder, setSelectionOrder] = useState<number[]>([]);
+
+    const handleCheckboxChange = (index: number) => {
+        const new_array = [...props.attribute];
         
-        return count;
-    }
-    // Vê quantos itens são verdadeiros no array de booleanos
-    
+        if (new_array[index]) {
+            // Se deschecar alguma caixa, remove essa da ordem armazenada e atualiza a array
+            new_array[index] = false;
+            setSelectionOrder(prev => prev.filter(i => i !== index));
+            props.setAttribute(new_array);
+        } else {
+            // Se checar alguma caixa
+            if (selectionOrder.length < 3) {
+                // Se tem menos de 3 caixas checadas, apenas adiciona
+                new_array[index] = true;
+                setSelectionOrder(prev => [...prev, index]);
+                props.setAttribute(new_array);
+            } else {
+                // Se já tem 3 caixas checadas, desseleciona a primeira checada e checa a que foi clicada
+                const firstChecked = selectionOrder[0];
+                new_array[firstChecked] = false;
+                new_array[index] = true;
+                setSelectionOrder(prev => [...prev.slice(1), index]); // Atualiza a ordem
+                props.setAttribute(new_array);
+            }
+        }
+    };
+
     return(
         <div className="
             flex flex-col justify-between items-start
             py-3
             gap-y-2">
-                
             <h1 className="
             w-full
             text-xl md:text-xl lg:lg
@@ -658,20 +677,14 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
 
                 <p className="
                 text-lg
-                text-blue-fcsn dark:text-white-off"
+                text-blue-fcsn"
                 >{ props.subtext }</p>
             
-            <div className="
-            flex flex-col
-            gap-y-2">
-            
+            <div className="flex flex-col gap-y-2">
             {props.list.map((string, index) => (
                 <div 
                 key={index} 
-                className="
-                flex flex-row
-                gap-x-2 md:gap-x-0 gap-y-2">
-                
+                className="flex flex-row gap-x-2 md:gap-x-0 gap-y-2">
                 <div className="
                     flex flex-col justify-center items-center
                     w-[3vw]
@@ -679,19 +692,8 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
                     
                     <input 
                     type="checkbox" 
-                    checked = {props.attribute[index]} 
-                    onChange={() => {
-                        const new_array = [...props.attribute];
-                        new_array[index] = !props.attribute[index];
-                        if(countODS(new_array) < 4)
-                        // NÃO PODE SELECIONAR MAIS QUE 4
-                        // TODO: se a pessoa tenta clicar em um a mais do que quatro
-                        // em vez de rejeitar, desseleciona um antigo que ela pressionou
-                        // e muda pro atual. Acho mais UX...
-                        props.setAttribute(new_array);
-                        else
-                        toast.error("Selecione no máximo 3");
-                    }} 
+                    checked={props.attribute[index]} 
+                    onChange={() => handleCheckboxChange(index)}
                     className="
                         w-[20px] 
                         h-[20px]
@@ -699,7 +701,7 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
                         cursor-pointer"/>
                 </div>
                 <h1 className="
-                    text-xl text-blue-fcsn dark:text-white-off"
+                    text-xl text-blue-fcsn"
                 >{"ODS " + (index + 1) + ": " + string}</h1>
                 </div>
             ))}
@@ -717,15 +719,34 @@ interface FileProps{
 
 export const FileInput: React.FC<FileProps> = (props) => {
     const [fileSize, setFileSize] = useState<number>(0)
+    const [isDragging, setIsDragging] = useState(false);
     
     useEffect(() => {
-        let len: number = 0;
-        for(const file in props.files){
-            len += 1;
-        }
-        setFileSize(len);
+        setFileSize(props.files.length);
     }, [props.files]);
-    // Lista de arquivo não tem len... tive que fazer eu mesmo
+
+    const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = Array.from(e.dataTransfer.files);
+        if(files?.length > 0) {
+            props.setFiles(prev => [...prev, ...files]);
+        }
+    };
     
     return(
         <div className="
@@ -740,14 +761,14 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 
                 <h1 className="
                     text-xl md:text-xl lg:lg
-                    text-blue-fcsn dark:text-white-off font-bold"
+                    text-blue-fcsn font-bold"
                 >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
                 <div></div>
                 <label className="
                     w-[35dvw] max-w-[250px] min-w-[100px] md:min-w-[160px]
                     min-h-[30px] max-h-[60px] sm:w-[40dvw] md:w-[25dvw] lg:w-[20dvw]
-                    bg-white dark:bg-blue-fcsn3
+                    bg-white 
                     justify-center text-center text-lg font-sembold text-blue-fcsn 
                     border-1 border-blue-fcsn 
                     cursor-pointer 
@@ -775,7 +796,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 flex flex-col justify-center items-start
                 w-full
                 h-[20dvh]
-                bg-white
+                bg-white 
                 border-1 border-blue-fcsn
                 rounded-t-[10px]
                 overflow-x-scroll">
