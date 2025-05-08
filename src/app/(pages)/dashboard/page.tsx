@@ -93,18 +93,22 @@ export default function DashboardPage() {
     //começo do código em si
     return (
         <div className="flex flex-col min-h-screen bg-white text-blue-fcsn">
-            <main className="flex flex-col gap-5 p-1 mx-12 md:mx-20">
+            <main className="flex flex-col gap-5 p-1 p-4 sm:p-6 md:p-10">
                 <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>  
-                <section className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right"> 
+                
+                {/* Section 1: Summary Cards */}
+                <section className="grid md:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 gap-4 text-right"> 
                     <div className="bg-white-off rounded-xl shadow-sm p-5">
                         <div className="mb-2">
-                            <h1 className="text-lg text-blue-fcsn font-light">Valor total investido em projetos</h1>  
+                            <h1 className="text-lg text-blue-fcsn font-light mb-2">
+                                Valor total investido em projetos</h1>  
                         </div>
-                        <h1 className="text-2xl text-blue-fcsn font-bold">R$9.173.461.815,00</h1>
+                        <h1 className="text-2xl text-blue-fcsn font-bold">
+                            R$9.173.461.815,00</h1>
                     </div>
-                    <div className="bg-white-off rounded-xl shadow-sm p-4">
+                    <div className="bg-white-off rounded-xl shadow-sm p-5">
                         <div className="mb-2">
-                            <h1 className="text-lg text-blue-fcsn font-light">Maior Aporte</h1>  
+                            <h1 className="text-lg text-blue-fcsn font-light mb-2">Maior Aporte</h1>  
                         </div>
                         <h1 className= "text-2xl text-blue-fcsn font-bold">R$530.000,00</h1>
                         <h1 className="text-base text-blue-fcsn font-light">Investido em Projeto X</h1>   
@@ -114,9 +118,9 @@ export default function DashboardPage() {
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
                     <div className="bg-white-off rounded-xl shadow-sm p-3">
                         <p className="text-xl font-bold">800</p>
-                        <h2 className="text-lg">Projetos no total</h2>
+                        <h2 className="text-lg mb-2">Projetos no total</h2>
                     </div>
-                    <div className="bg-white-off rounded-xl shadow-sm p-3">
+                    <div className="bg-white-off rounded-xl shadow-sm p-5">
                         <p className="text-xl font-bold">7000</p>                       
                         <h2 className="text-lg">Beneficiários diretos</h2>
                     </div>
@@ -137,36 +141,42 @@ export default function DashboardPage() {
                         <h2 className="text-lg">Municípios atendidos</h2>
                     </div>
                 </section>
-                <section className="bg-white-off rounded-xl shadow-sm p-4">
+                {/* Section 2: ODS Chart */}
+                <section className="bg-white-off rounded-xl shadow-sm p-5">
                     <h2 className="text-2xl font-bold mb-5">Objetivos de Desenvolvimento Sustentável</h2>
-                    <div className="h-100 w-full">
-                    <BarChart
-                        title=""
-                        data={odsData.values} 
-                        labels={odsData.labels} 
-                        colors={['#b37b97']}
-                        horizontal={false}
-                        useIcons={true}
-                        />
-
+                    <div className="w-full sm:overflow-x-auto md:overflow-x-hidden">
+                        <div className="h-96 min-w-[600]px md:min-w-0">
+                            <BarChart
+                                title=""
+                                data={odsData.values} 
+                                labels={odsData.labels} 
+                                colors={['#b37b97']}
+                                horizontal={false}
+                                useIcons={true}
+                            />
+                        </div>
                     </div>
                 </section>
-
-                <section className="h-250 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white-off rounded-xl shadow-sm p-5"> 
-                <h2 className=" absolute text-2xl font-bold mb-4">Estados de atuação</h2>
-                    <div className="h-250 w-full p-3">
-                        <BrazilMap data={mapData} />
+                {/* Section 3: Map and Chart */}
+                <section className="grid grid-cols-2 gap-4 bg-white-off rounded-xl shadow-sm p-5">
+                    <div className="flex flex-col sm:overflow-x-auto md:overflow-x-hidden">
+                        <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
+                            <div className="lg:h-120 md:h-100 sm:h-80 w-full p-3">
+                                <BrazilMap data={mapData} />
+                            </div>
                     </div>
-                    <div className="h-250 w-full p-3">
-
-                        <BarChart
-                            title=""
-                            data={estadosData.values}
-                            labels={estadosData.labels}
-                            colors={['#b37b97']}
-                            horizontal={true}
-                            useIcons={false}
-                        />
+                    <div className="flex flex-col">
+                        {/* box for the bar chart */}
+                        <div className="lg:h-170 md:h-120 sm:h-96 w-full">
+                            <BarChart
+                                title=""
+                                data={estadosData.values}
+                                labels={estadosData.labels}
+                                colors={['#b37b97']}
+                                horizontal={true}
+                                useIcons={false}
+                            />
+                        </div>
                     </div>
                 </section>
 
@@ -174,11 +184,11 @@ export default function DashboardPage() {
                     <div className="bg-white-off rounded-xl shadow-sm p-10">
                         <h2 className="text-2xl font-bold mb-4">Segmento do projeto</h2>
                         <div className="h-120">
-                        <PieChart 
-                        data={segmentData.values} 
-                        labels={segmentData.labels} 
-                        colors={['#e74c3c','#8e44ad','#39c2e0','#2ecc40','#f1c40f']}
-                    />
+                            <PieChart 
+                            data={segmentData.values} 
+                            labels={segmentData.labels} 
+                            colors={['#e74c3c','#8e44ad','#39c2e0','#2ecc40','#f1c40f']}
+                            />
                         </div>
                     </div>
                     <div className="bg-white-off rounded-xl shadow-sm p-5 h-full flex flex-col">
