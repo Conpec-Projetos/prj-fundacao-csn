@@ -71,7 +71,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
           <FaExclamationCircle className="text-yellow-500 mr-2" />
           <p className="text-sm text-yellow-700 dark:text-yellow-500">
             Formulário de acompanhamento pendente
-            <Link href={`/formulario/${project.id}`} className="ml-2 text-pink-fcsn dark:text-pink-light2 hover:underline">
+            <Link href={`/formulario/${project.id}`} className="ml-2 text-pink-fcsn dark:text-pink-light hover:underline">
               Preencher agora
             </Link>
           </p>
