@@ -598,12 +598,13 @@ export default function forms_acompanhamento(){
                         className="
                             w-[15dvw] min-w-[150px] max-w-[290px]
                             h-[9dvh] min-h-[50px] max-h-[75px]
-                            bg-blue-fcsn 
+                            bg-blue-fcsn dark:bg-blue-fcsn3
+                            hover:bg-blue-fcsn2 dark:hover:bg-[#4A4A5E]
                             rounded-[7px]
                             text-3xl lg:text-4xl font-bold
                             text-white
                             transition-all duration-500 ease-in-out
-                            cursor-pointer 
+                            cursor-pointer
                             ml-[3dvw] mb-10"
                     >Enviar</button>
                 </div>

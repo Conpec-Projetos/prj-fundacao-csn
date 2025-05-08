@@ -600,7 +600,7 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
                 w-full max-w-[250px] min-w-[185px]
                 h-[8dvh] max-h-[45px]
                 ml-4
-                bg-white 
+                bg-white dark:bg-blue-fcsn3
                 border-blue-fcsn border-1 
                 cursor-pointer 
                 rounded-[5px] 
@@ -677,7 +677,7 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
 
                 <p className="
                 text-lg
-                text-blue-fcsn"
+                text-blue-fcsn dark:text-white-off"
                 >{ props.subtext }</p>
             
             <div className="flex flex-col gap-y-2">
@@ -701,7 +701,7 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
                         cursor-pointer"/>
                 </div>
                 <h1 className="
-                    text-xl text-blue-fcsn"
+                    text-xl text-blue-fcsn dark:text-white-off"
                 >{"ODS " + (index + 1) + ": " + string}</h1>
                 </div>
             ))}
@@ -761,23 +761,23 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 
                 <h1 className="
                     text-xl md:text-xl lg:lg
-                    text-blue-fcsn font-bold"
+                    text-blue-fcsn dark:text-white-off font-bold"
                 >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
                 <div></div>
                 <label className="
                     w-[35dvw] max-w-[250px] min-w-[100px] md:min-w-[160px]
                     min-h-[30px] max-h-[60px] sm:w-[40dvw] md:w-[25dvw] lg:w-[20dvw]
-                    bg-white 
+                    bg-white dark:bg-blue-fcsn3
                     justify-center text-center text-lg font-sembold text-blue-fcsn 
                     border-1 border-blue-fcsn 
                     cursor-pointer 
                     rounded-[7px] 
                     mx-5"
                     >
-                        <div className="flex flex-row items-center gap-3">
-                            <Upload className="text-blue-fcsn"></Upload>
-                            <p>Adicionar Arquivo</p>
+                        <div className="flex flex-row items-center justify-center gap-3">
+                            <Upload className="text-blue-fcsn dark:text-white-off"></Upload>
+                            <p className="dark:text-white-off">Adicionar Arquivo</p>
                         </div>
 
                     <input 
@@ -796,10 +796,10 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 flex flex-col justify-center items-start
                 w-full
                 h-[20dvh]
-                bg-white 
+                bg-white dark:bg-blue-fcsn3
                 border-1 border-blue-fcsn
                 rounded-t-[10px]
-                overflow-x-scroll">
+                overflow-auto scrollbar-thin">
                 
                 <div 
                     style={{ width: `${420 * fileSize}px` }}
