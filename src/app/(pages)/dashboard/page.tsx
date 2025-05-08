@@ -116,27 +116,27 @@ export default function DashboardPage() {
                 </section>       
 
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
-                    <div className="bg-white-off dark:bg-blue-fcsn2 rounded-xl shadow-sm p-3">
+                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
                         <p className="text-xl font-bold">800</p>
                         <h2 className="text-lg mb-2">Projetos no total</h2>
                     </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn2 rounded-xl shadow-sm p-5">
+                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
                         <p className="text-xl font-bold">7000</p>                       
                         <h2 className="text-lg">Beneficiários diretos</h2>
                     </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn2 rounded-xl shadow-sm p-3">
+                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
                         <p className="text-xl font-bold">15000</p>
                         <h2 className="text-lg">Beneficiários indiretos</h2>
                     </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn2 rounded-xl shadow-sm p-3">
+                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
                         <p className="text-xl font-bold">750</p>
                         <h2 className="text-lg">Organizações envolvidas</h2>
                     </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn2 rounded-xl shadow-sm p-3">
+                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
                         <p className="text-xl font-bold">13</p>
                         <h2 className="text-lg">Estados atendidos</h2>
                     </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn2 rounded-xl shadow-sm p-3">
+                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
                         <p className="text-xl font-bold">714</p>
                         <h2 className="text-lg">Municípios atendidos</h2>
                     </div>
