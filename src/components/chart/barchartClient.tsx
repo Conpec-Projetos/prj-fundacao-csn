@@ -76,7 +76,7 @@ export default function BarChart({
   title,
   data,
   labels,
-  colors = ['#b37b97'],
+  colors = ['pink-fcsn'],
   useIcons = false,
   horizontal = false,
 }: BarChartProps) {
@@ -153,16 +153,15 @@ export default function BarChart({
     maintainAspectRatio: false, // isso precisa para que ele se ajuste ao tamanho do contêiner 
     layout: {
       padding: {
-        bottom: 80 // Space for the icons
+        bottom: useIcons ? 80 : 0, // Add space for icons if enabled
       }
     },
     plugins: {
       legend: {
-        display: false,
+        display: false, //nunca mostra a legenda
       },
       title: {
-        display: !!title,
-        text: title,
+        display: false,   //nunca mostra o título
       },
     },
     scales: {
