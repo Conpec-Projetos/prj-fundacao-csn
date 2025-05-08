@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -13,7 +13,7 @@ import {
   Chart,
   ChartOptions,
 } from 'chart.js';
-
+import { useTheme } from '@/context/themeContext';
 
 // Gradiente com base na quantidade de projetos
 export function generateGradientColors(data: number[], baseColor: string = '#b37b97'): string[] {
@@ -80,54 +80,93 @@ export default function BarChart({
   useIcons = false,
   horizontal = false,
 }: BarChartProps) {
+  const { darkMode } = useTheme(); // Access the dark mode state
+
   const chartRef = useRef<any>(null);
   const [iconsLoaded, setIconsLoaded] = useState(false);
   const iconsRef = useRef<HTMLImageElement[]>([]);
 
   // Load ODS icons
-    useEffect(() => {
-      const loadIcons = async () => {
-        const icons: HTMLImageElement[] = [];
-  
-        for (let i = 1; i <= 17; i++) {
-          const img = new Image();
-          img.src = `/ods/ods${i}.png`;
-          await new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-          });
-          icons.push(img);
-        }
-  
-        iconsRef.current = icons;
-        setIconsLoaded(true);
-      };
-  
-      loadIcons();
-    }, []);
+  useEffect(() => {
+    const loadIcons = async () => {
+      const icons: HTMLImageElement[] = [];
 
-    const iconPlugin = {
-      id: 'iconLabels',
-      afterDatasetsDraw: (chart: any) => {
-        const { ctx, scales } = chart;
-        const xAxis = scales.x;
-        const yAxis = scales.y;
-  
-        if (!xAxis || !yAxis || !iconsRef.current.length) return;
-  
-        chart.data.labels.forEach((_: any, index: number) => {
-          const icon = iconsRef.current[index];
-          if (!icon) return;
-          //alinhar os ODS
-          const x = xAxis.getPixelForValue(index);
-          const y = yAxis.bottom + 10;
-        
-          // Draw the icon centered under the bar
-          ctx.drawImage(icon, x - 30, y, 60, 60);
+      for (let i = 1; i <= 17; i++) {
+        const img = new Image();
+        img.src = `/ods/ods${i}.png`;
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
         });
+        icons.push(img);
       }
+
+      iconsRef.current = icons;
+      setIconsLoaded(true);
     };
-  
+
+    loadIcons();
+  }, []);
+
+  const iconPlugin = {
+    id: 'iconLabels',
+    afterDatasetsDraw: (chart: any) => {
+      const { ctx, scales } = chart;
+      const xAxis = scales.x;
+      const yAxis = scales.y;
+
+      if (!xAxis || !yAxis || !iconsRef.current.length) return;
+
+      chart.data.labels.forEach((_: any, index: number) => {
+        const icon = iconsRef.current[index];
+        if (!icon) return;
+        //alinhar os ODS
+        const x = xAxis.getPixelForValue(index);
+        const y = yAxis.bottom + 10;
+
+        // Draw the icon centered under the bar
+        ctx.drawImage(icon, x - 30, y, 60, 60);
+      });
+    }
+  };
+
+  // Dynamically update chart options based on dark mode
+  const options = useMemo(() => ({
+    responsive: true,
+    indexAxis: horizontal ? 'y' : 'x',
+    maintainAspectRatio: false,
+    layout: {
+      padding: {
+        bottom: useIcons ? 80 : 0,
+      },
+    },
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: false,
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          display: !useIcons,
+          color: darkMode ? '#FFFFFF' : '#292944', // White in dark mode, black in light mode
+        },
+      },
+      y: {
+        grid: { display: false },
+        ticks: {
+          display: true,
+          color: darkMode ? '#FFFFFF' : '#292944', // White in dark mode, black in light mode
+        },
+      },
+    },
+    animation: {},
+  }), [darkMode, useIcons, horizontal]); // Recreate options when darkMode changes
+
   const chartData = {
     labels: useIcons ? labels.map(() => '') : labels,
     datasets: [
@@ -135,46 +174,15 @@ export default function BarChart({
         data,
         backgroundColor: useIcons
           ? [
-            '#E5243B', '#DDA63A', '#4C9F38', '#C5192D', '#FF3A21', '#26BDE2', 
+            '#E5243B', '#DDA63A', '#4C9F38', '#C5192D', '#FF3A21', '#26BDE2',
             '#FCC30B', '#A21942', '#FD6925', '#DD1367', '#FD9D24', '#BF8B2E',
-            '#3F7E44', '#0A97D9', '#56C02B', '#00689D', '#19486A'
+            '#3F7E44', '#0A97D9', '#56C02B', '#00689D', '#19486A',
           ]
           : generateGradientColors(data, colors[0]),
         borderWidth: 1,
         borderRadius: 8,
-
       },
     ],
-  };
-
-  const options: ChartOptions<'bar'> = {
-    responsive: true,
-    indexAxis: horizontal ? 'y' : 'x', // Define a direção do gráfico ( se ele for horizontal ou)
-    maintainAspectRatio: false, // isso precisa para que ele se ajuste ao tamanho do contêiner 
-    layout: {
-      padding: {
-        bottom: useIcons ? 80 : 0, // Add space for icons if enabled
-      }
-    },
-    plugins: {
-      legend: {
-        display: false, //nunca mostra a legenda
-      },
-      title: {
-        display: false,   //nunca mostra o título
-      },
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: { display: !useIcons },
-      },
-      y: {
-        grid: { display: false },
-        ticks: { display: true },
-      },
-    },
-    animation: {},
   };
 
   return (

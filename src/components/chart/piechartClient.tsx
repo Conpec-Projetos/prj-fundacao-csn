@@ -8,6 +8,8 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import { useTheme } from '@/context/themeContext';
+import { useMemo } from 'react';
 
 ChartJS.register(
   ArcElement,
@@ -24,6 +26,7 @@ interface PieChartProps {
 export default function PieChart({data, labels, colors = [
   '#e74c3c','#8e44ad','#39c2e0','#2ecc40','#f1c40f',] }
   : PieChartProps) {
+  const { darkMode } = useTheme();
   const chartData = {
     labels,
     datasets: [
@@ -35,17 +38,21 @@ export default function PieChart({data, labels, colors = [
     ],
   };
 
-  const options = {
+
+  const options = useMemo(() => ({
     responsive: true,
     plugins: {
       legend: {
         position: 'right' as const,
+        labels: {
+          color: darkMode ? '#FFFFFF' : '#292944'
+        }
       },
       title: {
         display: true,
       },
     },
-  };
+  }), [darkMode]);
 
   return <Pie data={chartData} options={options} />;
 }
