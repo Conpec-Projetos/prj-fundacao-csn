@@ -109,54 +109,30 @@ export default function forms_acompanhamento(){
 
 
     return(
-        <main className="'
-            flex flex-col justify-between items-center
-            w-[screen]
-            h-[dvh]
-            overflow-hidden
-            no-scrollbar">
+        <main
+            className="flex flex-col justify-between items-center w-[screen] h-[dvh] overflow-hidden no-scrollbar">
             
-            
-            <div className="
-                flex flex-col items-center justify-center
-                w-full
-                h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh]
-                text-blue-fcsn text-7xl font-bold"
-            >
-                <h1 className="
-                    text-center
-                    w-[90dvw]
-                    text-wrap
-                    text-4xl sm:text-5xl lg:text-6xl xl:text-7xl
-                    transition-all duration-500 ease-in-out
-                ">Acompanhamento de projetos</h1>
+            <div
+                className="flex flex-col items-center justify-center w-full h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh] text-blue-fcsn text-7xl font-bold">
+                
+                <h1 
+                    className="text-center w-[90dvw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl transition-all duration-250 ease-in-out
+                    ">Acompanhamento de projetos</h1>
+
             </div>
             
             <form 
-                className="
-                    flex flex-col justify-center items-center 
-                    w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw]
-                    h-90/100
-                    mb-20
-                    bg-white-off 
-                    rounded-sm 
-                    shadow-md shadow-black
-                    overflow-hidden
-                    no-scrollbar
-                    transition-all duration-500 ease-in-out"
+                className="flex flex-col justify-center items-center w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw] h-90/100 mb-20 bg-white-off rounded-sm shadow-md shadow-black overflow-hidden no-scrollbar transition-all duration-250 ease-in-out"
                 onSubmit={(event) => handleSubmit(event)}>
                 
 
-                <div className="
-                    flex flex-col justify-around
-                    w-11/12
-                    h-23/24
-                    my-10">
+                <div className="flex flex-col justify-around w-11/12 h-23/24 py-10">
                 {/* Nome da instituição */}
                     <NormalInput
                         text="Nome da instituição:"
                         attribute={ nome }
                         setAttribute={ setNome }
+                        isNotMandatory={false}
                     ></NormalInput>
 
                 {/* Breve descrição do prj */}
@@ -164,6 +140,7 @@ export default function forms_acompanhamento(){
                         text="Breve descrição do projeto:"
                         attribute={ descricao }
                         setAttribute={ setDescricao }
+                        isNotMandatory={false}
                     ></LongInput>
 
                 {/* Seg do Projeto */}
@@ -178,6 +155,7 @@ export default function forms_acompanhamento(){
                         ]}
                         attribute={ segmento }
                         setAttribute={ setSegmento }
+                        isNotMandatory={false}
                     ></HorizontalSelects>
 
                 {/* Lei de incentivo do prj*/}
@@ -198,6 +176,7 @@ export default function forms_acompanhamento(){
                         ]}
                         attribute={ lei }
                         setAttribute={ setLei }
+                        isNotMandatory={false}
                     ></LeiSelect>
                         
                 {/* Pontos positivos do prj */}
@@ -205,6 +184,7 @@ export default function forms_acompanhamento(){
                         text="Pontos positivos do projeto:"
                         attribute={ positivos }
                         setAttribute={ setPositivos }
+                        isNotMandatory={true}
                     ></LongInput>
 
                 {/* Pontos negtivos do prj */}
@@ -212,6 +192,7 @@ export default function forms_acompanhamento(){
                         text="Pontos negativos do projeto:" 
                         attribute={ negativos }
                         setAttribute={ setNegativos }
+                        isNotMandatory={true}
                     ></LongInput>
 
                 {/* Pontos de atenção do prj */}
@@ -219,6 +200,7 @@ export default function forms_acompanhamento(){
                         text="Pontos de atenção do projeto:"
                         attribute={ atencao }
                         setAttribute={ setAtencao }
+                        isNotMandatory={true}
                     ></LongInput>
                 
                 {/* Ambito de desenvolvimento do prj */}
@@ -231,6 +213,7 @@ export default function forms_acompanhamento(){
                         ]}
                         attribute={ ambito }
                         setAttribute={ setAmbito }
+                        isNotMandatory={false}
                     ></HorizontalSelects>
 
                 {/* Estados onde ele atua: */}
@@ -240,6 +223,7 @@ export default function forms_acompanhamento(){
                         setEstados={ setEstados }
                         cidades={ cidades }
                         setCidades={ setCidades }
+                        isNotMandatory={false}
                     ></EstadoInput>
 
                 {/* Municipios onde ele atua: */}
@@ -249,6 +233,7 @@ export default function forms_acompanhamento(){
                         setEstados={ setEstados }
                         cidades={ cidades }
                         setCidades={ setCidades }
+                        isNotMandatory={false}
                     ></CidadeInput>
 
                 {/* Especificações do territorio de atuação do prj: */}
@@ -256,6 +241,7 @@ export default function forms_acompanhamento(){
                         text="Especificações do territorio de atuação do projeto:"
                         attribute={ especificacoes }
                         setAttribute={ setEspecificacoes }
+                        isNotMandatory={false}
                     ></LongInput>
 
                 {/* Periodo de execução do prj: */}
@@ -265,6 +251,7 @@ export default function forms_acompanhamento(){
                         setFirstAttribute={ setDataComeco } 
                         secondAttribute={ dataFim } 
                         setSecondAttribute={ setDataFim }
+                        isNotMandatory={false}
                     ></DateInputs>
 
                 {/* Contrapartidas do projeto: */}
@@ -272,6 +259,7 @@ export default function forms_acompanhamento(){
                         text="Contrapartidas do projeto:" 
                         attribute={ contrapartidas } 
                         setAttribute={ setContrapartidas }
+                        isNotMandatory={false}
                     ></LongInput>
 
                 {/* Numero total de beneficiários diretos: */}
@@ -280,6 +268,7 @@ export default function forms_acompanhamento(){
                         index={0}
                         attribute={ beneficiarios }
                         setAttribute={ setBeneficiarios }
+                        isNotMandatory={false}
                     ></NumberInput>
                 
                 {/* Numero total de beneficiários indiretos: */}
@@ -288,6 +277,7 @@ export default function forms_acompanhamento(){
                         index={1}
                         attribute={ beneficiarios }
                         setAttribute={ setBeneficiarios }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* Adota politicas de diversidade?: */}
@@ -296,6 +286,7 @@ export default function forms_acompanhamento(){
                         list={["Sim", "Não"]}
                         attribute={ dei }
                         setAttribute={ setDei }
+                        isNotMandatory={false}
                     ></YesNoInput>
 
                 {/* Amarelas: */}
@@ -304,6 +295,7 @@ export default function forms_acompanhamento(){
                         index={0}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* Brancas: */}
@@ -312,6 +304,7 @@ export default function forms_acompanhamento(){
                         index={1}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* Indígenas: */}
@@ -320,6 +313,7 @@ export default function forms_acompanhamento(){
                         index={2}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* Pardas: */}
@@ -328,6 +322,7 @@ export default function forms_acompanhamento(){
                         index={3}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* Pretas: */}
@@ -336,6 +331,7 @@ export default function forms_acompanhamento(){
                         index={4}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* Mulher cis: */}
@@ -344,6 +340,7 @@ export default function forms_acompanhamento(){
                         index={5}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* Mulher trans: */}
@@ -352,6 +349,7 @@ export default function forms_acompanhamento(){
                         index={6}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* Homem cis: */}
@@ -360,6 +358,7 @@ export default function forms_acompanhamento(){
                         index={7}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* Homem trans: */}
@@ -368,6 +367,7 @@ export default function forms_acompanhamento(){
                         index={8}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* NBs: */}
@@ -376,6 +376,7 @@ export default function forms_acompanhamento(){
                         index={9}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* PCDs: */}
@@ -384,6 +385,7 @@ export default function forms_acompanhamento(){
                         index={10}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* LGBTs: */}
@@ -392,6 +394,7 @@ export default function forms_acompanhamento(){
                         index={11}
                         attribute={ etnias }
                         setAttribute={ setEtnias }
+                        isNotMandatory={false}
                     ></NumberInput>
 
                 {/* ODSs: */}
@@ -419,6 +422,7 @@ export default function forms_acompanhamento(){
                         ]}
                         attribute={ ODS }
                         setAttribute={ setODS }
+                        isNotMandatory={false}
                     ></VerticalSelects>
 
                 {/* Relato de um beneficiário: */}
@@ -426,6 +430,7 @@ export default function forms_acompanhamento(){
                         text="Breve relato de um beneficiário do projeto:" 
                         attribute={ relato } 
                         setAttribute={ setRelato }
+                        isNotMandatory={true}
                     ></LongInput>
 
                 {/* Cinco fotos: */}
@@ -433,6 +438,7 @@ export default function forms_acompanhamento(){
                         text={"Cinco fotos das atividades do projeto:"}
                         files={fotos}
                         setFiles={setFotos}
+                        isNotMandatory={false}
                     ></FileInput>
 
                 {/* Links para as website: */}
@@ -440,6 +446,7 @@ export default function forms_acompanhamento(){
                         text="Link para website:" 
                         attribute={ website } 
                         setAttribute={ setWebsite }
+                        isNotMandatory={false}
                     ></NormalInput>
 
                 {/* Links para as redes sociais */}
@@ -447,6 +454,7 @@ export default function forms_acompanhamento(){
                         text="Links para as redes sociais:" 
                         attribute={ links } 
                         setAttribute={ setLinks }
+                        isNotMandatory={false}
                     ></LongInput>
 
                 {/* Contrapartidas apresentadas e executadas: */}
@@ -454,24 +462,14 @@ export default function forms_acompanhamento(){
                         text="Contrapartidas apresentadas e contrapartidas executadas:" 
                         attribute={ executadas } 
                         setAttribute={ setExecutadas }
+                        isNotMandatory={true}
                     ></LongInput>
                     
                 </div>
                     
-                <div className="
-                    flex items-start
-                    w-full">
+                <div className="flex items-start w-full">
                     <button 
-                        className="
-                            w-[15dvw] min-w-[150px] max-w-[290px]
-                            h-[9dvh] min-h-[50px] max-h-[75px]
-                            bg-blue-fcsn 
-                            rounded-[7px]
-                            text-3xl lg:text-4xl font-bold
-                            text-white
-                            transition-all duration-500 ease-in-out
-                            cursor-pointer 
-                            ml-[3dvw] mb-10"
+                        className="w-[15dvw] min-w-[150px] max-w-[290px] h-[9dvh] min-h-[50px] max-h-[75px] bg-blue-fcsn rounded-[7px] text-3xl lg:text-4xl font-bold text-white transition-all duration-250 ease-in-out cursor-pointer ml-[3dvw] mb-10"
                     >Enviar</button>
                 </div>
             </form>
