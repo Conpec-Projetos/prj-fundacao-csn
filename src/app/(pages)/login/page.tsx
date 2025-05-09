@@ -29,7 +29,7 @@ type FormFields = z.infer<typeof schema>;
 export default function Login() {
     const router = useRouter();
 
-    const { isDarkMode } = useTheme()
+    const { darkMode } = useTheme()
 
     const [visible, setVisible] = useState<boolean>(false);
 
@@ -70,7 +70,7 @@ export default function Login() {
 
                 <div className="flex flex-col justify-center items-center h-[200px] md:h-[250px] gap-6">
                     <Image
-                        src={ isDarkMode ? logo : darkLogo}
+                        src={ darkMode ? darkLogo : logo}
                         alt="csn-logo"
                         className=""
                         priority
