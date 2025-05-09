@@ -6,7 +6,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation"
 import {toast, Toaster} from "sonner"
-import { useTheme } from "@/context/ThemeContext";
+import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 
 export default function Signin(){

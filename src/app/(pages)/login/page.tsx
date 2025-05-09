@@ -11,7 +11,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { useTheme } from "@/context/ThemeContext";
+import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 
 // zod é uma biblioteca para validar parâmetros, no caso o schema
