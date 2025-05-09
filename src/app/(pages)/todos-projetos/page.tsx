@@ -19,16 +19,16 @@ interface ProjectProps {
 
 // Componente Project
 const Project: React.FC<ProjectProps> = ({ id, name, status, value, incentiveLaw, description, ODS}) => (
-  <div className="bg-white-off rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 md:1/2 sm:1/4">
+  <div className="bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 md:1/2 sm:1/4">
     <section className="flex flex-col col-span-2 mr-2">
         <div className="flex flex-row gap-2 mb-2">
             <div className="text-2xl font-bold">{name}</div>
             <div className="mt-1">
             {status === 'aprovado' && (
-              <FaCheckCircle color="green" size={22}  />
+              <FaCheckCircle className="text-green-600 dark:text-green-500" size={22}  />
             )}
             {status === 'pendente' && (
-              <FaClockRotateLeft color="DarkOrange" size={22} />
+              <FaClockRotateLeft color="darkOrange" size={22} />
             )}
             {status === 'reprovado' && (
               <FaTimesCircle color="red" size={22}/>
@@ -37,7 +37,7 @@ const Project: React.FC<ProjectProps> = ({ id, name, status, value, incentiveLaw
         </div>
 
         <p className="mb-2 text-lg"> {value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
-        <div className=" bg-pink-fcsn rounded-2xl px-4 py-2 size-fit text-base text-center mb-2 text-white ">{incentiveLaw}</div>
+        <div className=" bg-pink-fcsn dark:bg-pink-light2 rounded-2xl px-4 py-2 size-fit text-base text-center mb-2 text-white ">{incentiveLaw}</div>
         <p className="mr-2 mt-3 text-base text-justify">{description}</p>
     </section>
 
@@ -243,17 +243,17 @@ export default function TodosProjetos(){
       <main className="flex flex-1 flex-col px-4 sm:px-8 md:px-20 lg:px-32 py-4 gap-y-10 ">
         {/* Cabeçalho */}
         <section>
-          <h1 className="text-xl md:text-3xl font-bold text-blue-fcsn mt-3">Projetos</h1>
+          <h1 className="text-xl md:text-3xl font-bold text-blue-fcsn dark:text-white mt-3">Projetos</h1>
 
           {/* Barra de pesquisa*/}
           <div  className="flex flex-row gap-x-4 mt-3">
-            <div className="bg-white-off p-2 rounded-lg shadow-md">
-              <FaSearch size={24} />
+            <div className="bg-white-off dark:bg-blue-fcsn2 p-2 rounded-lg shadow-md">
+              <FaSearch size={24}/>
             </div>      
             <input
               type="text"
               placeholder="Pesquisar..."
-              className="bg-white-off px-3 flex-1 rounded-lg shadow-md"
+              className="bg-white-off dark:bg-blue-fcsn2 px-3 flex-1 rounded-lg shadow-md"
               value={search}
               // A cada mudança (inserção de caracter mudaremos nossa variavel)
               onChange={(e) => setSearch(e.target.value)}
@@ -262,7 +262,7 @@ export default function TodosProjetos(){
 
           {/* Filtros*/}
           <div className="flex flex-row gap-x-4 mt-3">
-            <div className="bg-white-off p-2 rounded-lg shadow-md">
+            <div className="bg-white-off dark:bg-blue-fcsn2 p-2 rounded-lg shadow-md">
               <FaFilter size={24} />
             </div>
 
@@ -273,11 +273,11 @@ export default function TodosProjetos(){
             className="relative z-10"
             >
             {/* seção para passarmos o mouse e aparecer o dropdown */}
-            <div className="bg-white-off p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center gap-2"> Aplicar filtros <FaCaretDown /> </div>
+            <div className="bg-white-off dark:bg-blue-fcsn2 p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center gap-2"> Aplicar filtros <FaCaretDown /> </div>
               {/* Dropdown */}
               {isOpen && (
-                <div className="absolute top-full left-0 w-200 bg-white p-2 pl-4 rounded shadow-md z-10">
-                  <p className="text-2xl text-blue-fcsn font-bold">Filtros</p>
+                <div className="absolute top-full left-0 w-200 bg-white dark:bg-blue-fcsn2 p-2 pl-4 rounded shadow-md z-10 mt-2">
+                  <p className="text-2xl text-blue-fcsn dark:text-white-off font-bold">Filtros</p>
 
                   <p className="py-2 text-xl">Situação</p>
                    
@@ -639,8 +639,8 @@ export default function TodosProjetos(){
                       <span>ODS 17: Parcerias e Meios de Implementação</span>
                     </label>
 
-                  <button className="bg-blue-fcsn rounded-lg p-2 text-white mt-8 mb-3 ml-2 cursor-pointer" onClick={() => applyFilters()}>Aplicar filtros</button>
-                  <button className="bg-blue-fcsn rounded-lg p-2 text-white mt-8 ml-4 mb-3 cursor-pointer" onClick={() => clearFilters()}>Limpar filtros</button>
+                  <button className="bg-blue-fcsn dark:bg-blue-fcsn3 rounded-lg p-2 text-white mt-8 mb-3 ml-2 cursor-pointer" onClick={() => applyFilters()}>Aplicar filtros</button>
+                  <button className="bg-blue-fcsn dark:bg-blue-fcsn3 rounded-lg p-2 text-white mt-8 ml-4 mb-3 cursor-pointer" onClick={() => clearFilters()}>Limpar filtros</button>
                 </div>
               )}
             </div>
@@ -659,7 +659,7 @@ export default function TodosProjetos(){
                 <Project key={project.id} {...project} />
               ))
             ) : (
-              <p className="text-blue-fcsn text-xl" >Nenhum projeto encontrado com esse nome.</p>
+              <p className="text-blue-fcsn dark:text-white-off text-xl" >Nenhum projeto encontrado com esse nome.</p>
             )
           ) : ctrl === true ? (
             filteredProjects.length > 0 ? (
@@ -667,7 +667,7 @@ export default function TodosProjetos(){
                 <Project key={project.id} {...project} />
               ))
             ) : (
-              <p className="text-blue-fcsn text-xl">Nenhum projeto encontrado com esse(s) filtro(s).</p>
+              <p className="text-blue-fcsn dark:text-white-off text-xl">Nenhum projeto encontrado com esse(s) filtro(s).</p>
             )
           ) : (
             AllProjects.map(project => (
