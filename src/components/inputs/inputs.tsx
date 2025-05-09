@@ -143,11 +143,12 @@ interface HorizontalProps{
 }
 
 export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
+    const { setAttribute } = props; // Destructure specific props
     const [clicked, setClicked] = useState<number>(-1);
-    
+
     useEffect(() => {
-        props.setAttribute(clicked);
-    }, [clicked]);
+        setAttribute(clicked); // Use destructured prop
+    }, [clicked, setAttribute]); // Include only necessary dependencies
     
     return(
 
@@ -251,7 +252,8 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
                     w-full md:max-w-[270px]
                     h-[5vh] min-h-[45px] max-h-[70px]
                     bg-white
-                    border-blue-fcsn border-1
+                    border-1 border-blue-fcsn
+                    text-blue-fcsn3
                     cursor-pointer 
                     rounded-[7px]
                     transition-all duration-300 
@@ -348,7 +350,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 flex flex-col justify-center
                 w-3/5 
                 h-full 
-                border-[1px] border-blue-fcsn 
+                border-1 border-blue-fcsn 
                 rounded-[7px]">
 
                 <select 
@@ -360,10 +362,11 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                     }}} 
                     className="
                         h-1/4 
-                        bg-white 
+                        bg-white
+                        text-blue-fcsn
                         cursor-pointer 
                         pl-5 
-                        rounded-[7px]">
+                        rounded-t-[7px]">
                     
                     <option 
                         disabled 
@@ -382,7 +385,8 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 
                 <div className="
                     h-full 
-                    bg-white 
+                    bg-white
+                    text-blue-fcsn3
                     rounded-[7px] 
                     overflow-y-scroll">
                     
@@ -438,7 +442,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 w-3/5
                 h-full 
                 flex flex-col justify-center 
-                border-[1px] border-blue-fcsn 
+                border-1 border-blue-fcsn 
                 rounded-[7px]">
 
                 <select 
@@ -449,8 +453,9 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                     }}} 
                     className="
                         h-1/4 
-                        bg-white 
-                        cursor-pointer 
+                        bg-white
+                        text-blue-fcsn
+                        cursor-pointer
                         pl-5 
                         rounded-[7px]">
                     
@@ -486,6 +491,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 <div className="
                     h-full 
                     bg-white 
+                    text-blue-fcsn3
                     rounded-[7px] 
                     overflow-y-scroll">
                    
@@ -540,6 +546,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         w-[140px] 
                         bg-white 
                         cursor-text 
+                        text-blue-fcsn3
                         border-1 border-blue-fcsn 
                         rounded-[7px] 
                         transition-all duration-300 
@@ -548,6 +555,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
 
                 <h1 className="
                 text-xl
+                text-blue-fcsn
                 px-2"
                 >a</h1>
                 <input
@@ -559,6 +567,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         w-[140px] 
                         bg-white 
                         cursor-text 
+                        text-blue-fcsn3
                         border-1 border-blue-fcsn 
                         rounded-[7px]
                         transition-all duration-300 
@@ -601,7 +610,8 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
                 h-[8dvh] max-h-[45px]
                 ml-4
                 bg-white 
-                border-blue-fcsn border-1 
+                border-blue-fcsn border-1
+                text-blue-fcsn
                 cursor-pointer 
                 rounded-[5px] 
                 transition-all duration-300 
@@ -770,7 +780,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                     rounded-[7px]
                     cursor-pointer
                     transition-all
-                    ${isDragging ? 'border-blue-400 border-dashed bg-blue-50' : 'hover:bg-gray-50'}
+                    ${isDragging ? 'border-dashed bg-blue-50' : 'hover:bg-gray-50'}
                     p-4
                 `}>
                 <input 
@@ -788,7 +798,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 {fileSize === 0 ? (
                     <div className="flex flex-col items-center gap-2 text-blue-fcsn">
                         <Upload className="w-8 h-8" />
-                        <p className="text-center text-gray-400">
+                        <p className="text-center text-blue-fcsn3">
                             {isDragging ? 'Solte os arquivos aqui' : 'Clique ou arraste arquivos aqui'}
                         </p>
                     </div>
@@ -805,7 +815,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                                     hover:bg-gray-100
                                     rounded-md
                                     group">
-                                <span className="text-blue-fcsn">{file.name}</span>
+                                <span className="text-blue-fcsn3">{file.name}</span>
                                 <button
                                     onClick={(e) => {
                                         e.preventDefault();

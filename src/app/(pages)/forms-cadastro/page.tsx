@@ -329,12 +329,12 @@ export default function forms_acompanhamento(){
                     ></DateInputs>
 
                 {/* Diário Oficial */}
-                    <FileInputBlank 
+                    <FileInput 
                         text={"Diário Oficial:"}
                         files={diario_oficial}
                         setFiles={setDiarioOficial}
                         isNotMandatory={false}
-                    ></FileInputBlank>
+                    ></FileInput>
 
                 <h1 className="mt-5
                 text-xl md:text-xl lg:lg
@@ -393,12 +393,12 @@ export default function forms_acompanhamento(){
                     ></LongInput>
 
                 {/* Apresentação do projeto */}
-                    <FileInputBlank 
+                    <FileInput 
                         text={"Apresentação do projeto:"}
                         files={apresentacao}
                         setFiles={setApresentacao}
                         isNotMandatory={false}
-                    ></FileInputBlank>
+                    ></FileInput>
 
                 {/* Público beneficiado */}
                 <div className="
