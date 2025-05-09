@@ -465,8 +465,8 @@ export default function forms_acompanhamento(){
                         className="
                             w-[15dvw] min-w-[150px] max-w-[290px]
                             h-[9dvh] min-h-[50px] max-h-[75px]
-                            bg-blue-fcsn dark:bg-blue-fcsn3
-                            hover:bg-blue-fcsn2 dark:hover:bg-[#4A4A5E]
+                            bg-blue-fcsn
+                            hover:bg-blue-fcsn3
                             rounded-[7px]
                             text-3xl lg:text-4xl font-bold
                             text-white
