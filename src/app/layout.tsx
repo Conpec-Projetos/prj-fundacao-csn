@@ -34,9 +34,7 @@ export default function RootLayout({
           <Header />
           {/* Wrap children with HeaderWrapper */}
             <HeaderWrapper>
-              <div className="pt-[10vh]">
-                {children}
-              </div>
+              {children}
             </HeaderWrapper>
         </ThemeProvider>
       </body>
