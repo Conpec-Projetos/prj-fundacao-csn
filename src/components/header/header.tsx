@@ -114,7 +114,7 @@ export default function Header(){
 
                 {/* Promote user */}
                 { isPopUpOpen && (
-                    <div className="flex flex-col justify-center items-center absolute top-78 left-1 sm:top-[10.5vh] sm:left-135 rounded shadow-md bg-blue-fcsn2 max-w-[90%] w-fit h-fit max-h-[90svh] overflow-y-auto overflow-hidden">
+                    <div className="flex flex-col items-center absolute top-78 left-1 sm:top-[10.5vh] sm:left-135 rounded shadow-md bg-blue-fcsn2 max-w-[90%] w-fit h-fit max-h-[90svh] overflow-y-auto overflow-hidden">
                         {UsersToPromote.map(user => (
                             <PromoteAdmin key={user.id} id={user.id} name={user.name}/>
                         ))}
