@@ -787,7 +787,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                     rounded-[7px]
                     cursor-pointer
                     transition-all
-                    ${isDragging ? 'border-dashed bg-blue-50' : 'hover:bg-gray-50'}
+                    ${isDragging ? 'border-dashed' : 'hover:bg-gray-100 dark:hover:bg-blue-fcsn'}
                     p-4
                 `}>
                 <input 
@@ -819,7 +819,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                                     w-full
                                     py-2
                                     px-4
-                                    hover:bg-gray-100
+                                    hover:bg-gray-100 dark:hover:bg-blue-fcsn3
                                     rounded-md
                                     group">
                                 <span className="text-blue-fcsn3 dark:text-white-off">{file.name}</span>
@@ -841,7 +841,8 @@ export const FileInput: React.FC<FileProps> = (props) => {
                         ))}
                     </div>
                 )}
-            </label>
+                </label>
+            </div>
         </div>
     );
 }
