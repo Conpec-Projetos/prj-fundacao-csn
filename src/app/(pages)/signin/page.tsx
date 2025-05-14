@@ -7,7 +7,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation"
 import {toast, Toaster} from "sonner"
 import { useTheme } from "@/context/themeContext";
-import darkLogo from "@/assets/fcsn-logo-dark.svg"
+import darkLogo from "@/assets/fcsn-logo-dark.svg";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth"
 
 export default function Signin(){
     const router = useRouter();
@@ -15,22 +16,69 @@ export default function Signin(){
     const [visibleSecond, setVisibleSecond] = useState(false);
     const { darkMode } = useTheme()
 
+    // Add state for form fields
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [formError, setFormError] = useState(""); // Add this line
+
+    // Handle form submission
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setFormError(""); // Clear previous errors
+        if (!name || !email || !password || !confirmPassword) {
+            setFormError("Preencha todos os campos.");
+            return;
+        }
+        if (password !== confirmPassword) {
+            setFormError("As senhas não coincidem.");
+            return;
+        }
+        setLoading(true);
+        const auth = getAuth();
+        try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            toast.success("Conta criada com sucesso!");
+            router.push("/");
+        } catch (error: any) {
+            let message = "Erro ao criar conta.";
+            if (error.code === "auth/email-already-in-use") {
+                message = "Este email já está em uso.";
+                toast.error(message);
+            } else if (error.code === "auth/invalid-email") {
+                message = "Email inválido.";
+                setFormError(message); // Show below the logo
+                return;
+            } else if (error.code === "auth/weak-password") {
+                message = "A senha deve ter pelo menos 6 caracteres.";
+                toast.error(message);
+            } else {
+                toast.error(message);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return(
         <main className="flex flex-col justify-between items-center w-screen min-h-screen bg-pink-fcsn dark:bg-blue-fcsn">
             <Toaster richColors closeButton/>
 
             <form
-                className="flex flex-col justify-between w-full max-w-[1100px] 
+                className="flex flex-col items-center justify-between w-full max-w-[1100px] 
                         h-auto min-h-[600px] my-4 md:my-8
                         bg-white-off dark:bg-blue-fcsn2 rounded-md shadow-blue-fcsn shadow-md
                         p-4 md:p-8"
-                onSubmit={(event) => event.preventDefault()}>
+                onSubmit={handleSubmit}>
                 
                 {/* Logo */}
                 <div className="flex flex-col justify-center items-center h-auto py-4">
                     <Image
                         src={darkMode ? darkLogo : logo}
                         alt="csn-logo"
+                        width={600}
                         className=""
                         priority
                     />
@@ -38,6 +86,13 @@ export default function Signin(){
                         Fazer cadastro
                     </h1>
                 </div>
+
+                {/* Error message */}
+                {formError && (
+                    <div className="w-full max-w-[300px] flex justify-center items-center bg-red-100 dark:bg-red-fcsn rounded-md mb-2">
+                        <span className="text-red-600 dark:text-red-100 font-semibold">{formError}</span>
+                    </div>
+                )}
 
                 {/* Inputs */}
                 <div className="flex flex-col items-center space-y-4 md:space-y-6 w-full">
@@ -48,6 +103,8 @@ export default function Signin(){
                         </label>                        
                         <input
                             type="text"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
                             className="w-full h-12 md:h-14 mt-1
                                     bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn2
                                     transition-all duration-300 px-4
@@ -62,6 +119,8 @@ export default function Signin(){
                         </label>                        
                         <input
                             type="email"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
                             className="w-full h-12 md:h-14 mt-1
                                     bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn
                                     transition-all duration-300 px-4
@@ -79,6 +138,8 @@ export default function Signin(){
                             <div className="relative mt-1">
                                 <input 
                                     type={visibleFirst ? "text" : "password"}
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
                                     className="w-full h-12 md:h-14
                                             bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn
                                             transition-all duration-300 px-4 pr-10
@@ -104,6 +165,8 @@ export default function Signin(){
                             <div className="relative mt-1">
                                 <input 
                                     type={visibleSecond ? "text" : "password"}
+                                    value={confirmPassword}
+                                    onChange={e => setConfirmPassword(e.target.value)}
                                     className="w-full h-12 md:h-14
                                             bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn
                                             transition-all duration-300 px-4 pr-10
@@ -134,15 +197,17 @@ export default function Signin(){
                     </button>
                 </div>
 
-                <div className="flex justify-center items-center py-6">
+                <div className="flex justify-center w-full items-center py-6">
                     <button
                         type="submit"
+                        disabled={loading}
                         className="w-full max-w-[250px] h-12 md:h-14
                                 bg-blue-fcsn rounded-xl
                                 text-white text-lg md:text-xl font-bold
-                                cursor-pointer hover:bg-blue-fcsn2 dark:hover:bg-[#202037] transition-colors"
+                                cursor-pointer hover:bg-blue-fcsn2 dark:hover:bg-[#202037] transition-colors
+                                disabled:opacity-60"
                     >
-                        Cadastrar
+                        {loading ? "Cadastrando..." : "Cadastrar"}
                     </button>
                 </div>
             </form>
