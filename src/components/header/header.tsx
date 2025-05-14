@@ -11,13 +11,13 @@ interface promoteAdminProps {
 }
 
 const PromoteAdmin = ({ id, name }: promoteAdminProps) => (
-    <div className="flex flex-col items-center justify-center w-[98%] h-fit bg-blue-fcsn3 rounded shadow-md text-white-off text-lg font-bold m-2 text-center">
-        <span className="m-2">Você deseja promover o colaborador {name} a administrador?</span>
+    <div className="flex flex-col items-center justify-center w-[98%] h-fit bg-white-off dark:bg-blue-fcsn3 rounded shadow-md text-white-off text-md m-2 text-center">
+        <span className="m-2 text-blue-fcsn dark:text-white font-medium">Você deseja promover o colaborador {name} a administrador?</span>
         <div className="flex flex-row gap-2">
-            <button className="bg-green-500 text-white rounded-full px-4 py-2 mt-2 mb-2 cursor-pointer">
+            <button className="bg-green-500 text-white font-medium rounded-full px-4 py-2 mt-2 mb-2 cursor-pointer text-sm">
                 Promover
             </button>
-            <button className="bg-red-500 text-white rounded-full px-4 py-2 mt-2 mb-2 cursor-pointer">
+            <button className="bg-red-500 text-white font-medium rounded-full px-4 py-2 mt-2 mb-2 cursor-pointer text-sm">
                 Não promover
             </button>
         </div>
@@ -71,7 +71,7 @@ export default function Header(){
                     <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
 
                     <button onClick={() => setIsPopUpOpen(!isPopUpOpen)}
-                        className="cursor-pointer">Promover Colaborador</button>
+                        className="cursor-pointer whitespace-nowrap">Promover Colaborador</button>
                 </div>
 
                 <button className="sm:hidden" onClick={() => setIsOpen(!isOpen)}>
@@ -114,7 +114,7 @@ export default function Header(){
 
                 {/* Promote user */}
                 { isPopUpOpen && (
-                    <div className="flex flex-col items-center absolute top-78 left-1 sm:top-[10.5vh] sm:left-135 rounded shadow-md bg-blue-fcsn2 max-w-[90%] w-fit h-fit max-h-[90svh] overflow-y-auto overflow-hidden">
+                    <div className={`${isOpen ? `` : `hidden sm:block`} flex flex-col items-center absolute top-78 left-1 sm:top-[10.5vh] sm:left-135 rounded shadow-md bg-blue-fcsn dark:bg-blue-fcsn2 max-w-[90%] w-fit h-fit max-h-[90svh] overflow-y-auto overflow-hidden`}>
                         {UsersToPromote.map(user => (
                             <PromoteAdmin key={user.id} id={user.id} name={user.name}/>
                         ))}
