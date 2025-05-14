@@ -15,23 +15,21 @@ export default function Signin(){
     const [visibleFirst, setVisibleFirst] = useState(false);
     const [visibleSecond, setVisibleSecond] = useState(false);
     const { darkMode } = useTheme()
-
-    // Add state for form fields
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [formError, setFormError] = useState(""); // Add this line
-
-    // Handle form submission
+    const [formError, setFormError] = useState("");
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        setFormError(""); // Clear previous errors
+        setFormError(""); // Limpa a mensagem de erro anterior
+        // Verifica se os campos estão preenchidos
         if (!name || !email || !password || !confirmPassword) {
             setFormError("Preencha todos os campos.");
             return;
         }
+        // Verifica se as senhas são iguais
         if (password !== confirmPassword) {
             setFormError("As senhas não coincidem.");
             return;
@@ -49,7 +47,7 @@ export default function Signin(){
                 toast.error(message);
             } else if (error.code === "auth/invalid-email") {
                 message = "Email inválido.";
-                setFormError(message); // Show below the logo
+                setFormError(message);
                 return;
             } else if (error.code === "auth/weak-password") {
                 message = "A senha deve ter pelo menos 6 caracteres.";
