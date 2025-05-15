@@ -5,57 +5,66 @@ import logo from "@/assets/fcsn-logo.svg"
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation"
-import {toast, Toaster} from "sonner"
+import { Toaster } from "sonner"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth"
+import { auth } from "@/firebase/firebase-config";
+import { createUserWithEmailAndPassword } from "firebase/auth"
+
+const schema = z.object({
+    name: z.string().min(1, {message: "Nome inválido!"}),
+    email: z.string().email({message: "Email inválido!"}).min(1),
+    password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/, {message: "A senha deve ter pelo menos 6 caracteres, incluindo letras maiúsculas e minúsculas e números."}),
+    confirmPassword: z.string().min(1, {message: "Confirmação de senha inválida!"})}).superRefine((data, ctx) => {
+    if (data.password !== data.confirmPassword) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "As senhas não coincidem.",
+            path: ["confirmPassword"],
+        });
+    }
+});
+
+type FormFields = z.infer<typeof schema>;
+
+
 
 export default function Signin(){
     const router = useRouter();
     const [visibleFirst, setVisibleFirst] = useState(false);
     const [visibleSecond, setVisibleSecond] = useState(false);
-    const { darkMode } = useTheme()
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
+    const { darkMode } = useTheme();
     const [loading, setLoading] = useState(false);
-    const [formError, setFormError] = useState("");
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setFormError(""); // Limpa a mensagem de erro anterior
-        // Verifica se os campos estão preenchidos
-        if (!name || !email || !password || !confirmPassword) {
-            setFormError("Preencha todos os campos.");
-            return;
-        }
-        // Verifica se as senhas são iguais
-        if (password !== confirmPassword) {
-            setFormError("As senhas não coincidem.");
-            return;
-        }
-        setLoading(true);
-        const auth = getAuth();
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<FormFields>({ resolver: zodResolver(schema),
+        defaultValues: {
+            name: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+        },
+        mode: "onChange"
+     });
+
+    const onSubmit: SubmitHandler<FormFields> = async (data) => {
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            toast.success("Conta criada com sucesso!");
-            router.push("/");
-        } catch (error: any) {
-            let message = "Erro ao criar conta.";
-            if (error.code === "auth/email-already-in-use") {
-                message = "Este email já está em uso.";
-                toast.error(message);
-            } else if (error.code === "auth/invalid-email") {
-                message = "Email inválido.";
-                setFormError(message);
-                return;
-            } else if (error.code === "auth/weak-password") {
-                message = "A senha deve ter pelo menos 6 caracteres.";
-                toast.error(message);
-            } else {
-                toast.error(message);
+            const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+            const user = {...userCredential.user, timeout: Date.now() + (1000 * 60 * 60)};
+            
+            if(user){
+                localStorage.setItem('user', JSON.stringify(user));
+                // Guarda o id do usuário no cache para facilitar o acesso na hora de enviar formulários
+                router.push("/");
             }
-        } finally {
+            // auth está em firebase-config.ts
+        } 
+        finally {
             setLoading(false);
         }
     };
@@ -69,7 +78,7 @@ export default function Signin(){
                         h-auto min-h-[600px] my-4 md:my-8
                         bg-white-off dark:bg-blue-fcsn2 rounded-md shadow-blue-fcsn shadow-md
                         p-4 md:p-8"
-                onSubmit={handleSubmit}>
+                onSubmit={handleSubmit(onSubmit)}>
                 
                 {/* Logo */}
                 <div className="flex flex-col justify-center items-center h-auto py-4">
@@ -84,13 +93,17 @@ export default function Signin(){
                         Fazer cadastro
                     </h1>
                 </div>
-
-                {/* Error message */}
-                {formError && (
-                    <div className="w-full max-w-[300px] flex justify-center items-center bg-red-100 dark:bg-red-fcsn rounded-md mb-2">
-                        <span className="text-red-600 dark:text-red-100 font-semibold">{formError}</span>
-                    </div>
-                )}
+                {/* Mostra um erro por vez */}
+                {(() => {
+                    const firstError =
+                        errors.name?.message ||
+                        errors.email?.message ||
+                        errors.password?.message ||
+                        errors.confirmPassword?.message;
+                    return firstError ? (
+                        <div className="w-fit h-fit flex text-red-600 dark:text-zinc-50 text-lg bg-red-100 dark:bg-red-fcsn text-center items-center rounded-lg p-2 mb-3">{firstError}</div>
+                    ) : null;
+                })()}
 
                 {/* Inputs */}
                 <div className="flex flex-col items-center space-y-4 md:space-y-6 w-full">
@@ -101,8 +114,7 @@ export default function Signin(){
                         </label>                        
                         <input
                             type="text"
-                            value={name}
-                            onChange={e => setName(e.target.value)}
+                            {...register("name")}
                             className="w-full h-12 md:h-14 mt-1
                                     bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn2
                                     transition-all duration-300 px-4
@@ -117,8 +129,7 @@ export default function Signin(){
                         </label>                        
                         <input
                             type="email"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
+                            {...register("email")}
                             className="w-full h-12 md:h-14 mt-1
                                     bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn
                                     transition-all duration-300 px-4
@@ -136,8 +147,7 @@ export default function Signin(){
                             <div className="relative mt-1">
                                 <input 
                                     type={visibleFirst ? "text" : "password"}
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
+                                    {...register("password")}
                                     className="w-full h-12 md:h-14
                                             bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn
                                             transition-all duration-300 px-4 pr-10
@@ -163,8 +173,7 @@ export default function Signin(){
                             <div className="relative mt-1">
                                 <input 
                                     type={visibleSecond ? "text" : "password"}
-                                    value={confirmPassword}
-                                    onChange={e => setConfirmPassword(e.target.value)}
+                                    {...register("confirmPassword")}
                                     className="w-full h-12 md:h-14
                                             bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn
                                             transition-all duration-300 px-4 pr-10
