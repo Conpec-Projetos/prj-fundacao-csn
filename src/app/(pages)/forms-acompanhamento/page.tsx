@@ -121,7 +121,7 @@ export default function forms_acompanhamento(){
                 flex flex-col items-center justify-center
                 w-full
                 h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh]
-                text-blue-fcsn text-7xl font-bold"
+                text-blue-fcsn dark:text-white-off text-7xl font-bold"
             >
                 <h1 className="
                     text-center
@@ -138,7 +138,7 @@ export default function forms_acompanhamento(){
                     w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw]
                     h-90/100
                     mb-20
-                    bg-white-off 
+                    bg-white-off dark:bg-blue-fcsn2
                     rounded-sm 
                     shadow-md shadow-black
                     overflow-hidden
@@ -465,7 +465,8 @@ export default function forms_acompanhamento(){
                         className="
                             w-[15dvw] min-w-[150px] max-w-[290px]
                             h-[9dvh] min-h-[50px] max-h-[75px]
-                            bg-blue-fcsn 
+                            bg-blue-fcsn
+                            hover:bg-blue-fcsn3
                             rounded-[7px]
                             text-3xl lg:text-4xl font-bold
                             text-white
