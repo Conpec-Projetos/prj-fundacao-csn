@@ -16,7 +16,6 @@ import {
     FileInput,
     CidadeInput,
     GrowInput,
-    FileInputBlank
     } from "@/components/inputs/inputs";
 import { Toaster } from "sonner";
 import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
@@ -228,7 +227,7 @@ export default function forms_acompanhamento(){
 
                 {/* Email do responsável */}
                     <NormalInput
-                        text="E-mail da pessoa responsável por passar informações para a Fundação:"
+                        text="E-mail do Responsável:"
                         attribute={ email_responsavel }
                         setAttribute={ setEmailResponsavel }
                         isNotMandatory={false}
@@ -329,12 +328,12 @@ export default function forms_acompanhamento(){
                     ></DateInputs>
 
                 {/* Diário Oficial */}
-                    <FileInputBlank 
+                    <FileInput 
                         text={"Diário Oficial:"}
                         files={diario_oficial}
                         setFiles={setDiarioOficial}
                         isNotMandatory={false}
-                    ></FileInputBlank>
+                    ></FileInput>
 
                 <h1 className="mt-5
                 text-xl md:text-xl lg:lg
@@ -393,12 +392,12 @@ export default function forms_acompanhamento(){
                     ></LongInput>
 
                 {/* Apresentação do projeto */}
-                    <FileInputBlank 
+                    <FileInput
                         text={"Apresentação do projeto:"}
                         files={apresentacao}
                         setFiles={setApresentacao}
                         isNotMandatory={false}
-                    ></FileInputBlank>
+                    ></FileInput>
 
                 {/* Público beneficiado */}
                 <div className="
