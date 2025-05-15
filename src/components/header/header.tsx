@@ -11,7 +11,7 @@ export default function Header(){
 
     return(
         <div className={`${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
-            <header className="fixed flex flex-row justify-evenly w-full h-[10vh] bg-blue-fcsn">
+            <header className="fixed flex flex-row justify-evenly w-full h-[10vh] bg-blue-fcsn z-50">
                 
                 <div className="flex flex-row justify-start items-center w-[85%] text-white dark:text-white-off text-xl gap-4 sm:w-3/4 lg:w-1/2 lg:text-2xl font-bold ml-1">
                     

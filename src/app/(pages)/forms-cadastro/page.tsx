@@ -1,7 +1,7 @@
 'use client';
 import Footer from "@/components/footer/footer";
 import Header from "@/components/header/header";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import {
     NormalInput,
     ShortInput,
@@ -154,7 +154,7 @@ export default function forms_acompanhamento(){
                 flex flex-col items-center justify-center
                 w-full
                 h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh]
-                text-blue-fcsn text-7xl font-bold"
+                text-blue-fcsn dark:text-white-off text-7xl font-bold"
             >
                 <h1 className="
                     text-center
@@ -171,7 +171,7 @@ export default function forms_acompanhamento(){
                     w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw]
                     h-90/100
                     mb-20
-                    bg-white-off 
+                    bg-white-off dark:bg-blue-fcsn2
                     rounded-sm 
                     shadow-md shadow-black
                     overflow-hidden
@@ -337,7 +337,7 @@ export default function forms_acompanhamento(){
 
                 <h1 className="mt-5
                 text-xl md:text-xl lg:lg
-                text-blue-fcsn font-bold"
+                text-blue-fcsn dark:text-white-off font-bold"
                 >Dados Bancários</h1>
                 
                 <div className="flex flex-col ml-7 mr-7">
@@ -408,7 +408,7 @@ export default function forms_acompanhamento(){
                     <h1 className="
                     w-full
                     text-xl md:text-xl lg:lg
-                    text-blue-fcsn font-bold"
+                    text-blue-fcsn dark:text-white-off font-bold"
                     >Público beneficiado: <span className="text-[#B15265]">*</span></h1>
                     
                     <div className="flex flex-col gap-y-2 text-xl">
@@ -455,7 +455,7 @@ export default function forms_acompanhamento(){
                                 className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
                                 <div className=" flex flex-row gap-3 items-center">
                                     <p>Outro:</p>
-                                    <input type="text" className="bg-white w-3/4 h-[4dvh] rounded-[7px] border-1 border-blue-fcsn transition-all duration-300 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+                                    <input type="text" className="bg-white dark:bg-blue-fcsn3 w-3/4 h-[4dvh] rounded-[7px] border-1 border-blue-fcsn transition-all duration-300 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
                                 </div>
                             </div> 
                     
@@ -597,12 +597,13 @@ export default function forms_acompanhamento(){
                         className="
                             w-[15dvw] min-w-[150px] max-w-[290px]
                             h-[9dvh] min-h-[50px] max-h-[75px]
-                            bg-blue-fcsn 
+                            bg-blue-fcsn
+                            hover:bg-blue-fcsn3
                             rounded-[7px]
                             text-3xl lg:text-4xl font-bold
                             text-white
                             transition-all duration-500 ease-in-out
-                            cursor-pointer 
+                            cursor-pointer
                             ml-[3dvw] mb-10"
                     >Enviar</button>
                 </div>
