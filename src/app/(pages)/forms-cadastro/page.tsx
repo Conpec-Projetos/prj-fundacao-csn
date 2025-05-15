@@ -1,6 +1,5 @@
 'use client';
 import Footer from "@/components/footer/footer";
-import Header from "@/components/header/header";
 import { Dispatch, SetStateAction, useState } from "react";
 import {
     NormalInput,
@@ -12,11 +11,9 @@ import {
     DateInputs,
     EstadoInput,
     LeiSelect,
-    YesNoInput,
     FileInput,
     CidadeInput,
     GrowInput,
-    FileInputBlank
     } from "@/components/inputs/inputs";
 import { Toaster } from "sonner";
 import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
@@ -41,7 +38,7 @@ interface VerticalProps{
     setAttribute: Dispatch<SetStateAction<string[]>>;
 }
 
-export default function forms_acompanhamento(){
+export default function forms_cadastro(){
 
     const [nome,setNome] = useState<string>("");
     const [cnpj,setCnpj] = useState<string>("");
