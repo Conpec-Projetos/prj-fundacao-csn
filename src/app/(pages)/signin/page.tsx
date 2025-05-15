@@ -13,7 +13,7 @@ export default function Signin(){
     const router = useRouter();
     const [visibleFirst, setVisibleFirst] = useState(false);
     const [visibleSecond, setVisibleSecond] = useState(false);
-    const { isDarkMode } = useTheme()
+    const { darkMode } = useTheme()
 
     return(
         <main className="flex flex-col justify-between items-center w-screen min-h-screen bg-pink-fcsn dark:bg-blue-fcsn">
@@ -29,13 +29,13 @@ export default function Signin(){
                 {/* Logo */}
                 <div className="flex flex-col justify-center items-center h-auto py-4">
                     <Image
-                        src={isDarkMode ? logo : darkLogo}
+                        src={darkMode ? darkLogo : logo}
                         alt="csn-logo"
                         className=""
                         priority
                     />
                     <h1 className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-4xl mt-4">
-                        Fazer Cadastro
+                        Fazer cadastro
                     </h1>
                 </div>
 
