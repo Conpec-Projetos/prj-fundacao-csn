@@ -1,4 +1,5 @@
 'use client';
+import Footer from "@/components/footer/footer";
 import { useState } from "react";
 import { Toaster } from "sonner";
 import ods7 from '@/assets/ODS 7.png'
@@ -137,28 +138,89 @@ export default function ProjectDetailsPage() {
 
                 <div className="flex flex-row gap-5">
                     {/* Points of Attention */}
-                    <div className="w-[50%] flex flex-col gap-3 bg-yellow-50 p-5 rounded-2xl">
+                    <div className="w-2/5 flex flex-col gap-3 bg-yellow-50 p-5 rounded-2xl">
                         <h3 className="flex flex-row justify-between text-xl font-bold mb-2">PONTOS DE ATENÇÃO <span className="size-6"><img src = {atencao.src} alt="" /></span></h3>
                         <p className="text-gray-700">Odit minus ipsam eaque enim enim et quas. 
                             Velit odit blanditis reiciendis pariatur sit repudiandae animi rerum. 
                             Et adipisci corporis est minus veniam sed.</p>
                     </div>
 
-                    <div>
-                    {/* Diversity */}
-
+                    <div className="flex flex-col gap-3 w-3/5 bg-white-off p-5 rounded-2xl">
+                        {/* Diversity */}
+                        <div className="flex flex-row justify-between">
+                            <h3 className="text-xl font-bold mb-2">DIVERSIDADE</h3>
+                            <div className="flex flex-col items-end">
+                                <p className="text-sm">PROJETO <span className="font-bold">NÃO ADOTA</span></p>
+                                <p className="text-sm">POLÍTICAS DE DIVERSIDADE</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-row gap-1">
+                            <div className="w-1/3 border-2 border-[var(--cultura)] rounded-2xl p-2">
+                                <h4 className="font-bold">ETNIA</h4>
+                                <div className="flex flex-row justify-between">
+                                    <p>branca</p>
+                                    <p className="font-bold">200</p>
+                                </div>
+                                <div className="flex flex-row justify-between">
+                                    <p>amarela</p>
+                                    <p className="font-bold">100</p>
+                                </div>
+                                <div className="flex flex-row justify-between">
+                                    <p>indígena</p>
+                                    <p className="font-bold">9</p>
+                                </div>
+                                <div className="flex flex-row justify-between">
+                                    <p>parda</p>
+                                    <p className="font-bold">80</p>
+                                </div>
+                                <div className="flex flex-row justify-between">
+                                    <p>preta</p>
+                                    <p className="font-bold">300</p>
+                                </div>
+                            </div>
+                            <div className="w-1/3 border-2 border-[var(--cultura)] rounded-2xl p-2">
+                                <h4 className="font-bold">GÊNERO</h4>
+                                <div className="flex flex-row justify-between">
+                                    <p>mulher cis</p>
+                                    <p className="font-bold">200</p>
+                                </div>
+                                <div className="flex flex-row justify-between">
+                                    <p>mulher trans</p>
+                                    <p className="font-bold">100</p>
+                                </div>
+                                <div className="flex flex-row justify-between">
+                                    <p>homem cis</p>
+                                    <p className="font-bold">9</p>
+                                </div>
+                                <div className="flex flex-row justify-between">
+                                    <p>homem trans</p>
+                                    <p className="font-bold">80</p>
+                                </div>
+                                <div className="flex flex-row justify-between">
+                                    <p>não-binário</p>
+                                    <p className="font-bold">300</p>
+                                </div>
+                            </div>
+                            <div className="w-1/3 h-3/4 border-2 border-[var(--cultura)] rounded-2xl p-2 self-end">
+                                <h4 className="font-bold"></h4>
+                                <div className="flex flex-row justify-between mt-14">
+                                    <p>PCD's</p>
+                                    <p className="font-bold">200</p>
+                                </div>
+                                <div className="flex flex-row justify-between">
+                                    <p>LGBTQIAPN+</p>
+                                    <p className="font-bold">100</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Diversity */}
-                    <div>
-                        
-                    </div>
                 </div>
 
                 <hr className="border-gray-300 my-4" />
 
                 {/* Beneficiary Testimonial */}
-                <div>
+                <div className="w-[100%] bg-white-off p-5 rounded-2xl">
                     <h3 className="text-xl font-bold mb-2">RELATO DE BENEFICIÁRIO</h3>
                     <p className="text-gray-700">Odit minus ipsam eaque enim enim et quas. Velit odit blanditis reiciendis pariatur sit repudiandae animi rerum. Et adipisci corporis est minus veniam sed.</p>
                 </div>
@@ -166,46 +228,51 @@ export default function ProjectDetailsPage() {
                 <hr className="border-gray-300 my-4" />
 
                 {/* Institution Information */}
-                <div>
+                <div className="w-[100%] bg-white-off p-5 rounded-2xl">
                     <h3 className="text-xl font-bold mb-2">SOBRE A INSTITUIÇÃO</h3>
-                    <p className="text-gray-700"><span className="font-semibold">CNPJ:</span> 13.083.277/0001-17</p>
-                    <p className="text-gray-700"><span className="font-semibold">Representante legal:</span> Mário José de Souza</p>
-                    <p className="text-gray-700"><span className="font-semibold">Contato:</span> +55 (11) 1111-1111 | mario@instituicao.org</p>
-                    <p className="text-gray-700"><span className="font-semibold">Endereço:</span> Av. Getúlio Vargas, 192, 6o andar – Feira de Santana, BA – 49820-349</p>
-                    <p className="text-gray-700"><span className="font-semibold">Dados bancários:</span> Itaú, Agência 0000-0, CC 00000-0</p>
-                    <p className="text-gray-700"><span className="font-semibold">Observações:</span> Lorem ipsum dolor sin amet.</p>
+                    <p><span className="font-bold">CNPJ:</span> 13.083.277/0001-17</p>
+                    <p><span className="font-bold">Representante legal:</span> Mário José de Souza</p>
+                    <p><span className="font-bold">Contato:</span> +55 (11) 1111-1111 | mario@instituicao.org</p>
+                    <p><span className="font-bold">Endereço:</span> Av. Getúlio Vargas, 192, 6o andar – Feira de Santana, BA – 49820-349</p>
+                    <p><span className="font-bold">Dados bancários:</span> Itaú, Agência 0000-0, CC 00000-0</p>
+                    <p><span className="font-bold">Observações:</span> Lorem ipsum dolor sin amet.</p>
                 </div>
 
                 <hr className="border-gray-300 my-4" />
 
                 {/* Admin Notes */}
-                <div>
+                <div className="w-[100%] bg-white-off p-5 rounded-2xl">
                     <h3 className="text-xl font-bold mb-2">ANOTAÇÕES DO ADMINISTRADOR</h3>
                     <ul className="list-disc pl-5 space-y-2">
                         <li className="text-gray-700">Odit minus ipsam eaque enim enim et quas. Velit odit blanditis reiciendis pariatur sit repudiandae animi rerum. Et adipisci corporis est minus veniam sed.</li>
                         <li className="text-gray-700">Odit minus ipsam eaque enim enim et quas. Velit odit blanditis reiciendis pariatur sit repudiandae animi rerum. Et adipisci corporis est minus veniam sed.</li>
                     </ul>
                     <textarea
-                        className="w-full mt-4 p-2 border border-gray-300 rounded-md"
+                        className="w-full bg-white mt-4 p-2 border border-gray-300 rounded-md"
                         rows={3}
                         placeholder="Adicionar novas anotações..."
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                     />
+                    <div className="flex justify-center mt-2">
+                        <button className="bg-[var(--cultura)] text-white px-10 py-2 rounded-md hover:bg-blue-fcsn2 transition-colors">
+                            Adicionar
+                        </button>
+                    </div>
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-between items-center mt-6">
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                        Adicionar
-                    </button>
-                    <div className="text-gray-500">
-                        <p>Data de submissão: 24 de agosto de 2024</p>
-                        <p className="text-right">submissão 3/3</p>
+                <div className="flex justify-center mt-6">
+                    
+                    <div>
+                        <p>Data de submissão: <span className="font-bold">24 de agosto de 2024</span></p>
+                        <p className="text-center">submissão: <span className="font-bold">3/3</span></p>
                     </div>
                 </div>
             </div>
             <Toaster position="top-right" />
+
+            <Footer></Footer>
         </main>
     );
 }
