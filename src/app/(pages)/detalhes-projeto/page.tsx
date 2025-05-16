@@ -286,26 +286,30 @@ export default function ProjectDetailsPage() {
           </p>
         </div>
         <hr className="border-gray-300 my-4" />
+        
+        
         {/* Project Images */}
-        // 33% of the carousel width.
-        <Carousel
-          opts={{
-            align: "start",
-          }}
-          className="w-full max-w-sm"
-        >
-          <CarouselContent>
-            {Array.from({ length: 5 }).map((_, index) => (
-              <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                <div className="p-1">
-                  {index}
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
-        </Carousel>
+        <div className="flex justify-center relative">
+            <Carousel
+            opts={{
+                align: "start",
+                loop: true
+            }}
+            className="w-full"
+            >
+            <CarouselContent className="">
+                {Array.from({ length: 5 }).map((_, index) => (
+                <CarouselItem key={index} className="basis-1/3">
+                    <div className="flex justify-center">
+                      <img src={carrossel.src} alt="" />
+                    </div>
+                </CarouselItem>
+                ))}
+            </CarouselContent>
+            <CarouselPrevious className="absolute left-5 bg-transparent cursor-pointer" />
+            <CarouselNext className="absolute right-5 bg-transparent cursor-pointer" />
+            </Carousel>
+        </div>
 
         <hr className="border-gray-300 my-4" />
 
