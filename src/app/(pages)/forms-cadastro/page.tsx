@@ -141,7 +141,7 @@ export default function forms_acompanhamento(){
 
 
     return(
-        <main className="'
+        <main className="
             flex flex-col justify-between items-center
             w-[screen]
             h-[dvh]
@@ -392,6 +392,7 @@ export default function forms_acompanhamento(){
 
                 {/* Apresentação do projeto */}
                     <FileInput
+                    <FileInput 
                         text={"Apresentação do projeto:"}
                         files={apresentacao}
                         setFiles={setApresentacao}
