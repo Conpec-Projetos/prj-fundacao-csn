@@ -1,6 +1,5 @@
 'use client';
 import Footer from "@/components/footer/footer";
-import Header from "@/components/header/header";
 import { Dispatch, SetStateAction, useState } from "react";
 import {
     NormalInput,
@@ -16,7 +15,6 @@ import {
     FileInput,
     CidadeInput,
     GrowInput,
-    FileInputBlank
     } from "@/components/inputs/inputs";
 import { Toaster } from "sonner";
 import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
@@ -143,7 +141,7 @@ export default function forms_acompanhamento(){
 
 
     return(
-        <main className="'
+        <main className="
             flex flex-col justify-between items-center
             w-[screen]
             h-[dvh]
@@ -228,7 +226,7 @@ export default function forms_acompanhamento(){
 
                 {/* Email do responsável */}
                     <NormalInput
-                        text="E-mail da pessoa responsável por passar informações para a Fundação:"
+                        text="E-mail do Responsável:"
                         attribute={ email_responsavel }
                         setAttribute={ setEmailResponsavel }
                         isNotMandatory={false}
@@ -393,7 +391,7 @@ export default function forms_acompanhamento(){
                     ></LongInput>
 
                 {/* Apresentação do projeto */}
-                    <FileInput 
+                    <FileInput
                         text={"Apresentação do projeto:"}
                         files={apresentacao}
                         setFiles={setApresentacao}
