@@ -72,6 +72,7 @@ export default function Login() {
                     <Image
                         src={ darkMode ? darkLogo : logo}
                         alt="csn-logo"
+                        width={600}
                         className=""
                         priority
                     />
