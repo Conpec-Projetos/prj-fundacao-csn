@@ -143,11 +143,12 @@ interface HorizontalProps{
 }
 
 export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
+    const { setAttribute } = props; // Destructure specific props
     const [clicked, setClicked] = useState<number>(-1);
-    
+
     useEffect(() => {
-        props.setAttribute(clicked);
-    }, [clicked]);
+        setAttribute(clicked); // Use destructured prop
+    }, [clicked, setAttribute]); // Include only necessary dependencies
     
     return(
 
@@ -250,8 +251,11 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
                 className="
                     w-full md:max-w-[270px]
                     h-[5vh] min-h-[45px] max-h-[70px]
+
+                    text-blue-fcsn3
                     bg-white dark:bg-blue-fcsn3
                     border-blue-fcsn border-1
+
                     cursor-pointer 
                     rounded-[7px]
                     transition-all duration-300 
@@ -348,7 +352,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 flex flex-col justify-center
                 w-3/5 
                 h-full 
-                border-[1px] border-blue-fcsn 
+                border-1 border-blue-fcsn 
                 rounded-[7px]">
 
                 <select 
@@ -360,10 +364,14 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                     }}} 
                     className="
                         h-1/4 
+
+                        text-blue-fcsn
+
                         bg-white dark:bg-blue-fcsn3
+
                         cursor-pointer 
                         pl-5 
-                        rounded-[7px]">
+                        rounded-t-[7px]">
                     
                     <option 
                         disabled 
@@ -382,6 +390,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 
                 <div className="
                     h-full 
+                    text-blue-fcsn3
                     bg-white dark:bg-blue-fcsn3 
                     rounded-[7px] 
                     overflow-y-auto overflow-hidden scrollbar-thin">
@@ -438,7 +447,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 w-3/5
                 h-full 
                 flex flex-col justify-center 
-                border-[1px] border-blue-fcsn 
+                border-1 border-blue-fcsn 
                 rounded-[7px]">
 
                 <select 
@@ -449,8 +458,12 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                     }}} 
                     className="
                         h-1/4 
+
+                        text-blue-fcsn
+                        cursor-pointer
                         bg-white dark:bg-blue-fcsn3
                         cursor-pointer 
+
                         pl-5 
                         rounded-[7px]">
                     
@@ -485,7 +498,10 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 
                 <div className="
                     h-full 
+                    text-blue-fcsn3
+
                     bg-white dark:bg-blue-fcsn3
+
                     rounded-[7px] 
                     overflow-y-auto overflow-hidden scrollbar-thin">
                    
@@ -540,6 +556,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         w-[140px] 
                         bg-white dark:bg-blue-fcsn3
                         cursor-text 
+                        text-blue-fcsn3
                         border-1 border-blue-fcsn 
                         rounded-[7px] 
                         transition-all duration-300 
@@ -548,6 +565,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
 
                 <h1 className="
                 text-xl
+                text-blue-fcsn
                 px-2"
                 >a</h1>
                 <input
@@ -559,6 +577,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                         w-[140px] 
                         bg-white dark:bg-blue-fcsn3
                         cursor-text 
+                        text-blue-fcsn3
                         border-1 border-blue-fcsn 
                         rounded-[7px]
                         transition-all duration-300 
@@ -600,8 +619,11 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
                 w-full max-w-[250px] min-w-[185px]
                 h-[8dvh] max-h-[45px]
                 ml-4
+
+                text-blue-fcsn
                 bg-white dark:bg-blue-fcsn3
                 border-blue-fcsn border-1 
+                           
                 cursor-pointer 
                 rounded-[5px] 
                 transition-all duration-300 
@@ -764,67 +786,75 @@ export const FileInput: React.FC<FileProps> = (props) => {
                     text-blue-fcsn dark:text-white-off font-bold"
                 >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
-                <div></div>
-                <label className="
-                    w-[35dvw] max-w-[250px] min-w-[100px] md:min-w-[160px]
-                    min-h-[30px] max-h-[60px] sm:w-[40dvw] md:w-[25dvw] lg:w-[20dvw]
-                    bg-white dark:bg-blue-fcsn3
-                    justify-center text-center text-lg font-sembold text-blue-fcsn 
-                    border-1 border-blue-fcsn 
-                    cursor-pointer 
-                    rounded-[7px] 
-                    mx-5"
-                    >
-                        <div className="flex flex-row items-center justify-center gap-3">
-                            <Upload className="text-blue-fcsn dark:text-white-off"></Upload>
-                            <p className="dark:text-white-off">Adicionar Arquivo</p>
-                        </div>
 
-                    <input 
-                        type="file" 
-                        className="hidden" 
-                        onChange={(event) => {
-                            const files = event.target.files
-                            if(files){
-                                props.setFiles(prev => [...prev, ...Array.from(files)]);
-                            }
-                        }}/>
-                </label>
-            </div>
-            
-            <div className="
-                flex flex-col justify-center items-start
-                w-full
-                h-[20dvh]
-                bg-white dark:bg-blue-fcsn3
-                border-1 border-blue-fcsn
-                rounded-t-[10px]
-                overflow-auto scrollbar-thin">
+            <label 
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`
+                    w-full
+                    flex flex-col items-center justify-center
+                    min-h-[100px]
+                    bg-white 
+                    border-1 border-blue-fcsn
+                    rounded-[7px]
+                    cursor-pointer
+                    transition-all
+                    ${isDragging ? 'border-dashed bg-blue-50' : 'hover:bg-gray-50'}
+                    p-4
+                `}>
+                <input 
+                    type="file" 
+                    className="hidden" 
+                    multiple
+                    onChange={(event) => {
+                        const files = event.target.files;
+                        if(files){
+                            props.setFiles(prev => [...prev, ...Array.from(files)]);
+                        }
+                    }}
+                />
                 
-                <div 
-                    style={{ width: `${420 * fileSize}px` }}
-                    // Tailwind não suporta tamanhos variáveis, tive que usar css... 
-                    className="
-                        flex flex-row justify-around items-center">
-                            
-                    {props.files.map((file, index) => (
-                        <div key={index}>
-                            <img 
-                                src={URL.createObjectURL(file)} 
-                                // Cria uma imagem para o arquivo que você fez upload
-                                alt={"image " + (index + 1)} 
-                                onClick={(event) => {
-                                    event.preventDefault();
-                                    props.setFiles(prev => prev.filter(item => item !== file));
-                                }} 
+                {fileSize === 0 ? (
+                    <div className="flex flex-col items-center gap-2 text-blue-fcsn">
+                        <Upload className="w-8 h-8" />
+                        <p className="text-center text-blue-fcsn3">
+                            {isDragging ? 'Solte os arquivos aqui' : 'Clique ou arraste arquivos aqui'}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="w-full space-y-2">
+                        {props.files.map((file, index) => (
+                            <div 
+                                key={index}
                                 className="
-                                    w-[400px] 
-                                    h-[300px] 
-                                    cursor-pointer"/>
-                        </div>
-                    ))}
-                </div>
-            </div>
+                                    flex flex-row justify-between items-center
+                                    w-full
+                                    py-2
+                                    px-4
+                                    hover:bg-gray-100
+                                    rounded-md
+                                    group">
+                                <span className="text-blue-fcsn3">{file.name}</span>
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        props.setFiles(prev => prev.filter((_, i) => i !== index));
+                                    }}
+                                    className="
+                                        text-red-500
+                                        opacity-0 group-hover:opacity-100
+                                        transition-opacity
+                                        cursor-pointer
+                                        hover:text-red-700">
+                                    Remover
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </label>
         </div>
     );
 }
