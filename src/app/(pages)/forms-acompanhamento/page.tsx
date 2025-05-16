@@ -124,7 +124,7 @@ export default function forms_acompanhamento(){
                     w-[90dvw]
                     text-wrap
                     text-4xl sm:text-5xl lg:text-6xl xl:text-7xl
-                    transition-all duration-500 ease-in-out
+                    transition-all duration-250 ease-in-out
                 ">Acompanhamento de projetos</h1>
             </div>
             
@@ -139,7 +139,7 @@ export default function forms_acompanhamento(){
                     shadow-md shadow-black
                     overflow-hidden
                     no-scrollbar
-                    transition-all duration-500 ease-in-out"
+                    transition-all duration-250 ease-in-out"
                 onSubmit={(event) => handleSubmit(event)}>
                 
 

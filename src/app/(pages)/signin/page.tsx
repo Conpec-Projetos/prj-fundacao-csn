@@ -30,8 +30,6 @@ const schema = z.object({
 
 type FormFields = z.infer<typeof schema>;
 
-
-
 export default function Signin(){
     const router = useRouter();
     const [visibleFirst, setVisibleFirst] = useState(false);
@@ -81,7 +79,7 @@ export default function Signin(){
                 onSubmit={handleSubmit(onSubmit)}>
                 
                 {/* Logo */}
-                <div className="flex flex-col justify-center items-center h-auto py-4">
+                <div className="flex flex-col h-auto justify-center items-center py-4">
                     <Image
                         src={darkMode ? darkLogo : logo}
                         alt="csn-logo"
