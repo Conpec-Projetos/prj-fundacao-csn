@@ -774,6 +774,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                     text-blue-fcsn dark:text-white-off font-bold"
                 >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
+
             <label 
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
