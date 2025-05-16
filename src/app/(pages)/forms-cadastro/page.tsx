@@ -160,7 +160,7 @@ export default function forms_acompanhamento(){
                     w-[90dvw]
                     text-wrap
                     text-4xl sm:text-5xl lg:text-6xl xl:text-7xl
-                    transition-all duration-500 ease-in-out
+                    transition-all duration-250 ease-in-out
                 ">Inscrição de Projeto</h1>
             </div>
             
@@ -175,7 +175,7 @@ export default function forms_acompanhamento(){
                     shadow-md shadow-black
                     overflow-hidden
                     no-scrollbar
-                    transition-all duration-500 ease-in-out"
+                    transition-all duration-250 ease-in-out"
                 onSubmit={(event) => handleSubmit(event)}>
                 
 
@@ -415,35 +415,35 @@ export default function forms_acompanhamento(){
                             <div className="flex flex-row gap-1 items-center">  
                                 <input 
                                 type="checkbox" 
-                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
                                 <p>Crianças</p>
                             </div>
 
                             <div className="flex flex-row gap-1 items-center">  
                                 <input 
                                 type="checkbox" 
-                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
                                 <p>Adolescentes</p>
                             </div> 
 
                             <div className="flex flex-row gap-1 items-center">  
                                 <input 
                                 type="checkbox" 
-                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
                                 <p>Jovens</p>
                             </div> 
 
                             <div className="flex flex-row gap-1 items-center">  
                                 <input 
                                 type="checkbox" 
-                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
                                 <p>Adultos</p>
                             </div> 
 
                             <div className="flex flex-row gap-1 items-center">  
                                 <input 
                                 type="checkbox" 
-                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
                                 <p>Idosos</p>
                             </div>
 
@@ -451,10 +451,10 @@ export default function forms_acompanhamento(){
                             ">  
                                 <input 
                                 type="checkbox" 
-                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"/>
+                                className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
                                 <div className=" flex flex-row gap-3 items-center">
                                     <p>Outro:</p>
-                                    <input type="text" className="bg-white dark:bg-blue-fcsn3 w-3/4 h-[4dvh] rounded-[7px] border-1 border-blue-fcsn transition-all duration-300 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+                                    <input type="text" className="bg-white dark:bg-blue-fcsn3 w-3/4 h-[4dvh] rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
                                 </div>
                             </div> 
                     
@@ -601,7 +601,7 @@ export default function forms_acompanhamento(){
                             rounded-[7px]
                             text-3xl lg:text-4xl font-bold
                             text-white
-                            transition-all duration-500 ease-in-out
+                            transition-all duration-250 ease-in-out
                             cursor-pointer
                             ml-[3dvw] mb-10"
                     >Enviar</button>
