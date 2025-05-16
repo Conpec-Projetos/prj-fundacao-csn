@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaFileAlt, FaClipboardCheck, FaEdit, FaExclamationCircle, FaInfoCircle } from 'react-icons/fa';
 import Footer from '@/components/footer/footer';
-import { useTheme } from '@/context/ThemeContext';
+import { useTheme } from '@/context/themeContext';
 
 // Componente de card para projeto
 // Define the Project type
@@ -67,11 +67,11 @@ const ProjectCard = ({ project }: { project: Project }) => {
       </div>
       
       {project.pendingForm && (
-        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-200 rounded-lg flex items-center">
+        <div className="mt-4 p-3 bg-yellow-50 dark:bg-[#5A5A72] rounded-lg flex items-center">
           <FaExclamationCircle className="text-yellow-500 mr-2" />
-          <p className="text-sm text-yellow-700 ">
+          <p className="text-sm text-yellow-700 dark:text-yellow-500">
             Formulário de acompanhamento pendente
-            <Link href={`/formulario/${project.id}`} className="ml-2 text-pink-fcsn hover:underline">
+            <Link href={`/formulario/${project.id}`} className="ml-2 text-pink-fcsn dark:text-pink-light hover:underline">
               Preencher agora
             </Link>
           </p>

@@ -112,6 +112,7 @@ export default function forms_acompanhamento(){
         <main
             className="flex flex-col justify-between items-center w-[screen] h-[dvh] overflow-hidden no-scrollbar">
             
+
             <div
                 className="flex flex-col items-center justify-center w-full h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh] text-blue-fcsn text-7xl font-bold">
                 
@@ -123,6 +124,7 @@ export default function forms_acompanhamento(){
             
             <form 
                 className="flex flex-col justify-center items-center w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw] h-90/100 mb-20 bg-white-off rounded-sm shadow-md shadow-black overflow-hidden no-scrollbar transition-all duration-250 ease-in-out"
+
                 onSubmit={(event) => handleSubmit(event)}>
                 
 
@@ -469,7 +471,9 @@ export default function forms_acompanhamento(){
                     
                 <div className="flex items-start w-full">
                     <button 
+
                         className="w-[15dvw] min-w-[150px] max-w-[290px] h-[9dvh] min-h-[50px] max-h-[75px] bg-blue-fcsn rounded-[7px] text-3xl lg:text-4xl font-bold text-white transition-all duration-250 ease-in-out cursor-pointer ml-[3dvw] mb-10"
+
                     >Enviar</button>
                 </div>
             </form>
