@@ -856,6 +856,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 )}
             </label>
         </div>
+        </div>
     );
 }
 
