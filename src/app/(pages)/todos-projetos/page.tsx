@@ -239,7 +239,7 @@ export default function TodosProjetos(){
   
 
     return(
-    <div className="flex flex-col min-h-[150vh]">
+    <div className="flex flex-col min-h-[180vh]">
       <main className="flex flex-1 flex-col px-4 sm:px-8 md:px-20 lg:px-32 py-4 gap-y-10 ">
         {/* Cabeçalho */}
         <section>
@@ -273,10 +273,12 @@ export default function TodosProjetos(){
             className="relative z-10"
             >
             {/* seção para passarmos o mouse e aparecer o dropdown */}
+            
             <div className="bg-white-off dark:bg-blue-fcsn2 p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center gap-2"> Aplicar filtros <FaCaretDown /> </div>
               {/* Dropdown */}
               {isOpen && (
-                <div className="absolute top-full left-0 w-200 bg-white dark:bg-blue-fcsn2 p-2 pl-4 rounded shadow-md z-10 mt-2">
+                
+                <div className="absolute top-full left-0 w-[90vw] md:w-[700px] lg:w-[768px] xl:w-[768px]  bg-white dark:bg-blue-fcsn2 p-2 pl-4 rounded shadow-md z-10">
                   <p className="text-2xl text-blue-fcsn dark:text-white-off font-bold">Filtros</p>
 
                   <p className="py-2 text-xl">Situação</p>
