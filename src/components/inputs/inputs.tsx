@@ -247,7 +247,7 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
                 defaultValue={""}
                 onChange={(event) => {
                     props.setAttribute( Number(event.target.value) );
-                    {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}}}
+                    }}
                 className="
                     w-full md:max-w-[270px]
                     h-[5vh] min-h-[45px] max-h-[70px]
