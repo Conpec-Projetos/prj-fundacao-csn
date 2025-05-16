@@ -392,7 +392,6 @@ export default function forms_acompanhamento(){
 
                 {/* Apresentação do projeto */}
                     <FileInput
-                    <FileInput 
                         text={"Apresentação do projeto:"}
                         files={apresentacao}
                         setFiles={setApresentacao}

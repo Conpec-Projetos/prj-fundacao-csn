@@ -856,12 +856,10 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 )}
             </label>
         </div>
+        </div>
     );
 }
 
-<<<<<<< HEAD
-// 811 linhas po, vai ver é bom colocar em arquivos diferentes
-=======
 export const FileInputBlank: React.FC<FileProps> = (props) => {
     const [fileSize, setFileSize] = useState<number>(0)
     
@@ -918,4 +916,3 @@ export const FileInputBlank: React.FC<FileProps> = (props) => {
     );
 }
 // 712 linhas po, vai ver é bom colocar em arquivos diferentes
->>>>>>> 34eea98370911eb08a83b628c2e5a5a41b7ad16b
