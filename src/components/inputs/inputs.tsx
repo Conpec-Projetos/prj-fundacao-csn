@@ -17,118 +17,60 @@ interface TextProps{
 
 export const NormalInput: React.FC<TextProps> = (props) => {
     return(
-        <div className="
-            grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr]
-            md:gap-x-4
-            py-3
-            items-center">
+        <div className="grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr] md:gap-x-4 py-3 items-center">
 
-            <h1 className="
-            text-xl md:text-xl lg:lg
-            text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <input
             type="text"
             onChange={(event) => {props.setAttribute(event.target.value)}}
-            className="
-                w-full
-                h-[6dvh]
-                bg-white dark:bg-blue-fcsn3
-                rounded-[7px]
-                border-1 border-blue-fcsn
-                transition-all duration-300
-                focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
-                px-3"/>
+            className="w-full h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
         </div>
     );
 }
 
 export const GrowInput: React.FC<TextProps> = (props) => {
     return(
-        <div className="
-            grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr]
-            md:gap-x-4
-            py-3
-            items-center
-            grow">
+        <div className="grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr] md:gap-x-4 py-3 items-center grow">
 
-            <h1 className="
-            text-xl md:text-xl lg:lg
-            text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <input
             type="text"
             onChange={(event) => {props.setAttribute(event.target.value)}}
-            className="
-                w-full
-                h-[6dvh]
-                bg-white dark:bg-blue-fcsn3
-                rounded-[7px]
-                border-1 border-blue-fcsn
-                transition-all duration-300
-                focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
-                px-3"/>
+            className="w-full h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
         </div>
     );
 }
 
 export const ShortInput: React.FC<TextProps> = (props) => {
     return(
-        <div className="
-            grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr]
-            md:gap-x-4
-            py-3
-            items-center">
+        <div className="grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr] md:gap-x-4 py-3 items-center">
 
-            <h1 className="
-            text-xl md:text-xl lg:lg
-            text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <input
             type="text"
             onChange={(event) => {props.setAttribute(event.target.value)}}
-            className="
-                w-[12dvh]
-                h-[6dvh]
-                bg-white dark:bg-blue-fcsn3
-                rounded-[7px]
-                border-1 border-blue-fcsn
-                transition-all duration-300
-                focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
-                px-3"/>
+            className="w-[12dvh] h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
         </div>
     );
 }
 
 export const LongInput: React.FC<TextProps> = (props) => {
     return(
-        <div className="
-            flex flex-col justify-between
-            h-[23dvh]
-            py-3">
+        <div className="flex flex-col justify-between h-[23dvh] py-3">
                         
-            <h1 className="
-                w-full
-                text-xl md:text-xl lg:lg
-                text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="w-full text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <textarea
                 spellCheck="false"
                 onChange={(event) => {props.setAttribute(event.target.value)}}
-                className="
-                    w-full
-                    h-full
-                    bg-white dark:bg-blue-fcsn3
-                    rounded-[7px]
-                    border-1 border-blue-fcsn
-                    transition-all duration-300
-                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn
-                    px-3
-                    resize-none"
+                className="w-full h-full bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3 resize-none"
                 ></textarea>     
         </div>
     );
@@ -152,63 +94,32 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
     
     return(
 
-        <div className="
-            flex flex-col justify-center
-            h-min
-            py-6">
+        <div className="flex flex-col justify-center h-min py-6">
                         
-            <h1 className="
-            w-full
-            text-xl md:text-xl lg:lg
-            text-blue-fcsn dark:text-white-off font-bold">
+            <h1 className="w-full text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold">
                 {props.text} {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </h1>
             
-            <div className="
-                grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5
-                justify-items-start
-                w-full
-                gap-y-2 lg:gap-x-4
-                text-wrap">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 justify-items-start w-full gap-y-2 lg:gap-x-4 text-wrap">
 
                 {props.list.map((string, index) => (
                     
                     <div
                         key={index} 
-                        className="
-                            flex flex-row justify-center items-center
-                            w-fit">
+                        className="flex flex-row justify-center items-center w-fit">
 
-                        <div className="
-                            flex flex-col justify-center items-center
-                            w-[30px]
-                            h-[30px]">
+                        <div className="flex flex-col justify-center items-center w-[30px] h-[30px]">
 
                             <button
                                 onClick={(event) => {
                                     event.preventDefault();
                                     setClicked(index);
                             }}
-                            className="
-                                w-[20px]
-                                h-[20px]
-                                bg-white 
-                                cursor-pointer
-                                rounded-full
-                                border-1">
+                            className="w-[20px] h-[20px] bg-white cursor-pointer rounded-full border-1">
 
                             {clicked == index && (
-                                <div className="
-                                    flex flex-col justify-center items-center 
-                                    w-full 
-                                    h-full
-                                    rounded-full 
-                                    border-1">
-                                    <div className="
-                                        w-[10px]
-                                        h-[10px]
-                                        bg-blue-fcsn 
-                                        rounded-full"
+                                <div className="flex flex-col justify-center items-center w-full h-full rounded-full border-1">
+                                    <div className="w-[10px] h-[10px] bg-blue-fcsn rounded-full"
                                     ></div>
                                 </div>
                                 // Bolinha que aparece quando clica no input
@@ -216,10 +127,7 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
                             </button>
                         </div>
 
-                        <h1 className="
-                            w-fit
-                            text-md
-                            text-blue-fcsn dark:text-white-off"
+                        <h1 className="w-fit text-md text-blue-fcsn dark:text-white-off"
                         >{ string }</h1>
                     </div>
                 ))}
@@ -230,36 +138,16 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
 
 export const LeiSelect: React.FC<HorizontalProps> = (props) => {
     return(
-        <div className="
-            grid grid-rows-2 md:grid-rows-none md:grid-cols-[auto_1fr]
-            md:gap-x-4
-            w-full
-            py-3
-            justify-center
-            items-center">
+        <div className="grid grid-rows-2 md:grid-rows-none md:grid-cols-[auto_1fr] md:gap-x-4 w-full py-3 justify-center items-center">
                         
             <h1 className="
-                text-xl md:text-xl lg:lg
-                text-blue-fcsn dark:text-white-off font-bold"
+                text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
             <select 
                 defaultValue={""}
-                onChange={(event) => {
-                    props.setAttribute( Number(event.target.value) );
-                    }}
-                className="
-                    w-full md:max-w-[270px]
-                    h-[5vh] min-h-[45px] max-h-[70px]
-                    bg-white dark:bg-blue-fcsn3
-                    border-1 border-blue-fcsn
-                    text-blue-fcsn3
-                    cursor-pointer 
-                    rounded-[7px]
-                    transition-all duration-300 
-                    focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl 
-                    px-5">
-
+                onChange={(event) => {props.setAttribute( Number(event.target.value) )}}
+                className="w-full md:max-w-[270px] h-[5vh] min-h-[45px] max-h-[70px] text-blue-fcsn3 dark:text-white-off bg-white dark:bg-blue-fcsn3 border-blue-fcsn border-1 cursor-pointer rounded-[7px] transition-all duration-250 focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl px-5">
                 <option 
                     disabled 
                     value={""}
@@ -287,18 +175,12 @@ interface NumberProps{
 
 export const NumberInput: React.FC<NumberProps> = (props) => {
     return(
-        <div className="
-            flex flex-row justify-start items-center
-            py-3">
+        <div className="flex flex-row justify-start items-center py-3">
                         
-            <h1 className="
-                text-xl md:text-xl lg:lg
-                text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
-            <div className="
-                w-[120px]
-                flex flex-col justify-center items-center">
+            <div className="w-[120px] flex flex-col justify-center items-center">
 
                 <input
                     type="number"
@@ -308,17 +190,7 @@ export const NumberInput: React.FC<NumberProps> = (props) => {
                         new_array[props.index] = Number(event.target.value);
                         props.setAttribute(new_array);
                     }}
-                    className="
-                        w-[75px] 
-                        h-[50px] 
-                        bg-white dark:bg-blue-fcsn3
-                        rounded-[7px] 
-                        border-1 border-blue-fcsn 
-                        transition-all duration-300 
-                        focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
-                        px-3 
-                        no-spinner 
-                        text-center"/>
+                    className="w-[75px] h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3 no-spinner text-center"/>
             </div>
         </div>
     );
@@ -336,22 +208,12 @@ interface LocationProps{
 export const EstadoInput: React.FC<LocationProps> = (props) => {
     
     return(
-        <div className="
-            flex flex-row justify-between items-start 
-            h-[200px] 
-            py-3">
+        <div className="flex flex-row justify-between items-start h-[200px] py-3">
             
-            <h1 className="
-                text-xl md:text-xl lg:lg
-                text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
-            <div className="
-                flex flex-col justify-center
-                w-3/5 
-                h-full 
-                border-1 border-blue-fcsn 
-                rounded-[7px]">
+            <div className="flex flex-col justify-center w-3/5 h-full border-1 border-blue-fcsn rounded-[7px]">
 
                 <select 
                     defaultValue={""}
@@ -360,13 +222,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                             props.setEstados(prevStates => ([...prevStates, event.target.value]));
                         // Verifica se o Estado já não está na lista antes de adicionar
                     }}} 
-                    className="
-                        h-1/4 
-                        bg-white dark:bg-blue-fcsn3
-                        text-blue-fcsn
-                        cursor-pointer 
-                        pl-5 
-                        rounded-t-[7px]">
+                    className="h-1/4 text-blue-fcsn dark:text-white-off cursor-pointer bg-white dark:bg-blue-fcsn3 pl-5 rounded-t-[7px]">
                     
                     <option 
                         disabled 
@@ -381,14 +237,9 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                     ))}
                 </select>
 
-                <div className="border-[1px] border-gray-500"></div>
+                <div className="border-[1px] border-blue-fcsn3 dark:border-blue-fcsn"></div>
                 
-                <div className="
-                    h-full 
-                    bg-white dark:bg-blue-fcsn3 
-                    text-blue-fcsn3
-                    rounded-[7px] 
-                    overflow-y-auto overflow-hidden scrollbar-thin">
+                <div className="h-full text-blue-fcsn3 bg-white dark:bg-blue-fcsn3 rounded-b-[7px] overflow-y-auto overflow-hidden scrollbar-thin">
                     
                     {props.estados.map((estado, index) => (
                         <button
@@ -402,9 +253,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                                     return prev.filter(item => !cidadesDoEstado.has(item));
                                 });
                             }}
-                        className="
-                            cursor-pointer
-                            px-2"
+                        className="cursor-pointer px-2"
                         >{estado.slice(0, -3)}</button>
                     ))}
                 </div>
@@ -428,22 +277,12 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
     // Função que pega todas as cidades dos estados selecionados
     
     return(
-        <div className="
-            flex flex-row justify-between items-start 
-            h-[200px] 
-            py-3">
+        <div className="flex flex-row justify-between items-start h-[200px] py-3">
             
-            <h1 className="
-                text-xl md:text-xl lg:lg
-                text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
-            <div className="
-                w-3/5
-                h-full 
-                flex flex-col justify-center 
-                border-1 border-blue-fcsn 
-                rounded-[7px]">
+            <div className="w-3/5 h-full flex flex-col justify-center border-1 border-blue-fcsn rounded-[7px]">
 
                 <select 
                     defaultValue={""} 
@@ -451,13 +290,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                     if(!props.cidades.includes(event.target.value)){
                         props.setCidades(prevCities => ([...prevCities, event.target.value]));
                     }}} 
-                    className="
-                        h-1/4 
-                        bg-white dark:bg-blue-fcsn3
-                        text-blue-fcsn
-                        cursor-pointer
-                        pl-5 
-                        rounded-[7px]">
+                    className="h-1/4 text-blue-fcsn dark:text-white-off cursor-pointer bg-white dark:bg-blue-fcsn3 pl-5 rounded-t-[7px]">
                     
                     <option 
                         disabled 
@@ -485,25 +318,16 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                     ))}
                 </select>
 
-                <div className="
-                    border-[1px] border-gray-500"></div>
-                
-                <div className="
-                    h-full 
-                    bg-white dark:bg-blue-fcsn3
-                    text-blue-fcsn3
-                    rounded-[7px] 
-                    overflow-y-auto overflow-hidden scrollbar-thin">
-                   
+                <div className="border-[1px] border-blue-fcsn3 dark:border-blue-fcsn"></div>
+
+                <div className="h-full text-blue-fcsn3 bg-white dark:bg-blue-fcsn3 rounded-b-[7px] overflow-y-auto overflow-hidden scrollbar-thin">
                     {props.cidades.map((cidade, index) => (
                         <button 
                             key={index} 
                             onClick={(event) => {
                                 event.preventDefault();
                                 props.setCidades(prev => prev.filter(item => item !== cidade))
-                        }} className="
-                            cursor-pointer 
-                            px-2"
+                        }} className="cursor-pointer px-2"
                         >{cidade}</button>
                     ))}
                 </div>
@@ -523,56 +347,25 @@ interface DateProps{
 
 export const DateInputs: React.FC<DateProps> = (props) => {
     return(
-        <div className="
-            flex flex-row flex-wrap justify-start items-center
-            w-full
-            py-3
-            gap-5">
+        <div className="flex flex-row flex-wrap justify-start items-center w-full py-3 gap-5">
 
-            <h1 className=" 
-                text-xl md:text-xl lg:lg
-                text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
-            <div className="
-                flex flex-row justify-start items-center       
-                w-1/2">
+            <div className="flex flex-row justify-start items-center w-1/2">
 
                 <input 
                     type="date" 
                     onChange={(event) => { props.setFirstAttribute(event.target.value)}} 
-                    className="
-                        h-[40px]
-                        w-[140px] 
-                        bg-white dark:bg-blue-fcsn3
-                        cursor-text 
-                        text-blue-fcsn3
-                        border-1 border-blue-fcsn 
-                        rounded-[7px] 
-                        transition-all duration-300 
-                        focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
-                        text-center"/>
+                    className="h-[40px] w-[140px] bg-white dark:bg-blue-fcsn3 cursor-text text-blue-fcsn3 dark:text-white-off border-1 border-blue-fcsn rounded-[7px] transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn text-center"/>
 
-                <h1 className="
-                text-xl
-                text-blue-fcsn
-                px-2"
-                >a</h1>
+                <p className="text-xl text-blue-fcsn dark:text-white-off px-2"
+                >a</p>
                 <input
 
                     type="date" 
                     onChange={(event) => { props.setSecondAttribute(event.target.value)}} 
-                    className="
-                        h-[40px]
-                        w-[140px] 
-                        bg-white dark:bg-blue-fcsn3
-                        cursor-text 
-                        text-blue-fcsn3
-                        border-1 border-blue-fcsn 
-                        rounded-[7px]
-                        transition-all duration-300 
-                        focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn 
-                        text-center"/>
+                    className="h-[40px] w-[140px] bg-white dark:bg-blue-fcsn3 cursor-text text-blue-fcsn3 dark:text-white-off border-1 border-blue-fcsn rounded-[7px] transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn text-center"/>
 
             </div>
         </div>
@@ -590,34 +383,15 @@ interface YesNoProps{
 export const YesNoInput: React.FC<YesNoProps> = (props) => {
     return(
 
-        <div className="
-            flex flex-row justify-start items-center
-            w-full
-            py-3">
+        <div className="flex flex-row justify-start items-center w-full py-3">
                 
-            <h1 className="
-            text-xl md:text-xl lg:lg
-            text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
-            <div className="
-            flex flex-col justify-center items-start
-            mr-4">
+            <div className="flex flex-col justify-center items-start mr-4">
             <select
                 defaultValue={""}
-                className="
-                w-full max-w-[250px] min-w-[185px]
-                h-[8dvh] max-h-[45px]
-                ml-4
-                bg-white dark:bg-blue-fcsn3
-                border-blue-fcsn border-1
-                text-blue-fcsn
-                cursor-pointer 
-                rounded-[5px] 
-                transition-all duration-300 
-                focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl 
-                px-5">
-
+                className="w-full max-w-[250px] min-w-[185px] h-[8dvh] max-h-[45px] ml-4 text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-blue-fcsn border-1 cursor-pointer rounded-[5px] transition-all duration-250 focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl px-5">
                 <option 
                 disabled 
                 value={""}
@@ -645,6 +419,14 @@ interface VerticalProps{
 }
 
 export const VerticalSelects: React.FC<VerticalProps> = (props) => {
+    // Garante que o array de atributos tenha o mesmo tamanho da lista e só valores booleanos
+    useEffect(() => {
+        if (props.attribute.length !== props.list.length) {
+            const newArray = props.list.map((_, i) => !!props.attribute[i]);
+            props.setAttribute(newArray);
+        }
+    }, [props.list.length, props.attribute, props.setAttribute]);
+
     // Acompanha a ordem de seleção
     const [selectionOrder, setSelectionOrder] = useState<number[]>([]);
 
@@ -675,19 +457,11 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
     };
 
     return(
-        <div className="
-            flex flex-col justify-between items-start
-            py-3
-            gap-y-2">
-            <h1 className="
-            w-full
-            text-xl md:text-xl lg:lg
-            text-blue-fcsn dark:text-white-off font-bold"
+        <div className="flex flex-col justify-between items-start py-3 gap-y-2">
+            <h1 className="w-full text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
-                <p className="
-                text-lg
-                text-blue-fcsn dark:text-white-off"
+                <p className="text-lg text-blue-fcsn dark:text-white-off"
                 >{ props.subtext }</p>
             
             <div className="flex flex-col gap-y-2">
@@ -695,23 +469,15 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
                 <div 
                 key={index} 
                 className="flex flex-row gap-x-2 md:gap-x-0 gap-y-2">
-                <div className="
-                    flex flex-col justify-center items-center
-                    w-[3vw]
-                    gap-y-2">
+                <div className="flex flex-col justify-center items-center w-[3vw] gap-y-2">
                     
                     <input 
                     type="checkbox" 
                     checked={props.attribute[index]} 
                     onChange={() => handleCheckboxChange(index)}
-                    className="
-                        w-[20px] 
-                        h-[20px]
-                        focus:ring focus:ring-blue-fcsn accent-blue-fcsn 
-                        cursor-pointer"/>
+                    className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
                 </div>
-                <h1 className="
-                    text-xl text-blue-fcsn dark:text-white-off"
+                <h1 className="text-xl text-blue-fcsn dark:text-white-off"
                 >{"ODS " + (index + 1) + ": " + string}</h1>
                 </div>
             ))}
@@ -759,19 +525,11 @@ export const FileInput: React.FC<FileProps> = (props) => {
     };
     
     return(
-        <div className="
-            flex flex-col justify-around items-center
-            h-[30dvh]
-            py-3">
+        <div className="flex flex-col justify-around items-center h-[30dvh] py-3">
 
-            <div className="
-                w-full
-                md:text-nowrap
-                flex flex-row justify-start items-center">
+            <div className="w-full md:text-nowrap flex flex-row justify-start items-center">
                 
-                <h1 className="
-                    text-xl md:text-xl lg:lg
-                    text-blue-fcsn dark:text-white-off font-bold"
+                <h1 className="text-xl md:text-xl lg:lg  text-blue-fcsn dark:text-white-off font-bold"
                 >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
 
@@ -779,17 +537,8 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`
-                    w-full
-                    flex flex-col items-center justify-center
-                    min-h-[100px]
-                    bg-white dark:bg-blue-fcsn3
-                    border-1 border-blue-fcsn
-                    rounded-[7px]
-                    cursor-pointer
-                    transition-all
-                    ${isDragging ? 'border-dashed' : 'hover:bg-gray-100 dark:hover:bg-blue-fcsn'}
-                    p-4
+                className={`w-full flex flex-col items-center justify-center min-h-[100px] bg-white dark:bg-blue-fcsn3 border-1 border-blue-fcsn rounded-[7px] cursor-pointer transition-all p-4
+                    ${isDragging ? 'border-dashed bg-blue-50' : 'hover:bg-gray-50 dark:hover:bg-blue-fcsn'}
                 `}>
                 <input 
                     type="file" 
@@ -804,8 +553,8 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 />
                 
                 {fileSize === 0 ? (
-                    <div className="flex flex-col items-center gap-2 text-blue-fcsn">
-                        <Upload className="w-8 h-8 text-blue-fcsn dark:text-white-off" />
+                    <div className="flex flex-col items-center gap-2 text-blue-fcsn dark:text-white-off">
+                        <Upload className="w-8 h-8" />
                         <p className="text-center text-blue-fcsn3 dark:text-white-off">
                             {isDragging ? 'Solte os arquivos aqui' : 'Clique ou arraste arquivos aqui'}
                         </p>
@@ -815,14 +564,7 @@ export const FileInput: React.FC<FileProps> = (props) => {
                         {props.files.map((file, index) => (
                             <div 
                                 key={index}
-                                className="
-                                    flex flex-row justify-between items-center
-                                    w-full
-                                    py-2
-                                    px-4
-                                    hover:bg-gray-100 dark:hover:bg-blue-fcsn3
-                                    rounded-md
-                                    group">
+                                className="flex flex-row justify-between items-center w-full hover:bg-gray-100 dark:hover:bg-blue-fcsn2 rounded-md group py-2 px-4">
                                 <span className="text-blue-fcsn3 dark:text-white-off">{file.name}</span>
                                 <button
                                     onClick={(e) => {
@@ -830,77 +572,15 @@ export const FileInput: React.FC<FileProps> = (props) => {
                                         e.stopPropagation();
                                         props.setFiles(prev => prev.filter((_, i) => i !== index));
                                     }}
-                                    className="
-                                        text-red-500
-                                        opacity-0 group-hover:opacity-100
-                                        transition-opacity
-                                        cursor-pointer
-                                        hover:text-red-700">
+                                    className="text-red-600 dark:text-red-50 bg-red-100 dark:bg-red-fcsn hover:bg-red-200 dark:hover:bg-red-400 rounded-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer p-[2px]">
                                     Remover
                                 </button>
                             </div>
                         ))}
                     </div>
                 )}
-                </label>
-            </div>
+            </label>
+        </div>
         </div>
     );
 }
-
-export const FileInputBlank: React.FC<FileProps> = (props) => {
-    const [fileSize, setFileSize] = useState<number>(0)
-    
-    useEffect(() => {
-        let len: number = 0;
-        for(const file in props.files){
-            len += 1;
-        }
-        setFileSize(len);
-    }, [props.files]);
-    // Lista de arquivo não tem len... tive que fazer eu mesmo
-    
-    return(
-        
-
-            <div className="
-                w-full
-                md:text-nowrap
-                flex flex-row justify-start items-center">
-                
-                <h1 className="
-                    text-xl md:text-xl lg:lg
-                    text-blue-fcsn dark:text-white-off font-bold"
-                >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
-
-                <label className="
-                    w-[35dvw] max-w-[250px] min-w-[100px] md:min-w-[160px]
-                    min-h-[30px] max-h-[60px] sm:w-[40dvw] md:w-[25dvw] lg:w-[20dvw]
-                    bg-white dark:bg-blue-fcsn3 
-                    justify-center text-center text-lg font-sembold text-blue-fcsn dark:text-white-off
-                    border-1 border-blue-fcsn 
-                    cursor-pointer 
-                    rounded-[7px] 
-                    mx-5"
-                    >
-
-                        <div className="flex flex-row items-center gap-3 w-full justify-center">
-                            <Upload className="text-blue-fcsn dark:text-white-off"></Upload>
-                            <p>Adicionar Arquivo</p>
-                        </div>
-
-                    <input 
-                        type="file" 
-                        className="hidden" 
-                        onChange={(event) => {
-                            const files = event.target.files
-                            if(files){
-                                props.setFiles(prev => [...prev, ...Array.from(files)]);
-                            }
-                        }}/>
-                </label>
-            </div>
-       
-    );
-}
-// 712 linhas po, vai ver é bom colocar em arquivos diferentes
