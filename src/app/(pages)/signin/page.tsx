@@ -31,6 +31,7 @@ export default function Signin(){
                     <Image
                         src={darkMode ? darkLogo : logo}
                         alt="csn-logo"
+                        width={600}
                         className=""
                         priority
                     />

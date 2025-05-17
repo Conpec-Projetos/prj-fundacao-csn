@@ -6,6 +6,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --nacional: #B15265;
+  --cultura: #292944;
 }
 .dark header {
   @apply bg-blue-fcsn2 text-white-off;
@@ -15,6 +17,14 @@
 }
 .dark {
   @apply bg-blue-fcsn text-white-off;
+}
+
+.nacional{
+  background-color: #B15265;
+  border-radius: 5px;
+  width: 10vw;
+  color: white;
+  padding-left: 10px;
 }
 
 @theme inline {
@@ -78,7 +88,12 @@
     -moz-appearance: textfield;
   }
 
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
   }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;             /* Chrome, Safari, Opera */
+  }
+
 }
