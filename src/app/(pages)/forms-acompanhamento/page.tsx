@@ -120,7 +120,7 @@ export default function forms_acompanhamento(){
             </div>
             
             <form 
-                className="flex flex-col justify-center items-center w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw] h-90/100 mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-sm shadow-md shadow-black overflow-hidden no-scrollbar transition-all duration-250 ease-in-out"
+                className="flex flex-col justify-center items-center w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw] h-90/100 mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-sm shadow-md shadow-gray-400 dark:shadow-gray-900 overflow-hidden no-scrollbar transition-all duration-250 ease-in-out"
                 onSubmit={(event) => handleSubmit(event)}>
                 
 

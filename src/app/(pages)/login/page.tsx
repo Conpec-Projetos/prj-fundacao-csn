@@ -59,8 +59,7 @@ export default function Login() {
     
     return (
         //classname="flex justify item h w color"
-        <main className="flex flex-col justify-between items-center min-h-screen w-full bg-pink-fcsn dark:bg-blue-fcsn">
-
+        <main className="flex flex-col justify-between items-center h-screen w-screen bg-pink-fcsn dark:bg-blue-fcsn overflow-auto">
             <Toaster richColors closeButton/>
     
             <form

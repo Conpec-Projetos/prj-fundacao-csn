@@ -68,7 +68,7 @@ export default function Signin(){
     };
 
     return(
-        <main className="flex flex-col justify-between items-center w-screen min-h-screen bg-pink-fcsn dark:bg-blue-fcsn">
+        <main className="flex flex-col justify-between items-center w-screen h-screen bg-pink-fcsn dark:bg-blue-fcsn overflow-auto">
             <Toaster richColors closeButton/>
 
             <form
