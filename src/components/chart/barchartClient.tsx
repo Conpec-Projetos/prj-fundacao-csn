@@ -70,6 +70,7 @@ interface BarChartProps {
   colors?: string[];
   useIcons?: boolean;
   horizontal?: boolean;
+  celular?: boolean;
 }
 
 export default function BarChart({
@@ -79,6 +80,7 @@ export default function BarChart({
   colors = ['pink-fcsn'],
   useIcons = false,
   horizontal = false,
+  celular = false,
 }: BarChartProps) {
   const { darkMode } = useTheme(); // Access the dark mode state
 
@@ -121,11 +123,16 @@ export default function BarChart({
         const icon = iconsRef.current[index];
         if (!icon) return;
         //alinhar os ODS
-        const x = xAxis.getPixelForValue(index);
-        const y = yAxis.bottom + 10;
+        const x = !horizontal ? xAxis.getPixelForValue(index) : xAxis.left + 10;
+        const y = !horizontal ? yAxis.bottom + 10 : yAxis.getPixelForValue(index);
 
+        const iconeTamanho = Math.min(60, chart.width / 10);
         // Draw the icon centered under the bar
-        ctx.drawImage(icon, x - 30, y, 60, 60);
+        if(!horizontal) {
+        ctx.drawImage(icon, x - iconeTamanho/2, y, iconeTamanho, iconeTamanho);}
+        else {
+          ctx.drawImage(icon, x - iconeTamanho*2, y - iconeTamanho/3, iconeTamanho, iconeTamanho);
+        }
       });
     }
   };
@@ -138,6 +145,7 @@ export default function BarChart({
     layout: {
       padding: {
         bottom: useIcons ? 80 : 0,
+        left: horizontal ? (celular ? 60 : 0) : 0,
       },
     },
     plugins: {
@@ -165,7 +173,7 @@ export default function BarChart({
       },
     },
     animation: {},
-  }), [darkMode, useIcons, horizontal]); // Recreate options when darkMode changes
+  }), [darkMode, useIcons, horizontal, celular]); // Recreate options when darkMode changes
 
   const chartData = {
     labels: useIcons ? labels.map(() => '') : labels,
@@ -186,7 +194,7 @@ export default function BarChart({
   };
 
   return (
-    <div className="relative w-full h-full">
+    <div className={`relative w-full ${celular ? 'h-[800px]' : 'h-[500px]'}`}>
       <Bar
         ref={chartRef}
         data={chartData}
