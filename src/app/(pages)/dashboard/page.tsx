@@ -221,7 +221,7 @@ export default function DashboardPage() {
             Objetivos de Desenvolvimento Sustentável
           </h2>
           <div className="w-full sm:overflow-x-auto md:overflow-x-hidden">
-            <div className="h-96 min-w-[600]px md:min-w-0">
+            <div className="min-h-96 h-fit min-w-[600]px md:min-w-0">
               <BarChart
                 title=""
                 data={odsData.values}
@@ -244,7 +244,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex flex-col">
             {/* box for the bar chart */}
-            <div className="lg:h-170 md:h-120 sm:h-96 w-full">
+            <div className="min-h-96 h-fit w-full">
               <BarChart
                 title=""
                 data={estadosData.values}
