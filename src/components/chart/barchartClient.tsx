@@ -126,12 +126,12 @@ export default function BarChart({
         const x = !horizontal ? xAxis.getPixelForValue(index) : xAxis.left + 10;
         const y = !horizontal ? yAxis.bottom + 10 : yAxis.getPixelForValue(index);
 
-        const iconeTamanho = Math.min(60, chart.width / 10);
+        const iconeTamanho = !horizontal ? Math.min(60, chart.width / 20) : Math.min(60, chart.width / 8);
         // Draw the icon centered under the bar
-        if(!horizontal) {
-        ctx.drawImage(icon, x - iconeTamanho/2, y, iconeTamanho, iconeTamanho);}
-        else {
-          ctx.drawImage(icon, x - iconeTamanho*2, y - iconeTamanho/3, iconeTamanho, iconeTamanho);
+        if (!horizontal) {
+          ctx.drawImage(icon, x - iconeTamanho / 2, y, iconeTamanho, iconeTamanho);
+        } else {
+          ctx.drawImage(icon, x - iconeTamanho * 2, y - iconeTamanho / 2.5, iconeTamanho, iconeTamanho);
         }
       });
     }
@@ -144,7 +144,7 @@ export default function BarChart({
     maintainAspectRatio: false,
     layout: {
       padding: {
-        bottom: useIcons ? 80 : 0,
+        bottom: useIcons && !horizontal ? 80 : 0,
         left: horizontal ? (celular ? 60 : 0) : 0,
       },
     },
@@ -160,8 +160,8 @@ export default function BarChart({
       x: {
         grid: { display: false },
         ticks: {
-          display: !useIcons,
-          color: darkMode ? '#FFFFFF' : '#292944', // White in dark mode, black in light mode
+          display: useIcons || !horizontal,
+          color: darkMode ? '#FFFFFF' : '#292944',
         },
       },
       y: {
@@ -195,12 +195,14 @@ export default function BarChart({
 
   return (
     <div className={`relative w-full ${celular ? 'h-[800px]' : 'h-[500px]'}`}>
-      <Bar
-        ref={chartRef}
-        data={chartData}
-        options={options}
-        plugins={useIcons ? [iconPlugin] : []}
-      />
+      {(!useIcons || iconsLoaded) && (
+        <Bar
+          ref={chartRef}
+          data={chartData}
+          options={options}
+          plugins={useIcons ? [iconPlugin] : []}
+        />
+      )}
     </div>
   );
 }
