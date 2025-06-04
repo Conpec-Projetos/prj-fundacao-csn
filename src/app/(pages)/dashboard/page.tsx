@@ -235,10 +235,10 @@ export default function DashboardPage() {
           </div>
         </section>
         {/* Section 3: Map and Chart */}
-        <section className="grid grid-cols-2 gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
+        <section className={`grid ${ehCelular ? '' : 'grid-cols-2'} gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5`}>
           <div className="flex flex-col sm:overflow-x-auto md:overflow-x-hidden">
             <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
-            <div className="lg:h-120 md:h-100 sm:h-80 w-full p-3">
+            <div className={`lg:h-120 md:h-100 sm:h-80 w-full p-3 ${ehCelular ? "hidden" : ""}`}>
               <BrazilMap data={mapData} />
             </div>
           </div>
@@ -257,28 +257,31 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 ">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-10">
             <h2 className="text-2xl font-bold mb-4">Segmento do projeto</h2>
-            <div className="h-120">
+            <div className="sm:h-120 h-fit">
               <PieChart
                 data={segmentData.values}
                 labels={segmentData.labels}
                 colors={["#e74c3c", "#8e44ad", "#39c2e0", "#2ecc40", "#f1c40f"]}
+                ehCelular={ehCelular}
               />
             </div>
           </div>
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 h-full flex flex-col">
             <h2 className="text-2xl font-bold mb-4">Lei de Incentivo</h2>
-            <div className="flex-grow w-full">
-              <BarChart
-                title=""
-                colors={["#b37b97"]}
-                data={incentiveData.values}
-                labels={incentiveData.labels}
-                horizontal={true}
-                useIcons={false}
-              />
+            <div className="flex-grow w-full overflow-x-auto">
+              <div className="min-w-[350px]"> {/* Adjust min-width as needed */}
+                <BarChart
+                  title=""
+                  colors={["#b37b97"]}
+                  data={incentiveData.values}
+                  labels={incentiveData.labels}
+                  horizontal={true}
+                  useIcons={false}
+                />
+              </div>
             </div>
           </div>
         </section>
