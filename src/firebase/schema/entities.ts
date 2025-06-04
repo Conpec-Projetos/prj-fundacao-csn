@@ -21,10 +21,11 @@ export interface usuarioInt {
 export interface Projetos {
   id: string;
   nome: string;
+  municipioID: number;
   aprovado: boolean;
   ativo: boolean;
   compliance: boolean;
-  empresa: string;
+  empresa: string[];
   indicacao?: string;
   ultimoFormulario?: string;
   valorAportadoReal: number;
@@ -47,8 +48,8 @@ export interface formsCadastroDados {
   estado: string;
   nomeProjeto: string;
   website: string; 
-  valorSolicitado: number;
-  valorAportado: number;
+  valorAprovado: number;
+  valorApto: number;
   dataInicial: Timestamp;
   dataFinal: Timestamp;
   diario: File;
@@ -58,7 +59,7 @@ export interface formsCadastroDados {
   segmento: number;
   descricao: string;
   apresentacao: File;
-  publico: number;
+  publico: string[];
   ods: number[];
   beneficiariosDiretos: number;
   qtdEstados: number;   
@@ -70,6 +71,8 @@ export interface formsCadastroDados {
   contrapartidasProjeto: string;
   observacoes: string;
   termosPrivacidade: boolean;
+  compliance: string;
+  documentos: string;
 }
 
 export interface formsAcompanhamentoDados {
@@ -118,6 +121,7 @@ export interface formsAcompanhamentoDados {
 }
 
 export interface dadosEstados {
+  id: string;
   nomeEstado: string;
   qtdProjetos: number;
   qtdMunicipios: number;
@@ -127,8 +131,8 @@ export interface dadosEstados {
   beneficiariosIndiretos: number;
   qtdOrganizacoes: number;
   ods: number[];
-  segmento: number[];
-  lei: number[];
+  segmento: Map<string, number>[];
+  lei: Map<string, number>;
 }
 
 export interface dadosMunicipios {
