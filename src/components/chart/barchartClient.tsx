@@ -146,6 +146,7 @@ export default function BarChart({
       padding: {
         bottom: useIcons && !horizontal ? 80 : 0,
         left: horizontal ? (celular ? 60 : 0) : 0,
+        right: 25,
       },
     },
     plugins: {
@@ -160,7 +161,7 @@ export default function BarChart({
       x: {
         grid: { display: false },
         ticks: {
-          display: useIcons || !horizontal,
+          display: true,
           color: darkMode ? '#FFFFFF' : '#292944',
         },
       },
