@@ -174,7 +174,7 @@ export default function DashboardPage() {
               <FaCaretDown /> Aplicar Filtros
             </button>
             {isOpen && (
-              <div className="absolute right-4 top-full mt-2 min-w-[220px] max-w-xs w-fit rounded-lg bg-white shadow-lg">
+              <div className="absolute right-4 top-full mt-2 min-w-[220px] max-w-xs w-fit rounded-lg bg-white dark:bg-blue-fcsn2 shadow-lg">
                 <EstadoInputDashboard
                   text="Filtre por estado"
                   estado={estado}
