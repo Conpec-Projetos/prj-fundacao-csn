@@ -302,29 +302,29 @@ export default function DashboardPage() {
 
         {estado !== '' && (
           <section
-            className={`grid gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 ${
-              ehCelular ? '' : 'grid-cols-2'
-            }`}
+            className={`grid gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 overflow-x-auto`}
           >
-            <div className="min-h-96 h-fit w-full flex items-center justify-center">
-              <BarChart
-                title=""
-                data={estadoData["grafico1"].values}
-                labels={estadoData["grafico1"].labels}
-                colors={["#b37b97"]}
-                horizontal={false}
-                useIcons={false}
-              />
-            </div>
-            <div className="min-h-96 h-fit w-full flex items-center justify-center">
-              <BarChart
-                title=""
-                data={estadoData["grafico2"].values}
-                labels={estadoData["grafico2"].labels}
-                colors={["#b37b97"]}
-                horizontal={false}
-                useIcons={false}
-              />
+            <div className={`grid min-w-[435px] ${ehCelular ? '' : 'grid-cols-2'}`}>
+              <div className="min-h-96 h-fit w-full flex items-center justify-center">
+                <BarChart
+                  title=""
+                  data={estadoData["grafico1"].values}
+                  labels={estadoData["grafico1"].labels}
+                  colors={["#b37b97"]}
+                  horizontal={ehCelular}
+                  useIcons={false}
+                />
+              </div>
+              <div className="min-h-96 h-fit w-full flex items-center justify-center">
+                <BarChart
+                  title=""
+                  data={estadoData["grafico2"].values}
+                  labels={estadoData["grafico2"].labels}
+                  colors={["#b37b97"]}
+                  horizontal={ehCelular}
+                  useIcons={false}
+                />
+              </div>
             </div>
           </section>
         )}
