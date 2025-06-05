@@ -3,7 +3,9 @@ import Footer from "@/components/footer/footer";
 import BarChart from "@/components/chart/barchartClient";
 import PieChart from "@/components/chart/piechartClient";
 import BrazilMap from "@/components/map/brazilMap";
+import { FaCaretDown } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import { EstadoInputDashboard } from "@/components/inputs/inputs";
 
 export default function DashboardPage() {
   // Sample data for charts
@@ -144,6 +146,8 @@ export default function DashboardPage() {
   };
 
   const [ehCelular, setEhCelular] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const [estado, setEstado] = useState("");
 
   useEffect(() => {
     const lidarRedimensionamento = () => {
@@ -160,7 +164,26 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
       <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10">
-        <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+        <div className="flex flex-row items-center w-full justify-between">
+          <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+          <div className="relative"> {/* <-- Add relative here */}
+            <button
+              className="flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              <FaCaretDown /> Aplicar Filtros
+            </button>
+            {isOpen && (
+              <div className="absolute right-4 top-full mt-2 min-w-[220px] max-w-xs w-fit rounded-lg bg-white shadow-lg">
+                <EstadoInputDashboard
+                  text="Filtre por estado"
+                  estado={estado}
+                  setEstado={setEstado}
+                />
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Section 1: Summary Cards */}
         <section className="grid md:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 gap-4 text-right">

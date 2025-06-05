@@ -263,6 +263,47 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
     );
 }
 
+interface LocationDashboardProps{
+    text: string;
+    estado: string;
+    setEstado: Dispatch<SetStateAction<string>>;
+}
+
+export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) => {
+
+    return(
+        <div className="flex flex-col justify-center items-center gap-2 py-3">
+            
+            <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
+            >{ props.text}</h1>
+
+            <div className="flex flex-col justify-center w-full h-fit border-1 border-blue-fcsn rounded-[7px]">
+
+                <select 
+                    defaultValue={""}
+                    onChange={(event) => {
+                        props.setEstado(event.target.value);
+                    }} 
+                    className="h-full w-full text-blue-fcsn dark:text-white-off cursor-pointer bg-white dark:bg-blue-fcsn3 pl-5 rounded-t-[7px]">
+                    
+                    <option 
+                        disabled 
+                        value={""}
+                    >Escolha uma opção</option>
+                    
+                    {State.getStatesOfCountry("BR").map((state, index) => (
+                        <option
+                            key={index}
+                            value={[state.name, state.isoCode]}
+                        >{state.name}</option>
+                    ))}
+                </select>
+            </div>
+        
+        </div>
+    );
+}
+
 export const CidadeInput: React.FC<LocationProps> = (props) => {
         
     function getCidades(estados: string[]){
