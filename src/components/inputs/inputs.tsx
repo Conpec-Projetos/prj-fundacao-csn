@@ -268,7 +268,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
 interface LocationDashboardProps{
     text: string;
     estado: string;
-    setEstado: Dispatch<SetStateAction<string>>;
+    setEstado: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) => {

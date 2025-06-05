@@ -145,14 +145,34 @@ export default function DashboardPage() {
     AP: 45,
   };
 
+  //Dados de um estado fake
+  const estadoData = {
+    "grafico1": {
+      labels: [
+        "Pessoas Beneficiadas indiretamente",
+        "Pessoas Beneficiadas diretamente",
+        "Minorias atendidas",
+      ],
+      values: [800, 2300, 400],
+    },
+    "grafico2": {
+      labels: [
+        "Municípios abrangidos",
+        "Quantidade de projetos",
+        "Organizações envolvidas",
+      ],
+      values: [40, 30, 25],
+    }
+  };
+
   const [ehCelular, setEhCelular] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
-  const [estado, setEstado] = useState("");
+  const [estado, setEstado] = useState<string>("");
 
   useEffect(() => {
     const lidarRedimensionamento = () => {
-        setEhCelular(window.innerWidth < 640);
-    }
+      setEhCelular(window.innerWidth < 640);
+    };
     lidarRedimensionamento();
     window.addEventListener("resize", lidarRedimensionamento);
     return () => {
@@ -258,7 +278,7 @@ export default function DashboardPage() {
           </div>
         </section>
         {/* Section 3: Map and Chart */}
-        <section className={`grid ${ehCelular ? '' : 'grid-cols-2'} gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5`}>
+        {estado == '' && <section className={`grid ${ehCelular ? '' : 'grid-cols-2'} gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5`}>
           <div className="flex flex-col sm:overflow-x-auto md:overflow-x-hidden">
             <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
             <div className={`lg:h-120 md:h-100 sm:h-80 w-full p-3 ${ehCelular ? "hidden" : ""}`}>
@@ -278,7 +298,36 @@ export default function DashboardPage() {
               />
             </div>
           </div>
-        </section>
+        </section>}
+
+        {estado !== '' && (
+          <section
+            className={`grid gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 ${
+              ehCelular ? '' : 'grid-cols-2'
+            }`}
+          >
+            <div className="min-h-96 h-fit w-full flex items-center justify-center">
+              <BarChart
+                title=""
+                data={estadoData["grafico1"].values}
+                labels={estadoData["grafico1"].labels}
+                colors={["#b37b97"]}
+                horizontal={false}
+                useIcons={false}
+              />
+            </div>
+            <div className="min-h-96 h-fit w-full flex items-center justify-center">
+              <BarChart
+                title=""
+                data={estadoData["grafico2"].values}
+                labels={estadoData["grafico2"].labels}
+                colors={["#b37b97"]}
+                horizontal={false}
+                useIcons={false}
+              />
+            </div>
+          </section>
+        )}
 
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-10">
