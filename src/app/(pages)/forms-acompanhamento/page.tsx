@@ -18,7 +18,7 @@ import { Toaster } from "sonner";
 import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
 import { collection, doc, getDocs, updateDoc, addDoc, arrayUnion } from "firebase/firestore";
 import { db, storage } from "@/firebase/firebase-config";
-import { formsAcompanhamentoData } from "@/firebase/schema/entities";
+import { formsAcompanhamentoDados } from "@/firebase/schema/entities";
 
 
 export default function forms_acompanhamento(){
@@ -89,7 +89,7 @@ export default function forms_acompanhamento(){
         }
     }
 
-    const saveData = async (data: formsAcompanhamentoData) => {
+    const saveData = async (data: formsAcompanhamentoDados) => {
         const docRef = doc(db, "forms");
         await setDoc(docRef, data);
     }
