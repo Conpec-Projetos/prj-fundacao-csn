@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 export interface Associacao {
   usuarioID: string;
   projetoID: string;
@@ -50,8 +48,8 @@ export interface formsCadastroDados {
   website: string; 
   valorAprovado: number;
   valorApto: number;
-  dataInicial: Timestamp;
-  dataFinal: Timestamp;
+  dataInicial: string;
+  dataFinal: string;
   diario: File;
   banco: string;
   agencia: string;
@@ -78,7 +76,7 @@ export interface formsCadastroDados {
 export interface formsAcompanhamentoDados {
   id: string;
   projetoID: string;
-  dataResposta: Timestamp;
+  dataResposta: string;
   usuarioID: string;
   instituicao: string;
   descricao: string;
@@ -94,8 +92,8 @@ export interface formsAcompanhamentoDados {
   qtdMunicipios: number;
   municipios: string[];
   especificacaoTerritorio: string;
-  dataInicial: Timestamp;
-  dataFinal: Timestamp;
+  dataInicial: string;
+  dataFinal: string;
   contrapartidasProjeto: string;
   beneficiariosDiretos: number;
   beneficiariosIndiretos: number;
@@ -132,23 +130,23 @@ export interface dadosEstados {
   qtdOrganizacoes: number;
   ods: number[];
   segmento: Map<string, number>[];
-  lei: Map<string, number>;
+  lei: Map<string, number>[];
 }
 
-export interface dadosMunicipios {
-  id: string;
-  nomeCidade: string;
-  nomeEstado: string;
-  qtdProjetos: number;
-  valorTotal: number;
-  maiorAporte: number;
-  beneficiariosDiretos: number;
-  beneficiariosIndiretos: number;
-  qtdOrganizacoes: number;
-  ods: number[];
-  segmento: number[];
-  lei: number[];
-}
+// export interface dadosMunicipios {
+//   id: string;
+//   nomeCidade: string;
+//   nomeEstado: string;
+//   qtdProjetos: number;
+//   valorTotal: number;
+//   maiorAporte: number;
+//   beneficiariosDiretos: number;
+//   beneficiariosIndiretos: number;
+//   qtdOrganizacoes: number;
+//   ods: number[];
+//   segmento: number[];
+//   lei: number[];
+// }
 
 export interface Segmento {
   id: number;
