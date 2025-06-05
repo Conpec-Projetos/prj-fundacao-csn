@@ -5,6 +5,8 @@ import { State, City, ICity } from "country-state-city";
 import { Upload } from "lucide-react";
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
+import { AiOutlineClose } from "react-icons/ai";
+
 
 
 // Props são como parâmetros, atributos. Como uma classe
@@ -272,34 +274,37 @@ interface LocationDashboardProps{
 export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) => {
 
     return(
-        <div className="flex flex-col justify-center items-center gap-2 py-3">
+        <div className="flex flex-col justify-center items-center gap-2 py-3 mx-2">
             
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text}</h1>
+            <div className="flex flex-row justify-center items-center w-full h-fit gap-2">
+                <button onClick={() => props.setEstado("")}
+                    className="text-blue-fcsn dark:text-white-off cursor-pointer"
+                    ><AiOutlineClose /></button>
+                <div className="flex flex-col justify-center w-full h-fit border-1 border-blue-fcsn rounded-[7px]">
 
-            <div className="flex flex-col justify-center w-full h-fit border-1 border-blue-fcsn rounded-[7px]">
-
-                <select 
-                    defaultValue={""}
-                    onChange={(event) => {
-                        props.setEstado(event.target.value);
-                    }} 
-                    className="h-full w-full text-blue-fcsn dark:text-white-off cursor-pointer bg-white dark:bg-blue-fcsn3 pl-5 rounded-t-[7px]">
-                    
-                    <option 
-                        disabled 
-                        value={""}
-                    >Escolha uma opção</option>
-                    
-                    {State.getStatesOfCountry("BR").map((state, index) => (
-                        <option
-                            key={index}
-                            value={[state.name, state.isoCode]}
-                        >{state.name}</option>
-                    ))}
-                </select>
+                    <select
+                        value={props.estado}
+                        onChange={(event) => {
+                            props.setEstado(event.target.value);
+                        }} 
+                        className="h-full w-full text-blue-fcsn dark:text-white-off cursor-pointer bg-white dark:bg-blue-fcsn3 pl-5 rounded-[7px]">
+                        
+                        <option 
+                            disabled 
+                            value={""}
+                        >Escolha uma opção</option>
+                        
+                        {State.getStatesOfCountry("BR").map((state, index) => (
+                            <option
+                                key={index}
+                                value={[state.name, state.isoCode]}
+                            >{state.name}</option>
+                        ))}
+                    </select>
+                </div>
             </div>
-        
         </div>
     );
 }
