@@ -3,21 +3,22 @@ import Image from "next/image";
 import Footer from "@/components/footer/footer";
 import logo from "@/assets/fcsn-logo.svg"
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Adicionado useEffect
 import { useRouter } from "next/navigation"
-import { Toaster } from "sonner"
+import { toast, Toaster } from "sonner"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import { auth } from "@/firebase/firebase-config";
-import { createUserWithEmailAndPassword } from "firebase/auth"
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { getUserIdFromLocalStorage } from "@/lib/utils"; // Importar a função
 
 const schema = z.object({
     name: z.string().min(1, {message: "Nome inválido!"}),
     email: z.string().email({message: "Email inválido!"}).min(1),
-    password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/, {message: "A senha deve ter pelo menos 6 caracteres, incluindo letras maiúsculas e minúsculas e números."}),
+    password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/, {message: "A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas e minúsculas e números."}),
     confirmPassword: z.string().min(1, {message: "Confirmação de senha inválida!"})}).superRefine((data, ctx) => {
     if (data.password !== data.confirmPassword) {
         ctx.addIssue({
@@ -35,7 +36,20 @@ export default function Signin(){
     const [visibleFirst, setVisibleFirst] = useState(false);
     const [visibleSecond, setVisibleSecond] = useState(false);
     const { darkMode } = useTheme();
-    const [loading, setLoading] = useState(false);
+    const [loadingAuth, setLoadingAuth] = useState(false); // Renomeado para evitar conflito com o loading do form
+    const [isCheckingUser, setIsCheckingUser] = useState(true); // Estado para verificar o login
+
+    useEffect(() => {
+        const userId = getUserIdFromLocalStorage();
+        if (userId) {
+            // Se o usuário já está logado, redireciona para a home
+            router.push("/");
+        } else {
+            // Se não está logado, permite que a página de signin seja renderizada
+            setIsCheckingUser(false);
+        }
+    }, [router]);
+
     const {
         register,
         handleSubmit,
@@ -51,9 +65,10 @@ export default function Signin(){
      });
 
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
+        setLoadingAuth(true); // Inicia o loading do processo de autenticação
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-            const user = {...userCredential.user, timeout: Date.now() + (1000 * 60 * 60)};
+            const user = {...userCredential.user, timeout: Date.now() + (1000 * 60 * 60 * 12)}; // Desloga automaticamente depois de 12 horas
             
             if(user){
                 localStorage.setItem('user', JSON.stringify(user));
@@ -62,13 +77,26 @@ export default function Signin(){
             }
             // auth está em firebase-config.ts
         } 
+        catch (error: any) { // Adicionar tipo para error
+            // Tratar erros específicos do Firebase aqui, se necessário
+            if (error.code === 'auth/email-already-in-use') {
+                toast.error('Este e-mail já está em uso.');
+            } else {
+                toast.error('Erro ao criar conta. Tente novamente.');
+            }
+            console.error("Erro no cadastro:", error);
+        }
         finally {
-            setLoading(false);
+            setLoadingAuth(false); // Finaliza o loading do processo de autenticação
         }
     };
 
+    if (isCheckingUser) {
+        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>
+    }
+
     return(
-        <main className="flex flex-col justify-between items-center w-screen h-screen bg-pink-fcsn dark:bg-blue-fcsn overflow-auto">
+        <main className="flex flex-col justify-between items-center w-screen h-auto bg-pink-fcsn dark:bg-blue-fcsn overflow-auto">
             <Toaster richColors closeButton/>
 
             <form
@@ -195,7 +223,10 @@ export default function Signin(){
                 <div className="flex flex-row justify-center items-center text-sm md:text-base mt-4">
                     <span>Já tem uma conta?</span>
                     <button
-                        onClick={() => router.push("./login")}
+                        onClick={(e) => { // Adicionar 'e' e prevenir default se necessário
+                            e.preventDefault();
+                            router.push("./login");
+                        }}
                         className="text-pink-fcsn dark:text-pink-light hover:text-[#A25D80] hover:dark:text-pink-light2 mx-1 underline cursor-pointer"
                     >
                         Faça o seu login.
@@ -205,14 +236,14 @@ export default function Signin(){
                 <div className="flex justify-center w-full items-center py-6">
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loadingAuth}
                         className="w-full max-w-[250px] h-12 md:h-14
                                 bg-blue-fcsn rounded-xl
                                 text-white text-lg md:text-xl font-bold
                                 cursor-pointer hover:bg-blue-fcsn2 dark:hover:bg-[#202037] transition-colors
                                 disabled:opacity-60"
                     >
-                        {loading ? "Cadastrando..." : "Cadastrar"}
+                        {loadingAuth ? "Cadastrando..." : "Cadastrar"}
                     </button>
                 </div>
             </form>
