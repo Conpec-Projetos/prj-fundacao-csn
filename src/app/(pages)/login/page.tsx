@@ -3,7 +3,7 @@ import Image from "next/image";
 import Footer from "@/components/footer/footer";
 import logo from "@/assets/fcsn-logo.svg"
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Adicionado useEffect
 import { auth } from "@/firebase/firebase-config"
 import { useRouter } from "next/navigation"
 import {toast, Toaster} from "sonner"
@@ -13,6 +13,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
+import { getUserIdFromLocalStorage } from "@/lib/utils"; // Importar a função
 
 // zod é uma biblioteca para validar parâmetros, no caso o schema
 const schema = z.object({
@@ -28,10 +29,20 @@ type FormFields = z.infer<typeof schema>;
 
 export default function Login() {
     const router = useRouter();
-
-    const { darkMode } = useTheme()
-
+    const { darkMode } = useTheme();
     const [visible, setVisible] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const userId = getUserIdFromLocalStorage();
+        if (userId) {
+            // Se o usuário já está logado, redireciona para a home
+            router.push("/");
+        } else {
+            // Se não está logado, permite que a página de login seja renderizada
+            setIsLoading(false);
+        }
+    }, [router]);
 
     const {
         register,
@@ -43,7 +54,7 @@ export default function Login() {
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-            const user = {...userCredential.user, timeout: Date.now() + (1000 * 60 * 60)};
+            const user = {...userCredential.user, timeout: Date.now() + (1000 * 60 * 60 * 12)}; // Desloga automaticamente depois de 12 horas
             
             if(user){
                 localStorage.setItem('user', JSON.stringify(user));
@@ -56,6 +67,10 @@ export default function Login() {
             toast.error('Senha ou e-mail incorreto.');
         }
     };
+
+    if (isLoading) {
+        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>
+    }
     
     return (
         //classname="flex justify item h w color"

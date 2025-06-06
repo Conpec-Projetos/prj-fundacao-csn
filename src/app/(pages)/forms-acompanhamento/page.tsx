@@ -1,6 +1,6 @@
 'use client';
 import Footer from "@/components/footer/footer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     NormalInput, 
     LongInput,
@@ -20,9 +20,12 @@ import { collection, doc, getDocs, updateDoc, addDoc, arrayUnion } from "firebas
 import { db, storage } from "@/firebase/firebase-config";
 import { formsAcompanhamentoDados, odsList } from "@/firebase/schema/entities";
 import { toast } from "sonner";
+import { getUserIdFromLocalStorage } from "@/lib/utils"; // Importe a função
 
+export default function FormsAcompanhamento(){
+    const [isLoading, setIsLoading] = useState(true);
+    const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
 
-export default function forms_acompanhamento(){
     const [instituicao, setInstituicao] = useState<string>("");
     const [descricao, setDescricao] = useState<string>("");
     const [segmento, setSegmento] = useState<number>(-1);
@@ -47,15 +50,32 @@ export default function forms_acompanhamento(){
     const [links, setLinks] = useState<string>("");
     const [executadas, setExecutadas] = useState<string>("");
 
-    const projetoID = "some-projeto-id"; // Tem que dar um jeito para como pegar o id do projeto do qual o usuário está respondendo o forms
-    const usuarioID = "some-user-id"; // Trocar para o ID do usuário quando a parte de autenticação estiver pronta
+    useEffect(() => {
+        const userId = getUserIdFromLocalStorage();
+        if (!userId) {
+            // A função getUserIdFromLocalStorage redireciona para a página de login caso retorne null
+            // Apenas definimos isLoading como false para evitar renderizar o conteúdo da página
+            setIsLoading(false); 
+        } else {
+            setUsuarioAtualID(userId);
+            setIsLoading(false);
+        }
+    }, []);
+
+    const projetoID = "ID-do-Projeto"; // Tem que fazer uma lógica para conseguir o ID do respectivo projeto ao qual o forms de acompanhamento está se referindo
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        toast.loading("Enviando formulário...");
+
+        if (!usuarioAtualID) {
+            toast.error("Usuário não autenticado. Por favor, faça login.");
+            // if (typeof window !== "undefined") window.location.href = "/login";
+            return;
+        }
+
+        const loadingToastId = toast.loading("Enviando formulário...");
 
         try {
-
             const fotoURLs: string[] = [];
             for (const file of fotos) {
                 const storageRef = ref(storage, `forms-acompanhamento-fotos/${projetoID}/${file.name}-${Date.now()}`);
@@ -76,7 +96,7 @@ export default function forms_acompanhamento(){
             const uploadFirestore: formsAcompanhamentoDados = {
                 projetoID: projetoID,
                 dataResposta: new Date().toISOString().split('T')[0],
-                usuarioID: usuarioID,
+                usuarioID: usuarioAtualID,
                 instituicao: instituicao,
                 descricao: descricao,
                 segmento: segmento,
@@ -117,9 +137,10 @@ export default function forms_acompanhamento(){
             };
 
             const docRef = await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
+            toast.dismiss(loadingToastId);
             toast.success(`Formulário enviado com sucesso! ID: ${docRef.id}`);
             
-            // Reseta os valores dos campos do forms
+            // Código para resetar os campos, mas ainda não sei se vai ser necessário
             setInstituicao("");
             setDescricao("");
             setSegmento(-1);
@@ -146,10 +167,20 @@ export default function forms_acompanhamento(){
 
         } catch (error) {
             console.error("Erro ao enviar formulário: ", error);
+            toast.dismiss(loadingToastId);
             toast.error("Erro ao enviar formulário. Tente novamente.");
         }
     };
 
+    if (isLoading) {
+        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>; // Talvez colocar um spinner no lugar...
+    }
+
+    if (!usuarioAtualID) {
+        // Você pode retornar null ou uma mensagem indicando que o redirecionamento está em progresso,
+        // mas idealmente o usuário já terá sido redirecionado.
+        return null; 
+    }
 
     return(
         <main
