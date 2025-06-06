@@ -4,20 +4,17 @@ export interface Associacao {
 }
 
 export interface usuarioExt {
-  id: string;
   nome: string;
   email: string;
 }
 
 export interface usuarioInt {
-  id: string;
   nome: string;
   email: string;
   administrador: boolean;
 }
 
 export interface Projetos {
-  id: string;
   nome: string;
   municipioID: number;
   aprovado: boolean;
@@ -30,7 +27,6 @@ export interface Projetos {
 }
 
 export interface formsCadastroDados {
-  id: string;
   projetoID: string;
   instituicao: string;
   cnpj: string;
@@ -74,7 +70,6 @@ export interface formsCadastroDados {
 }
 
 export interface formsAcompanhamentoDados {
-  id: string;
   projetoID: string;
   dataResposta: string;
   usuarioID: string;
@@ -85,13 +80,12 @@ export interface formsAcompanhamentoDados {
   pontosPositivos?: string;
   pontosNegativos?: string;
   pontosAtencao? : string;
-  especificacoes: string;
   ambito: number;
   qtdEstados: number;
   estados: string[];
   qtdMunicipios: number;
   municipios: string[];
-  especificacaoTerritorio: string;
+  especificacoes: string;
   dataInicial: string;
   dataFinal: string;
   contrapartidasProjeto: string;
@@ -112,14 +106,13 @@ export interface formsAcompanhamentoDados {
   qtdLGBT: number;
   ods: number[];
   relato? : string;
-  fotos: File[];
+  fotos: string[]; // Changed from File[] to string[]
   website: string;
   links: string;
   contrapartidasExecutadas?: string;
 }
 
 export interface dadosEstados {
-  id: string;
   nomeEstado: string;
   qtdProjetos: number;
   qtdMunicipios: number;
@@ -134,7 +127,6 @@ export interface dadosEstados {
 }
 
 // export interface dadosMunicipios {
-//   id: string;
 //   nomeCidade: string;
 //   nomeEstado: string;
 //   qtdProjetos: number;
