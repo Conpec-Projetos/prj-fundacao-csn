@@ -417,7 +417,7 @@ export default function forms_cadastro(){
                                 className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
                                 <div className=" flex flex-row gap-3 items-center">
                                     <p>Outro:</p>
-                                    <input type="text" className="bg-white dark:bg-blue-fcsn3 w-3/4 h-[4dvh] rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+                                    <input type="text" className="bg-white dark:bg-blue-fcsn3 w-3/4 h-[4dvh] rounded-[7px] border-1 border-blue-fcsn  focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
                                 </div>
                             </div> 
                     
