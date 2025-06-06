@@ -1,7 +1,7 @@
 'use client';
 
 import Footer from "@/components/footer/footer";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaCaretDown, FaCheckCircle, FaFilter, FaMoneyBillAlt, FaSearch, FaTimesCircle } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
 
@@ -80,6 +80,30 @@ export default function TodosProjetos(){
 
     // Usei esse estado para controlar o dropdown dos filtros
     const [isOpen, setIsOpen] = useState(false);
+    // caixaRef é a referencia de um elemento html, no caso nosso dropdown
+    const caixaRef = useRef<HTMLDivElement>(null);
+
+    //Usamos isso para fechar o dropdown quando clicarmos fora da caixa
+    useEffect(() => {
+      if (!isOpen) return;
+    
+      function handleCliqueFora(event: MouseEvent) {
+        if (
+          caixaRef.current &&
+          event.target instanceof Node &&
+          // Aqui verificaremos se o evento foi fora da nossa caixa de referencia 
+          !caixaRef.current.contains(event.target)
+        ) {
+          setIsOpen(false);
+        }
+      }
+    
+      document.addEventListener('mousedown', handleCliqueFora);
+      return () => {
+        document.removeEventListener('mousedown', handleCliqueFora);
+      };
+    }, [isOpen]); 
+
     // Usarei esse array para guardar apenas os projetos que passarem pelos filtros
     const [filteredProjects, setFilteredProjects] = useState<ProjectProps[]>([]);
     // Boolean para controlar se foi aplicado algum filtro (Para saber se será exibido algum projeto com filtro)
@@ -236,7 +260,6 @@ export default function TodosProjetos(){
       setFilteredProjects([]);
       setCtrl(false);
     }
-  
 
     return(
     <div className="flex flex-col min-h-[180vh]">
@@ -269,7 +292,6 @@ export default function TodosProjetos(){
           <div
           // O dropdown será exibido enquanto estivermos com o mouse em cima dele
             onMouseEnter={() => setIsOpen(true)}
-            onMouseLeave={() => setIsOpen(false)}
             className="relative z-10"
             >
             {/* seção para passarmos o mouse e aparecer o dropdown */}
@@ -277,8 +299,8 @@ export default function TodosProjetos(){
             <div className="bg-white-off dark:bg-blue-fcsn2 p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center gap-2"> Aplicar filtros <FaCaretDown /> </div>
               {/* Dropdown */}
               {isOpen && (
-                
-                <div className="absolute top-full left-0 w-[90vw] md:w-[700px] lg:w-[768px] xl:w-[768px]  bg-white dark:bg-blue-fcsn2 p-2 pl-4 rounded shadow-md z-10">
+                // Caixa de referencia para controlarmos se o click foi fora desta caixa
+                <div ref={caixaRef} className="absolute top-full left-0 w-[90vw] md:w-[700px] lg:w-[768px] xl:w-[768px]  bg-white dark:bg-blue-fcsn2 p-2 pl-4 rounded shadow-md z-10">
                   <p className="text-2xl text-blue-fcsn dark:text-white-off font-bold">Filtros</p>
 
                   <p className="py-2 text-xl">Situação</p>
