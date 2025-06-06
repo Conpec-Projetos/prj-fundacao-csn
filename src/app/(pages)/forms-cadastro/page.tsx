@@ -21,6 +21,7 @@ import { collection, doc, getDocs, updateDoc, addDoc, arrayUnion } from "firebas
 import { db, storage } from "@/firebase/firebase-config";
 import { formsAcompanhamentoData } from "@/firebase/schema/entities";
 import { set } from "zod";
+
 enum Publico {
     Crianças = "Crianças",
     Adolescentes = "Adolescentes",
@@ -40,6 +41,9 @@ interface VerticalProps{
 
 export default function forms_cadastro(){
 
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // ... todos os seus useStates existentes ...
     const [nome,setNome] = useState<string>("");
     const [cnpj,setCnpj] = useState<string>("");
     const [representante_legal,setRepresentanteLegal] = useState<string>("");
@@ -76,7 +80,8 @@ export default function forms_cadastro(){
     const [numero_aprovacao,setNumeroAprovacao] = useState<string>("");
     const [contrapartidas,setContrapartidas] = useState<string>("");
     const [observacoes,setObservacoes] = useState<string>("");
-    
+    // Novo estado para o arquivo de compliance:
+    const [complianceFile, setComplianceFile] = useState<File[]>([]);
 
     const uploadFiles = async (files: FileList) => {
         const fileURLs = [];
@@ -128,26 +133,29 @@ export default function forms_cadastro(){
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         try {
-            const fileUrls = await uploadFiles(fotos);
-            const data = prepareData(fileUrls);
-            await saveData(data);
+            // Exemplo: upload do arquivo de compliance
+            const complianceUrls = await uploadFiles(complianceFile as any);
+            // Adapte prepareData para incluir compliance se necessário
+            // const data = prepareData(...);
+            // await saveData(data);
             alert("Data uploaded successfully!");
-          } catch (error) {
+        } catch (error) {
             console.error("Error uploading data: ", error);
             alert("Failed to upload data.");
-          }
-    }
+        }
+    };
 
 
     return(
         <main className="flex flex-col justify-between items-center w-[screen] h-[dvh] overflow-hidden no-scrollbar">
             
             <div className="flex flex-col items-center justify-center w-full h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh] text-blue-fcsn dark:text-white-off text-7xl font-bold"
+
             >
                 <h1 className="text-center w-[90dvw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl"
                  >Inscrição de Projeto</h1>
             </div>
-            
+
             <form 
                 className="flex flex-col justify-center items-center w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw] h-90/100 mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-sm  shadow-md shadow-gray-400 dark:shadow-gray-900 overflow-hidden no-scrollbar"
                 onSubmit={(event) => handleSubmit(event)}>
@@ -323,16 +331,18 @@ export default function forms_cadastro(){
                                 text="Agência"
                                 attribute={ agencia }
                                 setAttribute={ setAgencia }
+
                                 isNotMandatory={false}
                             ></NormalInput>
 
-                        {/* Conta Corrente */}
-                        <NormalInput
-                                text="Conta Corrente:"
-                                attribute={ conta_corrente }
-                                setAttribute={ setContaCorrente }
+                        {/* Link para website */}
+                            <NormalInput
+                                text="Link para website:"
+                                attribute={ link }
+                                setAttribute={ setLink }
                                 isNotMandatory={false}
                             ></NormalInput>
+
                     </div>
                 </div>
                 
@@ -381,34 +391,157 @@ export default function forms_cadastro(){
                                 className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
                                 <p>Crianças</p>
                             </div>
+                        </div>
+                        
 
-                            <div className="flex flex-row gap-1 items-center">  
-                                <input 
-                                type="checkbox" 
-                                className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
-                                <p>Adolescentes</p>
-                            </div> 
+                        {/* Área de atuação */}
+                            <HorizontalSelects
+                                text="Área de atuação:"
+                                list={[
+                                    "Cultura", 
+                                    "Esporte", 
+                                    "Pessoa Idosa", 
+                                    "Criança e Adolescente", 
+                                    "Saúde"
+                                ]}
+                                attribute={ area_atuacao }
+                                setAttribute={ setAreaAtuacao }
+                            ></HorizontalSelects>
 
-                            <div className="flex flex-row gap-1 items-center">  
-                                <input 
-                                type="checkbox" 
-                                className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
-                                <p>Jovens</p>
-                            </div> 
+                        {/* Breve descrição do projeto */}
+                            <LongInput
+                                text="Breve descrição do projeto:"
+                                attribute={ descricao }
+                                setAttribute={ setDescricao }
+                                isNotMandatory={false}
+                            ></LongInput>
 
-                            <div className="flex flex-row gap-1 items-center">  
-                                <input 
-                                type="checkbox" 
-                                className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
-                                <p>Adultos</p>
-                            </div> 
+                        {/* Apresentação do projeto */}
+                            <FileInput
+                                text={"Apresentação do projeto:"}
+                                files={apresentacao}
+                                setFiles={setApresentacao}
+                                isNotMandatory={false}
+                            ></FileInput>
 
-                            <div className="flex flex-row gap-1 items-center">  
-                                <input 
-                                type="checkbox" 
-                                className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
-                                <p>Idosos</p>
+                        {/* Público beneficiado */}
+                        <div className="
+                            flex flex-col justify-between items-start
+                            py-3
+                            gap-y-2">
+                                
+                            <h1 className="
+                            w-full
+                            text-xl md:text-xl lg:lg
+                            text-blue-fcsn dark:text-white-off font-bold"
+                            >Público beneficiado: <span className="text-[#B15265]">*</span></h1>
+                            
+                            <div className="flex flex-col gap-y-2 text-xl">
+
+                                    <div className="flex flex-row gap-1 items-center">  
+                                        <input 
+                                        type="checkbox" 
+                                        className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
+                                        <p>Crianças</p>
+                                    </div>
+
+                                    <div className="flex flex-row gap-1 items-center">  
+                                        <input 
+                                        type="checkbox" 
+                                        className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
+                                        <p>Adolescentes</p>
+                                    </div> 
+
+                                    <div className="flex flex-row gap-1 items-center">  
+                                        <input 
+                                        type="checkbox" 
+                                        className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
+                                        <p>Jovens</p>
+                                    </div> 
+
+                                    <div className="flex flex-row gap-1 items-center">  
+                                        <input 
+                                        type="checkbox" 
+                                        className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
+                                        <p>Adultos</p>
+                                    </div> 
+
+                                    <div className="flex flex-row gap-1 items-center">  
+                                        <input 
+                                        type="checkbox" 
+                                        className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
+                                        <p>Idosos</p>
+                                    </div>
+
+                                    <div className="flex flex-row gap-1 items-center w-96
+                                    ">  
+                                        <input 
+                                        type="checkbox" 
+                                        className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
+                                        <div className=" flex flex-row gap-3 items-center">
+                                            <p>Outro:</p>
+                                            <input type="text" className="bg-white dark:bg-blue-fcsn3 w-3/4 h-[4dvh] rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+                                        </div>
+                                    </div> 
+                            
                             </div>
+                        </div>
+
+                        {/* ODSs: */}
+                            <VerticalSelects 
+                                text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
+                                subtext="Selecione até 3 opções."
+                                list={[
+                                    "Erradicação da Pobreza",
+                                    "Fome Zero e Agricultura Sustentável",
+                                    "Saúde e Bem-estar",
+                                    "Educação de qualidade",
+                                    "Igualdade de Gênero",
+                                    "Agua potável e Saneamento",
+                                    "Energia Acessível e Limpa",
+                                    "Trabalho decente e Crescimento Econômico",
+                                    "Indústria, Inovação e Infraestrutura",
+                                    "Redução das Desigualdades",
+                                    "Cidades e Comunidades Sustentáveis",
+                                    "Consumo e Produção Responsáveis",
+                                    "Ação contra a Mudança Global do Clima",
+                                    "Vida na Água",
+                                    "Vida Terrestre",
+                                    "Paz, Justiça e Instituições Eficazes",
+                                    "Parcerias e Meios de Implementação"
+                                ]}
+                                attribute={ ODS }
+                                setAttribute={ setODS }
+                                isNotMandatory={false}
+                                maxSelect={3}
+                            ></VerticalSelects>
+
+                        {/* Número de público direto que será impactado */}
+                            <NumberInput
+                                text="Número de público direto que será impactado:"
+                                attribute={ num_publico }
+                                setAttribute={ setNumPublico }
+                                isNotMandatory={false}
+                            ></NumberInput>
+
+                        {/* Quantidade de estados onde o projeto atua */}
+                            <NumberInput
+                                text="Quantidade de estados onde o projeto atua:"
+                                attribute={ qtde_estados }
+                                setAttribute={ setQtdeEstados }
+                                isNotMandatory={false}
+                            ></NumberInput>
+
+                        {/* Estados onde o projeto atua */}
+                            <EstadoInput
+                                text="Estados onde o projeto atua:"
+                                estados={ estados }
+                                setEstados={ setEstados }
+                                cidades={ cidades }
+                                setCidades={ setCidades }
+                                isNotMandatory={false}
+                            ></EstadoInput>
+
 
                             <div className="flex flex-row gap-1 items-center w-96
                             ">  
@@ -557,9 +690,9 @@ export default function forms_cadastro(){
                         className="w-[15dvw] min-w-[150px] max-w-[290px] h-[9dvh] min-h-[50px] max-h-[75px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-3xl lg:text-4xl font-bold text-white cursor-pointer ml-[3dvw] mb-10"
                     >Enviar</button>
                 </div>
-            </form>
 
-            <Footer></Footer>
+            </form>
+            <Footer />
         </main>
     );
 }
