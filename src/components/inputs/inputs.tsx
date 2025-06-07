@@ -260,6 +260,35 @@ interface LocationDashboardProps{
 }
 
 export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) => {
+    const estadosFirebase: {[key: string]: string} = {
+        'Acre': 'acre',
+        'Alagoas': 'alagoas',
+        'Amapá': 'amapa',
+        'Amazonas': 'amazonas',
+        'Bahia': 'bahia',
+        'Ceará': 'ceara',
+        'Distrito Federal': 'distrito_federal',
+        'Espírito Santo': 'espirito_santo',
+        'Goiás': 'goias',
+        'Maranhão': 'maranhao',
+        'MatoGrosso': 'mato_grosso',
+        'Mato Grosso Do Sul': 'mato_grosso_do_sul',
+        'Minas Gerais': 'minas_gerais',
+        'Pará': 'para',
+        'Paraíba': 'paraiba',
+        'Paraná': 'parana',
+        'Pernambuco': 'pernambuco',
+        'Piauí': 'piaui',
+        'RioDe Janeiro': 'rio_de_janeiro',
+        'Rio Grande Do Norte': 'rio_grande_do_norte',
+        'Rio Grande Do Sul': 'rio_grande_do_sul',
+        'Rondônia': 'rondonia',
+        'Roraima': 'roraima',
+        'Santa Catarina': 'santa_catarina',
+        'São Paulo': 'sao_paulo',
+        'Sergipe': 'sergipe',
+        'Tocantins': 'tocantins'
+        }
 
     return(
         <div className="flex flex-col justify-center items-center gap-2 py-3 mx-2">
@@ -267,7 +296,7 @@ export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) =>
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text}</h1>
             <div className="flex flex-row justify-center items-center w-full h-fit gap-2">
-                <button onClick={() => props.setEstado("")}
+                <button onClick={() => props.setEstado("placeholder")}
                     className="text-blue-fcsn dark:text-white-off cursor-pointer"
                     ><AiOutlineClose /></button>
                 <div className="flex flex-col justify-center w-full h-fit border-1 border-blue-fcsn rounded-[7px]">
@@ -287,7 +316,7 @@ export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) =>
                         {State.getStatesOfCountry("BR").map((state, index) => (
                             <option
                                 key={index}
-                                value={[state.name, state.isoCode]}
+                                value={estadosFirebase[state.name]}
                             >{state.name}</option>
                         ))}
                     </select>

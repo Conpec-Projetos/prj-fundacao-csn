@@ -6,8 +6,30 @@ import BrazilMap from "@/components/map/brazilMap";
 import { FaCaretDown } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { EstadoInputDashboard } from "@/components/inputs/inputs";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { db, storage } from "@/firebase/firebase-config";
+import { dadosEstados } from "@/firebase/schema/entities";
 
 export default function DashboardPage() {
+  async function buscarDadosEstado(estado: string): Promise<dadosEstados | null> {
+      const docRef = doc(db, 'dadosEstados', estado)
+
+      try {
+        const docSnapshot = await getDoc(docRef)
+
+        if (docSnapshot.exists()) {
+          const dados = docSnapshot.data() as dadosEstados;
+          console.log('Documento encontrado')
+          return dados
+        } else {
+          console.log("Documento não existe")
+          return null
+        }
+      } catch (error) {
+        console.error('Erro na busca do documento')
+        throw error
+      }
+    }
   // Sample data for charts
   const segmentData = {
     labels: [
@@ -168,6 +190,7 @@ export default function DashboardPage() {
   const [ehCelular, setEhCelular] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [estado, setEstado] = useState<string>("");
+  const [dados, setDados] = useState<dadosEstados | null>(null);
 
   useEffect(() => {
     const lidarRedimensionamento = () => {
@@ -180,12 +203,23 @@ export default function DashboardPage() {
     };
   },[]);
 
+  useEffect(() => {
+    console.log(estado)
+  },[estado]);
+
+  useEffect(() => {
+    buscarDadosEstado(estado).then((dado) => {
+      if (dado) setDados(dado)
+    })
+  }, [estado]);
+
+
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
       <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10">
         <div className="flex flex-row items-center w-full justify-between">
-          <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{estado}</h1>
           <div className="relative"> {/* <-- Add relative here */}
             <button
               className="flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer"
@@ -214,7 +248,7 @@ export default function DashboardPage() {
               </h1>
             </div>
             <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
-              R$9.173.461.815,00
+              {dados?.valorTotal}
             </h1>
           </div>
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
@@ -224,7 +258,7 @@ export default function DashboardPage() {
               </h1>
             </div>
             <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
-              R$530.000,00
+              {dados?.maiorAporte}
             </h1>
             <h1 className="text-base text-blue-fcsn dark:text-white-off font-light">
               Investido em Projeto X
@@ -234,19 +268,19 @@ export default function DashboardPage() {
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-            <p className="text-xl font-bold">800</p>
+            <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
             <h2 className="text-lg mb-2">Projetos no total</h2>
           </div>
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
-            <p className="text-xl font-bold">7000</p>
+            <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
             <h2 className="text-lg">Beneficiários diretos</h2>
           </div>
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-            <p className="text-xl font-bold">15000</p>
+            <p className="text-xl font-bold">{dados?.beneficiariosIndireto}</p>
             <h2 className="text-lg">Beneficiários indiretos</h2>
           </div>
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-            <p className="text-xl font-bold">750</p>
+            <p className="text-xl font-bold">{dados?.qtdOrganizacoes}</p>
             <h2 className="text-lg">Organizações envolvidas</h2>
           </div>
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
@@ -254,7 +288,7 @@ export default function DashboardPage() {
             <h2 className="text-lg">Estados atendidos</h2>
           </div>
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-            <p className="text-xl font-bold">714</p>
+            <p className="text-xl font-bold">{dados?.qtdMunicipios}</p>
             <h2 className="text-lg">Municípios atendidos</h2>
           </div>
         </section>
@@ -267,7 +301,7 @@ export default function DashboardPage() {
             <div className="min-h-96 h-fit min-w-[600]px md:min-w-0">
               <BarChart
                 title=""
-                data={odsData.values}
+                data={dados?.projetosODS ?? []}
                 labels={odsData.labels}
                 colors={["#b37b97"]}
                 horizontal={ehCelular}
@@ -299,36 +333,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>}
-
-        {estado !== '' && (
-          <section
-            className={`grid gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 overflow-x-auto`}
-          >
-            <div className={`grid min-w-[435px] ${ehCelular ? '' : 'grid-cols-2'}`}>
-              <div className="min-h-96 h-fit w-full flex items-center justify-center">
-                <BarChart
-                  title=""
-                  data={estadoData["grafico1"].values}
-                  labels={estadoData["grafico1"].labels}
-                  colors={["#b37b97"]}
-                  horizontal={ehCelular}
-                  useIcons={false}
-                />
-              </div>
-              <div className="min-h-96 h-fit w-full flex items-center justify-center">
-                <BarChart
-                  title=""
-                  data={estadoData["grafico2"].values}
-                  labels={estadoData["grafico2"].labels}
-                  colors={["#b37b97"]}
-                  horizontal={ehCelular}
-                  useIcons={false}
-                />
-              </div>
-            </div>
-          </section>
-        )}
-
+        
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-10">
             <h2 className="text-2xl font-bold mb-4">Segmento do projeto</h2>
