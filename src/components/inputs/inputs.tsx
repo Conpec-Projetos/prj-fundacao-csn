@@ -296,7 +296,7 @@ export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) =>
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text}</h1>
             <div className="flex flex-row justify-center items-center w-full h-fit gap-2">
-                <button onClick={() => props.setEstado("placeholder")}
+                <button onClick={() => props.setEstado("")}
                     className="text-blue-fcsn dark:text-white-off cursor-pointer"
                     ><AiOutlineClose /></button>
                 <div className="flex flex-col justify-center w-full h-fit border-1 border-blue-fcsn rounded-[7px]">

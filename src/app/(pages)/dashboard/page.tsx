@@ -4,7 +4,7 @@ import BarChart from "@/components/chart/barchartClient";
 import PieChart from "@/components/chart/piechartClient";
 import BrazilMap from "@/components/map/brazilMap";
 import { FaCaretDown } from "react-icons/fa";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { EstadoInputDashboard } from "@/components/inputs/inputs";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { db, storage } from "@/firebase/firebase-config";
@@ -30,6 +30,69 @@ export default function DashboardPage() {
         throw error
       }
     }
+
+function somarDadosEstados(array: dadosEstados[]): dadosEstados {
+  return array.reduce((acc, curr) => {
+    // Soma dos valores escalares
+    const novoAcc = {
+      nomeEstado: "Todos",
+      valorTotal: (acc.valorTotal ?? 0) + (curr.valorTotal ?? 0),
+      maiorAporte: Math.max(acc.maiorAporte ?? 0, curr.maiorAporte ?? 0),
+      qtdProjetos: (acc.qtdProjetos ?? 0) + (curr.qtdProjetos ?? 0),
+      beneficiariosDireto: (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
+      beneficiariosIndireto: (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
+      qtdOrganizacoes: (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
+      qtdMunicipios: (acc.qtdMunicipios ?? 0) + (curr.qtdMunicipios ?? 0),
+      projetosODS: acc.projetosODS
+        ? acc.projetosODS.map((v, i) => v + (curr.projetosODS?.[i] ?? 0))
+        : curr.projetosODS ?? [],
+      lei: [] as { nome:string; qtdProjetos: number }[],
+      segmento: [] as { nome: string; qtdProjetos: number }[],
+    };
+
+    // Agora agrupa e soma os segmentos
+    const segmentosCombinados = [...(acc.segmento || []), ...(curr.segmento || [])];
+    const leiCombinada = [...(acc.lei || []), ...(curr.lei || [])]
+
+    const segmentoAgrupado = segmentosCombinados.reduce((segAcc, segCurr) => {
+      const index = segAcc.findIndex(item => item.nome === segCurr.nome);
+      if (index >= 0) {
+        segAcc[index].qtdProjetos += segCurr.qtdProjetos || 0;
+      } else {
+        segAcc.push({ ...segCurr });
+      }
+      return segAcc;
+    }, [] as { nome: string; qtdProjetos: number }[]);
+
+    novoAcc.segmento = segmentoAgrupado;
+
+    const leiAgrupada = leiCombinada.reduce((leiAcc, leiCurr) => {
+      const index = leiAcc.findIndex(item => item.nome === leiCurr.nome);
+      if (index >= 0) {
+        leiAcc[index].qtdProjetos += leiCurr.qtdProjetos || 0;
+      } else {
+        leiAcc.push({ ...leiCurr });
+      }
+      return leiAcc;
+    }, [] as { nome: string; qtdProjetos: number }[]);
+
+    novoAcc.lei = leiAgrupada;
+
+    return novoAcc;
+  });
+}
+  
+  const buscarDadosGerais = useCallback(async (): Promise<dadosEstados | null> => {
+    const consultaSnapshot = await getDocs(collection(db, 'dadosEstados'));
+    const todosDados: dadosEstados[] = [];
+
+    consultaSnapshot.forEach((doc) => {
+      todosDados.push(doc.data() as dadosEstados)
+    })
+
+    return somarDadosEstados(todosDados)
+  }, [])
+
   // Sample data for charts
   const segmentData = {
     labels: [
@@ -167,30 +230,15 @@ export default function DashboardPage() {
     AP: 45,
   };
 
-  //Dados de um estado fake
-  const estadoData = {
-    "grafico1": {
-      labels: [
-        "Pessoas Beneficiadas indiretamente",
-        "Pessoas Beneficiadas diretamente",
-        "Minorias atendidas",
-      ],
-      values: [800, 2300, 400],
-    },
-    "grafico2": {
-      labels: [
-        "Municípios abrangidos",
-        "Quantidade de projetos",
-        "Organizações envolvidas",
-      ],
-      values: [40, 30, 25],
-    }
-  };
-
   const [ehCelular, setEhCelular] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [estado, setEstado] = useState<string>("");
   const [dados, setDados] = useState<dadosEstados | null>(null);
+
+  const segmentoNomes: string[] = dados?.segmento.map(item => item.nome) ?? [];
+  const segmentoValores: number[] = dados?.segmento.map(item => item.qtdProjetos) ?? [];
+  const leiNomes: string[] = dados?.lei.map(item => item.nome) ?? [];
+  const leiValores: number[] = dados?.lei.map(item => item.qtdProjetos) ?? [];
 
   useEffect(() => {
     const lidarRedimensionamento = () => {
@@ -204,22 +252,23 @@ export default function DashboardPage() {
   },[]);
 
   useEffect(() => {
-    console.log(estado)
-  },[estado]);
-
-  useEffect(() => {
-    buscarDadosEstado(estado).then((dado) => {
-      if (dado) setDados(dado)
+    if (estado != '') {
+      buscarDadosEstado(estado).then((dado) => {
+        if (dado) setDados(dado)
     })
-  }, [estado]);
-
+    } else {
+      buscarDadosGerais().then((dado) => {
+        if (dado) setDados(dado)
+      })
+    }
+  }, [estado, buscarDadosGerais]);
 
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
       <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10">
         <div className="flex flex-row items-center w-full justify-between">
-          <h1 className="text-2xl md:text-3xl font-bold">{estado}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
           <div className="relative"> {/* <-- Add relative here */}
             <button
               className="flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer"
@@ -339,8 +388,8 @@ export default function DashboardPage() {
             <h2 className="text-2xl font-bold mb-4">Segmento do projeto</h2>
             <div className="sm:h-120 h-fit">
               <PieChart
-                data={segmentData.values}
-                labels={segmentData.labels}
+                data={segmentoValores}
+                labels={segmentoNomes}
                 colors={["#e74c3c", "#8e44ad", "#39c2e0", "#2ecc40", "#f1c40f"]}
                 ehCelular={ehCelular}
               />
@@ -353,8 +402,8 @@ export default function DashboardPage() {
                 <BarChart
                   title=""
                   colors={["#b37b97"]}
-                  data={incentiveData.values}
-                  labels={incentiveData.labels}
+                  data={leiValores}
+                  labels={leiNomes}
                   horizontal={true}
                   useIcons={false}
                 />
