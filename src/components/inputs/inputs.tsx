@@ -25,7 +25,7 @@ export const NormalInput: React.FC<TextProps> = (props) => {
             <input
             type="text"
             onChange={(event) => {props.setAttribute(event.target.value)}}
-            className="w-full h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+            className="w-full h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn  focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
         </div>
     );
 }
@@ -40,7 +40,7 @@ export const GrowInput: React.FC<TextProps> = (props) => {
             <input
             type="text"
             onChange={(event) => {props.setAttribute(event.target.value)}}
-            className="w-full h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+            className="w-full h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn  focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
         </div>
     );
 }
@@ -55,7 +55,7 @@ export const ShortInput: React.FC<TextProps> = (props) => {
             <input
             type="text"
             onChange={(event) => {props.setAttribute(event.target.value)}}
-            className="w-[12dvh] h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+            className="w-[12dvh] h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn  focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
         </div>
     );
 }
@@ -70,7 +70,7 @@ export const LongInput: React.FC<TextProps> = (props) => {
             <textarea
                 spellCheck="false"
                 onChange={(event) => {props.setAttribute(event.target.value)}}
-                className="w-full h-full bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3 resize-none"
+                className="w-full h-full bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3 resize-none"
                 ></textarea>     
         </div>
     );
@@ -89,46 +89,34 @@ export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
     const [clicked, setClicked] = useState<number>(-1);
 
     useEffect(() => {
-        setAttribute(clicked); // Use destructured prop
-    }, [clicked, setAttribute]); // Include only necessary dependencies
+        setAttribute(clicked);
+    }, [clicked, setAttribute]); 
     
     return(
-
         <div className="flex flex-col justify-center h-min py-6">
-                        
             <h1 className="w-full text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold">
                 {props.text} {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </h1>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 justify-items-start w-full gap-y-2 lg:gap-x-4 text-wrap">
-
+            <div className="flex flex-col justify-items-start w-full gap-y-2 lg:gap-x-4 text-wrap">
                 {props.list.map((string, index) => (
-                    
                     <div
                         key={index} 
                         className="flex flex-row justify-center items-center w-fit">
-
                         <div className="flex flex-col justify-center items-center w-[30px] h-[30px]">
-
                             <button
                                 onClick={(event) => {
                                     event.preventDefault();
                                     setClicked(index);
-                            }}
-                            className="w-[20px] h-[20px] bg-white cursor-pointer rounded-full border-1">
-
+                                }}
+                                className="w-[20px] h-[20px] bg-white cursor-pointer rounded-full border-1">
                             {clicked == index && (
                                 <div className="flex flex-col justify-center items-center w-full h-full rounded-full border-1">
-                                    <div className="w-[10px] h-[10px] bg-blue-fcsn rounded-full"
-                                    ></div>
+                                    <div className="w-[10px] h-[10px] bg-blue-fcsn rounded-full"></div>
                                 </div>
-                                // Bolinha que aparece quando clica no input
                             )} 
                             </button>
                         </div>
-
-                        <h1 className="w-fit text-md text-blue-fcsn dark:text-white-off"
-                        >{ string }</h1>
+                        <h1 className="w-fit text-md text-blue-fcsn dark:text-white-off">{ string }</h1>
                     </div>
                 ))}
             </div>        
@@ -147,7 +135,7 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
             <select 
                 defaultValue={""}
                 onChange={(event) => {props.setAttribute( Number(event.target.value) )}}
-                className="w-full md:max-w-[270px] h-[5vh] min-h-[45px] max-h-[70px] text-blue-fcsn3 dark:text-white-off bg-white dark:bg-blue-fcsn3 border-blue-fcsn border-1 cursor-pointer rounded-[7px] transition-all duration-250 focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl px-5">
+                className="w-full md:max-w-[270px] h-[5vh] min-h-[45px] max-h-[70px] text-blue-fcsn3 dark:text-white-off bg-white dark:bg-blue-fcsn3 border-blue-fcsn border-1 cursor-pointer rounded-[7px] focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl px-5">
                 <option 
                     disabled 
                     value={""}
@@ -190,7 +178,7 @@ export const NumberInput: React.FC<NumberProps> = (props) => {
                         new_array[props.index] = Number(event.target.value);
                         props.setAttribute(new_array);
                     }}
-                    className="w-[75px] h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3 no-spinner text-center"/>
+                    className="w-[75px] h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3 no-spinner text-center"/>
             </div>
         </div>
     );
@@ -357,7 +345,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                 <input 
                     type="date" 
                     onChange={(event) => { props.setFirstAttribute(event.target.value)}} 
-                    className="h-[40px] w-[140px] bg-white dark:bg-blue-fcsn3 cursor-text text-blue-fcsn3 dark:text-white-off border-1 border-blue-fcsn rounded-[7px] transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn text-center"/>
+                    className="h-[40px] w-[140px] bg-white dark:bg-blue-fcsn3 cursor-text text-blue-fcsn3 dark:text-white-off border-1 border-blue-fcsn rounded-[7px] focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn text-center"/>
 
                 <p className="text-xl text-blue-fcsn dark:text-white-off px-2"
                 >a</p>
@@ -365,7 +353,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
 
                     type="date" 
                     onChange={(event) => { props.setSecondAttribute(event.target.value)}} 
-                    className="h-[40px] w-[140px] bg-white dark:bg-blue-fcsn3 cursor-text text-blue-fcsn3 dark:text-white-off border-1 border-blue-fcsn rounded-[7px] transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn text-center"/>
+                    className="h-[40px] w-[140px] bg-white dark:bg-blue-fcsn3 cursor-text text-blue-fcsn3 dark:text-white-off border-1 border-blue-fcsn rounded-[7px] focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn text-center"/>
 
             </div>
         </div>
@@ -381,6 +369,20 @@ interface YesNoProps{
 }
 
 export const YesNoInput: React.FC<YesNoProps> = (props) => {
+    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedIndex = event.target.value;
+        if (selectedIndex === "0") { // "Sim"
+            props.setAttribute(true);
+        } else if (selectedIndex === "1") { // "Não"
+            props.setAttribute(false);
+        }
+    };
+
+    // If props.attribute is true ("Sim"), value should be "0"
+    // If props.attribute is false ("Não"), value should be "1"
+    const selectValue = props.attribute === true ? "0" : props.attribute === false ? "1" : "";
+
+
     return(
 
         <div className="flex flex-row justify-start items-center w-full py-3">
@@ -390,17 +392,18 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
 
             <div className="flex flex-col justify-center items-start mr-4">
             <select
-                defaultValue={""}
-                className="w-full max-w-[250px] min-w-[185px] h-[8dvh] max-h-[45px] ml-4 text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-blue-fcsn border-1 cursor-pointer rounded-[5px] transition-all duration-250 focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl px-5">
+                value={selectValue}
+                onChange={handleChange}
+                className="w-full max-w-[250px] min-w-[185px] h-[8dvh] max-h-[45px] ml-4 text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-blue-fcsn border-1 cursor-pointer rounded-[5px] focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl px-5">
                 <option 
-                disabled 
-                value={""}
+                    disabled 
+                    value={""}
                 >Escolha uma opção</option>
 
                 {props.list.map((string, index) => (
                 <option 
                     key={index} 
-                    value={index}
+                    value={index.toString()}
                 >{string}</option>
                 ))}
             </select>    
@@ -525,19 +528,23 @@ export const FileInput: React.FC<FileProps> = (props) => {
     };
     
     return(
-        <div className="flex flex-col justify-around items-center h-[30dvh] py-3">
+        <div className={`flex ${fileSize === 0 ? 'flex-row items-center gap-4' : 'flex-col gap-2'} py-3`}>
 
-            <div className="w-full md:text-nowrap flex flex-row justify-start items-center">
-                
-                <h1 className="text-xl md:text-xl lg:lg  text-blue-fcsn dark:text-white-off font-bold"
-                >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
-
+            <div className={`${fileSize === 0 ? 'flex-shrink-0' : 'w-full'} md:text-nowrap flex flex-row justify-start items-center`}>
+                <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold">
+                    { props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
+                </h1>
+            </div>
 
             <label 
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`w-full flex flex-col items-center justify-center min-h-[100px] bg-white dark:bg-blue-fcsn3 border-1 border-blue-fcsn rounded-[7px] cursor-pointer transition-all p-4
+                className={`
+                    ${fileSize === 0 ? 'h-[80px] max-w-[270px] flex-grow' : 'w-full min-h-[100px] max-h-[300px] overflow-y-auto'} 
+                    flex flex-col items-center justify-center
+                    bg-white dark:bg-blue-fcsn3 border-1 border-blue-fcsn rounded-[7px] 
+                    cursor-pointer p-4
                     ${isDragging ? 'border-dashed bg-blue-50' : 'hover:bg-gray-50 dark:hover:bg-blue-fcsn'}
                 `}>
                 <input 
@@ -553,9 +560,9 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 />
                 
                 {fileSize === 0 ? (
-                    <div className="flex flex-col items-center gap-2 text-blue-fcsn dark:text-white-off">
-                        <Upload className="w-8 h-8" />
-                        <p className="text-center text-blue-fcsn3 dark:text-white-off">
+                    <div className="flex flex-row items-center gap-2 text-blue-fcsn dark:text-white-off">
+                        <Upload className="w-5 h-5" />
+                        <p className="text-sm text-blue-fcsn3 dark:text-white-off">
                             {isDragging ? 'Solte os arquivos aqui' : 'Clique ou arraste arquivos aqui'}
                         </p>
                     </div>
@@ -580,7 +587,6 @@ export const FileInput: React.FC<FileProps> = (props) => {
                     </div>
                 )}
             </label>
-        </div>
         </div>
     );
 }
