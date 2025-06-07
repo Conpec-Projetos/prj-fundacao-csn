@@ -118,10 +118,10 @@ export interface dadosEstados {
   qtdMunicipios: number;
   valorTotal: number;
   maiorAporte: number;
-  beneficiariosDiretos: number;
-  beneficiariosIndiretos: number;
+  beneficiariosDireto: number;
+  beneficiariosIndireto: number;
   qtdOrganizacoes: number;
-  ods: number[];
+  projetosODS: number[];
   segmento: Map<string, number>[];
   lei: Map<string, number>[];
 }
