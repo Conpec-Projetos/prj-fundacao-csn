@@ -6,94 +6,110 @@ import BrazilMap from "@/components/map/brazilMap";
 import { FaCaretDown } from "react-icons/fa";
 import { useCallback, useEffect, useState } from "react";
 import { EstadoInputDashboard } from "@/components/inputs/inputs";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import { dadosEstados } from "@/firebase/schema/entities";
 
 export default function DashboardPage() {
-  async function buscarDadosEstado(estado: string): Promise<dadosEstados | null> {
-      const docRef = doc(db, 'dadosEstados', estado)
+  async function buscarDadosEstado(
+    estado: string
+  ): Promise<dadosEstados | null> {
+    const docRef = doc(db, "dadosEstados", estado);
+    console.log(estado);
 
-      try {
-        const docSnapshot = await getDoc(docRef)
+    try {
+      const docSnapshot = await getDoc(docRef);
 
-        if (docSnapshot.exists()) {
-          const dados = docSnapshot.data() as dadosEstados;
-          console.log('Documento encontrado')
-          return dados
-        } else {
-          console.log("Documento não existe")
-          return null
-        }
-      } catch (error) {
-        console.error('Erro na busca do documento')
-        throw error
+      if (docSnapshot.exists()) {
+        const dados = docSnapshot.data() as dadosEstados;
+        console.log("Documento encontrado");
+        return dados;
+      } else {
+        console.log("Documento não existe");
+        return null;
       }
+    } catch (error) {
+      console.error("Erro na busca do documento");
+      throw error;
     }
+  }
 
-function somarDadosEstados(array: dadosEstados[]): dadosEstados {
-  return array.reduce((acc, curr) => {
-    // Soma dos valores escalares
-    const novoAcc = {
-      nomeEstado: "Todos",
-      valorTotal: (acc.valorTotal ?? 0) + (curr.valorTotal ?? 0),
-      maiorAporte: Math.max(acc.maiorAporte ?? 0, curr.maiorAporte ?? 0),
-      qtdProjetos: (acc.qtdProjetos ?? 0) + (curr.qtdProjetos ?? 0),
-      beneficiariosDireto: (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
-      beneficiariosIndireto: (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
-      qtdOrganizacoes: (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
-      qtdMunicipios: (acc.qtdMunicipios ?? 0) + (curr.qtdMunicipios ?? 0),
-      projetosODS: acc.projetosODS
-        ? acc.projetosODS.map((v, i) => v + (curr.projetosODS?.[i] ?? 0))
-        : curr.projetosODS ?? [],
-      lei: [] as { nome:string; qtdProjetos: number }[],
-      segmento: [] as { nome: string; qtdProjetos: number }[],
-    };
+  function somarDadosEstados(array: dadosEstados[]): dadosEstados {
+    return array.reduce((acc, curr) => {
+      // Soma dos valores escalares
+      const novoAcc = {
+        nomeEstado: "Todos",
+        valorTotal: (acc.valorTotal ?? 0) + (curr.valorTotal ?? 0),
+        maiorAporte: Math.max(acc.maiorAporte ?? 0, curr.maiorAporte ?? 0),
+        qtdProjetos: (acc.qtdProjetos ?? 0) + (curr.qtdProjetos ?? 0),
+        beneficiariosDireto:
+          (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
+        beneficiariosIndireto:
+          (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
+        qtdOrganizacoes:
+          (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
+        qtdMunicipios: (acc.qtdMunicipios ?? 0) + (curr.qtdMunicipios ?? 0),
+        projetosODS: acc.projetosODS
+          ? acc.projetosODS.map((v, i) => v + (curr.projetosODS?.[i] ?? 0))
+          : curr.projetosODS ?? [],
+        lei: [] as { nome: string; qtdProjetos: number }[],
+        segmento: [] as { nome: string; qtdProjetos: number }[],
+      };
 
-    // Agora agrupa e soma os segmentos
-    const segmentosCombinados = [...(acc.segmento || []), ...(curr.segmento || [])];
-    const leiCombinada = [...(acc.lei || []), ...(curr.lei || [])]
+      // Agora agrupa e soma os segmentos
+      const segmentosCombinados = [
+        ...(acc.segmento || []),
+        ...(curr.segmento || []),
+      ];
+      const leiCombinada = [...(acc.lei || []), ...(curr.lei || [])];
 
-    const segmentoAgrupado = segmentosCombinados.reduce((segAcc, segCurr) => {
-      const index = segAcc.findIndex(item => item.nome === segCurr.nome);
-      if (index >= 0) {
-        segAcc[index].qtdProjetos += segCurr.qtdProjetos || 0;
-      } else {
-        segAcc.push({ ...segCurr });
-      }
-      return segAcc;
-    }, [] as { nome: string; qtdProjetos: number }[]);
+      const segmentoAgrupado = segmentosCombinados.reduce((segAcc, segCurr) => {
+        const index = segAcc.findIndex((item) => item.nome === segCurr.nome);
+        if (index >= 0) {
+          segAcc[index].qtdProjetos += segCurr.qtdProjetos || 0;
+        } else {
+          segAcc.push({ ...segCurr });
+        }
+        return segAcc;
+      }, [] as { nome: string; qtdProjetos: number }[]);
 
-    novoAcc.segmento = segmentoAgrupado;
+      novoAcc.segmento = segmentoAgrupado;
 
-    const leiAgrupada = leiCombinada.reduce((leiAcc, leiCurr) => {
-      const index = leiAcc.findIndex(item => item.nome === leiCurr.nome);
-      if (index >= 0) {
-        leiAcc[index].qtdProjetos += leiCurr.qtdProjetos || 0;
-      } else {
-        leiAcc.push({ ...leiCurr });
-      }
-      return leiAcc;
-    }, [] as { nome: string; qtdProjetos: number }[]);
+      const leiAgrupada = leiCombinada.reduce((leiAcc, leiCurr) => {
+        const index = leiAcc.findIndex((item) => item.nome === leiCurr.nome);
+        if (index >= 0) {
+          leiAcc[index].qtdProjetos += leiCurr.qtdProjetos || 0;
+        } else {
+          leiAcc.push({ ...leiCurr });
+        }
+        return leiAcc;
+      }, [] as { nome: string; qtdProjetos: number }[]);
 
-    novoAcc.lei = leiAgrupada;
+      novoAcc.lei = leiAgrupada;
 
-    return novoAcc;
-  });
-}
-  
-  const buscarDadosGerais = useCallback(async (): Promise<dadosEstados | null> => {
-    const consultaSnapshot = await getDocs(collection(db, 'dadosEstados'));
-    const todosDados: dadosEstados[] = [];
-    const dadosMapaTemp: Record<string, number> = {} as Record<string, number>
+      return novoAcc;
+    });
+  }
 
-    consultaSnapshot.forEach((doc) => {
-      todosDados.push(doc.data() as dadosEstados)
-      dadosMapaTemp[doc.data().nomeEstado] = doc.data().qtdProjetos
-    })
-    setDadosMapa(dadosMapaTemp)
-    return somarDadosEstados(todosDados)
-  }, [])
+  const buscarDadosGerais =
+    useCallback(async (): Promise<dadosEstados | null> => {
+      const consulta = query(collection(db, 'dadosEstados'), where("qtdProjetos", "!=", 0))
+
+      const consultaSnapshot = await getDocs(consulta);
+      const todosDados: dadosEstados[] = [];
+      const dadosMapaTemp: Record<string, number> = {} as Record<
+        string,
+        number
+      >;
+
+      consultaSnapshot.forEach((doc) => {
+        todosDados.push(doc.data() as dadosEstados);
+        dadosMapaTemp[doc.data().nomeEstado] = doc.data().qtdProjetos;
+      });
+      setDadosMapa(dadosMapaTemp);
+      setEstadosAtendidos(todosDados.length)
+      return somarDadosEstados(todosDados);
+    }, []);
 
   const odsData = {
     labels: [
@@ -117,39 +133,34 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
     ],
   };
   // Sample Estados de Atuação data
-  const estadosData = {
-    labels: [
-      "BA",
-      "SP",
-      "MG",
-      "TO",
-      "CE",
-      "RO",
-      "GO",
-      "PB",
-      "AL",
-      "MS",
-      "RN",
-      "MA",
-      "PA",
-      "PR",
-      "SC",
-      "RJ",
-      "RR",
-      "AC",
-      "DF",
-      "ES",
-      "MT",
-      "SE",
-      "PI",
-      "PE",
-      "RS",
-      "AP",
-    ],
-    values: [
-      95, 90, 45, 75, 60, 45, 30, 55, 40, 35, 25, 15, 20, 10, 5, 50, 10, 30, 40,
-      40, 40, 10, 10, 20, 60, 10,
-    ],
+  const estadosSiglas = {
+    "Acre" : "AC",
+    "Alagoas" : "AL",
+    "Amapá" : "AP",
+    "Amazonas" : "AM",
+    "Bahia" : "BA",
+    "Ceará" : "CE",
+    "Distrito Federal" : "DF",
+    "Espírito Santo" : "ES",
+    "Goiás" : "GO",
+    "Maranhão" : "MA",
+    "Mato Grosso" : "MT",
+    "Mato Grosso do Sul" : "MS",
+    "Minas Gerais" : "MG",
+    "Pará" : "PA",
+    "Paraíba" : "PB",
+    "Paraná" : "PR",
+    "Pernambuco" : "PE",
+    "Piauí" : "PI",
+    "Rio de Janeiro" : "RJ",
+    "Rio Grande do Norte" : "RN",
+    "Rio Grande do Sul" : "RS",
+    "Rondônia" : "RO",
+    "Roraima" : "RR",
+    "Santa Catarina" : "SC",
+    "São Paulo" : "SP",
+    "Sergipe" : "SE",
+    "Tocantins" : "TO",
   };
 
   const [ehCelular, setEhCelular] = useState(true);
@@ -157,11 +168,14 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
   const [estado, setEstado] = useState<string>("");
   const [dados, setDados] = useState<dadosEstados | null>(null);
   const [dadosMapa, setDadosMapa] = useState<Record<string, number>>({});
+  const [estadosAtendidos, setEstadosAtendidos] = useState<number>(0);
 
-  const segmentoNomes: string[] = dados?.segmento.map(item => item.nome) ?? [];
-  const segmentoValores: number[] = dados?.segmento.map(item => item.qtdProjetos) ?? [];
-  const leiNomes: string[] = dados?.lei.map(item => item.nome) ?? [];
-  const leiValores: number[] = dados?.lei.map(item => item.qtdProjetos) ?? [];
+  const segmentoNomes: string[] =
+    dados?.segmento.map((item) => item.nome) ?? [];
+  const segmentoValores: number[] =
+    dados?.segmento.map((item) => item.qtdProjetos) ?? [];
+  const leiNomes: string[] = dados?.lei.map((item) => item.nome) ?? [];
+  const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
 
   useEffect(() => {
     const lidarRedimensionamento = () => {
@@ -172,21 +186,19 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
     return () => {
       window.removeEventListener("resize", lidarRedimensionamento);
     };
-  },[]);
+  }, []);
 
   useEffect(() => {
-    if (estado != '') {
+    if (estado != "") {
       buscarDadosEstado(estado).then((dado) => {
-        if (dado) setDados(dado)
-    })
+        if (dado) setDados(dado);
+      });
     } else {
       buscarDadosGerais().then((dado) => {
-        if (dado) setDados(dado)
-      })
+        if (dado) setDados(dado);
+      });
     }
   }, [estado, buscarDadosGerais]);
-
-  console.log(Object.keys(dadosMapa))
 
   //começo do código em si
   return (
@@ -194,7 +206,9 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
       <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10">
         <div className="flex flex-row items-center w-full justify-between">
           <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
-          <div className="relative"> {/* <-- Add relative here */}
+          <div className="relative">
+            {" "}
+            {/* <-- Add relative here */}
             <button
               className="flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer"
               onClick={() => setIsOpen(!isOpen)}
@@ -240,30 +254,36 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
-          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-            <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
-            <h2 className="text-lg mb-2">Projetos no total</h2>
+        <section className="grid grid-rows-2 gap-5 text-left">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
+              <h2 className="text-lg mb-2">Projetos no total</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
+              <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
+              <h2 className="text-lg">Beneficiários diretos</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">
+                {dados?.beneficiariosIndireto}
+              </p>
+              <h2 className="text-lg">Beneficiários indiretos</h2>
+            </div>
           </div>
-          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
-            <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
-            <h2 className="text-lg">Beneficiários diretos</h2>
-          </div>
-          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-            <p className="text-xl font-bold">{dados?.beneficiariosIndireto}</p>
-            <h2 className="text-lg">Beneficiários indiretos</h2>
-          </div>
-          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-            <p className="text-xl font-bold">{dados?.qtdOrganizacoes}</p>
-            <h2 className="text-lg">Organizações envolvidas</h2>
-          </div>
-          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-            <p className="text-xl font-bold">13</p>
-            <h2 className="text-lg">Estados atendidos</h2>
-          </div>
-          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-            <p className="text-xl font-bold">{dados?.qtdMunicipios}</p>
-            <h2 className="text-lg">Municípios atendidos</h2>
+          <div className={`grid gap-5 ${estado === '' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.qtdOrganizacoes}</p>
+              <h2 className="text-lg">Organizações envolvidas</h2>
+            </div>
+            <div className={`bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 ${estado === '' ? '' : 'hidden'}`}>
+              <p className="text-xl font-bold">{estadosAtendidos}</p>
+              <h2 className="text-lg">Estados atendidos</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.qtdMunicipios}</p>
+              <h2 className="text-lg">Municípios atendidos</h2>
+            </div>
           </div>
         </section>
         {/* Section 2: ODS Chart */}
@@ -286,28 +306,38 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
           </div>
         </section>
         {/* Section 3: Map and Chart */}
-        {estado == '' && <section className={`grid ${ehCelular ? '' : 'grid-cols-2'} gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5`}>
-          <div className="flex flex-col sm:overflow-x-auto md:overflow-x-hidden">
-            <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
-            <div className={`lg:h-120 md:h-100 sm:h-80 w-full p-3 ${ehCelular ? "hidden" : ""}`}>
-              <BrazilMap data={dadosMapa} />
+        {estado === "" && (
+          <section
+            className={`grid ${
+              ehCelular ? "" : "grid-cols-2"
+            } gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5`}
+          >
+            <div className="flex flex-col sm:overflow-x-auto md:overflow-x-hidden">
+              <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
+              <div
+                className={`lg:h-120 md:h-100 sm:h-80 w-full p-3 ${
+                  ehCelular ? "hidden" : ""
+                }`}
+              >
+                <BrazilMap data={dadosMapa} />
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col">
-            {/* box for the bar chart */}
-            <div className="min-h-96 h-fit w-full">
-              <BarChart
-                title=""
-                data={Object.values(dadosMapa)}
-                labels={Object.keys(dadosMapa)}
-                colors={["#b37b97"]}
-                horizontal={true}
-                useIcons={false}
-              />
+            <div className="flex flex-col">
+              {/* box for the bar chart */}
+              <div className="min-h-96 h-fit w-full">
+                <BarChart
+                  title=""
+                  data={Object.values(dadosMapa)}
+                  labels={Object.keys(dadosMapa).map(nome => estadosSiglas[nome] ?? nome)}
+                  colors={["#b37b97"]}
+                  horizontal={true}
+                  useIcons={false}
+                />
+              </div>
             </div>
-          </div>
-        </section>}
-        
+          </section>
+        )}
+
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-10">
             <h2 className="text-2xl font-bold mb-4">Segmento do projeto</h2>
@@ -323,7 +353,9 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 h-full flex flex-col">
             <h2 className="text-2xl font-bold mb-4">Lei de Incentivo</h2>
             <div className="flex-grow w-full overflow-x-auto">
-              <div className="min-w-[350px]"> {/* Adjust min-width as needed */}
+              <div className="min-w-[1000px]">
+                {" "}
+                {/* Adjust min-width as needed */}
                 <BarChart
                   title=""
                   colors={["#b37b97"]}

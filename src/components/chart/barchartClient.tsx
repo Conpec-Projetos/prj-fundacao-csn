@@ -195,7 +195,7 @@ export default function BarChart({
   };
 
   return (
-    <div className={`relative w-full ${celular ? 'h-[800px]' : 'h-[500px]'}`}>
+    <div className={`relative w-full ${celular ? 'h-[800px]' : 'h-[600px]'}`}>
       {(!useIcons || iconsLoaded) && (
         <Bar
           ref={chartRef}
