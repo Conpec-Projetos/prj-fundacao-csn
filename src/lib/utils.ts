@@ -1,5 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
+import { storage } from "@/firebase/firebase-config";
+import { odsList, publicoList } from "@/firebase/schema/entities";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -38,4 +41,40 @@ export function getUserIdFromLocalStorage(): string | null {
         }
     }
   return null;
+}
+
+export async function getFileUrl(files: File[], projetoID: string, filename?: string): Promise<string[]> {
+  const fileUrl: string[] = [];
+  for (const file of files) {
+      const storageRef = ref(storage, `forms-cadastro/${projetoID}/${Date.now()}-${filename || file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      fileUrl.push(downloadURL);
+  }
+  return fileUrl;
+}
+
+export function getOdsIds(selectedOds: boolean[]): number[] {
+    const ids: number[] = [];
+    selectedOds.forEach((isSelected, index) => {
+        if (isSelected) {
+            ids.push(odsList[index].id);
+        }
+    });
+    return ids;
+};
+
+export function getPublicoNomes(selectedPublico: boolean[]): string[] {
+    const nomes: string[] = [];
+    selectedPublico.forEach((isSelected, index) => {
+        if (isSelected) {
+            nomes.push(publicoList[index].nome);
+        }
+    });
+    return nomes;
+}
+
+export function getItemNome(selectedItem: number, ItemList: { id: number; nome: string }[]): string {
+    const itemObj = ItemList.find((item) => item.id === selectedItem);
+    return itemObj ? itemObj.nome : "";
 }
