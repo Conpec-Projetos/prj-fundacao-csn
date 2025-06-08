@@ -4,10 +4,10 @@ import BarChart from "@/components/chart/barchartClient";
 import PieChart from "@/components/chart/piechartClient";
 import BrazilMap from "@/components/map/brazilMap";
 import { FaCaretDown } from "react-icons/fa";
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { EstadoInputDashboard } from "@/components/inputs/inputs";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
-import { db, storage } from "@/firebase/firebase-config";
+import { db } from "@/firebase/firebase-config";
 import { dadosEstados } from "@/firebase/schema/entities";
 
 export default function DashboardPage() {
@@ -85,41 +85,16 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
   const buscarDadosGerais = useCallback(async (): Promise<dadosEstados | null> => {
     const consultaSnapshot = await getDocs(collection(db, 'dadosEstados'));
     const todosDados: dadosEstados[] = [];
+    const dadosMapaTemp: Record<string, number> = {} as Record<string, number>
 
     consultaSnapshot.forEach((doc) => {
       todosDados.push(doc.data() as dadosEstados)
+      dadosMapaTemp[doc.data().nomeEstado] = doc.data().qtdProjetos
     })
-
+    setDadosMapa(dadosMapaTemp)
     return somarDadosEstados(todosDados)
   }, [])
 
-  // Sample data for charts
-  const segmentData = {
-    labels: [
-      "Cultura",
-      "Esporte",
-      "Pessoa Idosa",
-      "Criança e Adolescente",
-      "Saúde",
-    ],
-    values: [250, 180, 120, 150, 100],
-  };
-  // Sample Lei de Incentivo data
-  const incentiveData = {
-    labels: [
-      "Lei de Incentivo à Cultura",
-      "PROAC",
-      "FIA",
-      "LIE",
-      "Lei da Pessoa Idosa",
-      "Pronas",
-      "Pronon",
-      "Promac",
-      "ICMS",
-    ],
-    values: [200, 150, 120, 100, 80, 60, 40, 30, 20],
-  };
-  // ODS Sample Data
   const odsData = {
     labels: [
       "ODS 1: Erradicação da Pobreza",
@@ -139,29 +114,6 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
       "ODS 15: Vida Terrestre",
       "ODS 16: Paz, Justiça e Instituições Eficazes",
       "ODS 17: Parcerias e Meios de Implementação",
-    ],
-    values: [
-      120, 150, 180, 90, 110, 70, 130, 160, 140, 100, 85, 95, 75, 65, 115, 105,
-      125,
-    ],
-    colors: [
-      "#E5243B",
-      "#DDA63A",
-      "#4C9F38",
-      "#C5192D",
-      "#FF3A21",
-      "#26BDE2",
-      "#FCC30B",
-      "#A21942",
-      "#FD6925",
-      "#DD1367",
-      "#FD9D24",
-      "#BF8B2E",
-      "#3F7E44",
-      "#0A97D9",
-      "#56C02B",
-      "#00689D",
-      "#19486A",
     ],
   };
   // Sample Estados de Atuação data
@@ -199,41 +151,12 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
       40, 40, 10, 10, 20, 60, 10,
     ],
   };
-  // Sample data for the map
-  const mapData = {
-    SP: 90,
-    RJ: 50,
-    MG: 45,
-    BA: 95,
-    TO: 75,
-    CE: 60,
-    AM: 39,
-    RO: 45,
-    GO: 30,
-    PB: 55,
-    AL: 40,
-    MS: 35,
-    RR: 10,
-    MA: 15,
-    PA: 20,
-    PR: 10,
-    SC: 5,
-    AC: 30,
-    DF: 40,
-    ES: 40,
-    MT: 40,
-    RN: 25,
-    SE: 10,
-    PI: 10,
-    PE: 60,
-    RS: 30,
-    AP: 45,
-  };
 
   const [ehCelular, setEhCelular] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [estado, setEstado] = useState<string>("");
   const [dados, setDados] = useState<dadosEstados | null>(null);
+  const [dadosMapa, setDadosMapa] = useState<Record<string, number>>({});
 
   const segmentoNomes: string[] = dados?.segmento.map(item => item.nome) ?? [];
   const segmentoValores: number[] = dados?.segmento.map(item => item.qtdProjetos) ?? [];
@@ -262,6 +185,8 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
       })
     }
   }, [estado, buscarDadosGerais]);
+
+  console.log(Object.keys(dadosMapa))
 
   //começo do código em si
   return (
@@ -365,7 +290,7 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
           <div className="flex flex-col sm:overflow-x-auto md:overflow-x-hidden">
             <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
             <div className={`lg:h-120 md:h-100 sm:h-80 w-full p-3 ${ehCelular ? "hidden" : ""}`}>
-              <BrazilMap data={mapData} />
+              <BrazilMap data={dadosMapa} />
             </div>
           </div>
           <div className="flex flex-col">
@@ -373,8 +298,8 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
             <div className="min-h-96 h-fit w-full">
               <BarChart
                 title=""
-                data={estadosData.values}
-                labels={estadosData.labels}
+                data={Object.values(dadosMapa)}
+                labels={Object.keys(dadosMapa)}
                 colors={["#b37b97"]}
                 horizontal={true}
                 useIcons={false}
