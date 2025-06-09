@@ -273,22 +273,30 @@ export default function TodosProjetos(){
     const [isLoading, setIsLoading] = useState(true);
     const { darkMode } = useTheme();
 
+
+
     useEffect(() => {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-          if (!user) {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user && user.email) {
+            const emailDomain = user.email.split('@')[1];
+            if ((emailDomain === "conpec.com.br") && user.emailVerified) {
+              setIsLoading(false);
+            } else {
+              router.push("./inicio-externo");
+            }
+        } else {
+            // Se não está logado, permite que a página de login seja renderizada
             router.push("./login");
-          } else {
-            setIsLoading(false);
-          }
-        });
+        }});
 
       return () => unsubscribe();
-    }, [router])
+    }, [router]);
+
 
 
     if (isLoading) {
         return (
-            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-black dark:bg-opacity-80">
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
                 <Image
                     src={darkMode ? darkLogo : logo}
                     alt="csn-logo"

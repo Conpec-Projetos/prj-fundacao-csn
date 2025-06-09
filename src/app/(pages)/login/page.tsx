@@ -10,7 +10,7 @@ import {toast, Toaster} from "sonner"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
+import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import { getUserIdFromLocalStorage } from "@/lib/utils"; // Importar a função
@@ -35,15 +35,28 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // nas outras paginas estou usando onAuthStateChanged, mas nao quis mudar nessa caso seja necessario armazenar no localStorage
-        const userId = getUserIdFromLocalStorage();
-        if (userId) {
-            // Se o usuário já está logado, redireciona para a home
-            router.push("/");
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            if (user.email && user.emailVerified) {
+                const emailDomain = user.email.split('@')[1];
+
+                // Se colocar o dominio da csn nao conseguirei testar, logo coloquei o da conpec
+                if (emailDomain === "conpec.com.br") {
+                    router.push("/")
+                } else {
+                    router.push("inicio-externo")
+                }
+                
+            } else {
+                console.log("E-mail não verificado, bloqueando acesso.");
+                setIsLoading(false);
+            }
         } else {
             // Se não está logado, permite que a página de login seja renderizada
             setIsLoading(false);
-        }
+        }});
+
+      return () => unsubscribe();
     }, [router]);
 
     const {
@@ -62,11 +75,24 @@ export default function Login() {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password); // tenta fazer o login
             const user = {...userCredential.user, timeout: Date.now() + (1000 * 60 * 60 * 12)}; // Desloga automaticamente depois de 12 horas
-            
-            if(user){
+            const userVerification = userCredential.user;
+
+            if(userVerification){
                 localStorage.setItem('user', JSON.stringify(user));
                 // Guarda o id do usuário no cache para facilitar o acesso na hora de enviar formulários
-                router.push("/"); // redireciona para a home
+                if (userVerification.email && userVerification.emailVerified) {
+                    const emailDomain = userVerification.email.split('@')[1];
+
+                    // Se colocar o dominio da csn nao conseguirei testar, logo coloquei o da conpec
+                    if (emailDomain === "conpec.com.br") {
+                        router.push("/")
+                    } else {
+                        router.push("inicio-externo")
+                    }
+                    
+                } else {
+                    console.log("E-mail não verificado, bloqueando acesso.");
+                }
             }
             // auth está em firebase-config.ts
         } 
@@ -77,7 +103,7 @@ export default function Login() {
 
     if (isLoading){
         return (
-            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-black dark:bg-opacity-80">
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
                 <Image
                     src={darkMode ? darkLogo : logo}
                     alt="csn-logo"
@@ -138,7 +164,7 @@ export default function Login() {
                         {/* Se possuir erro exibiremos uma mensagem abaixo do input, div className="min-h-[24px] (define um espaço para a mensagem de erro e impede que o conteudo "pule" ao exibir a mensagem*/}
                     <div className="min-h-[24px] mt-1">
                         {errors.email && (
-                            <p className="text-red-600 dark:text-zinc-50 text-base">
+                            <p className="text-red-600 dark:text-red-500 text-base">
                                 {errors.email.message}
                             </p>
                         )}
@@ -171,7 +197,7 @@ export default function Login() {
                         {/* Se possuir erro exibiremos uma mensagem abaixo do input */}
                             <div className="h-6 mt-1 mb-2">
                                 {errors.password && (
-                                    <p className="text-red-600 dark:text-zinc-50 text-base mt-1">
+                                    <p className="text-red-600 dark:text-red-500 text-base mt-1">
                                         {errors.password.message}
                                     </p>
                                 )}

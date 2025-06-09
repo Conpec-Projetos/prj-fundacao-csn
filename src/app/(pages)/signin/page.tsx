@@ -12,7 +12,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import { auth } from "@/firebase/firebase-config";
-import { createUserWithEmailAndPassword} from "firebase/auth";
+import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification} from "firebase/auth";
 import { getUserIdFromLocalStorage } from "@/lib/utils"; // Importar a função
 
 const schema = z.object({
@@ -40,16 +40,29 @@ export default function Signin(){
     const [isCheckingUser, setIsCheckingUser] = useState(true); // Estado para verificar o login
 
     useEffect(() => {
-        // nas outras paginas estou usando onAuthStateChanged, mas nao quis mudar nessa caso seja necessario armazenar no localStorage
-        const userId = getUserIdFromLocalStorage();
-        if (userId) {
-            // Se o usuário já está logado, redireciona para a home
-            router.push("/");
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            if (user.email && user.emailVerified) {
+                const emailDomain = user.email.split('@')[1];
+
+                // Se colocar o dominio da csn nao conseguirei testar, logo coloquei o da conpec
+                if (emailDomain === "conpec.com.br") {
+                    router.push("/")
+                } else {
+                    router.push("inicio-externo")
+                }
+                
+            } else {
+                console.log("E-mail não verificado, bloqueando acesso.");
+            }
         } else {
-            // Se não está logado, permite que a página de signin seja renderizada
+            // Se não está logado, permite que a página de login seja renderizada
             setIsCheckingUser(false);
-        }
+        }});
+
+      return () => unsubscribe();
     }, [router]);
+
 
     const {
         register,
@@ -69,15 +82,17 @@ export default function Signin(){
         setLoadingAuth(true); // Inicia o loading do processo de autenticação
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-            const user = {...userCredential.user, timeout: Date.now() + (1000 * 60 * 60 * 12)}; // Desloga automaticamente depois de 12 horas
+
+            const userVerification = userCredential.user;
+            await sendEmailVerification(userVerification);
+            toast.success("E-mail de verificação enviado. Verifique sua caixa de entrada!");
             
-            if(user){
-                localStorage.setItem('user', JSON.stringify(user));
-                // Guarda o id do usuário no cache para facilitar o acesso na hora de enviar formulários
-                router.push("/");
-            }
-            // auth está em firebase-config.ts
-        } 
+            setTimeout(() => {
+              router.push("./login"); // volta para tela de login
+            }, 6000); // 6 segundos
+            console.log("E-mail de verificação enviado para:", data.email);
+        }
+            
         catch (error: any) { // Adicionar tipo para error
             // Tratar erros específicos do Firebase aqui, se necessário
             if (error.code === 'auth/email-already-in-use') {
@@ -94,7 +109,7 @@ export default function Signin(){
 
     if (isCheckingUser){
         return (
-            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-black dark:bg-opacity-80">
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
                 <Image
                     src={darkMode ? darkLogo : logo}
                     alt="csn-logo"
@@ -167,7 +182,7 @@ export default function Signin(){
                         {/* Se possuir erro exibiremos uma mensagem abaixo do input, div className="min-h-[24px] (define um espaço para a mensagem de erro e impede que o conteudo "pule" ao exibir a mensagem*/}
                         <div className="min-h-[24px] mt-1">
                             {errors.email && (
-                                <p className="text-red-600 dark:text-zinc-50 text-base">
+                                <p className="text-red-600 dark:text-red-500 text-base">
                                     {errors.email.message}
                                 </p>
                             )}
@@ -203,7 +218,7 @@ export default function Signin(){
                                                     {/* Se possuir erro exibiremos uma mensagem abaixo do input */}
                             <div className="h-6 mt-1">
                                 {errors.password && (
-                                    <p className="text-red-600 dark:text-zinc-50 text-base mt-1">
+                                    <p className="text-red-600 dark:text-red-500 text-base mt-1">
                                         {errors.password.message}
                                     </p>
                                 )}
@@ -237,7 +252,7 @@ export default function Signin(){
                                                     {/* Se possuir erro exibiremos uma mensagem abaixo do input */}
                             <div className="h-6 mt-1">
                                 {errors.confirmPassword && (
-                                    <p className="text-red-600 dark:text-zinc-50 text-base mt-1">
+                                    <p className="text-red-600 dark:text-red-500 text-base mt-1">
                                         {errors.confirmPassword.message}
                                     </p>
                                 )}
