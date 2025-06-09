@@ -35,12 +35,19 @@ export default function DashboardPage() {
   }
 
   function somarDadosEstados(array: dadosEstados[]): dadosEstados {
+    const maiorAporteGlobal = array.map(d => d.maiorAporte).reduce((max, curr) => {
+      if (!max || (curr && curr.valorAportado > max.valorAportado)) {
+        return curr;
+      }
+      return max;
+      }, null as { nome: string; valorAportado: number} | null)
+
     return array.reduce((acc, curr) => {
       // Soma dos valores escalares
       const novoAcc = {
         nomeEstado: "Todos",
         valorTotal: (acc.valorTotal ?? 0) + (curr.valorTotal ?? 0),
-        maiorAporte: Math.max(acc.maiorAporte ?? 0, curr.maiorAporte ?? 0),
+        maiorAporte: maiorAporteGlobal,
         qtdProjetos: (acc.qtdProjetos ?? 0) + (curr.qtdProjetos ?? 0),
         beneficiariosDireto:
           (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
@@ -57,6 +64,7 @@ export default function DashboardPage() {
       };
 
       // Agora agrupa e soma os segmentos
+
       const segmentosCombinados = [
         ...(acc.segmento || []),
         ...(curr.segmento || []),
@@ -236,7 +244,7 @@ export default function DashboardPage() {
               </h1>
             </div>
             <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
-              {dados?.valorTotal}
+              R$ {dados?.valorTotal},00
             </h1>
           </div>
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
@@ -246,10 +254,10 @@ export default function DashboardPage() {
               </h1>
             </div>
             <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
-              {dados?.maiorAporte}
+              R$ {dados?.maiorAporte.valorAportado},00
             </h1>
             <h1 className="text-base text-blue-fcsn dark:text-white-off font-light">
-              Investido em Projeto X
+              Investido em Projeto {dados?.maiorAporte.nome}
             </h1>
           </div>
         </section>
@@ -260,7 +268,7 @@ export default function DashboardPage() {
               <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
               <h2 className="text-lg mb-2">Projetos no total</h2>
             </div>
-            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
               <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
               <h2 className="text-lg">Beneficiários diretos</h2>
             </div>
