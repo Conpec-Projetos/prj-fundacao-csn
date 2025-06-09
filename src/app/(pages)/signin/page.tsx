@@ -12,7 +12,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import { auth } from "@/firebase/firebase-config";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword} from "firebase/auth";
 import { getUserIdFromLocalStorage } from "@/lib/utils"; // Importar a função
 
 const schema = z.object({
@@ -40,6 +40,7 @@ export default function Signin(){
     const [isCheckingUser, setIsCheckingUser] = useState(true); // Estado para verificar o login
 
     useEffect(() => {
+        // nas outras paginas estou usando onAuthStateChanged, mas nao quis mudar nessa caso seja necessario armazenar no localStorage
         const userId = getUserIdFromLocalStorage();
         if (userId) {
             // Se o usuário já está logado, redireciona para a home
@@ -91,8 +92,21 @@ export default function Signin(){
         }
     };
 
-    if (isCheckingUser) {
-        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>
+    if (isCheckingUser){
+        return (
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-black dark:bg-opacity-80">
+                <Image
+                    src={darkMode ? darkLogo : logo}
+                    alt="csn-logo"
+                    width={600}
+                    className=""
+                    priority
+                />
+                <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
+                    Verificando sessão...
+                </div>
+            </div>
+        );
     }
 
     return(
@@ -101,7 +115,7 @@ export default function Signin(){
 
             <form
                 className="flex flex-col items-center justify-between w-full max-w-[1100px] 
-                        h-auto min-h-[600px] my-4 md:my-8
+                        h-auto min-h-[600px] my-4 md:my-8 py-6
                         bg-white-off dark:bg-blue-fcsn2 rounded-md shadow-blue-fcsn shadow-md
                         p-4 md:p-8"
                 onSubmit={handleSubmit(onSubmit)}>
@@ -119,17 +133,6 @@ export default function Signin(){
                         Fazer cadastro
                     </h1>
                 </div>
-                {/* Mostra um erro por vez */}
-                {(() => {
-                    const firstError =
-                        errors.name?.message ||
-                        errors.email?.message ||
-                        errors.password?.message ||
-                        errors.confirmPassword?.message;
-                    return firstError ? (
-                        <div className="w-fit h-fit flex text-red-600 dark:text-zinc-50 text-lg bg-red-100 dark:bg-red-fcsn text-center items-center rounded-lg p-2 mb-3">{firstError}</div>
-                    ) : null;
-                })()}
 
                 {/* Inputs */}
                 <div className="flex flex-col items-center space-y-4 md:space-y-6 w-full">
@@ -161,6 +164,14 @@ export default function Signin(){
                                     transition-all duration-300 px-4
                                     focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn"
                         />
+                        {/* Se possuir erro exibiremos uma mensagem abaixo do input, div className="min-h-[24px] (define um espaço para a mensagem de erro e impede que o conteudo "pule" ao exibir a mensagem*/}
+                        <div className="min-h-[24px] mt-1">
+                            {errors.email && (
+                                <p className="text-red-600 dark:text-zinc-50 text-base">
+                                    {errors.email.message}
+                                </p>
+                            )}
+                        </div>
                     </div>
                     
                     {/* Senhas */}
@@ -189,6 +200,14 @@ export default function Signin(){
                                     {visibleFirst ? <Eye size={20}/> : <EyeOff size={20}/>}
                                 </button>
                             </div>
+                                                    {/* Se possuir erro exibiremos uma mensagem abaixo do input */}
+                            <div className="h-6 mt-1">
+                                {errors.password && (
+                                    <p className="text-red-600 dark:text-zinc-50 text-base mt-1">
+                                        {errors.password.message}
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
                         {/* Segunda senha */}
@@ -215,12 +234,20 @@ export default function Signin(){
                                     {visibleSecond ? <Eye size={20}/> : <EyeOff size={20}/>}
                                 </button>
                             </div>
+                                                    {/* Se possuir erro exibiremos uma mensagem abaixo do input */}
+                            <div className="h-6 mt-1">
+                                {errors.confirmPassword && (
+                                    <p className="text-red-600 dark:text-zinc-50 text-base mt-1">
+                                        {errors.confirmPassword.message}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 
-                <div className="flex flex-row justify-center items-center text-sm md:text-base mt-4">
+                <div className="flex flex-row justify-center items-center text-sm md:text-base mt-12">
                     <span>Já tem uma conta?</span>
                     <button
                         onClick={(e) => { // Adicionar 'e' e prevenir default se necessário
