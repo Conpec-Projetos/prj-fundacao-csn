@@ -4,7 +4,14 @@ import Footer from "@/components/footer/footer";
 import { useEffect, useRef, useState } from "react";
 import { FaCaretDown, FaCheckCircle, FaFilter, FaMoneyBillAlt, FaSearch, FaTimesCircle } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
-import Botao from "../../../components/botoes_todos-proj/Botao";
+import Botao from "../../../components/botoes/botoes_todos-proj/Botao";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/firebase/firebase-config";
+import darkLogo from "@/assets/fcsn-logo-dark.svg"
+import logo from "@/assets/fcsn-logo.svg"
+import Image from "next/image";
+import { useTheme } from "@/context/themeContext";
 
 // Interface (base) para cada projeto
 interface ProjectProps {
@@ -260,6 +267,42 @@ export default function TodosProjetos(){
       setFilteredProjects([]);
       setCtrl(false);
     }
+
+    // verificando se o usuario ja realizou login
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
+    const { darkMode } = useTheme();
+
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (!user) {
+            router.push("./login");
+          } else {
+            setIsLoading(false);
+          }
+        });
+
+      return () => unsubscribe();
+    }, [router])
+
+
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-black dark:bg-opacity-80">
+                <Image
+                    src={darkMode ? darkLogo : logo}
+                    alt="csn-logo"
+                    width={600}
+                    className=""
+                    priority
+                />
+                <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
+                    Verificando sessão...
+                </div>
+            </div>
+        );
+    }
+
 
     return(
     <div className="flex flex-col min-h-[180vh]">
