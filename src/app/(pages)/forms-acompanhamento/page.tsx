@@ -14,13 +14,11 @@ import {
     FileInput,
     CidadeInput
     } from "@/components/inputs/inputs";
-import { Toaster } from "sonner";
-import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
-import { collection, doc, getDocs, updateDoc, addDoc, arrayUnion } from "firebase/firestore";
-import { db, storage } from "@/firebase/firebase-config";
-import { formsAcompanhamentoDados, odsList } from "@/firebase/schema/entities";
-import { toast } from "sonner";
-import { getUserIdFromLocalStorage } from "@/lib/utils"; // Importe a função
+import { Toaster, toast } from "sonner";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "@/firebase/firebase-config";
+import { formsAcompanhamentoDados, odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
+import { getUserIdFromLocalStorage, getFileUrl, getOdsIds, getItemNome } from "@/lib/utils";
 
 export default function FormsAcompanhamento(){
     const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +39,7 @@ export default function FormsAcompanhamento(){
     const [dataFim, setDataFim] = useState<string>("");
     const [contrapartidas, setContrapartidas] = useState<string>("");
     const [beneficiarios, setBeneficiarios] = useState<number[]>([0, 0]);
-    const [diversidade, setDiversidade] = useState<boolean>(false);
+    const [diversidade, setDiversidade] = useState<boolean>();
     const [etnias, setEtnias] = useState<number[]>(new Array(12).fill(0));
     const [ODS, setODS] = useState<boolean[]>(new Array(odsList.length).fill(false));
     const [relato, setRelato] = useState<string>("");
@@ -76,22 +74,7 @@ export default function FormsAcompanhamento(){
         const loadingToastId = toast.loading("Enviando formulário...");
 
         try {
-            const fotoURLs: string[] = [];
-            for (const file of fotos) {
-                const storageRef = ref(storage, `forms-acompanhamento-fotos/${projetoID}/${file.name}-${Date.now()}`);
-                await uploadBytes(storageRef, file);
-                const downloadURL = await getDownloadURL(storageRef);
-                fotoURLs.push(downloadURL);
-            }
-            const getOdsIds = (selectedOds: boolean[]): number[] => {
-                const ids: number[] = [];
-                selectedOds.forEach((isSelected, index) => {
-                    if (isSelected) {
-                        ids.push(odsList[index].id);
-                    }
-                });
-                return ids;
-            };
+            const fotoURLs = await getFileUrl(fotos, projetoID);
 
             const uploadFirestore: formsAcompanhamentoDados = {
                 projetoID: projetoID,
@@ -99,12 +82,12 @@ export default function FormsAcompanhamento(){
                 usuarioID: usuarioAtualID,
                 instituicao: instituicao,
                 descricao: descricao,
-                segmento: segmento,
-                lei: lei,
+                segmento: getItemNome(segmento, segmentoList),
+                lei: getItemNome(lei, leiList),
                 pontosPositivos: positivos || "",
                 pontosNegativos: negativos || "",
                 pontosAtencao: atencao || "",
-                ambito: ambito,
+                ambito: getItemNome(ambito, ambitoList),
                 qtdEstados: estados.length,
                 estados: estados,
                 qtdMunicipios: cidades.length,
@@ -136,35 +119,10 @@ export default function FormsAcompanhamento(){
                 contrapartidasExecutadas: executadas || "",
             };
 
-            const docRef = await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
+            await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
             toast.dismiss(loadingToastId);
-            toast.success(`Formulário enviado com sucesso! ID: ${docRef.id}`);
+            toast.success(`Formulário enviado com sucesso! ID`);
             
-            // Código para resetar os campos, mas ainda não sei se vai ser necessário
-            setInstituicao("");
-            setDescricao("");
-            setSegmento(-1);
-            setLei(-1);
-            setPositivos("");
-            setNegativos("");
-            setAtencao("");
-            setAmbito(-1);
-            setEstados([]);
-            setCidades([]);
-            setEspecificacoes("");
-            setDataComeco("");
-            setDataFim("");
-            setContrapartidas("");
-            setBeneficiarios([0, 0]);
-            setDiversidade(false);
-            setEtnias(new Array(12).fill(0));
-            setODS(new Array(odsList.length).fill(false));
-            setRelato("");
-            setFotos([]);
-            setWebsite("");
-            setLinks("");
-            setExecutadas("");
-
         } catch (error) {
             console.error("Erro ao enviar formulário: ", error);
             toast.dismiss(loadingToastId);
