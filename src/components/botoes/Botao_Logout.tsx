@@ -16,6 +16,7 @@ export default function Botao_Logout() {
     const [isLogOut, setLogOut] = useState(false);
 
     const router = useRouter();
+    
     async function LogOut(){
         try {
             setLogOut(true);
