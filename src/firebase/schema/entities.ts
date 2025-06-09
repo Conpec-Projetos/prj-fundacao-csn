@@ -120,7 +120,7 @@ export interface dadosEstados {
   qtdProjetos: number;
   qtdMunicipios: number;
   valorTotal: number;
-  maiorAporte: number;
+  maiorAporte: Map<string, number>;
   beneficiariosDireto: number;
   beneficiariosIndireto: number;
   qtdOrganizacoes: number;
