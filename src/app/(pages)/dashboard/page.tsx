@@ -5,7 +5,7 @@ import PieChart from "@/components/chart/piechartClient";
 import BrazilMap from "@/components/map/brazilMap";
 import { FaCaretDown } from "react-icons/fa";
 import { useCallback, useEffect, useState } from "react";
-import { EstadoInputDashboard } from "@/components/inputs/inputs";
+import { EstadoInputDashboard, CidadeInputDashboard } from "@/components/inputs/inputs";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import { dadosEstados } from "@/firebase/schema/entities";
@@ -177,6 +177,8 @@ export default function DashboardPage() {
   const [dados, setDados] = useState<dadosEstados | null>(null);
   const [dadosMapa, setDadosMapa] = useState<Record<string, number>>({});
   const [estadosAtendidos, setEstadosAtendidos] = useState<number>(0);
+  const [cidades, setCidades] = useState<string[]>([]);
+  const [filtrarPorEstado, setFiltrarPorEstado] = useState<boolean>(false);
 
   const segmentoNomes: string[] =
     dados?.segmento.map((item) => item.nome) ?? [];
@@ -224,12 +226,26 @@ export default function DashboardPage() {
               <FaCaretDown /> Aplicar Filtros
             </button>
             {isOpen && (
-              <div className="absolute right-4 top-full mt-2 min-w-[220px] max-w-xs w-fit rounded-lg bg-white dark:bg-blue-fcsn2 shadow-lg">
-                <EstadoInputDashboard
-                  text="Filtre por estado"
+              <div className="absolute right-4 top-full flex flex-col justify-center items-center mt-2 min-w-[250px] max-w-sm w-fit rounded-lg bg-white dark:bg-blue-fcsn2 shadow-lg">
+                <button className="cursor-pointer bg-blue-fcsn dark:bg-blue-fcsn3 text-white-off rounded-md m-4 p-3 text-lg font-bold"
+                onClick={() => setFiltrarPorEstado(!filtrarPorEstado)}>
+                  Filtrar por {filtrarPorEstado ? 'estado' : 'município'}
+                </button>
+                <div className=''>
+                  <EstadoInputDashboard
+                    text="Filtre por estado"
+                    estado={estado}
+                    setEstado={setEstado}
+                  />
+                </div>
+                <div className={`${filtrarPorEstado ? '' : 'hidden'}`}> 
+                  <CidadeInputDashboard
+                  text="Filtre por cidade"
                   estado={estado}
-                  setEstado={setEstado}
-                />
+                  cidades={cidades}
+                  setCidades={setCidades}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -320,7 +336,7 @@ export default function DashboardPage() {
               ehCelular ? "" : "grid-cols-2"
             } gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5`}
           >
-            <div className="flex flex-col sm:overflow-x-auto md:overflow-x-hidden">
+            <div className="flex flex-col overflow-x-auto md:overflow-x-hidden">
               <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
               <div
                 className={`lg:h-120 md:h-100 sm:h-80 w-full p-3 ${
