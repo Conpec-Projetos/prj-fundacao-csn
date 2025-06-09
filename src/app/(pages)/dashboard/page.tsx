@@ -90,6 +90,7 @@ export default function DashboardPage() {
         AP: 45,   
     };
     
+    
     //começo do código em si
     return (
         <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
