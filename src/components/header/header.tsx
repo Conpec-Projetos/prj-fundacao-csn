@@ -61,13 +61,22 @@ export default function Header(){
                     <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
 
                     <button
+                        onClick={(event) => {
+                                event.preventDefault();
+                                router.push("./dashboard")
+                            }}
                         className="
                             cursor-pointer">Dashboard</button>
                     
                     <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
 
-                    <button className="
-                        cursor-pointer">Projetos</button>
+                    <button 
+                        onClick={(event) => {
+                                event.preventDefault();
+                                router.push("./todos-projetos")
+                            }}
+                        className="
+                            cursor-pointer">Projetos</button>
 
                     <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
 
@@ -99,14 +108,19 @@ export default function Header(){
                         <button
                             onClick={(event) => {
                                 event.preventDefault();
-                                router.push("/dashboard");
+                                router.push("./dashboard");
                             }}
                             className="cursor-pointer"
                         >
                             Dashboard
                         </button>
 
-                        <button className="cursor-pointer">Projetos</button>
+                        <button                 
+                            onClick={(event) => {
+                                event.preventDefault();
+                                router.push("./todos-projetos");
+                            }}
+                        className="cursor-pointer">Projetos</button>
 
                         <button
                             onClick={() => setIsPopUpOpen(!isPopUpOpen)}
