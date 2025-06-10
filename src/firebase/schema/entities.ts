@@ -129,19 +129,18 @@ export interface dadosEstados {
   lei: Map<string, number>[];
 }
 
-// export interface dadosMunicipios {
-//   nomeCidade: string;
-//   nomeEstado: string;
-//   qtdProjetos: number;
-//   valorTotal: number;
-//   maiorAporte: number;
-//   beneficiariosDiretos: number;
-//   beneficiariosIndiretos: number;
-//   qtdOrganizacoes: number;
-//   ods: number[];
-//   segmento: number[];
-//   lei: number[];
-// }
+ export interface dadosProjeto {
+   nomeCidade: string;
+   nomeEstado: string;
+   qtdProjetos: number;
+   valorAportado: number;
+   beneficiariosDiretos: number;
+   beneficiariosIndiretos: number;
+   qtdOrganizacoes: number;
+   ods: number[];
+   segmento: number;
+   lei: Map<string, number>[];
+}
 
 export interface ambito {
   id: number;

@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import { EstadoInputDashboard, CidadeInputDashboard } from "@/components/inputs/inputs";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
-import { dadosEstados } from "@/firebase/schema/entities";
+import { dadosEstados, dadosProjeto } from "@/firebase/schema/entities";
 
 export default function DashboardPage() {
   async function buscarDadosEstado(
@@ -119,6 +119,60 @@ export default function DashboardPage() {
       return somarDadosEstados(todosDados);
     }, []);
 
+    const buscarDadosMunicipios = useCallback(async ( municipios:string[]): dadosProjeto => {
+      const idsProjetosNosMunicipios: string[] = [];
+      const idsUltimosForms: string[] = [];
+      const valoresAportados = {};
+      const todosDados: dadosProjeto[] = {} as dadosProjeto;
+
+      //Procuro no forms de cadastro os projetos que atua em cada municipio e armazeno os ids
+      for (const municipio of municipios) {
+        const consulta = query(collection(db, 'forms-cadastro'), where('municipios', 'array-contains', municipio));
+        const consultaSnapshot = await getDocs(consulta);
+
+        consultaSnapshot.forEach((doc) => {
+          idsProjetosNosMunicipios.push(doc.data().projetoID)
+        })
+      }
+      //Procuro nos projetos os ids dos projetos armazenados anteriormente e armazeno os ids dos ultimos forms de cadastro preenchidos
+      for (const id of idsProjetosNosMunicipios) {
+        const refProjeto = doc(db, 'projetos', id)
+        const projetoSnapshot = await getDoc(refProjeto)
+        
+        if (projetoSnapshot.exists()) {
+          const idForms: string = projetoSnapshot.data().ultimoFormulario
+          valoresAportados[idForms] = projetoSnapshot.data().valorAportadoReal
+          idsUltimosForms.push(idForms)
+        }
+      }
+
+      //Pego os dados do forms de acompanhamento e armazeno em um array com todos os dados
+      for (const id of idsUltimosForms) {
+        const refForms = doc(db, 'forms-acompanhamento', id)
+        const formsSnapshot = await getDoc(refForms)
+
+        if (formsSnapshot.exists()) {
+          const dado = formsSnapshot.data();
+
+
+          const dadoFiltrado: dadosProjeto = {
+            nomeCidade: '',
+            nomeEstado: '',
+            qtdProjetos: dado.qtdProjetos,
+            valorAportado: valoresAportados[id],
+            beneficiariosDiretos: dado.beneficiariosDiretos,
+            beneficiariosIndiretos: dado.beneficiariosIndiretos,
+            qtdOrganizacoes: 0,
+            ods: dado.ods,
+            segmento: dado.segmento,
+            lei: dado.lei
+          }
+        }
+      }
+    }, [])
+
+
+
   const odsData = {
     labels: [
       "ODS 1: Erradicação da Pobreza",
@@ -199,14 +253,17 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (estado != "") {
+    if (estado != "" && cidades.length === 0) {
       buscarDadosEstado(estado).then((dado) => {
         if (dado) setDados(dado);
       });
-    } else {
+    } else if(estado === '' && cidades.length === 0) {
       buscarDadosGerais().then((dado) => {
         if (dado) setDados(dado);
-      });
+      }
+    );
+    } else if (estado != '' && cidades.length > 0) {
+      
     }
   }, [estado, buscarDadosGerais]);
 
