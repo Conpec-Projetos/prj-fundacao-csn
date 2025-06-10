@@ -1,37 +1,32 @@
 export interface Associacao {
   usuarioID: string;
-  projetoID: string;
+  projetosIDs: string[];
 }
 
 export interface usuarioExt {
-  id: string;
   nome: string;
   email: string;
 }
 
 export interface usuarioInt {
-  id: string;
   nome: string;
   email: string;
   administrador: boolean;
 }
 
 export interface Projetos {
-  id: string;
   nome: string;
-  municipioID: number;
+  municipios: string[];
   aprovado: boolean;
   ativo: boolean;
   compliance: boolean;
-  empresa: string[];
+  empresas: string[];
   indicacao?: string;
   ultimoFormulario?: string;
   valorAportadoReal: number;
 }
 
 export interface formsCadastroDados {
-  id: string;
-  projetoID: string;
   instituicao: string;
   cnpj: string;
   representante: string;
@@ -50,13 +45,11 @@ export interface formsCadastroDados {
   valorApto: number;
   dataInicial: string;
   dataFinal: string;
-  diario: File;
   banco: string;
   agencia: string;
   conta: string;
-  segmento: number;
+  segmento: string;
   descricao: string;
-  apresentacao: File;
   publico: string[];
   ods: number[];
   beneficiariosDiretos: number;
@@ -64,34 +57,38 @@ export interface formsCadastroDados {
   estados: string[];  
   qtdMunicipios: number;
   municipios: string[];
-  lei: number;
-  numeroLei: number;
+  lei: string;
+  numeroLei: string;
   contrapartidasProjeto: string;
   observacoes: string;
   termosPrivacidade: boolean;
-  compliance: string;
-  documentos: string;
+}
+
+export interface formsCadastroDocumentos {
+  projetoID: string;
+  diario: string[];
+  apresentacao: string[];
+  compliance: string[];
+  documentos: string[];
 }
 
 export interface formsAcompanhamentoDados {
-  id: string;
   projetoID: string;
   dataResposta: string;
   usuarioID: string;
   instituicao: string;
   descricao: string;
-  segmento: number;
-  lei: number;
+  segmento: string;
+  lei: string;
   pontosPositivos?: string;
   pontosNegativos?: string;
   pontosAtencao? : string;
-  especificacoes: string;
-  ambito: number;
+  ambito: string;
   qtdEstados: number;
   estados: string[];
   qtdMunicipios: number;
   municipios: string[];
-  especificacaoTerritorio: string;
+  especificacoes: string;
   dataInicial: string;
   dataFinal: string;
   contrapartidasProjeto: string;
@@ -112,14 +109,13 @@ export interface formsAcompanhamentoDados {
   qtdLGBT: number;
   ods: number[];
   relato? : string;
-  fotos: File[];
+  fotos: string[];
   website: string;
   links: string;
   contrapartidasExecutadas?: string;
 }
 
 export interface dadosEstados {
-  id: string;
   nomeEstado: string;
   qtdProjetos: number;
   qtdMunicipios: number;
@@ -134,7 +130,6 @@ export interface dadosEstados {
 }
 
 // export interface dadosMunicipios {
-//   id: string;
 //   nomeCidade: string;
 //   nomeEstado: string;
 //   qtdProjetos: number;
@@ -147,6 +142,17 @@ export interface dadosEstados {
 //   segmento: number[];
 //   lei: number[];
 // }
+
+export interface ambito {
+  id: number;
+  nome: string;
+}
+
+export const ambitoList: ambito[] = [
+  { id: 0, nome: "Nacional" },
+  { id: 1, nome: "Estadual" },
+  { id: 2, nome: "Municipal" }
+];
 
 export interface Segmento {
   id: number;

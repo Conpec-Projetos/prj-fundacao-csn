@@ -1,10 +1,8 @@
 'use client';
 import React from "react";
-import { useState, SetStateAction, Dispatch, useEffect } from "react";
-import { State, City, ICity } from "country-state-city";
+import { Dispatch, SetStateAction, useEffect, useState, useMemo } from 'react';
+import { State, City } from "country-state-city";
 import { Upload } from "lucide-react";
-import { toast } from "sonner"
-import { Input } from "@/components/ui/input"
 
 
 // Props são como parâmetros, atributos. Como uma classe
@@ -17,7 +15,7 @@ interface TextProps{
 
 export const NormalInput: React.FC<TextProps> = (props) => {
     return(
-        <div className="grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr] md:gap-x-4 py-3 items-center">
+        <div className="grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr] md:gap-x-4 py-2 items-center">
 
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
@@ -25,14 +23,14 @@ export const NormalInput: React.FC<TextProps> = (props) => {
             <input
             type="text"
             onChange={(event) => {props.setAttribute(event.target.value)}}
-            className="w-full h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+            className="w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn  focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
         </div>
     );
 }
 
 export const GrowInput: React.FC<TextProps> = (props) => {
     return(
-        <div className="grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr] md:gap-x-4 py-3 items-center grow">
+        <div className="grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr] md:gap-x-4 py-2 items-center grow">
 
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
@@ -40,14 +38,14 @@ export const GrowInput: React.FC<TextProps> = (props) => {
             <input
             type="text"
             onChange={(event) => {props.setAttribute(event.target.value)}}
-            className="w-full h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+            className="w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn  focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
         </div>
     );
 }
 
 export const ShortInput: React.FC<TextProps> = (props) => {
     return(
-        <div className="grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr] md:gap-x-4 py-3 items-center">
+        <div className="grid grid-rows-2 lg:grid-rows-none lg:grid-cols-[auto_1fr] md:gap-x-4 py-2 items-center">
 
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
@@ -55,22 +53,22 @@ export const ShortInput: React.FC<TextProps> = (props) => {
             <input
             type="text"
             onChange={(event) => {props.setAttribute(event.target.value)}}
-            className="w-[12dvh] h-[6dvh] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
+            className="w-[6vw] h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn  focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3"/>
         </div>
     );
 }
 
 export const LongInput: React.FC<TextProps> = (props) => {
     return(
-        <div className="flex flex-col justify-between h-[23dvh] py-3">
+        <div className="flex flex-col justify-between h-[23dvh] mt-2">
                         
-            <h1 className="w-full text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="w-full text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold pb-1"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
             <textarea
                 spellCheck="false"
                 onChange={(event) => {props.setAttribute(event.target.value)}}
-                className="w-full h-full bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3 resize-none"
+                className="w-full h-full bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3 resize-none"
                 ></textarea>     
         </div>
     );
@@ -84,51 +82,39 @@ interface HorizontalProps{
     setAttribute: Dispatch<SetStateAction<number>>;
 }
 
-export const HorizontalSelects: React.FC<HorizontalProps> = (props) => {
-    const { setAttribute } = props; // Destructure specific props
+export const HorizontalSelects: React.FC<HorizontalProps> = (props) => { // Não é mais horizontal, talvez seja legal mudar o nome
+    const { setAttribute } = props;
     const [clicked, setClicked] = useState<number>(-1);
 
     useEffect(() => {
-        setAttribute(clicked); // Use destructured prop
-    }, [clicked, setAttribute]); // Include only necessary dependencies
+        setAttribute(clicked);
+    }, [clicked, setAttribute]); 
     
     return(
-
-        <div className="flex flex-col justify-center h-min py-6">
-                        
-            <h1 className="w-full text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold">
+        <div className="flex flex-col justify-center h-min my-4">
+            <h1 className="w-full text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold pb-2">
                 {props.text} {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </h1>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 justify-items-start w-full gap-y-2 lg:gap-x-4 text-wrap">
-
+            <div className="flex flex-col justify-items-start w-full gap-y-2 text-wrap">
                 {props.list.map((string, index) => (
-                    
                     <div
                         key={index} 
                         className="flex flex-row justify-center items-center w-fit">
-
                         <div className="flex flex-col justify-center items-center w-[30px] h-[30px]">
-
                             <button
                                 onClick={(event) => {
                                     event.preventDefault();
                                     setClicked(index);
-                            }}
-                            className="w-[20px] h-[20px] bg-white cursor-pointer rounded-full border-1">
-
+                                }}
+                                className="w-[20px] h-[20px] bg-white cursor-pointer rounded-full border-1">
                             {clicked == index && (
                                 <div className="flex flex-col justify-center items-center w-full h-full rounded-full border-1">
-                                    <div className="w-[10px] h-[10px] bg-blue-fcsn rounded-full"
-                                    ></div>
+                                    <div className="w-[10px] h-[10px] bg-blue-fcsn rounded-full"></div>
                                 </div>
-                                // Bolinha que aparece quando clica no input
                             )} 
                             </button>
                         </div>
-
-                        <h1 className="w-fit text-md text-blue-fcsn dark:text-white-off"
-                        >{ string }</h1>
+                        <h1 className="w-fit text-md text-blue-fcsn dark:text-white-off">{ string }</h1>
                     </div>
                 ))}
             </div>        
@@ -147,7 +133,7 @@ export const LeiSelect: React.FC<HorizontalProps> = (props) => {
             <select 
                 defaultValue={""}
                 onChange={(event) => {props.setAttribute( Number(event.target.value) )}}
-                className="w-full md:max-w-[270px] h-[5vh] min-h-[45px] max-h-[70px] text-blue-fcsn3 dark:text-white-off bg-white dark:bg-blue-fcsn3 border-blue-fcsn border-1 cursor-pointer rounded-[7px] transition-all duration-250 focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl px-5">
+                className="w-full md:max-w-[270px] h-[5vh] min-h-[45px] max-h-[70px] text-blue-fcsn3 dark:text-white-off bg-white dark:bg-blue-fcsn3 border-blue-fcsn border-1 cursor-pointer rounded-[7px] focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl px-5">
                 <option 
                     disabled 
                     value={""}
@@ -180,17 +166,16 @@ export const NumberInput: React.FC<NumberProps> = (props) => {
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
-            <div className="w-[120px] flex flex-col justify-center items-center">
+            <div className="w-auto flex flex-col justify-center items-center px-3">
 
                 <input
                     type="number"
                     onChange={(event) => {
-                        let new_array;
-                        new_array = props.attribute;
+                        const new_array = [...props.attribute];
                         new_array[props.index] = Number(event.target.value);
                         props.setAttribute(new_array);
                     }}
-                    className="w-[75px] h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-3 no-spinner text-center"/>
+                    className="w-[6vw] h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 border-blue-fcsn focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-2 no-spinner text-center"/>
             </div>
         </div>
     );
@@ -206,56 +191,99 @@ interface LocationProps{
 }
 
 export const EstadoInput: React.FC<LocationProps> = (props) => {
+    const [searchTerm, setSearchTerm] = useState<string>("");
+    const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+
+    // Memoize a lista de todos os estados para evitar recálculos
+    const allBrazilianStates = useMemo(() => State.getStatesOfCountry("BR"), []);
+
+    // Memoize a lista de estados filtrados
+    const filteredStates = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return []; // Não mostrar sugestões se o input estiver vazio
+        }
+        return allBrazilianStates.filter(state =>
+            state.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            !props.estados.includes(state.name) // MODIFICADO: Checa apenas pelo nome
+        );
+    }, [searchTerm, allBrazilianStates, props.estados]);
+
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value);
+        setShowSuggestions(true);
+    };
+
+    const handleSelectState = (stateName: string) => {
+        const stateValue = stateName; // MODIFICADO: Armazena apenas o nome do estado
+        if (!props.estados.includes(stateValue)) {
+            props.setEstados(prevStates => [...prevStates, stateValue]);
+        }
+        setSearchTerm(""); // Limpa o input após a seleção
+        setShowSuggestions(false);
+    };
     
     return(
-        <div className="flex flex-row justify-between items-start h-[200px] py-3">
+        <div className="flex flex-row justify-between items-start h-auto py-3">
             
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
-            <div className="flex flex-col justify-center w-3/5 h-full border-1 border-blue-fcsn rounded-[7px]">
+            {/* Container principal para input, sugestões e lista de selecionados */}
+            <div className="flex flex-col justify-start w-3/5 max-h-[15vh] border border-blue-fcsn rounded-[7px] bg-white dark:bg-blue-fcsn3 relative">
+                {/* Input de busca */}
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleInputChange}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} // Pequeno delay para permitir o clique na sugestão
+                    placeholder="Digite para buscar um estado..."
+                    className="w-full min-h-[50px] text-blue-fcsn dark:text-white-off bg-transparent pl-5 rounded-t-[7px] focus:outline-none box-border"
+                />
 
-                <select 
-                    defaultValue={""}
-                    onChange={(event) => {
-                        if(!props.estados.includes(event.target.value)){
-                            props.setEstados(prevStates => ([...prevStates, event.target.value]));
-                        // Verifica se o Estado já não está na lista antes de adicionar
-                    }}} 
-                    className="h-1/4 text-blue-fcsn dark:text-white-off cursor-pointer bg-white dark:bg-blue-fcsn3 pl-5 rounded-t-[7px]">
-                    
-                    <option 
-                        disabled 
-                        value={""}
-                    >Escolha uma ou mais opções</option>
-                    
-                    {State.getStatesOfCountry("BR").map((state, index) => (
-                        <option
-                            key={index}
-                            value={[state.name, state.isoCode]}
-                        >{state.name}</option>
-                    ))}
-                </select>
+                {/* Lista de sugestões (posicionada absolutamente) */}
+                {showSuggestions && filteredStates.length > 0 && (
+                    <ul className="absolute top-[50px] left-[-1px] right-[-1px] z-15 bg-white dark:bg-blue-fcsn3 border-l border-r border-b border-blue-fcsn rounded-b-[7px] max-h-[50vh] overflow-y-auto shadow-lg">
+                        {filteredStates.map((state) => (
+                            <li
+                                key={state.isoCode} // Usar isoCode como chave única
+                                onClick={() => handleSelectState(state.name)}
+                                className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off"
+                            >
+                                {state.name}
+                            </li>
+                        ))}
+                    </ul>
+                )}
 
-                <div className="border-[1px] border-blue-fcsn3 dark:border-blue-fcsn"></div>
+                {/* Divisor */}
+                <div className="border-t border-blue-fcsn3 dark:border-blue-fcsn"></div>
                 
-                <div className="h-full text-blue-fcsn3 bg-white dark:bg-blue-fcsn3 rounded-b-[7px] overflow-y-auto overflow-hidden scrollbar-thin">
-                    
-                    {props.estados.map((estado, index) => (
+                {/* Área de estados selecionados */}
+                <div className="h-[calc(100%-51px)] text-blue-fcsn3 rounded-b-[7px] overflow-y-auto scrollbar-thin p-2"> {/* 50px para input + 1px para divisor */}
+                    {props.estados.map((estado) => ( // estado é stateName
                         <button
-                            key={index}
+                            key={estado} // MODIFICADO: Usa o nome do estado como chave
                             onClick={(event) => {
                                 event.preventDefault();
                                 props.setEstados(prev => prev.filter(item => item !== estado));
-                                props.setCidades(prev => {
-                                    const estadoUF = estado.slice(estado.length-2);
+                                
+                                // Encontra o objeto do estado para obter o isoCode para limpar as cidades
+                                const stateObject = allBrazilianStates.find(s => s.name === estado);
+                                if (stateObject) {
+                                    const estadoUF = stateObject.isoCode;
                                     const cidadesDoEstado = new Set(City.getCitiesOfState("BR", estadoUF).map(cidade => cidade.name));
-                                    return prev.filter(item => !cidadesDoEstado.has(item));
-                                });
+                                    props.setCidades(prevCidades => prevCidades.filter(item => !cidadesDoEstado.has(item)));
+                                }
                             }}
-                        className="cursor-pointer px-2"
-                        >{estado.slice(0, -3)}</button>
+                            className="text-sm bg-blue-50 hover:bg-blue-100 dark:bg-blue-fcsn2 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off cursor-pointer px-2 py-1 rounded m-1 inline-flex"
+                        >
+                            {estado} {/* MODIFICADO: Mostra apenas o nome do estado */}
+                        </button>
                     ))}
+                    {props.estados.length === 0 && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 p-2">Selecione pelo menos um estado.</p>
+                    )}
                 </div>
             </div>
         
@@ -264,72 +292,166 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
 }
 
 export const CidadeInput: React.FC<LocationProps> = (props) => {
-        
-    function getCidades(estados: string[]){
-        let todasCidades: string[] = [];
-        let cidades: ICity[];
-        for(const estado of estados){
-            cidades = City.getCitiesOfState("BR", estado.slice(estado.length-2));
-            todasCidades.push(...cidades.map(cidade => cidade.name))
+    const [searchTerm, setSearchTerm] = useState<string>("");
+    const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+
+    // Helper para obter todos os estados brasileiros. Pode ser otimizado se já disponível do componente pai.
+    const getAllBrazilianStates = () => State.getStatesOfCountry("BR");
+
+    // Memoize todos os nomes de cidades disponíveis dos estados selecionados
+    const allCityNamesFromSelectedStates = useMemo(() => {
+        const cityNames: string[] = [];
+        if (props.estados && props.estados.length > 0) {
+            const brazilianStates = getAllBrazilianStates();
+            props.estados.forEach(estadoNome => { // estadoNome é o nome do estado
+                if (!estadoNome) return;
+                const stateObject = brazilianStates.find(s => s.name === estadoNome);
+                if (stateObject) {
+                    const stateIsoCode = stateObject.isoCode;
+                    const citiesFromState = City.getCitiesOfState("BR", stateIsoCode);
+                    cityNames.push(...citiesFromState.map(city => city.name));
+                }
+            });
         }
-        return todasCidades;
-    }
-    // Função que pega todas as cidades dos estados selecionados
+        return [...new Set(cityNames)]; // Remove duplicatas, caso haja
+    }, [props.estados]);
+
+    // Memoize a lista de cidades filtradas para as sugestões do autocomplete
+    const filteredCitySuggestions = useMemo(() => {
+        if (!searchTerm.trim() || props.estados.length === 0) {
+            return []; // Não mostrar sugestões se o input estiver vazio ou nenhum estado selecionado
+        }
+        return allCityNamesFromSelectedStates.filter(cityName =>
+            cityName.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            !props.cidades.includes(cityName) // Não sugerir cidades já selecionadas
+        );
+    }, [searchTerm, allCityNamesFromSelectedStates, props.cidades, props.estados.length]);
+
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value);
+        setShowSuggestions(true); // Mostra sugestões ao digitar
+    };
+
+    const handleSelectCity = (cityName: string) => {
+        if (!props.cidades.includes(cityName)) {
+            props.setCidades(prevCities => [...prevCities, cityName]);
+        }
+        setSearchTerm(""); // Limpa o input após seleção
+        setShowSuggestions(false);
+    };
+
+    const handleAddAllCitiesFromState = (stateName: string) => { // stateName é o nome do estado
+        if (!stateName) return;
+        const brazilianStates = getAllBrazilianStates();
+        const stateObject = brazilianStates.find(s => s.name === stateName);
+
+        if (stateObject) {
+            const stateIsoCode = stateObject.isoCode;
+            const citiesOfThisState = City.getCitiesOfState("BR", stateIsoCode);
+            const cityNamesToAdd = citiesOfThisState
+                .map(city => city.name)
+                .filter(name => !props.cidades.includes(name)); // Adiciona apenas cidades ainda não selecionadas
+            
+            if (cityNamesToAdd.length > 0) {
+                props.setCidades(prevCities => [...new Set([...prevCities, ...cityNamesToAdd])]); // Garante unicidade ao adicionar
+            }
+        }
+        setSearchTerm("");
+        setShowSuggestions(false);
+    };
+
+    const handleRemoveAllCities = () => {
+        props.setCidades([]);
+    };
     
     return(
-        <div className="flex flex-row justify-between items-start h-[200px] py-3">
+        <div className="flex flex-row justify-between items-start h-auto py-3">
             
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
             
-            <div className="w-3/5 h-full flex flex-col justify-center border-1 border-blue-fcsn rounded-[7px]">
+            <div className="flex flex-col justify-start w-3/5 max-h-[45vh] border border-blue-fcsn rounded-[7px] bg-white dark:bg-blue-fcsn3 relative">
+                {/* Input de busca de cidade */}
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleInputChange}
+                    onFocus={() => { 
+                        if (props.estados.length > 0 && allCityNamesFromSelectedStates.length > 0) {
+                            setShowSuggestions(true);
+                        }
+                    }}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                    placeholder={props.estados.length === 0 ? "Selecione um estado primeiro" : "Buscar cidade..."}
+                    className="w-full min-h-[50px] text-blue-fcsn dark:text-white-off bg-transparent pl-5 rounded-t-[7px] focus:outline-none box-border"
+                    disabled={props.estados.length === 0}
+                />
 
-                <select 
-                    defaultValue={""} 
-                    onChange={(event) => {
-                    if(!props.cidades.includes(event.target.value)){
-                        props.setCidades(prevCities => ([...prevCities, event.target.value]));
-                    }}} 
-                    className="h-1/4 text-blue-fcsn dark:text-white-off cursor-pointer bg-white dark:bg-blue-fcsn3 pl-5 rounded-t-[7px]">
-                    
-                    <option 
-                        disabled 
-                        value=""
-                    >Escolha uma ou mais opções</option>
-                    
-                    {props.estados.map((estado, index) => (
-                        <option 
-                            key={index} 
-                            value={""} 
-                            onClick={() => {
-                                const cidades = City.getCitiesOfState("BR", estado.slice(estado.length-2));
-                                props.setCidades(prevCities => {
-                                    const cidadesAdicionar = cidades.filter(cidade => !props.cidades.includes(cidade.name)).map(cidade => cidade.name)
-                                    return [...prevCities, ...cidadesAdicionar];
-                            });
-                        }}>Adicionar todas as cidades de {estado.slice(0, -3)}</option>
-                    ))}
+                {showSuggestions && filteredCitySuggestions.length > 0 && (
+                    <ul className="absolute top-[50px] left-[-1px] right-[-1px] z-15 bg-white dark:bg-blue-fcsn3 border-l border-r border-b border-blue-fcsn rounded-b-[7px] max-h-[50vh] overflow-y-auto shadow-lg">
+                        {filteredCitySuggestions.map((cityName, index) => (
+                            <li
+                                key={`city-sugg-${index}-${cityName}`}
+                                onClick={() => handleSelectCity(cityName)}
+                                className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off"
+                            >
+                                {cityName}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                
+                <div className="border-t border-blue-fcsn3 dark:border-blue-fcsn"></div>
+                
+                <div className="h-[calc(100%-51px)] overflow-y-auto scrollbar-thin">
+                    {props.estados.length > 0 && (
+                        <div className="sticky top-0 z-10 bg-white dark:bg-blue-fcsn3 flex flex-wrap max-h-[10vh] p-2 border-b border-blue-fcsn3 dark:border-blue-fcsn overflow-y-scroll">
+                            <div className="w-full flex justify-start gap-x-1 mb-0.5"> {/* Envolve o texto e o botão de remover tudo para melhor layout */}
+                                <span className="text-xs h-[24px] text-gray-500 dark:text-gray-400 py-0.5">Opções rápidas:</span>
+                                {props.cidades.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveAllCities}
+                                        className="text-xs text-red-600 dark:text-red-50 bg-red-100 dark:bg-red-fcsn hover:bg-red-200 dark:hover:bg-red-400 cursor-pointer px-2 py-1 rounded">
+                                        Remover todas
+                                    </button>
+                                )}
+                            </div>
+                            
+                            <div className="w-full flex flex-wrap"> {/* Container para os botões de adicionar por estado */}
+                                {props.estados.map((estadoNome) => ( // estadoNome é o nome do estado
+                                    <button
+                                        key={`add-all-${estadoNome}`} // MODIFICADO: Usa o nome do estado para a chave
+                                        type="button"
+                                        onClick={() => handleAddAllCitiesFromState(estadoNome)}
+                                        className="text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-fcsn2 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off cursor-pointer px-2 py-1 rounded m-1">
+                                        Adicionar todas de {estadoNome} {/* MODIFICADO: Mostra apenas o nome do estado */}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
-                    {getCidades(props.estados).map((city, index) => (
-                        <option 
-                            key={index} 
-                            value={ city }
-                        >{ city }</option>
-                    ))}
-                </select>
-
-                <div className="border-[1px] border-blue-fcsn3 dark:border-blue-fcsn"></div>
-
-                <div className="h-full text-blue-fcsn3 bg-white dark:bg-blue-fcsn3 rounded-b-[7px] overflow-y-auto overflow-hidden scrollbar-thin">
-                    {props.cidades.map((cidade, index) => (
-                        <button 
-                            key={index} 
-                            onClick={(event) => {
-                                event.preventDefault();
-                                props.setCidades(prev => prev.filter(item => item !== cidade))
-                        }} className="cursor-pointer px-2"
-                        >{cidade}</button>
-                    ))}
+                    <div className="p-2">
+                        {props.cidades.length > 0 ? props.cidades.map((cidade, index) => (
+                            <button
+                                key={`${cidade}-${index}-selected`}
+                                type="button" 
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    props.setCidades(prev => prev.filter(item => item !== cidade));
+                                }}
+                                className="text-sm bg-blue-50 hover:bg-blue-100 dark:bg-blue-fcsn2 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off cursor-pointer px-2 py-1 rounded m-1 inline-flex"
+                            >
+                                {cidade}
+                            </button>
+                        )) : (
+                            props.estados.length > 0 && <p className="text-xs text-gray-400 dark:text-gray-500 px-2">Nenhuma cidade selecionada.</p>
+                        )}
+                         {props.estados.length === 0 && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 p-2">Selecione estados para ver opções de cidades.</p>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -357,7 +479,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                 <input 
                     type="date" 
                     onChange={(event) => { props.setFirstAttribute(event.target.value)}} 
-                    className="h-[40px] w-[140px] bg-white dark:bg-blue-fcsn3 cursor-text text-blue-fcsn3 dark:text-white-off border-1 border-blue-fcsn rounded-[7px] transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn text-center"/>
+                    className="h-[40px] w-[140px] bg-white dark:bg-blue-fcsn3 cursor-text text-blue-fcsn3 dark:text-white-off border-1 border-blue-fcsn rounded-[7px] focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn text-center"/>
 
                 <p className="text-xl text-blue-fcsn dark:text-white-off px-2"
                 >a</p>
@@ -365,7 +487,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
 
                     type="date" 
                     onChange={(event) => { props.setSecondAttribute(event.target.value)}} 
-                    className="h-[40px] w-[140px] bg-white dark:bg-blue-fcsn3 cursor-text text-blue-fcsn3 dark:text-white-off border-1 border-blue-fcsn rounded-[7px] transition-all duration-250 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn text-center"/>
+                    className="h-[40px] w-[140px] bg-white dark:bg-blue-fcsn3 cursor-text text-blue-fcsn3 dark:text-white-off border-1 border-blue-fcsn rounded-[7px] focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn text-center"/>
 
             </div>
         </div>
@@ -381,6 +503,18 @@ interface YesNoProps{
 }
 
 export const YesNoInput: React.FC<YesNoProps> = (props) => {
+    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedIndex = event.target.value;
+        if (selectedIndex === "0") { // "Sim"
+            props.setAttribute(true);
+        } else if (selectedIndex === "1") { // "Não"
+            props.setAttribute(false);
+        }
+    };
+
+    const selectValue = props.attribute === true ? "0" : props.attribute === false ? "1" : "";
+
+
     return(
 
         <div className="flex flex-row justify-start items-center w-full py-3">
@@ -390,17 +524,18 @@ export const YesNoInput: React.FC<YesNoProps> = (props) => {
 
             <div className="flex flex-col justify-center items-start mr-4">
             <select
-                defaultValue={""}
-                className="w-full max-w-[250px] min-w-[185px] h-[8dvh] max-h-[45px] ml-4 text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-blue-fcsn border-1 cursor-pointer rounded-[5px] transition-all duration-250 focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl px-5">
+                value={selectValue}
+                onChange={handleChange}
+                className="w-full max-w-[250px] min-w-[185px] h-[8dvh] max-h-[45px] ml-4 text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-blue-fcsn border-1 cursor-pointer rounded-[5px] focus:ring focus:border-1 focus:border-blue-fcsn focus:shadow-2xl px-5">
                 <option 
-                disabled 
-                value={""}
+                    disabled 
+                    value={""}
                 >Escolha uma opção</option>
 
                 {props.list.map((string, index) => (
                 <option 
                     key={index} 
-                    value={index}
+                    value={index.toString()}
                 >{string}</option>
                 ))}
             </select>    
@@ -486,6 +621,50 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
     );
 }
 
+export const PublicoBeneficiadoInput: React.FC<Omit<VerticalProps, 'subtext'>> = (props) => {
+    const { list, attribute, setAttribute } = props;
+
+    useEffect(() => {
+        // Garante que o array de atributos tenha o mesmo tamanho da lista e só valores booleanos
+        if (attribute.length !== list.length || attribute.some(val => typeof val !== 'boolean')) {
+            const newArray = list.map((_, i) => !!attribute[i]);
+            setAttribute(newArray);
+        }
+    }, [list, attribute, setAttribute]);
+
+    const handleCheckboxChange = (index: number) => {
+        const new_array = [...attribute];
+        new_array[index] = !new_array[index]; // Simplesmente inverte o valor
+        setAttribute(new_array);
+    };
+
+    return(
+        <div className="flex flex-col justify-between items-start py-3 gap-y-2">
+            <h1 className="w-full text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
+            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
+            
+            <div className="flex flex-col gap-y-2">
+            {props.list.map((string, index) => (
+                <div 
+                key={index} 
+                className="flex flex-row gap-x-2 md:gap-x-0 gap-y-2">
+                <div className="flex flex-col justify-center items-center w-[3vw] gap-y-2">
+                    
+                    <input 
+                    type="checkbox" 
+                    checked={attribute[index]} 
+                    onChange={() => handleCheckboxChange(index)}
+                    className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
+                </div>
+                <h1 className="text-xl text-blue-fcsn dark:text-white-off"
+                >{string}</h1>
+                </div>
+            ))}
+            </div>
+        </div>
+    )
+}
+
 interface FileProps{
     text: string;
     files: File[];
@@ -525,19 +704,23 @@ export const FileInput: React.FC<FileProps> = (props) => {
     };
     
     return(
-        <div className="flex flex-col justify-around items-center h-[30dvh] py-3">
+        <div className={`flex ${fileSize === 0 ? 'flex-row items-center gap-4' : 'flex-col gap-2'} py-3`}>
 
-            <div className="w-full md:text-nowrap flex flex-row justify-start items-center">
-                
-                <h1 className="text-xl md:text-xl lg:lg  text-blue-fcsn dark:text-white-off font-bold"
-                >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
-
+            <div className={`${fileSize === 0 ? 'flex-shrink-0' : 'w-full'} md:text-nowrap flex flex-row justify-start items-center`}>
+                <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold">
+                    { props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
+                </h1>
+            </div>
 
             <label 
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`w-full flex flex-col items-center justify-center min-h-[100px] bg-white dark:bg-blue-fcsn3 border-1 border-blue-fcsn rounded-[7px] cursor-pointer transition-all p-4
+                className={`
+                    ${fileSize === 0 ? 'h-[80px] max-w-[290px] flex-grow' : 'w-full min-h-[100px] max-h-[300px] overflow-y-auto'} 
+                    flex flex-col items-center justify-center
+                    bg-white dark:bg-blue-fcsn3 border-1 border-blue-fcsn rounded-[7px] 
+                    cursor-pointer p-4
                     ${isDragging ? 'border-dashed bg-blue-50' : 'hover:bg-gray-50 dark:hover:bg-blue-fcsn'}
                 `}>
                 <input 
@@ -553,9 +736,9 @@ export const FileInput: React.FC<FileProps> = (props) => {
                 />
                 
                 {fileSize === 0 ? (
-                    <div className="flex flex-col items-center gap-2 text-blue-fcsn dark:text-white-off">
-                        <Upload className="w-8 h-8" />
-                        <p className="text-center text-blue-fcsn3 dark:text-white-off">
+                    <div className="flex flex-row items-center gap-2 text-blue-fcsn dark:text-white-off">
+                        <Upload className="w-7 h-7" />
+                        <p className="text-md text-blue-fcsn3 dark:text-white-off">
                             {isDragging ? 'Solte os arquivos aqui' : 'Clique ou arraste arquivos aqui'}
                         </p>
                     </div>
@@ -580,7 +763,6 @@ export const FileInput: React.FC<FileProps> = (props) => {
                     </div>
                 )}
             </label>
-        </div>
         </div>
     );
 }
