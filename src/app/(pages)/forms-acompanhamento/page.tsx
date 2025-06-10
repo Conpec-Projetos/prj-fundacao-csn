@@ -1,6 +1,6 @@
 'use client';
 import Footer from "@/components/footer/footer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     NormalInput, 
     LongInput,
@@ -14,99 +14,131 @@ import {
     FileInput,
     CidadeInput
     } from "@/components/inputs/inputs";
-import { Toaster } from "sonner";
-import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
-import { collection, doc, getDocs, updateDoc, addDoc, arrayUnion } from "firebase/firestore";
-import { db, storage } from "@/firebase/firebase-config";
-import { formsAcompanhamentoDados } from "@/firebase/schema/entities";
+import { Toaster, toast } from "sonner";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "@/firebase/firebase-config";
+import { formsAcompanhamentoDados, odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
+import { getUserIdFromLocalStorage, getFileUrl, getOdsIds, getItemNome } from "@/lib/utils";
 
+export default function FormsAcompanhamento(){
+    const [isLoading, setIsLoading] = useState(true);
+    const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
 
-export default function forms_acompanhamento(){
-
-    const [nome,setNome] = useState<string>("");
-    const [descricao,setDescricao] = useState<string>("");
-    const [positivos,setPositivos] = useState<string>("");
-    const [negativos,setNegativos] = useState<string>("");
-    const [atencao,setAtencao] = useState<string>("");
-    const [especificacoes,setEspecificacoes] = useState<string>("");
-    const [contrapartidas,setContrapartidas] = useState<string>("");
-    const [website,setWebsite] = useState<string>("");
-    const [links,setLinks] = useState<string>("");
-    const [executadas,setExecutadas] = useState<string>("");
-    const [relato,setRelato] = useState<string>("");
-    const [ambito,setAmbito] = useState<number>(0);
-    const [segmento,setSegmento] = useState<number>(0);
-    const [lei,setLei] = useState<number>(0);
-    const [dataComeco,setDataComeco] = useState<string>("");
-    const [dataFim,setDataFim] = useState<string>("");
-    const [beneficiarios,setBeneficiarios] = useState<number[]>(Array(2).fill(0));
-    const [dei,setDei] = useState<boolean>(false);
-    const [etnias, setEtnias] = useState<number[]>(Array(12).fill(0));
-    const [ODS,setODS] = useState<boolean[]>(Array(17).fill(false));
+    const [instituicao, setInstituicao] = useState<string>("");
+    const [descricao, setDescricao] = useState<string>("");
+    const [segmento, setSegmento] = useState<number>(-1);
+    const [lei, setLei] = useState<number>(-1);
+    const [positivos, setPositivos] = useState<string>("");
+    const [negativos, setNegativos] = useState<string>("");
+    const [atencao, setAtencao] = useState<string>("");
+    const [ambito, setAmbito] = useState<number>(-1);
     const [estados, setEstados] = useState<string[]>([]);
     const [cidades, setCidades] = useState<string[]>([]);
-    const [fotos,setFotos] = useState<File[]>([]);
+    const [especificacoes, setEspecificacoes] = useState<string>("");
+    const [dataComeco, setDataComeco] = useState<string>("");
+    const [dataFim, setDataFim] = useState<string>("");
+    const [contrapartidas, setContrapartidas] = useState<string>("");
+    const [beneficiarios, setBeneficiarios] = useState<number[]>([0, 0]);
+    const [diversidade, setDiversidade] = useState<boolean>();
+    const [etnias, setEtnias] = useState<number[]>(new Array(12).fill(0));
+    const [ODS, setODS] = useState<boolean[]>(new Array(odsList.length).fill(false));
+    const [relato, setRelato] = useState<string>("");
+    const [fotos, setFotos] = useState<File[]>([]);
+    const [website, setWebsite] = useState<string>("");
+    const [links, setLinks] = useState<string>("");
+    const [executadas, setExecutadas] = useState<string>("");
 
-    const uploadFiles = async (files: FileList) => {
-        const fileURLs = [];
-        for(const file of files){
-            const fileRef = ref(storage, `uploads/${file.name}`);
-            await uploadBytes(fileRef, file);
-            const fileURL = await getDownloadURL(fileRef);
-            fileURLs.push(fileURL);
+    useEffect(() => {
+        const userId = getUserIdFromLocalStorage();
+        if (!userId) {
+            // A função getUserIdFromLocalStorage redireciona para a página de login caso retorne null
+            // Apenas definimos isLoading como false para evitar renderizar o conteúdo da página
+            setIsLoading(false); 
+        } else {
+            setUsuarioAtualID(userId);
+            setIsLoading(false);
         }
-        return fileURLs;
-    };
-    // fotos tem que ser feitas primeiro, então salvamos os links das imagens e subimos com o forms
+    }, []);
 
-    const prepareData = async (fileURLs: string[], userID: string, projectID: string) => {
-        return{
-            projectID: projectID,
-            userID: userID,
-            nome,
-            descricao,
-            positivos,
-            negativos,
-            atencao,
-            especificacoes,
-            contrapartidas,
-            website,
-            links,
-            executadas,
-            relato,
-            ambito,
-            segmento,
-            lei,
-            dataComeco,
-            dataFim,
-            beneficiarios: arrayUnion(...beneficiarios),
-            dei,
-            etnias: arrayUnion(...etnias),
-            ODS: arrayUnion(...ODS),
-            estados: arrayUnion(...estados),
-            cidades: arrayUnion(...cidades),
-            fotos: arrayUnion(...fileURLs)
-        }
-    }
-
-    const saveData = async (data: formsAcompanhamentoDados) => {
-        const docRef = doc(db, "forms");
-        await setDoc(docRef, data);
-    }
+    const projetoID = "ID-do-Projeto"; // Tem que fazer uma lógica para conseguir o ID do respectivo projeto ao qual o forms de acompanhamento está se referindo
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        if (!usuarioAtualID) {
+            toast.error("Usuário não autenticado. Por favor, faça login.");
+            // if (typeof window !== "undefined") window.location.href = "/login";
+            return;
+        }
+
+        const loadingToastId = toast.loading("Enviando formulário...");
+
         try {
-            const fileUrls = await uploadFiles(fotos);
-            const data = prepareData(fileUrls);
-            await saveData(data);
-            alert("Data uploaded successfully!");
-          } catch (error) {
-            console.error("Error uploading data: ", error);
-            alert("Failed to upload data.");
-          }
+            const fotoURLs = await getFileUrl(fotos, projetoID);
+
+            const uploadFirestore: formsAcompanhamentoDados = {
+                projetoID: projetoID,
+                dataResposta: new Date().toISOString().split('T')[0],
+                usuarioID: usuarioAtualID,
+                instituicao: instituicao,
+                descricao: descricao,
+                segmento: getItemNome(segmento, segmentoList),
+                lei: getItemNome(lei, leiList),
+                pontosPositivos: positivos || "",
+                pontosNegativos: negativos || "",
+                pontosAtencao: atencao || "",
+                ambito: getItemNome(ambito, ambitoList),
+                qtdEstados: estados.length,
+                estados: estados,
+                qtdMunicipios: cidades.length,
+                municipios: cidades,
+                especificacoes: especificacoes,
+                dataInicial: dataComeco,
+                dataFinal: dataFim,
+                contrapartidasProjeto: contrapartidas,
+                beneficiariosDiretos: beneficiarios[0],
+                beneficiariosIndiretos: beneficiarios[1],
+                diversidade: diversidade,
+                qtdAmarelas: etnias[0],
+                qtdBrancas: etnias[1],
+                qtdIndigenas: etnias[2],
+                qtdPardas: etnias[3],
+                qtdPretas: etnias[4],
+                qtdMulherCis: etnias[5],
+                qtdMulherTrans: etnias[6],
+                qtdHomemCis: etnias[7],
+                qtdHomemTrans: etnias[8],
+                qtdNaoBinarios: etnias[9],
+                qtdPCD: etnias[10],
+                qtdLGBT: etnias[11],
+                ods: getOdsIds(ODS),
+                relato: relato || "",
+                fotos: fotoURLs,
+                website: website,
+                links: links,
+                contrapartidasExecutadas: executadas || "",
+            };
+
+            await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
+            toast.dismiss(loadingToastId);
+            toast.success(`Formulário enviado com sucesso! ID`);
+            
+        } catch (error) {
+            console.error("Erro ao enviar formulário: ", error);
+            toast.dismiss(loadingToastId);
+            toast.error("Erro ao enviar formulário. Tente novamente.");
+        }
+    };
+
+    if (isLoading) {
+        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>; // Talvez colocar um spinner no lugar...
     }
 
+    if (!usuarioAtualID) {
+        // Você pode retornar null ou uma mensagem indicando que o redirecionamento está em progresso,
+        // mas idealmente o usuário já terá sido redirecionado.
+        return null; 
+    }
 
     return(
         <main
@@ -115,12 +147,12 @@ export default function forms_acompanhamento(){
             
             <div className="flex flex-col items-center justify-center w-full h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh] text-blue-fcsn dark:text-white-off text-7xl font-bold"
             >
-                <h1 className="text-center w-[90dvw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl transition-all duration-250 ease-in-out
+                <h1 className="text-center w-[90dvw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl
                 ">Acompanhamento de projetos</h1>
             </div>
             
             <form 
-                className="flex flex-col justify-center items-center w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw] h-90/100 mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-sm shadow-md shadow-black overflow-hidden no-scrollbar transition-all duration-250 ease-in-out"
+                className="flex flex-col justify-center items-center w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw] h-90/100 mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-sm shadow-md shadow-gray-400 dark:shadow-gray-900 overflow-hidden no-scrollbar"
                 onSubmit={(event) => handleSubmit(event)}>
                 
 
@@ -128,8 +160,8 @@ export default function forms_acompanhamento(){
                 {/* Nome da instituição */}
                     <NormalInput
                         text="Nome da instituição:"
-                        attribute={ nome }
-                        setAttribute={ setNome }
+                        attribute={ instituicao }
+                        setAttribute={ setInstituicao }
                         isNotMandatory={false}
                     ></NormalInput>
 
@@ -282,8 +314,8 @@ export default function forms_acompanhamento(){
                     <YesNoInput 
                         text="Sua instituição adota políticas de diversidade?" 
                         list={["Sim", "Não"]}
-                        attribute={ dei }
-                        setAttribute={ setDei }
+                        attribute={ diversidade }
+                        setAttribute={ setDiversidade }
                         isNotMandatory={false}
                     ></YesNoInput>
 
@@ -465,13 +497,14 @@ export default function forms_acompanhamento(){
                     
                 </div>
                     
-                <div className="flex items-start w-full">
+                <div className="flex flex-grow items-start w-full">
                     <button 
-                        className="w-[15dvw] min-w-[150px] max-w-[290px] h-[9dvh] min-h-[50px] max-h-[75px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-3xl lg:text-4xl font-bold text-white transition-all duration-250 ease-in-out cursor-pointer ml-[3dvw] mb-10"
+                        type="submit"
+                        className="w-[110px] md:w-[150px] h-[60px] md:h-[75px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-xl md:text-3xl font-bold text-white  ease-in-out cursor-pointer ml-[3dvw] mb-10"
                     >Enviar</button>
                 </div>
             </form>
-
+            <Toaster richColors /> {/* Ensure Toaster is rendered */}
             <Footer></Footer>
         </main>
     );
