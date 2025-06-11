@@ -4,6 +4,7 @@ import { Sun, Moon } from 'lucide-react';
 import { FaBars } from 'react-icons/fa';
 import { useTheme } from '@/context/themeContext';
 import { useState } from "react";
+import Botao_Logout from "../botoes/Botao_Logout";
 
 interface promoteAdminProps {
     id: number;
@@ -44,7 +45,7 @@ export default function Header(){
 
     return(
         <div className={`${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
-            <header className="fixed flex flex-row justify-evenly w-full h-[10vh] bg-blue-fcsn z-50 shadow-md/20">
+            <header className="fixed flex flex-row justify-between w-full h-[10vh] bg-blue-fcsn z-50 shadow-md/20 px-10">
                 
                 <div className="hidden sm:flex flex-row justify-start items-center w-[85%] text-white dark:text-white-off text-xl gap-4 sm:w-3/4 lg:w-1/2 lg:text-2xl font-bold ml-1">
                     
@@ -60,13 +61,22 @@ export default function Header(){
                     <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
 
                     <button
+                        onClick={(event) => {
+                                event.preventDefault();
+                                router.push("./dashboard")
+                            }}
                         className="
                             cursor-pointer">Dashboard</button>
                     
                     <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
 
-                    <button className="
-                        cursor-pointer">Projetos</button>
+                    <button 
+                        onClick={(event) => {
+                                event.preventDefault();
+                                router.push("./todos-projetos")
+                            }}
+                        className="
+                            cursor-pointer">Projetos</button>
 
                     <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
 
@@ -74,10 +84,14 @@ export default function Header(){
                         className="cursor-pointer whitespace-nowrap">Promover Colaborador</button>
                 </div>
 
+            <div className="flex flex-row gap-10">
                 <button className="sm:hidden" onClick={() => setIsOpen(!isOpen)}>
                     <FaBars size={20} className="text-white" />
                 </button>
 
+                <div className="py-4">
+                    <Botao_Logout />
+                </div>
                 {/* Mobile Menu */}
                 {isOpen && (
                     <div className="sm:hidden absolute top-[10.5vh] left-1 w-[50%] h-fit bg-blue-fcsn dark:bg-blue-fcsn2 rounded shadow-md text-white-off text-lg font-bold flex flex-col items-center gap-4 p-4">
@@ -94,14 +108,19 @@ export default function Header(){
                         <button
                             onClick={(event) => {
                                 event.preventDefault();
-                                router.push("/dashboard");
+                                router.push("./dashboard");
                             }}
                             className="cursor-pointer"
                         >
                             Dashboard
                         </button>
 
-                        <button className="cursor-pointer">Projetos</button>
+                        <button                 
+                            onClick={(event) => {
+                                event.preventDefault();
+                                router.push("./todos-projetos");
+                            }}
+                        className="cursor-pointer">Projetos</button>
 
                         <button
                             onClick={() => setIsPopUpOpen(!isPopUpOpen)}
@@ -126,7 +145,7 @@ export default function Header(){
                     onClick={toggleDarkMode}>{darkMode ? <Moon size={20} className="text-white" /> : <Sun size={20} className="text-white" />}
                     </button>
                 </div>
-
+            </div>
             </header>
         </div>
     );

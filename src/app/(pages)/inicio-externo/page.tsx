@@ -5,6 +5,14 @@ import Link from 'next/link';
 import { FaFileAlt, FaClipboardCheck, FaEdit, FaExclamationCircle, FaInfoCircle } from 'react-icons/fa';
 import Footer from '@/components/footer/footer';
 import { useTheme } from '@/context/themeContext';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase/firebase-config';
+import { useRouter } from 'next/navigation';
+import logo from "@/assets/fcsn-logo.svg"
+import Image from "next/image";
+import darkLogo from "@/assets/fcsn-logo-dark.svg"
+import Botao_Logout from '@/components/botoes/Botao_Logout';
+import { Moon, Sun } from 'lucide-react';
 
 // Componente de card para projeto
 // Define the Project type
@@ -83,10 +91,12 @@ const ProjectCard = ({ project }: { project: Project }) => {
 
 //Componente principal da página
 export default function ExternalUserHomePage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState('João Silva');   //exemplo de usuário externo
   const [currentTime, setCurrentTime] = useState('');
   const [greeting, setGreeting] = useState('');
-  const { darkMode } = useTheme();
+  const { darkMode, toggleDarkMode } = useTheme();
   
   // Dados de exemplo para projetos e notificações
   const userProjects = [
@@ -170,9 +180,63 @@ export default function ExternalUserHomePage() {
     return () => clearInterval(timer);
   }, []);
 
+  // Vamos verificar se é o usuario externo
+  useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user && user.email) {
+            const emailDomain = user.email.split('@')[1];
+            if ((emailDomain != "conpec.com.br") && user.emailVerified) {
+              setIsLoading(false);
+            } else {
+              router.push("/");
+            }
+        } else {
+            // Se não está logado, permite que a página de login seja renderizada
+            router.push("./login");
+        }});
+
+      return () => unsubscribe();
+    }, [router]);
+
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
+                <Image
+                    src={darkMode ? darkLogo : logo}
+                    alt="csn-logo"
+                    width={600}
+                    className=""
+                    priority
+                />
+                <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
+                    Verificando sessão...
+                </div>
+            </div>
+        );
+    }
+  
   return (
     <div className={`min-h-screen ${darkMode ? "dark" : ""}`} >      
       <main className="flex flex-col px-4 p-10 md:mx-20">
+        {/* botao de logout se nao tiver mesmo o header */}
+        <div className='flex flex-row  justify-between mb-5'>           
+                <Image
+                    src={darkMode ? darkLogo : logo}
+                    alt="csn-logo"
+                    width={250}
+                    className=""
+                    priority
+                />
+                              
+                  <div className="w-[15%] flex justify-end items-center gap-10">
+                    <button className="cursor-pointer transition-all duration-300 " 
+                    onClick={toggleDarkMode}>{darkMode ? <Moon size={20} className="text-white" /> : <Sun size={20}  className="text-black" />}
+                    </button>
+                    <Botao_Logout />
+                </div>
+                
+                
+          </div>
         {/* Seção de boas-vindas */}
         <div className="flex justify-between items-center mb-8">
           <div>
