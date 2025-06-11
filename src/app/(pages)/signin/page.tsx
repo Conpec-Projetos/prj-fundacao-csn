@@ -13,10 +13,10 @@ import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
 
 import { auth } from "@/firebase/firebase-config";
-import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification} from "firebase/auth";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signOut } from "firebase/auth";
+import { collection, query, where, getDocs, addDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
-import { Associacao } from "@/firebase/schema/entities";
+import { Associacao, Projetos } from "@/firebase/schema/entities";
 
 const schema = z.object({
     name: z.string().min(1, {message: "Nome inválido!"}),
@@ -34,13 +34,13 @@ const schema = z.object({
 
 type FormFields = z.infer<typeof schema>;
 
-export default function Signin(){
+export default function Signin() {
     const router = useRouter();
     const [visibleFirst, setVisibleFirst] = useState(false);
     const [visibleSecond, setVisibleSecond] = useState(false);
     const { darkMode } = useTheme();
     const [loadingAuth, setLoadingAuth] = useState(false);
-    const [isCheckingUser, setIsCheckingUser] = useState(true); // Estado para verificar o login
+    const [isCheckingUser, setIsCheckingUser] = useState(true);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -48,19 +48,16 @@ export default function Signin(){
             if (user.email && user.emailVerified) {
                 const emailDomain = user.email.split('@')[1];
 
-                // Se colocar o dominio da csn nao conseguirei testar, logo coloquei o da conpec
                 if (emailDomain === "conpec.com.br") {
                     router.push("/")
                 } else {
-
                     router.push("inicio-externo")
                 }
-                
+
             } else {
                 console.log("E-mail não verificado, bloqueando acesso.");
             }
         } else {
-            // Se não está logado, permite que a página de login seja renderizada
             setIsCheckingUser(false);
         }});
 
@@ -82,118 +79,116 @@ export default function Signin(){
         mode: "onChange"
      });
 
-    async function projetoValido(email: String): Promise<Boolean> {
+    async function projetoValido(email: string): Promise<{ valido: boolean, projetosIDs: string[] }> {
         const emailDomain = email.split('@')[1];
 
         if (emailDomain === "conpec.com.br") {
-            return true;
+            return { valido: true, projetosIDs: [] };
         }
 
-        const cadastroRef = collection(db, "forms-cadastro");
-        const qCadastro = query(cadastroRef, where("emailResponsavel", "==", email));
-        const snapshotCadastro = await getDocs(qCadastro);
+        const formsRef = collection(db, "forms-cadastro");
+        const qForms = query(formsRef, where("emailResponsavel", "==", email));
+        const formsSnapshot = await getDocs(qForms);
 
-        if (snapshotCadastro.empty) {
+        if (formsSnapshot.empty) {
             toast.error("Não encontramos nenhum projeto cadastro no sistema associado a esse e-mail.");
-            return false;
+            return { valido: false, projetosIDs: [] };
         }
 
-        // Para cada cadastro encontrado, verificamos se há projeto aprovado
-        for (const docCadastro of snapshotCadastro.docs) {
+        const foundProjetosIDs: string[] = [];
+        let hasApprovedProject = false;
+
+        for (const docCadastro of formsSnapshot.docs) {
             const idCadastro = docCadastro.id;
             const projetoRef = collection(db, "projetos");
-            const qProjeto = query(projetoRef, 
-                                where("ultimoFormulario", "==", idCadastro), 
-                                where("aprovado", "==", "aprovado"));
+            const qProjeto = query(projetoRef,
+                                where("ultimoFormulario", "==", idCadastro));
             const snapshotProjeto = await getDocs(qProjeto);
 
             if (!snapshotProjeto.empty) {
-                return true;  // Se encontrou pelo menos 1 projeto aprovado, retorna true
+                snapshotProjeto.forEach(projDoc => {
+                    const projetoData = projDoc.data() as Projetos;
+                    if (projetoData.status === "aprovado") { // Checa se o projeto está aprovado
+                        hasApprovedProject = true;
+                    }
+                    if (!foundProjetosIDs.includes(projDoc.id)) {
+                        foundProjetosIDs.push(projDoc.id);
+                    }
+                });
             }
         }
 
-        // Se percorreu todos e não encontrou nenhum projeto aprovado:
-        toast.error("Não é possível cadastrar esse usuário pois não há nenhum projeto aprovado.");
-        return false;
+        if (!hasApprovedProject) {
+            toast.error("Não é possível cadastrar esse usuário pois não há nenhum projeto aprovado associado a este e-mail.");
+            return { valido: false, projetosIDs: [] };
+        }
+
+        return { valido: true, projetosIDs: foundProjetosIDs };
     }
+
 
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    setLoadingAuth(true); // Inicia o loading
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-        const user = userCredential.user;
+        setLoadingAuth(true);
 
-        if (user && user.email) {
-            // 1. Encontrar os formulários de cadastro associados ao email do usuário
-            const formsRef = collection(db, "forms-cadastro");
-            const qForms = query(formsRef, where("emailResponsavel", "==", user.email));
-            const formsSnapshot = await getDocs(qForms);
-            const formDocIds = formsSnapshot.docs.map(doc => doc.id);
+        try {
+            const { valido, projetosIDs } = await projetoValido(data.email);
 
-            const projetosIDs: string[] = [];
-
-            // 2. Encontrar os projetos que correspondem a esses formulários
-            if (formDocIds.length > 0) {
-                const projetosRef = collection(db, "projetos");
-                // Itera sobre cada ID de formulário para encontrar o projeto correspondente
-                for (const formId of formDocIds) {
-                    const qProjetos = query(projetosRef, where("ultimoFormulario", "==", formId));
-                    const projetosSnapshot = await getDocs(qProjetos);
-                    projetosSnapshot.forEach(doc => {
-                        if (!projetosIDs.includes(doc.id)) {
-                            projetosIDs.push(doc.id);
-                        }
-                    });
-                }
-
-                setTimeout(() => {
-                    router.push("./login");
-                    
-                }, 6000);
-            } else {
-                await userCredential.user.delete();
-                // A mensagem de erro já foi exibida dentro do projetoValido().
+            if (!valido) {
+                return;
             }
-        }
-        catch (error: any) { // Adicionar tipo para error
-            // Tratar erros específicos do Firebase aqui, se necessário
+
+            const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+            const user = userCredential.user;
+
+            // Manda o e-mail de verificação
+            await sendEmailVerification(user);
+            toast.success("E-mail de verificação enviado. Verifique sua caixa de entrada para terminar o cadastro!");
+
+            // Cria ou atualiza o documento da coleção 'associacao'
+            if (user && user.uid) {
+                const associacaoRef = collection(db, "associacao");
+                const q = query(associacaoRef, where("usuarioID", "==", user.uid));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const existingDocRef = querySnapshot.docs[0].ref;
+                    await updateDoc(existingDocRef, {
+                        projetosIDs: arrayUnion(...projetosIDs)
+                    });
+                    console.log("Documento de associação existente foi atualizado.");
+                } else {
+                    const newAssociacaoDoc: Associacao = {
+                        usuarioID: user.uid,
+                        projetosIDs: projetosIDs
+                    };
+                    await addDoc(collection(db, "associacao"), newAssociacaoDoc);
+                    console.log("Novo documento de associação foi criado.");
+                }
+            }
+
+            // Desloga o usuário após o cadastro
+            await signOut(auth);
+
+            setTimeout(() => {
+                router.push("./login");
+            }, 6000);
+
+        } catch (error: any) {
+            console.error("Erro no cadastro:", error);
             if (error.code === 'auth/email-already-in-use') {
                 toast.error('Este e-mail já está em uso.');
+            } else if (error.code === 'auth/invalid-email') {
+                toast.error('Formato de e-mail inválido.');
+            } else if (error.code === 'auth/weak-password') {
+                toast.error('A senha é muito fraca. Por favor, insira uma senha mais forte.');
             } else {
-                toast.error('Erro ao criar conta. Tente novamente.');
+                toast.error('Erro ao criar conta. Tente novamente. Se o problema persistir, entre em contato.');
             }
 
-            // 3. Criar o novo documento na coleção "associacao"
-            const newAssociacaoDoc: Associacao = {
-                usuarioID: user.uid,
-                projetosIDs: projetosIDs
-            };
-
-            await addDoc(collection(db, "associacao"), newAssociacaoDoc);
-            console.log("Documento de associação criado para o usuário:", user.uid, "com os projetos:", projetosIDs);
+        } finally {
+            setLoadingAuth(false);
         }
-
-        await sendEmailVerification(user);
-        toast.success("E-mail de verificação enviado. Verifique sua caixa de entrada!");
-
-        setTimeout(() => {
-          router.push("./login"); // volta para tela de login
-        }, 6000); 
-        console.log("E-mail de verificação enviado para:", data.email);
-    }
-
-    catch (error: any) { 
-        if (error.code === 'auth/email-already-in-use') {
-            toast.error('Este e-mail já está em uso.');
-        } else {
-            toast.error('Erro ao criar conta. Tente novamente.');
-        }
-        console.error("Erro no cadastro:", error);
-    }
-    finally {
-        setLoadingAuth(false); // Finaliza o loading
-    }
-};
+    };
 
 
     if (isCheckingUser){
@@ -218,12 +213,12 @@ export default function Signin(){
             <Toaster richColors closeButton/>
 
             <form
-                className="flex flex-col items-center justify-between w-full max-w-[1100px] 
+                className="flex flex-col items-center justify-between w-full max-w-[1100px]
                         h-auto min-h-[600px] my-4 md:my-8 py-6
                         bg-white-off dark:bg-blue-fcsn2 rounded-md shadow-blue-fcsn shadow-md
                         p-4 md:p-8"
                 onSubmit={handleSubmit(onSubmit)}>
-                
+
                 {/* Logo */}
                 <div className="flex flex-col h-auto justify-center items-center py-4">
                     <Image
@@ -244,7 +239,7 @@ export default function Signin(){
                     <div className="w-full max-w-[600px]">
                         <label className="text-blue-fcsn dark:text-white-off font-bold text-base md:text-lg">
                             Nome
-                        </label>                        
+                        </label>
                         <input
                             type="text"
                             {...register("name")}
@@ -259,7 +254,7 @@ export default function Signin(){
                     <div className="w-full max-w-[600px]">
                         <label className="text-blue-fcsn dark:text-white-off font-bold text-base md:text-lg">
                             Email
-                        </label>                        
+                        </label>
                         <input
                             type="email"
                             {...register("email")}
@@ -268,7 +263,6 @@ export default function Signin(){
                                     transition-all duration-300 px-4
                                     focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn dark:focus:bg-blue-fcsn3"
                         />
-                        {/* Se possuir erro exibiremos uma mensagem abaixo do input, div className="min-h-[24px] (define um espaço para a mensagem de erro e impede que o conteudo "pule" ao exibir a mensagem*/}
                         <div className="min-h-[24px] mt-1">
                             {errors.email && (
                                 <p className="text-red-600 dark:text-red-500 text-base">
@@ -277,7 +271,7 @@ export default function Signin(){
                             )}
                         </div>
                     </div>
-                    
+
                     {/* Senhas */}
                     <div className="w-full max-w-[600px] flex flex-col md:flex-row justify-between gap-4 md:gap-6">
                         {/* Primeira senha */}
@@ -286,7 +280,7 @@ export default function Signin(){
                                 Senha
                             </label>
                             <div className="relative mt-1">
-                                <input 
+                                <input
                                     type={visibleFirst ? "text" : "password"}
                                     {...register("password")}
                                     className="w-full h-12 md:h-14
@@ -304,7 +298,6 @@ export default function Signin(){
                                     {visibleFirst ? <Eye size={20}/> : <EyeOff size={20}/>}
                                 </button>
                             </div>
-                                                    {/* Se possuir erro exibiremos uma mensagem abaixo do input */}
                             <div className="h-6 mt-1">
                                 {errors.password && (
                                     <p className="text-red-600 dark:text-red-500 text-base mt-1">
@@ -320,7 +313,7 @@ export default function Signin(){
                                 Confirme a senha
                             </label>
                             <div className="relative mt-1">
-                                <input 
+                                <input
                                     type={visibleSecond ? "text" : "password"}
                                     {...register("confirmPassword")}
                                     className="w-full h-12 md:h-14
@@ -338,7 +331,6 @@ export default function Signin(){
                                     {visibleSecond ? <Eye size={20}/> : <EyeOff size={20}/>}
                                 </button>
                             </div>
-                                                    {/* Se possuir erro exibiremos uma mensagem abaixo do input */}
                             <div className="h-6 mt-1">
                                 {errors.confirmPassword && (
                                     <p className="text-red-600 dark:text-red-500 text-base mt-1">
@@ -350,11 +342,11 @@ export default function Signin(){
                     </div>
                 </div>
 
-                
+
                 <div className="flex flex-row justify-center items-center text-sm md:text-base mt-12">
                     <span>Já tem uma conta?</span>
                     <button
-                        onClick={(e) => { // Adicionar 'e' e prevenir default se necessário
+                        onClick={(e) => {
                             e.preventDefault();
                             router.push("./login");
                         }}
@@ -378,7 +370,7 @@ export default function Signin(){
                     </button>
                 </div>
             </form>
-            
+
             <Footer/>
         </main>
     );
