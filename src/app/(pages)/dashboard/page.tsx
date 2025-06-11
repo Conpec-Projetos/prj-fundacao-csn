@@ -1,214 +1,546 @@
-// ❌ DO NOT add "use client" here — it's a server component
-import Header from "@/components/header/header";
+"use client";
 import Footer from "@/components/footer/footer";
 import BarChart from "@/components/chart/barchartClient";
-import PieChart from "@/components/chart/piechartClient";  
-import BrazilMap from "@/components/map/brazilMap";  
+import PieChart from "@/components/chart/piechartClient";
+import BrazilMap from "@/components/map/brazilMap";
+import { FaCaretDown } from "react-icons/fa";
+import { useCallback, useEffect, useState } from "react";
+import { EstadoInputDashboard, CidadeInputDashboard } from "@/components/inputs/inputs";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/firebase/firebase-config";
+import { dadosEstados, dadosProjeto } from "@/firebase/schema/entities";
 
 export default function DashboardPage() {
-    // Sample data for charts
-    const segmentData = {
-    labels: ["Cultura", "Esporte", "Pessoa Idosa", "Criança e Adolescente", "Saúde"],
-    values: [250, 180, 120, 150, 100]
-    };
-    // Sample Lei de Incentivo data
-    const incentiveData = {
-    labels: [
-      "Lei de Incentivo à Cultura",
-      "PROAC",
-      "FIA",
-      "LIE",
-      "Lei da Pessoa Idosa",
-      "Pronas",
-      "Pronon",
-      "Promac",
-      "ICMS"
-    ],
-    values: [200, 150, 120, 100, 80, 60, 40, 30, 20]
-    };
-  // ODS Sample Data
-    const odsData = {
-    labels: [
-      'ODS 1: Erradicação da Pobreza',
-      'ODS 2: Fome Zero',
-      'ODS 3: Saúde e Bem-Estar',
-      'ODS 4: Educação de Qualidade',
-      'ODS 5: Igualdade de Gênero',
-      'ODS 6: Água Potável e Saneamento',
-      'ODS 7: Energia Limpa e Acessível',
-      'ODS 8: Trabalho Decente e Crescimento Econômico',
-      'ODS 9: Indústria, Inovação e Infraestrutura',
-      'ODS 10: Redução das Desigualdades',
-      'ODS 11: Cidades e Comunidades Sustentáveis',
-      'ODS 12: Consumo e Produção Responsáveis',
-      'ODS 13: Ação Contra a Mudança Global do Clima',
-      'ODS 14: Vida na Água',
-      'ODS 15: Vida Terrestre',
-      'ODS 16: Paz, Justiça e Instituições Eficazes',
-      'ODS 17: Parcerias e Meios de Implementação'
-    ],
-    values: [120, 150, 180, 90, 110, 70, 130, 160, 140, 100, 85, 95, 75, 65, 115, 105, 125],
-    colors: [
-      '#E5243B', '#DDA63A', '#4C9F38', '#C5192D', '#FF3A21', '#26BDE2', 
-      '#FCC30B', '#A21942', '#FD6925', '#DD1367', '#FD9D24', '#BF8B2E',
-      '#3F7E44', '#0A97D9', '#56C02B', '#00689D', '#19486A'
-    ]
-    };
-    // Sample Estados de Atuação data
-    const estadosData = {
-        labels: ["BA","SP","MG","TO","CE","RO","GO","PB","AL","MS","RN","MA", "PA", "PR", "SC", "RJ", "RR", "AC", "DF", "ES", "MT", "SE", "PI", "PE", "RS", "AP"],
-        values: [95,   90, 45, 75,  60,  45,  30,  55,  40,  35,  25,  15,  20,   10,    5,   50,   10,   30,   40,   40,   40,   10, 10, 20, 60, 10]
-    };
-    // Sample data for the map
-    const mapData = {
-        SP: 90,
-        RJ: 50,
-        MG: 45,
-        BA: 95,
-        TO: 75,
-        CE: 60,
-        AM: 39,
-        RO: 45,
-        GO: 30,
-        PB: 55,   
-        AL: 40,
-        MS: 35,
-        RR: 10,
-        MA: 15,
-        PA: 20,
-        PR: 10,
-        SC: 5,    
-        AC: 30,
-        DF: 40,
-        ES: 40,
-        MT: 40,
-        RN: 25,
-        SE: 10,
-        PI: 10,
-        PE: 60,
-        RS: 30,
-        AP: 45,   
-    };
+  async function buscarDadosEstado(
+    estado: string
+  ): Promise<dadosEstados | null> {
+    const docRef = doc(db, "dadosEstados", estado);
+    console.log(estado);
+
+    try {
+      const docSnapshot = await getDoc(docRef);
+
+      if (docSnapshot.exists()) {
+        const dados = docSnapshot.data() as dadosEstados;
+        console.log("Documento encontrado");
+        return dados;
+      } else {
+        console.log("Documento não existe");
+        return null;
+      }
+    } catch (error) {
+      console.error("Erro na busca do documento");
+      throw error;
+    }
+  }
+
+  function somarDadosEstados(array: dadosEstados[]): dadosEstados {
+    const maiorAporteGlobal = array.map(d => d.maiorAporte).reduce((max, curr) => {
+      if (!max || (curr && curr.valorAportado > max.valorAportado)) {
+        return curr;
+      }
+      return max;
+      }, null as { nome: string; valorAportado: number} | null) ?? { nome: '', valorAportado: 0 };
+
+    return array.reduce((acc, curr) => {
+      // Soma dos valores escalares
+      const novoAcc = {
+        nomeEstado: "Todos",
+        valorTotal: (acc.valorTotal ?? 0) + (curr.valorTotal ?? 0),
+        maiorAporte: maiorAporteGlobal,
+        qtdProjetos: (acc.qtdProjetos ?? 0) + (curr.qtdProjetos ?? 0),
+        beneficiariosDireto:
+          (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
+        beneficiariosIndireto:
+          (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
+        qtdOrganizacoes:
+          (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
+        qtdMunicipios: (acc.qtdMunicipios ?? 0) + (curr.qtdMunicipios ?? 0),
+        projetosODS: acc.projetosODS
+          ? acc.projetosODS.map((v, i) => v + (curr.projetosODS?.[i] ?? 0))
+          : curr.projetosODS ?? [],
+        lei: [] as { nome: string; qtdProjetos: number }[],
+        segmento: [] as { nome: string; qtdProjetos: number }[],
+      };
+
+      // Agora agrupa e soma os segmentos
+
+      const segmentosCombinados = [
+        ...(acc.segmento || []),
+        ...(curr.segmento || []),
+      ];
+      const leiCombinada = [...(acc.lei || []), ...(curr.lei || [])];
+
+      const segmentoAgrupado = segmentosCombinados.reduce((segAcc, segCurr) => {
+        const index = segAcc.findIndex((item) => item.nome === segCurr.nome);
+        if (index >= 0) {
+          segAcc[index].qtdProjetos += segCurr.qtdProjetos || 0;
+        } else {
+          segAcc.push({ ...segCurr });
+        }
+        return segAcc;
+      }, [] as { nome: string; qtdProjetos: number }[]);
+
+      novoAcc.segmento = segmentoAgrupado;
+
+      const leiAgrupada = leiCombinada.reduce((leiAcc, leiCurr) => {
+        const index = leiAcc.findIndex((item) => item.nome === leiCurr.nome);
+        if (index >= 0) {
+          leiAcc[index].qtdProjetos += leiCurr.qtdProjetos || 0;
+        } else {
+          leiAcc.push({ ...leiCurr });
+        }
+        return leiAcc;
+      }, [] as { nome: string; qtdProjetos: number }[]);
+
+      novoAcc.lei = leiAgrupada;
+
+      return novoAcc;
+    });
+  }
+
+  function somarDadosMunicipios(array: dadosProjeto[]): dadosEstados {
+    const maiorAporteGlobal = array.map(d => d.valorAportadoReal).reduce((max, curr) => {
+      if (!max || (curr && curr.valorAportado > max.valorAportado)) {
+        return curr;
+      }
+      return max;
+      }, null as { nome: string; valorAportado: number} | null) ?? { nome: '', valorAportado: 0 };
+
+    const organizacoes = Array.from(new Set(array.map(d => d.instituicao)));
+
+    const leisAgrupadas: Record<string, number> = {}
+
+    array.forEach(d => {
+        leisAgrupadas[d.lei.nome] = (leisAgrupadas[d.lei.nome] ?? 0) + d.lei.qtdProjetos;
+      });
     
+    const resultLeis = Object.entries(leisAgrupadas).map(([nome, qtdProjetos]) => ({
+      nome,
+      qtdProjetos
+    }));
+
+    const segmentosAgrupados: Record<string, number> = {}
+
+    array.forEach(d => {
+        segmentosAgrupados[d.segmento.nome] = (leisAgrupadas[d.segmento.nome] ?? 0) + d.segmento.qtdProjetos;
+      });
     
-    //começo do código em si
-    return (
-        <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
-            <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10">
-                <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>  
-                
-                {/* Section 1: Summary Cards */}
-                <section className="grid md:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 gap-4 text-right"> 
-                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
-                        <div className="mb-2">
-                            <h1 className="text-lg text-blue-fcsn dark:text-white-off font-light mb-2">
-                                Valor total investido em projetos</h1>  
-                        </div>
-                        <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
-                            R$9.173.461.815,00</h1>
-                    </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
-                        <div className="mb-2">
-                            <h1 className="text-lg text-blue-fcsn dark:text-white-off font-light mb-2">Maior Aporte</h1>  
-                        </div>
-                        <h1 className= "text-2xl text-blue-fcsn dark:text-white-off font-bold">R$530.000,00</h1>
-                        <h1 className="text-base text-blue-fcsn dark:text-white-off font-light">Investido em Projeto X</h1>   
-                    </div>
-                </section>       
+    const resultSegmentos = Object.entries(segmentosAgrupados).map(([nome, qtdProjetos]) => ({
+      nome,
+      qtdProjetos
+    }));
 
-                <section className="grid grid-cols-1 md:grid-cols-3 gap-5 text-left">
-                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-                        <p className="text-xl font-bold">800</p>
-                        <h2 className="text-lg mb-2">Projetos no total</h2>
-                    </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
-                        <p className="text-xl font-bold">7000</p>                       
-                        <h2 className="text-lg">Beneficiários diretos</h2>
-                    </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-                        <p className="text-xl font-bold">15000</p>
-                        <h2 className="text-lg">Beneficiários indiretos</h2>
-                    </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-                        <p className="text-xl font-bold">750</p>
-                        <h2 className="text-lg">Organizações envolvidas</h2>
-                    </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-                        <p className="text-xl font-bold">13</p>
-                        <h2 className="text-lg">Estados atendidos</h2>
-                    </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-                        <p className="text-xl font-bold">714</p>
-                        <h2 className="text-lg">Municípios atendidos</h2>
-                    </div>
-                </section>
-                {/* Section 2: ODS Chart */}
-                <section className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
-                    <h2 className="text-2xl font-bold mb-5">Objetivos de Desenvolvimento Sustentável</h2>
-                    <div className="w-full sm:overflow-x-auto md:overflow-x-hidden">
-                        <div className="h-96 min-w-[600]px md:min-w-0">
-                            <BarChart
-                                title=""
-                                data={odsData.values} 
-                                labels={odsData.labels} 
-                                colors={['#b37b97']}
-                                horizontal={false}
-                                useIcons={true}
-                            />
-                        </div>
-                    </div>
-                </section>
-                {/* Section 3: Map and Chart */}
-                <section className="grid grid-cols-2 gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
-                    <div className="flex flex-col sm:overflow-x-auto md:overflow-x-hidden">
-                        <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
-                            <div className="lg:h-120 md:h-100 sm:h-80 w-full p-3">
-                                <BrazilMap data={mapData} />
-                            </div>
-                    </div>
-                    <div className="flex flex-col">
-                        {/* box for the bar chart */}
-                        <div className="lg:h-170 md:h-120 sm:h-96 w-full">
-                            <BarChart
-                                title=""
-                                data={estadosData.values}
-                                labels={estadosData.labels}
-                                colors={['#b37b97']}
-                                horizontal={true}
-                                useIcons={false}
-                            />
-                        </div>
-                    </div>
-                </section>
+    const projetosODS:number[] = Array(17).fill(0)
+    
+    array.forEach(d => {
+      d.ods.forEach(element => {
+        projetosODS[element] += 1
+      })
+    })
 
-                <section className="grid grid-cols-1 md:grid-cols-2 gap-8 ">
-                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-10">
-                        <h2 className="text-2xl font-bold mb-4">Segmento do projeto</h2>
-                        <div className="h-120">
-                            <PieChart 
-                            data={segmentData.values} 
-                            labels={segmentData.labels} 
-                            colors={['#e74c3c','#8e44ad','#39c2e0','#2ecc40','#f1c40f']}
-                            />
-                        </div>
-                    </div>
-                    <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 h-full flex flex-col">
-                        <h2 className="text-2xl font-bold mb-4">Lei de Incentivo</h2>
-                        <div className="flex-grow w-full">
-                        <BarChart 
-                            title=""
-                            colors={['#b37b97']}
-                            data={incentiveData.values} 
-                            labels={incentiveData.labels} 
-                            horizontal={true}
-                            useIcons={false}
 
-                        />
-                        </div> 
-                    </div>
-                </section>
-            </main>
-            <Footer />
-        </div>
+  
+    const initial: dadosEstados = {
+    nomeEstado: "",
+    valorTotal: 0,
+    maiorAporte: maiorAporteGlobal,
+    qtdProjetos: 0,
+    beneficiariosDireto: 0,
+    beneficiariosIndireto: 0,
+    qtdOrganizacoes: organizacoes.length,
+    qtdMunicipios: 0,
+    projetosODS: projetosODS,
+    lei: [],
+    segmento: [],
+  };
+
+  return array.reduce((acc, curr) => ({
+    ...acc,
+    valorTotal: (acc.valorTotal ?? 0) + (curr.valorAportadoReal?.valorAportado ?? 0),
+    maiorAporte: maiorAporteGlobal,
+    qtdProjetos: array.length,
+    qtdOrganizacoes: organizacoes.length,
+    beneficiariosDireto: (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
+    beneficiariosIndireto: (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
+    projetosODS: projetosODS,
+    lei: resultLeis,
+    segmento: resultSegmentos
+    
+  }), initial);
+}
+
+
+  const buscarDadosGerais =
+    useCallback(async (): Promise<dadosEstados | null> => {
+      const consulta = query(collection(db, 'dadosEstados'), where("qtdProjetos", "!=", 0))
+
+      const consultaSnapshot = await getDocs(consulta);
+      const todosDados: dadosEstados[] = [];
+      const dadosMapaTemp: Record<string, number> = {} as Record<
+        string,
+        number
+      >;
+
+      consultaSnapshot.forEach((doc) => {
+        todosDados.push(doc.data() as dadosEstados);
+        dadosMapaTemp[doc.data().nomeEstado] = doc.data().qtdProjetos;
+      });
+      setDadosMapa(dadosMapaTemp);
+      setEstadosAtendidos(todosDados.length)
+      return somarDadosEstados(todosDados);
+    }, []);
+
+    const buscarDadosMunicipios = useCallback(async ( municipios:string[]): Promise<dadosEstados> => {
+      const idsUltimosForms: string[] = [];
+      const valoresAportados: Record<string, number> = {};
+      const nomesProjetos: Record<string, string> = {};
+      const todosDados: dadosProjeto[] = [] as dadosProjeto[];
+
+      //Procuro nos projetos quais atuam em cada municipio e armazeno os ids
+      for (const municipio of municipios) {
+        const consulta = query(collection(db, 'projetos'), where('municipios', 'array-contains', municipio));
+        const consultaSnapshot = await getDocs(consulta);
+
+        consultaSnapshot.forEach((doc) => {
+          idsUltimosForms.push(doc.data().ultimoFormulario)
+          valoresAportados[doc.data().ultimoFormulario] = doc.data().valorAportadoReal
+          nomesProjetos[doc.data().ultimoFormulario] = doc.data().nome
+        })
+      }
+      //Evito ids repetidos
+      const idsUltimosFormsUnicos = Array.from(new Set(idsUltimosForms));
+
+      //Pego os dados do forms de acompanhamento e armazeno em um array com todos os dados
+      for (const id of idsUltimosFormsUnicos) {
+        const refForms = doc(db, 'forms-acompanhamento', id)
+        const formsSnapshot = await getDoc(refForms)
+
+        if (formsSnapshot.exists()) {
+          const dado = formsSnapshot.data();
+          console.log(dado.instituicao)
+          const dadoFiltrado: dadosProjeto = {
+            instituicao: dado.instituicao,
+            qtdProjetos: dado.qtdProjetos,
+            valorAportadoReal: {valorAportado: valoresAportados[id], nome:nomesProjetos[id]},
+            beneficiariosDireto: dado.beneficiariosDiretos,
+            beneficiariosIndireto: dado.beneficiariosIndiretos,
+            ods: dado.ods,
+            segmento: {nome: dado.segmento, qtdProjetos: 1},
+            lei: {nome:dado.lei, qtdProjetos: 1}
+          }
+          todosDados.push(dadoFiltrado)
+        }
+      }
+      return somarDadosMunicipios(todosDados)
+    }, [])
+
+
+
+  const odsData = {
+    labels: [
+      "ODS 1: Erradicação da Pobreza",
+      "ODS 2: Fome Zero",
+      "ODS 3: Saúde e Bem-Estar",
+      "ODS 4: Educação de Qualidade",
+      "ODS 5: Igualdade de Gênero",
+      "ODS 6: Água Potável e Saneamento",
+      "ODS 7: Energia Limpa e Acessível",
+      "ODS 8: Trabalho Decente e Crescimento Econômico",
+      "ODS 9: Indústria, Inovação e Infraestrutura",
+      "ODS 10: Redução das Desigualdades",
+      "ODS 11: Cidades e Comunidades Sustentáveis",
+      "ODS 12: Consumo e Produção Responsáveis",
+      "ODS 13: Ação Contra a Mudança Global do Clima",
+      "ODS 14: Vida na Água",
+      "ODS 15: Vida Terrestre",
+      "ODS 16: Paz, Justiça e Instituições Eficazes",
+      "ODS 17: Parcerias e Meios de Implementação",
+    ],
+  };
+  // Sample Estados de Atuação data
+  const estadosSiglas = {
+    "Acre" : "AC",
+    "Alagoas" : "AL",
+    "Amapá" : "AP",
+    "Amazonas" : "AM",
+    "Bahia" : "BA",
+    "Ceará" : "CE",
+    "Distrito Federal" : "DF",
+    "Espírito Santo" : "ES",
+    "Goiás" : "GO",
+    "Maranhão" : "MA",
+    "Mato Grosso" : "MT",
+    "Mato Grosso do Sul" : "MS",
+    "Minas Gerais" : "MG",
+    "Pará" : "PA",
+    "Paraíba" : "PB",
+    "Paraná" : "PR",
+    "Pernambuco" : "PE",
+    "Piauí" : "PI",
+    "Rio de Janeiro" : "RJ",
+    "Rio Grande do Norte" : "RN",
+    "Rio Grande do Sul" : "RS",
+    "Rondônia" : "RO",
+    "Roraima" : "RR",
+    "Santa Catarina" : "SC",
+    "São Paulo" : "SP",
+    "Sergipe" : "SE",
+    "Tocantins" : "TO",
+  };
+
+  const [ehCelular, setEhCelular] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const [estado, setEstado] = useState<string>("");
+  const [dados, setDados] = useState<dadosEstados | null>(null);
+  const [dadosMapa, setDadosMapa] = useState<Record<string, number>>({});
+  const [estadosAtendidos, setEstadosAtendidos] = useState<number>(0);
+  const [cidades, setCidades] = useState<string[]>([]);
+  const [filtrarPorEstado, setFiltrarPorEstado] = useState<boolean>(false);
+
+  const segmentoNomes: string[] =
+    dados?.segmento.map((item) => item.nome) ?? [];
+  const segmentoValores: number[] =
+    dados?.segmento.map((item) => item.qtdProjetos) ?? [];
+  const leiNomes: string[] = dados?.lei.map((item) => item.nome) ?? [];
+  const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
+
+  useEffect(() => {
+    const lidarRedimensionamento = () => {
+      setEhCelular(window.innerWidth < 640);
+    };
+    lidarRedimensionamento();
+    window.addEventListener("resize", lidarRedimensionamento);
+    return () => {
+      window.removeEventListener("resize", lidarRedimensionamento);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (estado != "" && cidades.length === 0) {
+      buscarDadosEstado(estado).then((dado) => {
+        if (dado) setDados(dado);
+      });
+    } else if(estado === '' && cidades.length === 0) {
+      buscarDadosGerais().then((dado) => {
+        if (dado) setDados(dado);
+      }
     );
+    } else if (estado != '' && cidades.length > 0) {
+      buscarDadosMunicipios(cidades).then((dado) => {
+        if (dado) setDados(dado)
+      })
+    }
+  }, [estado, buscarDadosGerais, cidades, buscarDadosMunicipios]);
+
+  //começo do código em si
+  return (
+    <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
+      <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10">
+        <div className="flex flex-row items-center w-full justify-between">
+          <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+          <div className="relative">
+            {" "}
+            {/* <-- Add relative here */}
+            <button
+              className="flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              <FaCaretDown /> Aplicar Filtros
+            </button>
+            {isOpen && (
+              <div className="absolute right-4 top-full flex flex-col justify-center items-center mt-2 min-w-[250px] max-w-sm w-fit rounded-lg bg-white dark:bg-blue-fcsn2 shadow-lg">
+                <button className="cursor-pointer bg-blue-fcsn dark:bg-blue-fcsn3 text-white-off rounded-md m-4 p-3 text-lg font-bold"
+                onClick={() => setFiltrarPorEstado(!filtrarPorEstado)}>
+                  Filtrar por {filtrarPorEstado ? 'estado' : 'município'}
+                </button>
+                <div className=''>
+                  <EstadoInputDashboard
+                    text="Filtre por estado"
+                    estado={estado}
+                    setEstado={setEstado}
+                    setCidades={setCidades}
+                  />
+                </div>
+                <div className={`${filtrarPorEstado ? '' : 'hidden'}`}> 
+                  <CidadeInputDashboard
+                  text="Filtre por cidade"
+                  estado={estado}
+                  cidades={cidades}
+                  setCidades={setCidades}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Section 1: Summary Cards */}
+        <section className="grid md:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 gap-4 text-right">
+          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
+            <div className="mb-2">
+              <h1 className="text-lg text-blue-fcsn dark:text-white-off font-light mb-2">
+                Valor total investido em projetos
+              </h1>
+            </div>
+            <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
+              R$ {dados?.valorTotal},00
+            </h1>
+          </div>
+          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
+            <div className="mb-2">
+              <h1 className="text-lg text-blue-fcsn dark:text-white-off font-light mb-2">
+                Maior Aporte
+              </h1>
+            </div>
+            <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
+              R$ {dados?.maiorAporte.valorAportado},00
+            </h1>
+            <h1 className="text-base text-blue-fcsn dark:text-white-off font-light">
+              Investido em Projeto {dados?.maiorAporte.nome}
+            </h1>
+          </div>
+        </section>
+
+          {cidades.length > 0 && <section className="grid grid-rows-1 gap-5 text-left">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
+              <h2 className="text-lg mb-2">Projetos no total</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
+              <h2 className="text-lg">Beneficiários diretos</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">
+                {dados?.beneficiariosIndireto}
+              </p>
+              <h2 className="text-lg">Beneficiários indiretos</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.qtdOrganizacoes}</p>
+              <h2 className="text-lg">Organizações envolvidas</h2>
+            </div>
+          </div>
+        </section>}
+
+          {cidades.length == 0 && <section className="grid grid-rows-2 gap-5 text-left">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
+              <h2 className="text-lg mb-2">Projetos no total</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
+              <h2 className="text-lg">Beneficiários diretos</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">
+                {dados?.beneficiariosIndireto}
+              </p>
+              <h2 className="text-lg">Beneficiários indiretos</h2>
+            </div>
+          </div>
+          <div className={`grid gap-5 ${estado === '' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.qtdOrganizacoes}</p>
+              <h2 className="text-lg">Organizações envolvidas</h2>
+            </div>
+            <div className={`bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 ${estado === '' ? '' : 'hidden'}`}>
+              <p className="text-xl font-bold">{estadosAtendidos}</p>
+              <h2 className="text-lg">Estados atendidos</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.qtdMunicipios}</p>
+              <h2 className="text-lg">Municípios atendidos</h2>
+            </div>
+          </div>
+        </section>}
+        {/* Section 2: ODS Chart */}
+        <section className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
+          <h2 className="text-2xl font-bold mb-5">
+            Objetivos de Desenvolvimento Sustentável
+          </h2>
+          <div className="w-full sm:overflow-x-auto md:overflow-x-hidden">
+            <div className="min-h-96 h-fit min-w-[600]px md:min-w-0">
+              <BarChart
+                title=""
+                data={dados?.projetosODS ?? []}
+                labels={odsData.labels}
+                colors={["#b37b97"]}
+                horizontal={ehCelular}
+                celular={ehCelular}
+                useIcons={true}
+              />
+            </div>
+          </div>
+        </section>
+        {/* Section 3: Map and Chart */}
+        {estado === "" && (
+          <section
+            className={`grid ${
+              ehCelular ? "" : "grid-cols-2"
+            } gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5`}
+          >
+            <div className="flex flex-col overflow-x-auto md:overflow-x-hidden">
+              <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
+              <div
+                className={`lg:h-120 md:h-100 sm:h-80 w-full p-3 ${
+                  ehCelular ? "hidden" : ""
+                }`}
+              >
+                <BrazilMap data={dadosMapa} />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              {/* box for the bar chart */}
+              <div className="min-h-96 h-fit w-full">
+                <BarChart
+                  title=""
+                  data={Object.values(dadosMapa)}
+                  labels={Object.keys(dadosMapa).map(nome => estadosSiglas[nome] ?? nome)}
+                  colors={["#b37b97"]}
+                  horizontal={true}
+                  useIcons={false}
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-10">
+            <h2 className="text-2xl font-bold mb-4">Segmento do projeto</h2>
+            <div className="sm:h-120 h-fit">
+              <PieChart
+                data={segmentoValores}
+                labels={segmentoNomes}
+                colors={["#e74c3c", "#8e44ad", "#39c2e0", "#2ecc40", "#f1c40f"]}
+                ehCelular={ehCelular}
+              />
+            </div>
+          </div>
+          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 h-full flex flex-col">
+            <h2 className="text-2xl font-bold mb-4">Lei de Incentivo</h2>
+            <div className="flex-grow w-full overflow-x-auto">
+              <div className="min-w-[1000px]">
+                {" "}
+                {/* Adjust min-width as needed */}
+                <BarChart
+                  title=""
+                  colors={["#b37b97"]}
+                  data={leiValores}
+                  labels={leiNomes}
+                  horizontal={true}
+                  useIcons={false}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  );
 }
