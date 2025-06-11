@@ -131,13 +131,6 @@ export default function DashboardPage() {
       qtdProjetos
     }));
 
-    const somaODS = (array: { ods: number[] }[]): number[] => {
-  return array.reduce((acc, curr) => {
-    if (!acc.length) return curr.ods ?? [];
-    return acc.map((v, i) => v + (curr.ods?.[i] ?? 0));
-  }, [] as number[]);
-};
-
 
   
     const initial: dadosEstados = {
@@ -162,7 +155,9 @@ export default function DashboardPage() {
     qtdOrganizacoes: organizacoes.length,
     beneficiariosDireto: (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
     beneficiariosIndireto: (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
-    projetosODS: resultODS,
+    projetosODS: acc.projetosODS
+          ? acc.projetosODS.map((v, i) => v + (curr.ods?.[i] ?? 0))
+          : curr.ods ?? [],
     lei: resultLeis,
     segmento: resultSegmentos
     
@@ -190,11 +185,11 @@ export default function DashboardPage() {
       return somarDadosEstados(todosDados);
     }, []);
 
-    const buscarDadosMunicipios = useCallback(async ( municipios:string[]): Promise<dadosProjeto> => {
+    const buscarDadosMunicipios = useCallback(async ( municipios:string[]): Promise<dadosEstados> => {
       const idsUltimosForms: string[] = [];
       const valoresAportados: Record<string, number> = {};
       const nomesProjetos: Record<string, string> = {};
-      const todosDados: dadosProjeto[] = {} as dadosProjeto[];
+      const todosDados: dadosProjeto[] = [] as dadosProjeto[];
 
       //Procuro nos projetos quais atuam em cada municipio e armazeno os ids
       for (const municipio of municipios) {
@@ -217,6 +212,7 @@ export default function DashboardPage() {
 
         if (formsSnapshot.exists()) {
           const dado = formsSnapshot.data();
+          console.log(dado.instituicao)
           const dadoFiltrado: dadosProjeto = {
             instituicao: dado.instituicao,
             qtdProjetos: dado.qtdProjetos,
@@ -230,7 +226,7 @@ export default function DashboardPage() {
           todosDados.push(dadoFiltrado)
         }
       }
-      return todosDados
+      return somarDadosMunicipios(todosDados)
     }, [])
 
 
@@ -326,7 +322,7 @@ export default function DashboardPage() {
     );
     } else if (estado != '' && cidades.length > 0) {
       buscarDadosMunicipios(cidades).then((dado) => {
-        if (dado) 
+        if (dado) setDados(dado)
       })
     }
   }, [estado, buscarDadosGerais, cidades, buscarDadosMunicipios]);
