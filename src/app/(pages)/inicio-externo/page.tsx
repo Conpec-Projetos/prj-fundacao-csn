@@ -113,8 +113,7 @@ export default function ExternalUserHomePage() {
           const usuarioExtRef = collection(db, 'usuarioExt');
           const qUsuarioExt = query(usuarioExtRef, where('email', '==', user.email))
           const usuarioExt = await getDocs(qUsuarioExt);
-          console.log(usuarioExt.docs[0].data().nome)
-          setUserName(user.displayName || user.email);
+          setUserName(usuarioExt.docs[0].data().nome.split(" ")[0]);
           setIsLoading(false); // Autenticação verificada
 
           try {
@@ -148,11 +147,11 @@ export default function ExternalUserHomePage() {
               // Tentar buscar informações do formulário de acompanhamento primeiro
               const acompanhamentoRef = collection(db, 'forms-acompanhamento');
               const qAcompanhamento = query(acompanhamentoRef, where('projetoID', '==', projetoId));
-              const acompanhamentoSnapshot = await getDocs(qAcompanhamento);
+              const acompanhamentoSnap = await getDocs(qAcompanhamento);
 
-              if (!acompanhamentoSnapshot.empty) {
+              if (!acompanhamentoSnap.empty) {
                 // Se encontrou um formulário de acompanhamento, use seus dados
-                const acompanhamentoData = acompanhamentoSnapshot.docs[0].data() as formsAcompanhamentoDados;
+                const acompanhamentoData = acompanhamentoSnap.docs[0].data() as formsAcompanhamentoDados;
                 institution = acompanhamentoData.instituicao;
                 incentiveLaw = acompanhamentoData.lei;
                 pendingForm = false; // Há um formulário de acompanhamento
