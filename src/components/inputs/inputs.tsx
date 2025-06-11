@@ -297,6 +297,7 @@ interface LocationDashboardProps{
     text: string;
     estado: string;
     setEstado: React.Dispatch<React.SetStateAction<string>>;
+    setCidades: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) => {
@@ -333,7 +334,7 @@ export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) =>
     return(
         <div className="flex flex-col justify-center items-center gap-2 py-3 mx-2">
             <div className="flex flex-row justify-center items-center w-full h-fit gap-2">
-                <button onClick={() => props.setEstado("")}
+                <button onClick={() => {props.setEstado(""); props.setCidades([])}}
                     className="text-blue-fcsn dark:text-white-off cursor-pointer"
                     ><AiOutlineClose /></button>
                 <div className="flex flex-col justify-center w-full h-fit border-1 border-blue-fcsn rounded-[7px]">

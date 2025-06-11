@@ -120,26 +120,24 @@ export interface dadosEstados {
   qtdProjetos: number;
   qtdMunicipios: number;
   valorTotal: number;
-  maiorAporte: Map<string, number>;
+  maiorAporte: {nome: string, valorAportado: number};
   beneficiariosDireto: number;
   beneficiariosIndireto: number;
   qtdOrganizacoes: number;
   projetosODS: number[];
-  segmento: Map<string, number>[];
-  lei: Map<string, number>[];
+  segmento: { nome: string; qtdProjetos: number }[];
+  lei: { nome: string; qtdProjetos: number }[];
 }
 
  export interface dadosProjeto {
-   nomeCidade: string;
-   nomeEstado: string;
    qtdProjetos: number;
-   valorAportado: number;
-   beneficiariosDiretos: number;
-   beneficiariosIndiretos: number;
-   qtdOrganizacoes: number;
+   instituicao: string;
+   valorAportadoReal: {nome: string, valorAportado: number};
+   beneficiariosDireto: number;
+   beneficiariosIndireto: number;
    ods: number[];
-   segmento: number;
-   lei: Map<string, number>[];
+   segmento: { nome: string; qtdProjetos: number };
+   lei: { nome: string; qtdProjetos: number };
 }
 
 export interface ambito {

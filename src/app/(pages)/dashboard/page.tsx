@@ -40,7 +40,7 @@ export default function DashboardPage() {
         return curr;
       }
       return max;
-      }, null as { nome: string; valorAportado: number} | null)
+      }, null as { nome: string; valorAportado: number} | null) ?? { nome: '', valorAportado: 0 };
 
     return array.reduce((acc, curr) => {
       // Soma dos valores escalares
@@ -99,6 +99,77 @@ export default function DashboardPage() {
     });
   }
 
+  function somarDadosMunicipios(array: dadosProjeto[]): dadosEstados {
+    const maiorAporteGlobal = array.map(d => d.valorAportadoReal).reduce((max, curr) => {
+      if (!max || (curr && curr.valorAportado > max.valorAportado)) {
+        return curr;
+      }
+      return max;
+      }, null as { nome: string; valorAportado: number} | null) ?? { nome: '', valorAportado: 0 };
+
+    const organizacoes = Array.from(new Set(array.map(d => d.instituicao)));
+
+    const leisAgrupadas: Record<string, number> = {}
+
+    array.forEach(d => {
+        leisAgrupadas[d.lei.nome] = (leisAgrupadas[d.lei.nome] ?? 0) + d.lei.qtdProjetos;
+      });
+    
+    const resultLeis = Object.entries(leisAgrupadas).map(([nome, qtdProjetos]) => ({
+      nome,
+      qtdProjetos
+    }));
+
+    const segmentosAgrupados: Record<string, number> = {}
+
+    array.forEach(d => {
+        segmentosAgrupados[d.segmento.nome] = (leisAgrupadas[d.segmento.nome] ?? 0) + d.segmento.qtdProjetos;
+      });
+    
+    const resultSegmentos = Object.entries(segmentosAgrupados).map(([nome, qtdProjetos]) => ({
+      nome,
+      qtdProjetos
+    }));
+
+    const somaODS = (array: { ods: number[] }[]): number[] => {
+  return array.reduce((acc, curr) => {
+    if (!acc.length) return curr.ods ?? [];
+    return acc.map((v, i) => v + (curr.ods?.[i] ?? 0));
+  }, [] as number[]);
+};
+
+
+  
+    const initial: dadosEstados = {
+    nomeEstado: "",
+    valorTotal: 0,
+    maiorAporte: maiorAporteGlobal,
+    qtdProjetos: 0,
+    beneficiariosDireto: 0,
+    beneficiariosIndireto: 0,
+    qtdOrganizacoes: organizacoes.length,
+    qtdMunicipios: 0,
+    projetosODS: [],
+    lei: [],
+    segmento: [],
+  };
+
+  return array.reduce((acc, curr) => ({
+    ...acc,
+    valorTotal: (acc.valorTotal ?? 0) + (curr.valorAportadoReal?.valorAportado ?? 0),
+    maiorAporte: maiorAporteGlobal,
+    qtdProjetos: array.length,
+    qtdOrganizacoes: organizacoes.length,
+    beneficiariosDireto: (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
+    beneficiariosIndireto: (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
+    projetosODS: resultODS,
+    lei: resultLeis,
+    segmento: resultSegmentos
+    
+  }), initial);
+}
+
+
   const buscarDadosGerais =
     useCallback(async (): Promise<dadosEstados | null> => {
       const consulta = query(collection(db, 'dadosEstados'), where("qtdProjetos", "!=", 0))
@@ -119,56 +190,47 @@ export default function DashboardPage() {
       return somarDadosEstados(todosDados);
     }, []);
 
-    const buscarDadosMunicipios = useCallback(async ( municipios:string[]): dadosProjeto => {
-      const idsProjetosNosMunicipios: string[] = [];
+    const buscarDadosMunicipios = useCallback(async ( municipios:string[]): Promise<dadosProjeto> => {
       const idsUltimosForms: string[] = [];
-      const valoresAportados = {};
-      const todosDados: dadosProjeto[] = {} as dadosProjeto;
+      const valoresAportados: Record<string, number> = {};
+      const nomesProjetos: Record<string, string> = {};
+      const todosDados: dadosProjeto[] = {} as dadosProjeto[];
 
-      //Procuro no forms de cadastro os projetos que atua em cada municipio e armazeno os ids
+      //Procuro nos projetos quais atuam em cada municipio e armazeno os ids
       for (const municipio of municipios) {
-        const consulta = query(collection(db, 'forms-cadastro'), where('municipios', 'array-contains', municipio));
+        const consulta = query(collection(db, 'projetos'), where('municipios', 'array-contains', municipio));
         const consultaSnapshot = await getDocs(consulta);
 
         consultaSnapshot.forEach((doc) => {
-          idsProjetosNosMunicipios.push(doc.data().projetoID)
+          idsUltimosForms.push(doc.data().ultimoFormulario)
+          valoresAportados[doc.data().ultimoFormulario] = doc.data().valorAportadoReal
+          nomesProjetos[doc.data().ultimoFormulario] = doc.data().nome
         })
       }
-      //Procuro nos projetos os ids dos projetos armazenados anteriormente e armazeno os ids dos ultimos forms de cadastro preenchidos
-      for (const id of idsProjetosNosMunicipios) {
-        const refProjeto = doc(db, 'projetos', id)
-        const projetoSnapshot = await getDoc(refProjeto)
-        
-        if (projetoSnapshot.exists()) {
-          const idForms: string = projetoSnapshot.data().ultimoFormulario
-          valoresAportados[idForms] = projetoSnapshot.data().valorAportadoReal
-          idsUltimosForms.push(idForms)
-        }
-      }
+      //Evito ids repetidos
+      const idsUltimosFormsUnicos = Array.from(new Set(idsUltimosForms));
 
       //Pego os dados do forms de acompanhamento e armazeno em um array com todos os dados
-      for (const id of idsUltimosForms) {
+      for (const id of idsUltimosFormsUnicos) {
         const refForms = doc(db, 'forms-acompanhamento', id)
         const formsSnapshot = await getDoc(refForms)
 
         if (formsSnapshot.exists()) {
           const dado = formsSnapshot.data();
-
-
           const dadoFiltrado: dadosProjeto = {
-            nomeCidade: '',
-            nomeEstado: '',
+            instituicao: dado.instituicao,
             qtdProjetos: dado.qtdProjetos,
-            valorAportado: valoresAportados[id],
-            beneficiariosDiretos: dado.beneficiariosDiretos,
-            beneficiariosIndiretos: dado.beneficiariosIndiretos,
-            qtdOrganizacoes: 0,
+            valorAportadoReal: {valorAportado: valoresAportados[id], nome:nomesProjetos[id]},
+            beneficiariosDireto: dado.beneficiariosDiretos,
+            beneficiariosIndireto: dado.beneficiariosIndiretos,
             ods: dado.ods,
-            segmento: dado.segmento,
-            lei: dado.lei
+            segmento: {nome: dado.segmento, qtdProjetos: 1},
+            lei: {nome:dado.lei, qtdProjetos: 1}
           }
+          todosDados.push(dadoFiltrado)
         }
       }
+      return todosDados
     }, [])
 
 
@@ -263,9 +325,11 @@ export default function DashboardPage() {
       }
     );
     } else if (estado != '' && cidades.length > 0) {
-      
+      buscarDadosMunicipios(cidades).then((dado) => {
+        if (dado) 
+      })
     }
-  }, [estado, buscarDadosGerais]);
+  }, [estado, buscarDadosGerais, cidades, buscarDadosMunicipios]);
 
   //começo do código em si
   return (
@@ -293,6 +357,7 @@ export default function DashboardPage() {
                     text="Filtre por estado"
                     estado={estado}
                     setEstado={setEstado}
+                    setCidades={setCidades}
                   />
                 </div>
                 <div className={`${filtrarPorEstado ? '' : 'hidden'}`}> 
