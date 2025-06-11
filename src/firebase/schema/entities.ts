@@ -17,9 +17,9 @@ export interface usuarioInt {
 export interface Projetos {
   nome: string;
   municipios: string[];
-  aprovado: boolean;
+  status: "pendente" | "aprovado" | "reprovado";
   ativo: boolean;
-  compliance: boolean;
+  compliance: "pendente" | "aprovado" | "reprovado";
   empresas: string[];
   indicacao?: string;
   ultimoFormulario?: string;
@@ -27,6 +27,7 @@ export interface Projetos {
 }
 
 export interface formsCadastroDados {
+  dataPreenchido: string;
   instituicao: string;
   cnpj: string;
   representante: string;
@@ -108,7 +109,7 @@ export interface formsAcompanhamentoDados {
   qtdPCD: number;
   qtdLGBT: number;
   ods: number[];
-  relato? : string;
+  relato?: string;
   fotos: string[];
   website: string;
   links: string;
@@ -198,7 +199,7 @@ export const publicoList: Publico[] = [
   { id: 2, nome: "Jovens" },
   { id: 3, nome: "Adultos" },
   { id: 4, nome: "Idosos" },
-  { id: 5, nome: "Outro" }
+  { id: 5, nome: "" },
 ];
 
 export interface Ods {

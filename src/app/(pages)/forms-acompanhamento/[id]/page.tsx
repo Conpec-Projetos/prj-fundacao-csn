@@ -1,6 +1,11 @@
 'use client';
+import Image from "next/image";
 import Footer from "@/components/footer/footer";
+import logo from "@/assets/fcsn-logo.svg"
+import darkLogo from "@/assets/fcsn-logo-dark.svg";
+import { useTheme } from "@/context/themeContext";
 import { useState, useEffect } from "react";
+import { useParams } from 'next/navigation';
 import {
     NormalInput, 
     LongInput,
@@ -16,14 +21,22 @@ import {
     } from "@/components/inputs/inputs";
 import { Toaster, toast } from "sonner";
 import { collection, addDoc } from "firebase/firestore";
-import { db } from "@/firebase/firebase-config";
+import { db, auth } from "@/firebase/firebase-config";
 import { formsAcompanhamentoDados, odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
-import { getUserIdFromLocalStorage, getFileUrl, getOdsIds, getItemNome } from "@/lib/utils";
+import { getFileUrl, getOdsIds, getItemNome } from "@/lib/utils";
+import { onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
-export default function FormsAcompanhamento(){
-    const [isLoading, setIsLoading] = useState(true);
+export default function FormsAcompanhamento() {
+
+    const router = useRouter();
+    const routeParams = useParams<{ id: string }>();
+    const { darkMode } = useTheme();
+    const [isCheckingUser, setIsCheckingUser] = useState(true); // Estado para verificar o login
+
+    const projetoID = routeParams.id;
+
     const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
-
     const [instituicao, setInstituicao] = useState<string>("");
     const [descricao, setDescricao] = useState<string>("");
     const [segmento, setSegmento] = useState<number>(-1);
@@ -39,7 +52,7 @@ export default function FormsAcompanhamento(){
     const [dataFim, setDataFim] = useState<string>("");
     const [contrapartidas, setContrapartidas] = useState<string>("");
     const [beneficiarios, setBeneficiarios] = useState<number[]>([0, 0]);
-    const [diversidade, setDiversidade] = useState<boolean>();
+    const [diversidade, setDiversidade] = useState<boolean | undefined>(undefined);
     const [etnias, setEtnias] = useState<number[]>(new Array(12).fill(0));
     const [ODS, setODS] = useState<boolean[]>(new Array(odsList.length).fill(false));
     const [relato, setRelato] = useState<string>("");
@@ -49,25 +62,23 @@ export default function FormsAcompanhamento(){
     const [executadas, setExecutadas] = useState<string>("");
 
     useEffect(() => {
-        const userId = getUserIdFromLocalStorage();
-        if (!userId) {
-            // A função getUserIdFromLocalStorage redireciona para a página de login caso retorne null
-            // Apenas definimos isLoading como false para evitar renderizar o conteúdo da página
-            setIsLoading(false); 
-        } else {
-            setUsuarioAtualID(userId);
-            setIsLoading(false);
-        }
-    }, []);
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setUsuarioAtualID(user.uid);
+            } else {
+                router.push("/login"); 
+            }
+            setIsCheckingUser(false);
+        });
 
-    const projetoID = "ID-do-Projeto"; // Tem que fazer uma lógica para conseguir o ID do respectivo projeto ao qual o forms de acompanhamento está se referindo
+        return () => unsubscribe();
+    }, [router]);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         if (!usuarioAtualID) {
             toast.error("Usuário não autenticado. Por favor, faça login.");
-            // if (typeof window !== "undefined") window.location.href = "/login";
             return;
         }
 
@@ -98,7 +109,7 @@ export default function FormsAcompanhamento(){
                 contrapartidasProjeto: contrapartidas,
                 beneficiariosDiretos: beneficiarios[0],
                 beneficiariosIndiretos: beneficiarios[1],
-                diversidade: diversidade,
+                diversidade: diversidade ?? false,
                 qtdAmarelas: etnias[0],
                 qtdBrancas: etnias[1],
                 qtdIndigenas: etnias[2],
@@ -121,7 +132,7 @@ export default function FormsAcompanhamento(){
 
             await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
             toast.dismiss(loadingToastId);
-            toast.success(`Formulário enviado com sucesso! ID`);
+            toast.success(`Formulário enviado com sucesso!`);
             
         } catch (error) {
             console.error("Erro ao enviar formulário: ", error);
@@ -130,14 +141,21 @@ export default function FormsAcompanhamento(){
         }
     };
 
-    if (isLoading) {
-        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>; // Talvez colocar um spinner no lugar...
-    }
-
-    if (!usuarioAtualID) {
-        // Você pode retornar null ou uma mensagem indicando que o redirecionamento está em progresso,
-        // mas idealmente o usuário já terá sido redirecionado.
-        return null; 
+    if (isCheckingUser){
+        return (
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2">
+                <Image
+                    src={darkMode ? darkLogo : logo}
+                    alt="csn-logo"
+                    width={600}
+                    className=""
+                    priority
+                />
+                <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
+                    Verificando sessão...
+                </div>
+            </div>
+        );
     }
 
     return(
@@ -504,7 +522,7 @@ export default function FormsAcompanhamento(){
                     >Enviar</button>
                 </div>
             </form>
-            <Toaster richColors /> {/* Ensure Toaster is rendered */}
+            <Toaster richColors />
             <Footer></Footer>
         </main>
     );
