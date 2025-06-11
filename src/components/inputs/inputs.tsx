@@ -505,7 +505,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
                 <input 
                     type="date" 
                     onChange={(event) => { props.setFirstAttribute(event.target.value)}} 
-                    className="w-[150px] h-[50px] bg-white dark:bg-blue-fcsn3 text-center text-blue-fcsn rounded-[7px] border-1 border-blue-fcsn focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn"/>
+                    className="w-[150px] h-[50px] bg-white dark:bg-blue-fcsn3 text-center text-blue-fcsn dark:text-white rounded-[7px] border-1 border-blue-fcsn focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn"/>
 
                 <p className="text-xl text-blue-fcsn dark:text-white-off px-2"
                 >a</p>
@@ -513,7 +513,7 @@ export const DateInputs: React.FC<DateProps> = (props) => {
 
                     type="date" 
                     onChange={(event) => { props.setSecondAttribute(event.target.value)}} 
-                    className="w-[150px] h-[50px] bg-white dark:bg-blue-fcsn3 text-center text-blue-fcsn rounded-[7px] border-1 border-blue-fcsn focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn "/>
+                    className="w-[150px] h-[50px] bg-white dark:bg-blue-fcsn3 text-center text-blue-fcsn dark:text-white rounded-[7px] border-1 border-blue-fcsn focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn "/>
 
             </div>
         </div>

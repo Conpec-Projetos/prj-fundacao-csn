@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FaFileAlt, FaClipboardCheck, FaEdit, FaExclamationCircle, FaInfoCircle } from 'react-icons/fa';
+import { FaExclamationCircle } from 'react-icons/fa';
 import Footer from '@/components/footer/footer';
 import { useTheme } from '@/context/themeContext';
 import { onAuthStateChanged } from 'firebase/auth';

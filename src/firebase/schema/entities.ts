@@ -19,7 +19,7 @@ export interface Projetos {
   municipios: string[];
   status: "pendente" | "aprovado" | "reprovado";
   ativo: boolean;
-  compliance: boolean;
+  compliance: "pendente" | "aprovado" | "reprovado";
   empresas: string[];
   indicacao?: string;
   ultimoFormulario?: string;
@@ -27,6 +27,7 @@ export interface Projetos {
 }
 
 export interface formsCadastroDados {
+  dataPreenchido: string;
   instituicao: string;
   cnpj: string;
   representante: string;
