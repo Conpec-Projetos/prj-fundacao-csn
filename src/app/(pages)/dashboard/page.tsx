@@ -131,6 +131,14 @@ export default function DashboardPage() {
       qtdProjetos
     }));
 
+    const projetosODS:number[] = Array(17).fill(0)
+    
+    array.forEach(d => {
+      d.ods.forEach(element => {
+        projetosODS[element] += 1
+      })
+    })
+
 
   
     const initial: dadosEstados = {
@@ -142,7 +150,7 @@ export default function DashboardPage() {
     beneficiariosIndireto: 0,
     qtdOrganizacoes: organizacoes.length,
     qtdMunicipios: 0,
-    projetosODS: [],
+    projetosODS: projetosODS,
     lei: [],
     segmento: [],
   };
@@ -155,9 +163,7 @@ export default function DashboardPage() {
     qtdOrganizacoes: organizacoes.length,
     beneficiariosDireto: (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
     beneficiariosIndireto: (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
-    projetosODS: acc.projetosODS
-          ? acc.projetosODS.map((v, i) => v + (curr.ods?.[i] ?? 0))
-          : curr.ods ?? [],
+    projetosODS: projetosODS,
     lei: resultLeis,
     segmento: resultSegmentos
     
@@ -396,7 +402,30 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="grid grid-rows-2 gap-5 text-left">
+          {cidades.length > 0 && <section className="grid grid-rows-1 gap-5 text-left">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
+              <h2 className="text-lg mb-2">Projetos no total</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
+              <h2 className="text-lg">Beneficiários diretos</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">
+                {dados?.beneficiariosIndireto}
+              </p>
+              <h2 className="text-lg">Beneficiários indiretos</h2>
+            </div>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
+              <p className="text-xl font-bold">{dados?.qtdOrganizacoes}</p>
+              <h2 className="text-lg">Organizações envolvidas</h2>
+            </div>
+          </div>
+        </section>}
+
+          {cidades.length == 0 && <section className="grid grid-rows-2 gap-5 text-left">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
               <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
@@ -427,7 +456,7 @@ export default function DashboardPage() {
               <h2 className="text-lg">Municípios atendidos</h2>
             </div>
           </div>
-        </section>
+        </section>}
         {/* Section 2: ODS Chart */}
         <section className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
           <h2 className="text-2xl font-bold mb-5">
