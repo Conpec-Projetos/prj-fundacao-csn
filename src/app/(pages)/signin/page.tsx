@@ -38,7 +38,7 @@ export default function Signin(){
     const [visibleFirst, setVisibleFirst] = useState(false);
     const [visibleSecond, setVisibleSecond] = useState(false);
     const { darkMode } = useTheme();
-    const [loadingAuth, setLoadingAuth] = useState(false); // Renomeado para evitar conflito com o loading do form
+    const [loadingAuth, setLoadingAuth] = useState(false);
     const [isCheckingUser, setIsCheckingUser] = useState(true); // Estado para verificar o login
 
     useEffect(() => {

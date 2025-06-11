@@ -1,9 +1,8 @@
 'use client';
 import Footer from "@/components/footer/footer";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
     NormalInput,
-    ShortInput,
     LongInput,
     NumberInput,
     HorizontalSelects,
@@ -20,17 +19,13 @@ import {
 import { Toaster, toast } from "sonner";
 import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
-import { formsCadastroDados, odsList, leiList, segmentoList, formsCadastroDocumentos, Projetos, Associacao } from "@/firebase/schema/entities";
-import { getUserIdFromLocalStorage, getFileUrl, getOdsIds, getPublicoNomes, getItemNome } from "@/lib/utils";
+import { formsCadastroDados, odsList, leiList, segmentoList, formsCadastroDocumentos, Projetos } from "@/firebase/schema/entities";
+import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome } from "@/lib/utils";
 
 
 export default function FormsCadastro(){
 
     const [currentPage, setCurrentPage] = useState(1);
-
-    const [isLoading, setIsLoading] = useState(true);
-    const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
-
     const [instituicao, setInstituicao] = useState<string>("");
     const [cnpj, setCnpj] = useState<string>("");
     const [representanteLegal, setRepresentanteLegal] = useState<string>("");
@@ -70,32 +65,14 @@ export default function FormsCadastro(){
     const [compliance, setCompliance] = useState<File[]>([]);
     const [documentos, setDocumentos] = useState<File[]>([]);
 
-    useEffect(() => {
-        const userId = getUserIdFromLocalStorage();
-        if (!userId) {
-            // A função getUserIdFromLocalStorage redireciona para a página de login caso retorne null
-            // Apenas definimos isLoading como false para evitar renderizar o conteúdo da página
-            setIsLoading(false); 
-        } else {
-            setUsuarioAtualID(userId);
-            setIsLoading(false);
-        }
-    }, []);
-
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
-        if (!usuarioAtualID) {
-            toast.error("Usuário não autenticado. Por favor, faça login.");
-            // if (typeof window !== "undefined") window.location.href = "/login";
-            return;
-        }
 
         const loadingToastId = toast.loading("Enviando formulário...");
 
         try {
-
             const uploadFirestore: formsCadastroDados = {
+                dataPreenchido: new Date().toISOString().split('T')[0],
                 instituicao: instituicao,
                 cnpj: cnpj,
                 representante: representanteLegal,
@@ -140,7 +117,7 @@ export default function FormsCadastro(){
                 municipios: cidades,
                 status: "pendente",
                 ativo: false,
-                compliance: false, // De início, o projeto não tem nenhum dos trës aprovados
+                compliance: "pendente", // De início, o projeto não tem nenhum dos trës aprovados
                 empresas: [""],
                 indicacao: "",
                 ultimoFormulario: docRef.id, // Armazena o ID do forms de cadastro que acabou de ser enviado
@@ -167,13 +144,6 @@ export default function FormsCadastro(){
 
             await updateDoc(doc(db, "forms-cadastro", docRef.id), { ...updateDocumentos });
 
-            const createAssociacao: Associacao = {
-                usuarioID: usuarioAtualID,
-                projetosIDs: [projetoID] // Armazena o ID do projeto recém-criado
-            };
-
-            await addDoc(collection(db, "associacao"), createAssociacao);
-
             toast.dismiss(loadingToastId);
             toast.success(`Formulário enviado com sucesso!`);
             
@@ -184,16 +154,6 @@ export default function FormsCadastro(){
             toast.error("Erro ao enviar formulário. Tente novamente.");
         }
     };
-
-    if (isLoading) {
-        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>; // Talvez colocar um spinner no lugar...
-    }
-
-    if (!usuarioAtualID) {
-        // Você pode retornar null ou uma mensagem indicando que o redirecionamento está em progresso,
-        // mas idealmente o usuário já terá sido redirecionado.
-        return null; 
-    }
 
     return(
         <main className="flex flex-col justify-between items-center w-[screen] h-[dvh] overflow-hidden no-scrollbar">
