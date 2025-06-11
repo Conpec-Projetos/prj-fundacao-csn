@@ -1,6 +1,6 @@
 'use client';
 import React from "react";
-import { Dispatch, SetStateAction, useEffect, useState, useMemo } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState, useMemo, useRef } from 'react';
 import { State, City } from "country-state-city";
 import { Upload } from "lucide-react";
 import { AiOutlineClose } from "react-icons/ai";
@@ -195,6 +195,7 @@ interface LocationProps{
 export const EstadoInput: React.FC<LocationProps> = (props) => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
 
     // Memoize a lista de todos os estados para evitar recálculos
     const allBrazilianStates = useMemo(() => State.getStatesOfCountry("BR"), []);
@@ -202,11 +203,11 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
     // Memoize a lista de estados filtrados
     const filteredStates = useMemo(() => {
         if (!searchTerm.trim()) {
-            return []; // Não mostrar sugestões se o input estiver vazio
+            return [];
         }
         return allBrazilianStates.filter(state =>
             state.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-            !props.estados.includes(state.name) // MODIFICADO: Checa apenas pelo nome
+            !props.estados.includes(state.name)
         );
     }, [searchTerm, allBrazilianStates, props.estados]);
 
@@ -216,16 +217,28 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
     };
 
     const handleSelectState = (stateName: string) => {
-        const stateValue = stateName; // MODIFICADO: Armazena apenas o nome do estado
+        const stateValue = stateName;
         if (!props.estados.includes(stateValue)) {
             props.setEstados(prevStates => [...prevStates, stateValue]);
         }
-        setSearchTerm(""); // Limpa o input após a seleção
+        setSearchTerm("");
         setShowSuggestions(false);
     };
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setShowSuggestions(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [wrapperRef]);
     
     return(
-        <div className="flex flex-row justify-between items-start h-auto py-3">
+        <div className="flex flex-row justify-between items-start h-auto py-3" ref={wrapperRef}> {/* Adicione a ref aqui */}
             
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
@@ -238,7 +251,6 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                     value={searchTerm}
                     onChange={handleInputChange}
                     onFocus={() => setShowSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)} // Pequeno delay para permitir o clique na sugestão
                     placeholder="Digite para buscar um estado..."
                     className="w-full min-h-[50px] text-blue-fcsn dark:text-white-off bg-transparent pl-5 rounded-t-[7px] focus:outline-none box-border"
                 />
@@ -248,8 +260,8 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                     <ul className="absolute top-[50px] left-[-1px] right-[-1px] z-15 bg-white dark:bg-blue-fcsn3 border-l border-r border-b border-blue-fcsn rounded-b-[7px] max-h-[50vh] overflow-y-auto shadow-lg">
                         {filteredStates.map((state) => (
                             <li
-                                key={state.isoCode} // Usar isoCode como chave única
-                                onClick={() => handleSelectState(state.name)}
+                                key={state.isoCode}
+                                onMouseDown={() => handleSelectState(state.name)}
                                 className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off"
                             >
                                 {state.name}
@@ -262,15 +274,14 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                 <div className="border-t border-blue-fcsn3 dark:border-blue-fcsn"></div>
                 
                 {/* Área de estados selecionados */}
-                <div className="h-[calc(100%-51px)] text-blue-fcsn3 rounded-b-[7px] overflow-y-auto scrollbar-thin p-2"> {/* 50px para input + 1px para divisor */}
-                    {props.estados.map((estado) => ( // estado é stateName
+                <div className="h-[calc(100%-51px)] text-blue-fcsn3 rounded-b-[7px] overflow-y-auto scrollbar-thin p-2">
+                    {props.estados.map((estado) => (
                         <button
-                            key={estado} // MODIFICADO: Usa o nome do estado como chave
+                            key={estado}
                             onClick={(event) => {
                                 event.preventDefault();
                                 props.setEstados(prev => prev.filter(item => item !== estado));
                                 
-                                // Encontra o objeto do estado para obter o isoCode para limpar as cidades
                                 const stateObject = allBrazilianStates.find(s => s.name === estado);
                                 if (stateObject) {
                                     const estadoUF = stateObject.isoCode;
@@ -367,6 +378,7 @@ export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) =>
 export const CidadeInput: React.FC<LocationProps> = (props) => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
 
     // Helper para obter todos os estados brasileiros. Pode ser otimizado se já disponível do componente pai.
     const getAllBrazilianStates = () => State.getStatesOfCountry("BR");
@@ -402,7 +414,9 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(event.target.value);
-        setShowSuggestions(true); // Mostra sugestões ao digitar
+        if (props.estados.length > 0 && allCityNamesFromSelectedStates.length > 0) {
+            setShowSuggestions(true); // Mostra sugestões ao digitar, apenas se houver estados e cidades disponíveis
+        }
     };
 
     const handleSelectCity = (cityName: string) => {
@@ -436,9 +450,21 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
     const handleRemoveAllCities = () => {
         props.setCidades([]);
     };
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setShowSuggestions(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [wrapperRef]);
     
     return(
-        <div className="flex flex-row justify-between items-start h-auto py-3">
+        <div className="flex flex-row justify-between items-start h-auto py-3" ref={wrapperRef}> {/* Adicione a ref aqui */}
             
             <h1 className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
@@ -454,7 +480,6 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                             setShowSuggestions(true);
                         }
                     }}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                     placeholder={props.estados.length === 0 ? "Selecione um estado primeiro" : "Buscar cidade..."}
                     className="w-full min-h-[50px] text-blue-fcsn dark:text-white-off bg-transparent pl-5 rounded-t-[7px] focus:outline-none box-border"
                     disabled={props.estados.length === 0}
@@ -465,7 +490,8 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                         {filteredCitySuggestions.map((cityName, index) => (
                             <li
                                 key={`city-sugg-${index}-${cityName}`}
-                                onClick={() => handleSelectCity(cityName)}
+                                // Use onMouseDown para garantir que o evento de clique seja processado antes do onBlur
+                                onMouseDown={() => handleSelectCity(cityName)}
                                 className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off"
                             >
                                 {cityName}
@@ -479,7 +505,7 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                 <div className="h-[calc(100%-51px)] overflow-y-auto scrollbar-thin">
                     {props.estados.length > 0 && (
                         <div className="sticky top-0 z-10 bg-white dark:bg-blue-fcsn3 flex flex-wrap max-h-[10vh] p-2 border-b border-blue-fcsn3 dark:border-blue-fcsn overflow-y-scroll">
-                            <div className="w-full flex justify-start gap-x-1 mb-0.5"> {/* Envolve o texto e o botão de remover tudo para melhor layout */}
+                            <div className="w-full flex justify-start gap-x-1 mb-0.5">
                                 <span className="text-xs h-[24px] text-gray-500 dark:text-gray-400 py-0.5">Opções rápidas:</span>
                                 {props.cidades.length > 0 && (
                                     <button
@@ -491,14 +517,14 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                                 )}
                             </div>
                             
-                            <div className="w-full flex flex-wrap"> {/* Container para os botões de adicionar por estado */}
-                                {props.estados.map((estadoNome) => ( // estadoNome é o nome do estado
+                            <div className="w-full flex flex-wrap">
+                                {props.estados.map((estadoNome) => (
                                     <button
-                                        key={`add-all-${estadoNome}`} // MODIFICADO: Usa o nome do estado para a chave
+                                        key={`add-all-${estadoNome}`}
                                         type="button"
-                                        onClick={() => handleAddAllCitiesFromState(estadoNome)}
+                                        onMouseDown={() => handleAddAllCitiesFromState(estadoNome)} // Use onMouseDown
                                         className="text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-fcsn2 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off cursor-pointer px-2 py-1 rounded m-1">
-                                        Adicionar todas de {estadoNome} {/* MODIFICADO: Mostra apenas o nome do estado */}
+                                        Adicionar todas de {estadoNome}
                                     </button>
                                 ))}
                             </div>

@@ -136,7 +136,7 @@ export default function FormsCadastro(){
             const createProjeto: Projetos = {
                 nome: nomeProjeto,
                 municipios: cidades,
-                aprovado: false,
+                aprovado: "pending",
                 ativo: false,
                 compliance: false, // De início, o projeto não tem nenhum dos trës aprovados
                 empresas: [""],
