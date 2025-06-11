@@ -134,7 +134,7 @@ export default function Signin(){
                 }, 6000);
             } else {
                 await userCredential.user.delete();
-                // A mensagem de erro já foi exibida dentro do projetoValido()
+                // A mensagem de erro já foi exibida dentro do projetoValido().
             }
         }
         catch (error: any) { // Adicionar tipo para error
