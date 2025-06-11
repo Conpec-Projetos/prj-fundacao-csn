@@ -3,7 +3,7 @@ import Image from "next/image";
 import Footer from "@/components/footer/footer";
 import logo from "@/assets/fcsn-logo.svg"
 import { Eye, EyeOff } from "lucide-react";
-import { useState, useEffect } from "react"; // Adicionado useEffect
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"
 import { toast, Toaster } from "sonner"
 import { z } from "zod"
@@ -12,8 +12,11 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import { auth } from "@/firebase/firebase-config";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { getUserIdFromLocalStorage } from "@/lib/utils"; // Importar a função
+import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification} from "firebase/auth";
+import { getUserIdFromLocalStorage } from "@/lib/utils";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { db } from "@/firebase/firebase-config";
+import { Associacao } from "@/firebase/schema/entities";
 
 const schema = z.object({
     name: z.string().min(1, {message: "Nome inválido!"}),
@@ -40,15 +43,29 @@ export default function Signin(){
     const [isCheckingUser, setIsCheckingUser] = useState(true); // Estado para verificar o login
 
     useEffect(() => {
-        const userId = getUserIdFromLocalStorage();
-        if (userId) {
-            // Se o usuário já está logado, redireciona para a home
-            router.push("/");
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            if (user.email && user.emailVerified) {
+                const emailDomain = user.email.split('@')[1];
+
+                // Se colocar o dominio da csn nao conseguirei testar, logo coloquei o da conpec
+                if (emailDomain === "conpec.com.br") {
+                    router.push("/")
+                } else {
+                    router.push("inicio-externo")
+                }
+                
+            } else {
+                console.log("E-mail não verificado, bloqueando acesso.");
+            }
         } else {
-            // Se não está logado, permite que a página de signin seja renderizada
+            // Se não está logado, permite que a página de login seja renderizada
             setIsCheckingUser(false);
-        }
+        }});
+
+      return () => unsubscribe();
     }, [router]);
+
 
     const {
         register,
@@ -65,34 +82,83 @@ export default function Signin(){
      });
 
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
-        setLoadingAuth(true); // Inicia o loading do processo de autenticação
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-            const user = {...userCredential.user, timeout: Date.now() + (1000 * 60 * 60 * 12)}; // Desloga automaticamente depois de 12 horas
-            
-            if(user){
-                localStorage.setItem('user', JSON.stringify(user));
-                // Guarda o id do usuário no cache para facilitar o acesso na hora de enviar formulários
-                router.push("/");
-            }
-            // auth está em firebase-config.ts
-        } 
-        catch (error: any) { // Adicionar tipo para error
-            // Tratar erros específicos do Firebase aqui, se necessário
-            if (error.code === 'auth/email-already-in-use') {
-                toast.error('Este e-mail já está em uso.');
-            } else {
-                toast.error('Erro ao criar conta. Tente novamente.');
-            }
-            console.error("Erro no cadastro:", error);
-        }
-        finally {
-            setLoadingAuth(false); // Finaliza o loading do processo de autenticação
-        }
-    };
+    setLoadingAuth(true); // Inicia o loading
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        const user = userCredential.user;
 
-    if (isCheckingUser) {
-        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>
+        if (user && user.email) {
+            // 1. Encontrar os formulários de cadastro associados ao email do usuário
+            const formsRef = collection(db, "forms-cadastro");
+            const qForms = query(formsRef, where("emailResponsavel", "==", user.email));
+            const formsSnapshot = await getDocs(qForms);
+            const formDocIds = formsSnapshot.docs.map(doc => doc.id);
+
+            const projetosIDs: string[] = [];
+
+            // 2. Encontrar os projetos que correspondem a esses formulários
+            if (formDocIds.length > 0) {
+                const projetosRef = collection(db, "projetos");
+                // Itera sobre cada ID de formulário para encontrar o projeto correspondente
+                for (const formId of formDocIds) {
+                    const qProjetos = query(projetosRef, where("ultimoFormulario", "==", formId));
+                    const projetosSnapshot = await getDocs(qProjetos);
+                    projetosSnapshot.forEach(doc => {
+                        if (!projetosIDs.includes(doc.id)) {
+                            projetosIDs.push(doc.id);
+                        }
+                    });
+                }
+            }
+
+            // 3. Criar o novo documento na coleção "associacao"
+            const newAssociacaoDoc: Associacao = {
+                usuarioID: user.uid,
+                projetosIDs: projetosIDs
+            };
+
+            await addDoc(collection(db, "associacao"), newAssociacaoDoc);
+            console.log("Documento de associação criado para o usuário:", user.uid, "com os projetos:", projetosIDs);
+        }
+
+        await sendEmailVerification(user);
+        toast.success("E-mail de verificação enviado. Verifique sua caixa de entrada!");
+
+        setTimeout(() => {
+          router.push("./login"); // volta para tela de login
+        }, 6000); 
+        console.log("E-mail de verificação enviado para:", data.email);
+    }
+
+    catch (error: any) { 
+        if (error.code === 'auth/email-already-in-use') {
+            toast.error('Este e-mail já está em uso.');
+        } else {
+            toast.error('Erro ao criar conta. Tente novamente.');
+        }
+        console.error("Erro no cadastro:", error);
+    }
+    finally {
+        setLoadingAuth(false); // Finaliza o loading
+    }
+};
+
+
+    if (isCheckingUser){
+        return (
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
+                <Image
+                    src={darkMode ? darkLogo : logo}
+                    alt="csn-logo"
+                    width={600}
+                    className=""
+                    priority
+                />
+                <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
+                    Verificando sessão...
+                </div>
+            </div>
+        );
     }
 
     return(
@@ -101,7 +167,7 @@ export default function Signin(){
 
             <form
                 className="flex flex-col items-center justify-between w-full max-w-[1100px] 
-                        h-auto min-h-[600px] my-4 md:my-8
+                        h-auto min-h-[600px] my-4 md:my-8 py-6
                         bg-white-off dark:bg-blue-fcsn2 rounded-md shadow-blue-fcsn shadow-md
                         p-4 md:p-8"
                 onSubmit={handleSubmit(onSubmit)}>
@@ -119,17 +185,6 @@ export default function Signin(){
                         Fazer cadastro
                     </h1>
                 </div>
-                {/* Mostra um erro por vez */}
-                {(() => {
-                    const firstError =
-                        errors.name?.message ||
-                        errors.email?.message ||
-                        errors.password?.message ||
-                        errors.confirmPassword?.message;
-                    return firstError ? (
-                        <div className="w-fit h-fit flex text-red-600 dark:text-zinc-50 text-lg bg-red-100 dark:bg-red-fcsn text-center items-center rounded-lg p-2 mb-3">{firstError}</div>
-                    ) : null;
-                })()}
 
                 {/* Inputs */}
                 <div className="flex flex-col items-center space-y-4 md:space-y-6 w-full">
@@ -161,6 +216,14 @@ export default function Signin(){
                                     transition-all duration-300 px-4
                                     focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn"
                         />
+                        {/* Se possuir erro exibiremos uma mensagem abaixo do input, div className="min-h-[24px] (define um espaço para a mensagem de erro e impede que o conteudo "pule" ao exibir a mensagem*/}
+                        <div className="min-h-[24px] mt-1">
+                            {errors.email && (
+                                <p className="text-red-600 dark:text-red-500 text-base">
+                                    {errors.email.message}
+                                </p>
+                            )}
+                        </div>
                     </div>
                     
                     {/* Senhas */}
@@ -189,6 +252,14 @@ export default function Signin(){
                                     {visibleFirst ? <Eye size={20}/> : <EyeOff size={20}/>}
                                 </button>
                             </div>
+                                                    {/* Se possuir erro exibiremos uma mensagem abaixo do input */}
+                            <div className="h-6 mt-1">
+                                {errors.password && (
+                                    <p className="text-red-600 dark:text-red-500 text-base mt-1">
+                                        {errors.password.message}
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
                         {/* Segunda senha */}
@@ -215,12 +286,20 @@ export default function Signin(){
                                     {visibleSecond ? <Eye size={20}/> : <EyeOff size={20}/>}
                                 </button>
                             </div>
+                                                    {/* Se possuir erro exibiremos uma mensagem abaixo do input */}
+                            <div className="h-6 mt-1">
+                                {errors.confirmPassword && (
+                                    <p className="text-red-600 dark:text-red-500 text-base mt-1">
+                                        {errors.confirmPassword.message}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 
-                <div className="flex flex-row justify-center items-center text-sm md:text-base mt-4">
+                <div className="flex flex-row justify-center items-center text-sm md:text-base mt-12">
                     <span>Já tem uma conta?</span>
                     <button
                         onClick={(e) => { // Adicionar 'e' e prevenir default se necessário

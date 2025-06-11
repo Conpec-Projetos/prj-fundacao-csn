@@ -1,6 +1,7 @@
 'use client';
 import Footer from "@/components/footer/footer";
 import { useState, useEffect } from "react";
+import { useParams } from 'next/navigation';
 import {
     NormalInput, 
     LongInput,
@@ -20,10 +21,13 @@ import { db } from "@/firebase/firebase-config";
 import { formsAcompanhamentoDados, odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
 import { getUserIdFromLocalStorage, getFileUrl, getOdsIds, getItemNome } from "@/lib/utils";
 
-export default function FormsAcompanhamento(){
+export default function FormsAcompanhamento() {
+
+    const routeParams = useParams<{ id: string }>();
+    const projetoID = routeParams.id;
+
     const [isLoading, setIsLoading] = useState(true);
     const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
-
     const [instituicao, setInstituicao] = useState<string>("");
     const [descricao, setDescricao] = useState<string>("");
     const [segmento, setSegmento] = useState<number>(-1);
@@ -51,8 +55,6 @@ export default function FormsAcompanhamento(){
     useEffect(() => {
         const userId = getUserIdFromLocalStorage();
         if (!userId) {
-            // A função getUserIdFromLocalStorage redireciona para a página de login caso retorne null
-            // Apenas definimos isLoading como false para evitar renderizar o conteúdo da página
             setIsLoading(false); 
         } else {
             setUsuarioAtualID(userId);
@@ -60,14 +62,11 @@ export default function FormsAcompanhamento(){
         }
     }, []);
 
-    const projetoID = "ID-do-Projeto"; // Tem que fazer uma lógica para conseguir o ID do respectivo projeto ao qual o forms de acompanhamento está se referindo
-
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         if (!usuarioAtualID) {
             toast.error("Usuário não autenticado. Por favor, faça login.");
-            // if (typeof window !== "undefined") window.location.href = "/login";
             return;
         }
 
@@ -131,12 +130,10 @@ export default function FormsAcompanhamento(){
     };
 
     if (isLoading) {
-        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>; // Talvez colocar um spinner no lugar...
+        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>;
     }
 
     if (!usuarioAtualID) {
-        // Você pode retornar null ou uma mensagem indicando que o redirecionamento está em progresso,
-        // mas idealmente o usuário já terá sido redirecionado.
         return null; 
     }
 
@@ -504,7 +501,7 @@ export default function FormsAcompanhamento(){
                     >Enviar</button>
                 </div>
             </form>
-            <Toaster richColors /> {/* Ensure Toaster is rendered */}
+            <Toaster richColors />
             <Footer></Footer>
         </main>
     );

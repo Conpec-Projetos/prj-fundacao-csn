@@ -10,18 +10,18 @@ import {toast, Toaster} from "sonner"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import { getUserIdFromLocalStorage } from "@/lib/utils"; // Importar a função
+import RecoverPassword from "./recoverPassword";
 
 // zod é uma biblioteca para validar parâmetros, no caso o schema
 const schema = z.object({
-    email: z.string().email().min(1),
-    password: z.string().min(1),
-    // como uma classe. Primeiro o nome do atributo e depois seu tipo
-    // coloque () depois do tipo e qualquer comando depois dele determina
-    // as condições que ele deve ter para ser válido.
+    email: z.string().email({message: "Email inválido!"}).min(1),
+    // Verifica se possui estrutura de email
+    password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/, {message: "A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas e minúsculas e números."}),
+    // verifica se possui a estrutura de senha definida com regex
     });
 
 type FormFields = z.infer<typeof schema>;
@@ -31,55 +31,105 @@ export default function Login() {
     const router = useRouter();
     const { darkMode } = useTheme();
     const [visible, setVisible] = useState<boolean>(false);
+    const [recoverPassword, setRecoverPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const userId = getUserIdFromLocalStorage();
-        if (userId) {
-            // Se o usuário já está logado, redireciona para a home
-            router.push("/");
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            if (user.email && user.emailVerified) {
+                const emailDomain = user.email.split('@')[1];
+
+                // Se colocar o dominio da csn nao conseguirei testar, logo coloquei o da conpec
+                if (emailDomain === "conpec.com.br") {
+                    router.push("/")
+                } else {
+                    router.push("inicio-externo")
+                }
+                
+            } else {
+                console.log("E-mail não verificado, bloqueando acesso.");
+                setIsLoading(false);
+            }
         } else {
             // Se não está logado, permite que a página de login seja renderizada
             setIsLoading(false);
-        }
+        }});
+
+      return () => unsubscribe();
     }, [router]);
 
     const {
         register,
         handleSubmit,
-        formState: {  isSubmitting },
-    } = useForm<FormFields>({ resolver: zodResolver(schema) });
-    // declara o formulário
+        formState: {  isSubmitting, errors },
+    } = useForm<FormFields>({ resolver: zodResolver(schema),
+            defaultValues: {
+            email: "",
+            password: ""
+        },
+        mode: "onChange" // atualizara valores conforme cada caractere digitado, o que permite que mensagens de erro nao sejam exibidas só ao enviar o form
+     });
 
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+            const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password); // tenta fazer o login
             const user = {...userCredential.user, timeout: Date.now() + (1000 * 60 * 60 * 12)}; // Desloga automaticamente depois de 12 horas
-            
-            if(user){
+            const userVerification = userCredential.user;
+
+            if(userVerification){
                 localStorage.setItem('user', JSON.stringify(user));
                 // Guarda o id do usuário no cache para facilitar o acesso na hora de enviar formulários
-                router.push("/");
+                if (userVerification.email && userVerification.emailVerified) {
+                    const emailDomain = userVerification.email.split('@')[1];
+
+                    // Se colocar o dominio da csn nao conseguirei testar, logo coloquei o da conpec
+                    if (emailDomain === "conpec.com.br") {
+                        router.push("/")
+                    } else {
+                        router.push("inicio-externo")
+                    }
+                    
+                } else {
+                    console.log("E-mail não verificado, bloqueando acesso.");
+                }
             }
             // auth está em firebase-config.ts
         } 
         catch (error) {
-            toast.error('Senha ou e-mail incorreto.');
+            toast.error('Email ou senha incorreto.');
         }
     };
 
-    if (isLoading) {
-        return <div className="flex justify-center items-center min-h-screen">Verificando sessão...</div>
+    if (isLoading){
+        return (
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
+                <Image
+                    src={darkMode ? darkLogo : logo}
+                    alt="csn-logo"
+                    width={600}
+                    className=""
+                    priority
+                />
+                <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
+                    Verificando sessão...
+                </div>
+            </div>
+        );
+    }
+
+    if (recoverPassword) {
+        return <RecoverPassword onBack={() => setRecoverPassword(false)}/>
     }
     
     return (
-        //classname="flex justify item h w color"
+
         <main className="flex flex-col justify-between items-center h-screen w-screen bg-pink-fcsn dark:bg-blue-fcsn overflow-auto">
-            <Toaster richColors closeButton/>
+            <Toaster richColors closeButton/> {/* Usado para mostrar mensagens ao usuario de uma forma pratica*/}
     
             <form
             onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-col justify-between w-full max-w-[1100px] h-auto min-h-[600px] my-4 md:my-8 bg-white-off dark:bg-blue-fcsn2 rounded-md shadow-blue-fcsn shadow-md">
+            className="flex flex-col justify-between w-full max-w-[1100px] h-auto min-h-[600px] my-4 md:my-8 py-6 bg-white-off dark:bg-blue-fcsn2 rounded-md shadow-blue-fcsn shadow-md">
                 {/*Quadrado branco*/}
 
                 <div className="flex flex-col justify-center items-center h-[200px] md:h-[250px] gap-6">
@@ -96,7 +146,7 @@ export default function Login() {
                         Fazer Login
                     </div>
                 </div>
-
+    
                 {/*INPUTS*/}
                 <div className="flex flex-col items-center w-full space-y-4 md:space-y-6 px-4 md:px-8">
 
@@ -111,7 +161,15 @@ export default function Login() {
                             {...register('email')}
                             className="w-full h-12 md:h-14 bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn transition-all duration-300 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-4"
                         />
+                        {/* Se possuir erro exibiremos uma mensagem abaixo do input, div className="min-h-[24px] (define um espaço para a mensagem de erro e impede que o conteudo "pule" ao exibir a mensagem*/}
+                    <div className="min-h-[24px] mt-1">
+                        {errors.email && (
+                            <p className="text-red-600 dark:text-red-500 text-base">
+                                {errors.email.message}
+                            </p>
+                        )}
                     </div>
+                </div>
                     
 
                     {/* INPUT DE SENHA */}
@@ -127,7 +185,6 @@ export default function Login() {
                                 className="w-full h-12 md:h-14 bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn transition-all duration-300 focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn px-4 pr-10"
                             />
                             <button
-
                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-400"
 
                                 onClick={(event) => {
@@ -137,6 +194,14 @@ export default function Login() {
                                     {visible ? <Eye size={20}/> : <EyeOff size={20}/>}
                             </button>
                         </div>
+                        {/* Se possuir erro exibiremos uma mensagem abaixo do input */}
+                            <div className="h-6 mt-1 mb-2">
+                                {errors.password && (
+                                    <p className="text-red-600 dark:text-red-500 text-base mt-1">
+                                        {errors.password.message}
+                                    </p>
+                                )}
+                            </div>
                     </div>
 
 
@@ -154,9 +219,9 @@ export default function Login() {
                         </div>
 
                         <button
+                            onClick={(e) => setRecoverPassword(true)}
                             className="text-pink-fcsn dark:text-pink-light hover:text-[#A25D80] hover:dark:text-pink-light2 mx-1 underline cursor-pointer"
                             >Esqueceu a senha?</button>
-                        {/* TODO: IMPLEMENTAR ESQUECEU A SENHA */}
                     </div>
                 </div>
 
