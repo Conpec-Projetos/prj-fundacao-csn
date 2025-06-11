@@ -108,7 +108,7 @@ export interface formsAcompanhamentoDados {
   qtdPCD: number;
   qtdLGBT: number;
   ods: number[];
-  relato? : string;
+  relato?: string;
   fotos: string[];
   website: string;
   links: string;

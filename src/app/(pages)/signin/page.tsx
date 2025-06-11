@@ -13,7 +13,6 @@ import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import { auth } from "@/firebase/firebase-config";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification} from "firebase/auth";
-import { getUserIdFromLocalStorage } from "@/lib/utils";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import { Associacao } from "@/firebase/schema/entities";
