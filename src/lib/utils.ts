@@ -64,11 +64,21 @@ export function getOdsIds(selectedOds: boolean[]): number[] {
     return ids;
 };
 
-export function getPublicoNomes(selectedPublico: boolean[]): string[] {
+export function getPublicoNomes(selectedPublico: boolean[], outroValue: string): string[] {
     const nomes: string[] = [];
     selectedPublico.forEach((isSelected, index) => {
-        if (isSelected) {
-            nomes.push(publicoList[index].nome);
+        if (!isSelected) {
+            return; // Pula o item se a checkbox não estiver marcada
+        }
+
+        const publicoItem = publicoList[index];
+
+        // Verifica se é a última opção da lista (que corresponde a "Outro")
+        if (index === publicoList.length - 1) {
+            // Se o usuário digitou algo, usa o texto dele. Senão, usa "Outro".
+            nomes.push(outroValue.trim() || publicoItem.nome);
+        } else {
+            nomes.push(publicoItem.nome);
         }
     });
     return nomes;

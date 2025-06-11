@@ -106,10 +106,14 @@ export default function AdminHomePage() {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user && user.email) {
+            if (!user.emailVerified) { // Checa se o usuário tem email verificado primeiro
+                router.push("./login");
+                return
+            }
             const emailDomain = user.email.split('@')[1];
-            if ((emailDomain === "conpec.com.br") && user.emailVerified) {
+            if ((emailDomain === "conpec.com.br")) {
               setIsLoading(false);
-            } else {
+            } else { // Verified but not admin domain
               router.push("./inicio-externo");
             }
         } else {
