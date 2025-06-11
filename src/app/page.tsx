@@ -5,6 +5,12 @@ import Link from 'next/link';
 import { FaClipboardList, FaChartPie, FaMapMarkedAlt, FaFileAlt, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import Footer from '@/components/footer/footer';
 import { useTheme } from '@/context/themeContext';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/firebase/firebase-config';
+import { useRouter } from 'next/navigation';
+import logo from "@/assets/fcsn-logo.svg"
+import Image from "next/image";
+import darkLogo from "@/assets/fcsn-logo-dark.svg"
 
 // Componente de card para métricas
 interface MetricCardProps {
@@ -53,10 +59,14 @@ const PendingProjectCard: React.FC<{ project: Project }> = ({ project }) => (
 );
 
 export default function AdminHomePage() {
+  const router = useRouter();
   const [userName, setUserName] = useState('Administrador');
   const [currentTime, setCurrentTime] = useState('');
   const [greeting, setGreeting] = useState('');
   const { darkMode } = useTheme();
+
+  // Para verificar se esta logado
+  const [isLoading, setIsLoading] = useState(true);
   
   // Dados de exemplo para as métricas
   const pendingProjects: Project[] = [
@@ -91,6 +101,43 @@ export default function AdminHomePage() {
     
     return () => clearInterval(timer);
   }, []);
+
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user && user.email) {
+            const emailDomain = user.email.split('@')[1];
+            if ((emailDomain === "conpec.com.br") && user.emailVerified) {
+              setIsLoading(false);
+            } else {
+              router.push("./inicio-externo");
+            }
+        } else {
+            // Se não está logado, permite que a página de login seja renderizada
+            router.push("./login");
+        }});
+
+      return () => unsubscribe();
+    }, [router]);
+
+
+
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
+                <Image
+                    src={darkMode ? darkLogo : logo}
+                    alt="csn-logo"
+                    width={600}
+                    className=""
+                    priority
+                />
+                <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
+                    Verificando sessão...
+                </div>
+            </div>
+        );
+    }
 
   return (
     <div className={`flex flex-col grow min-h-[90vh] ${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
