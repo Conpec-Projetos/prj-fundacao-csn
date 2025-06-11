@@ -76,7 +76,7 @@ export function getPublicoNomes(selectedPublico: boolean[], outroValue: string):
         // Verifica se é a última opção da lista (que corresponde a "Outro")
         if (index === publicoList.length - 1) {
             // Se o usuário digitou algo, usa o texto dele. Senão, usa "Outro".
-            nomes.push(outroValue.trim());
+            nomes.push(outroValue.trim() || publicoItem.nome);
         } else {
             nomes.push(publicoItem.nome);
         }

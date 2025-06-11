@@ -204,8 +204,8 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
             return [];
         }
         return allBrazilianStates.filter(state =>
-            state.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-            !props.estados.includes(state.name)
+            (state.name.toLowerCase().includes(searchTerm.toLowerCase()) || state.isoCode.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            !props.estados.includes(state.name))
         );
     }, [searchTerm, allBrazilianStates, props.estados]);
 
@@ -253,7 +253,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                     className="w-full min-h-[50px] text-blue-fcsn dark:text-white-off bg-transparent pl-5 rounded-t-[7px] focus:outline-none box-border"
                 />
 
-                {/* Lista de sugestões (posicionada absolutamente) */}
+                {/* Lista de sugestões */}
                 {showSuggestions && filteredStates.length > 0 && (
                     <ul className="absolute top-[50px] left-[-1px] right-[-1px] z-15 bg-white dark:bg-blue-fcsn3 border-l border-r border-b border-blue-fcsn rounded-b-[7px] max-h-[50vh] overflow-y-auto shadow-lg">
                         {filteredStates.map((state) => (
@@ -262,7 +262,7 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
                                 onMouseDown={() => handleSelectState(state.name)}
                                 className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off"
                             >
-                                {state.name}
+                                {state.name} ({state.isoCode})
                             </li>
                         ))}
                     </ul>
