@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
+
 import { auth } from "@/firebase/firebase-config";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification} from "firebase/auth";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
@@ -51,6 +52,7 @@ export default function Signin(){
                 if (emailDomain === "conpec.com.br") {
                     router.push("/")
                 } else {
+
                     router.push("inicio-externo")
                 }
                 
@@ -80,6 +82,41 @@ export default function Signin(){
         mode: "onChange"
      });
 
+    async function projetoValido(email: String): Promise<Boolean> {
+        const emailDomain = email.split('@')[1];
+
+        if (emailDomain === "conpec.com.br") {
+            return true;
+        }
+
+        const cadastroRef = collection(db, "forms-cadastro");
+        const qCadastro = query(cadastroRef, where("emailResponsavel", "==", email));
+        const snapshotCadastro = await getDocs(qCadastro);
+
+        if (snapshotCadastro.empty) {
+            toast.error("Não encontramos nenhum projeto cadastro no sistema associado a esse e-mail.");
+            return false;
+        }
+
+        // Para cada cadastro encontrado, verificamos se há projeto aprovado
+        for (const docCadastro of snapshotCadastro.docs) {
+            const idCadastro = docCadastro.id;
+            const projetoRef = collection(db, "projetos");
+            const qProjeto = query(projetoRef, 
+                                where("ultimoFormulario", "==", idCadastro), 
+                                where("aprovado", "==", "aprovado"));
+            const snapshotProjeto = await getDocs(qProjeto);
+
+            if (!snapshotProjeto.empty) {
+                return true;  // Se encontrou pelo menos 1 projeto aprovado, retorna true
+            }
+        }
+
+        // Se percorreu todos e não encontrou nenhum projeto aprovado:
+        toast.error("Não é possível cadastrar esse usuário pois não há nenhum projeto aprovado.");
+        return false;
+    }
+
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
     setLoadingAuth(true); // Inicia o loading
     try {
@@ -108,6 +145,7 @@ export default function Signin(){
                         }
                     });
                 }
+
             }
 
             // 3. Criar o novo documento na coleção "associacao"
@@ -198,7 +236,7 @@ export default function Signin(){
                             className="w-full h-12 md:h-14 mt-1
                                     bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn2
                                     transition-all duration-300 px-4
-                                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn"
+                                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn dark:focus:bg-blue-fcsn3"
                         />
                     </div>
 
@@ -213,7 +251,7 @@ export default function Signin(){
                             className="w-full h-12 md:h-14 mt-1
                                     bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn
                                     transition-all duration-300 px-4
-                                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn"
+                                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn dark:focus:bg-blue-fcsn3"
                         />
                         {/* Se possuir erro exibiremos uma mensagem abaixo do input, div className="min-h-[24px] (define um espaço para a mensagem de erro e impede que o conteudo "pule" ao exibir a mensagem*/}
                         <div className="min-h-[24px] mt-1">
@@ -239,7 +277,7 @@ export default function Signin(){
                                     className="w-full h-12 md:h-14
                                             bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn
                                             transition-all duration-300 px-4 pr-10
-                                            focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn"
+                                            focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn dark:focus:bg-blue-fcsn3"
                                 />
                                 <button
                                     className="absolute right-3 top-1/2 transform -translate-y-1/2
