@@ -16,7 +16,7 @@ import { auth } from "@/firebase/firebase-config";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signOut } from "firebase/auth";
 import { collection, query, where, getDocs, addDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
-import { Associacao, Projetos } from "@/firebase/schema/entities";
+import { Associacao, Projetos, usuarioInt, usuarioExt } from "@/firebase/schema/entities";
 
 const schema = z.object({
     name: z.string().min(1, {message: "Nome inválido!"}),
@@ -34,7 +34,7 @@ const schema = z.object({
 
 type FormFields = z.infer<typeof schema>;
 
-export default function Signin() {
+export default function Signin(){
     const router = useRouter();
     const [visibleFirst, setVisibleFirst] = useState(false);
     const [visibleSecond, setVisibleSecond] = useState(false);
@@ -144,30 +144,50 @@ export default function Signin() {
             await sendEmailVerification(user);
             toast.success("E-mail de verificação enviado. Verifique sua caixa de entrada para terminar o cadastro!");
 
-            // Cria ou atualiza o documento da coleção 'associacao'
-            if (user && user.uid) {
-                const associacaoRef = collection(db, "associacao");
-                const q = query(associacaoRef, where("usuarioID", "==", user.uid));
-                const querySnapshot = await getDocs(q);
+            // Lógica para criar o documento na coleção 'usuarioInt' ou 'usuarioExt'
+            const emailDomain = data.email.split('@')[1];
 
-                if (!querySnapshot.empty) {
-                    const existingDocRef = querySnapshot.docs[0].ref;
-                    await updateDoc(existingDocRef, {
-                        projetosIDs: arrayUnion(...projetosIDs)
-                    });
-                    console.log("Documento de associação existente foi atualizado.");
-                } else {
-                    const newAssociacaoDoc: Associacao = {
-                        usuarioID: user.uid,
-                        projetosIDs: projetosIDs
-                    };
-                    await addDoc(collection(db, "associacao"), newAssociacaoDoc);
-                    console.log("Novo documento de associação foi criado.");
+            if (emailDomain === "conpec.com.br") {
+                const newUserInt: usuarioInt = {
+                    nome: data.name,
+                    email: data.email,
+                    administrador: false,
+                };
+                await addDoc(collection(db, "usuarioInt"), newUserInt);
+                console.log("Documento de usuário interno criado.");
+            } else {
+                const newUserExt: usuarioExt = {
+                    nome: data.name,
+                    email: data.email,
+                };
+                await addDoc(collection(db, "usuarioExt"), newUserExt);
+                console.log("Documento de usuário externo criado.");
+
+                // Cria ou atualiza o documento da coleção 'associacao'
+                if (user && user.uid) {
+                    const associacaoRef = collection(db, "associacao");
+                    const q = query(associacaoRef, where("usuarioID", "==", user.uid));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        const existingDocRef = querySnapshot.docs[0].ref;
+                        await updateDoc(existingDocRef, {
+                            projetosIDs: arrayUnion(...projetosIDs)
+                        });
+                        console.log("Documento de associação existente foi atualizado.");
+                    } else {
+                        const newAssociacaoDoc: Associacao = {
+                            usuarioID: user.uid,
+                            projetosIDs: projetosIDs
+                        };
+                        await addDoc(collection(db, "associacao"), newAssociacaoDoc);
+                        console.log("Novo documento de associação foi criado.");
+                    }
                 }
             }
 
             // Desloga o usuário após o cadastro
-            await signOut(auth);
+            await signOut(auth); 
 
             setTimeout(() => {
                 router.push("./login");
