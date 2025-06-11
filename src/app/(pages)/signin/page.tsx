@@ -146,6 +146,21 @@ export default function Signin(){
                     });
                 }
 
+                setTimeout(() => {
+                    router.push("./login");
+                    
+                }, 6000);
+            } else {
+                await userCredential.user.delete();
+                // A mensagem de erro já foi exibida dentro do projetoValido().
+            }
+        }
+        catch (error: any) { // Adicionar tipo para error
+            // Tratar erros específicos do Firebase aqui, se necessário
+            if (error.code === 'auth/email-already-in-use') {
+                toast.error('Este e-mail já está em uso.');
+            } else {
+                toast.error('Erro ao criar conta. Tente novamente.');
             }
 
             // 3. Criar o novo documento na coleção "associacao"
