@@ -17,7 +17,7 @@ export interface usuarioInt {
 export interface Projetos {
   nome: string;
   municipios: string[];
-  aprovado: boolean;
+  aprovado: "pending" | "approved" | "rejected";
   ativo: boolean;
   compliance: boolean;
   empresas: string[];
