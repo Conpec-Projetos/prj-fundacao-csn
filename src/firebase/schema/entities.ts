@@ -17,7 +17,7 @@ export interface usuarioInt {
 export interface Projetos {
   nome: string;
   municipios: string[];
-  aprovado: "pending" | "approved" | "rejected";
+  status: "pendente" | "aprovado" | "reprovado";
   ativo: boolean;
   compliance: boolean;
   empresas: string[];
@@ -198,7 +198,6 @@ export const publicoList: Publico[] = [
   { id: 2, nome: "Jovens" },
   { id: 3, nome: "Adultos" },
   { id: 4, nome: "Idosos" },
-  { id: 5, nome: "Outro" }
 ];
 
 export interface Ods {

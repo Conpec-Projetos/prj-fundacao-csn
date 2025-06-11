@@ -15,6 +15,7 @@ import {
     CidadeInput,
     GrowInput,
     PublicoBeneficiadoInput,
+    SingleEstadoInput
     } from "@/components/inputs/inputs";
 import { Toaster, toast } from "sonner";
 import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
@@ -55,6 +56,7 @@ export default function FormsCadastro(){
     const [descricao, setDescricao] = useState<string>("");
     const [apresentacao, setApresentacao] = useState<File[]>([]);
     const [publico, setPublico] = useState<boolean[]>([]);
+    const [outroPublico, setOutroPublico] = useState<string>("");
     const [ODS, setODS] = useState<boolean[]>(new Array(odsList.length).fill(false));
     const [numPublico, setNumPublico] = useState<number[]>([0]);
     const [estados, setEstados] = useState<string[]>([]);
@@ -117,7 +119,7 @@ export default function FormsCadastro(){
                 conta: conta,
                 segmento: getItemNome(segmento, segmentoList),
                 descricao: descricao,
-                publico: getPublicoNomes(publico),
+                publico: getPublicoNomes(publico, outroPublico),
                 ods: getOdsIds(ODS),
                 beneficiariosDiretos: numPublico[0],
                 qtdEstados: estados.length,
@@ -136,7 +138,7 @@ export default function FormsCadastro(){
             const createProjeto: Projetos = {
                 nome: nomeProjeto,
                 municipios: cidades,
-                aprovado: "pending",
+                status: "pendente",
                 ativo: false,
                 compliance: false, // De início, o projeto não tem nenhum dos trës aprovados
                 empresas: [""],
@@ -293,7 +295,7 @@ export default function FormsCadastro(){
                             ></GrowInput>
                     </div>
                     
-                    <div className="flex flex-row h-full w-full justify-between items-center gap-5">
+                    <div className="flex flex-row h-full w-full justify-between items-center gap-5">      
                         {/* Cidade */}
                         <GrowInput
                                 text="Cidade:"
@@ -303,12 +305,12 @@ export default function FormsCadastro(){
                             ></GrowInput>
 
                         {/* Estado */}
-                        <ShortInput
+                        <SingleEstadoInput
                                 text="Estado:"
                                 attribute={ estado }
                                 setAttribute={ setEstado}
                                 isNotMandatory={false}
-                            ></ShortInput>
+                            ></SingleEstadoInput>
                     </div>
 
                     {/* Nome do Projeto */}
@@ -366,7 +368,7 @@ export default function FormsCadastro(){
                     <h1 className="mt-5 text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
                     >Dados Bancários</h1>
                     
-                    <div className="flex flex-col ml-7 mr-7">
+                    <div className="flex flex-col mx-7">
                         {/* Banco */}
                             <NormalInput
                                 text="Banco:"
@@ -375,7 +377,7 @@ export default function FormsCadastro(){
                                 isNotMandatory={false}
                             ></NormalInput>
 
-                        <div className="flex flex-row h-full w-full justify-between items-center">
+                        <div className="flex flex-row h-full w-full justify-between items-center gap-x-4">
                             {/* Agência */}
                             <NormalInput
                                     text="Agência"
@@ -385,12 +387,12 @@ export default function FormsCadastro(){
                                 ></NormalInput>
 
                             {/* Conta Corrente */}
-                            <NormalInput
+                            <GrowInput
                                     text="Conta Corrente:"
                                     attribute={ conta }
                                     setAttribute={ setConta }
                                     isNotMandatory={false}
-                                ></NormalInput>
+                                ></GrowInput>
                         </div>
                     </div>
                     
@@ -439,6 +441,8 @@ export default function FormsCadastro(){
                             ]}
                             attribute={ publico }
                             setAttribute={ setPublico }
+                            outroAttribute= { outroPublico }
+                            setOutroAttribute= { setOutroPublico }
                             isNotMandatory={false}
                         ></PublicoBeneficiadoInput>
 
@@ -543,15 +547,6 @@ export default function FormsCadastro(){
                             setAttribute={ setObservacoes }
                             isNotMandatory={false}
                         ></LongInput>
-                        
-
-                    <div className="flex flex-row gap-2 items-center pt-10">
-                        <input 
-                        type="checkbox" 
-                        className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"
-                        onChange={(select) => setTermosPrivacidade(select.target.checked)}/>
-                        <p className="text-xl">Eu declaro ter lido e concordado com os termos de uso e a política de privacidade<span className="text-[#B15265]"> *</span></p>
-                    </div>
                     
                     </div>
 
@@ -579,6 +574,13 @@ export default function FormsCadastro(){
                                 setFiles={setDocumentos}
                                 isNotMandatory={true}
                             />
+                            <div className="flex flex-row gap-x-2 items-center pt-7">
+                                <input 
+                                type="checkbox" 
+                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"
+                                onChange={(select) => setTermosPrivacidade(select.target.checked)}/>
+                                <p className="text-xl">Eu declaro ter lido e concordado com os termos de uso e a política de privacidade<span className="text-[#B15265]"> *</span></p>
+                            </div>
                         </div>
                         <div className="flex flex-row w-11/12 justify-between gap-4">
                             <button

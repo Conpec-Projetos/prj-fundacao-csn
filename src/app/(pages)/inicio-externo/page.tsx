@@ -16,31 +16,31 @@ import { Moon, Sun } from 'lucide-react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Projetos, formsAcompanhamentoDados, formsCadastroDados, Associacao } from '@/firebase/schema/entities';
 
-interface Project {
+interface ProjetoExt {
   id: string;
-  name: string;
-  institution: string;
-  status: 'approved' | 'pending' | 'rejected';
-  value: string;
-  incentiveLaw: string;
-  pendingForm: boolean;
+  nome: string;
+  instituicao: string;
+  status: 'pendente' | 'aprovado' | 'reprovado';
+  valorTotal: string;
+  lei: string;
+  formularioPendente: boolean;
 }
 
-const ProjectCard = ({ project }: { project: Project }) => {
+const ProjectCard = ({ project }: { project: ProjetoExt }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-100 dark:bg-green-500 text-green-800 dark:text-white';
-      case 'pending': return 'bg-yellow-100 dark:bg-yellow-500 text-yellow-800 dark:text-white';
-      case 'rejected': return 'bg-red-100 dark:bg-red-500 text-red-800 dark:text-white';
+      case 'aprovado': return 'bg-green-100 dark:bg-green-500 text-green-800 dark:text-white';
+      case 'pendente': return 'bg-yellow-100 dark:bg-yellow-500 text-yellow-800 dark:text-white';
+      case 'rejeitado': return 'bg-red-100 dark:bg-red-500 text-red-800 dark:text-white';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
   
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'approved': return 'Aprovado';
-      case 'pending': return 'Em análise';
-      case 'rejected': return 'Não aprovado';
+      case 'aprovado': return 'Aprovado';
+      case 'pendente': return 'Em análise';
+      case 'reprovado': return 'Não aprovado';
       default: return 'Desconhecido';
     }
   };
@@ -49,8 +49,8 @@ const ProjectCard = ({ project }: { project: Project }) => {
     <div className="bg-white dark:bg-blue-fcsn3 rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="font-bold text-lg text-blue-fcsn dark:text-white-off">{project.name}</h3>
-          <p className="text-gray-500 dark:text-gray-300 text-sm mb-2">{project.institution}</p>
+          <h3 className="font-bold text-lg text-blue-fcsn dark:text-white-off">{project.nome}</h3>
+          <p className="text-gray-500 dark:text-gray-300 text-sm mb-2">{project.instituicao}</p>
         </div>
         <span className={`px-3 py-1 rounded-full whitespace-nowrap text-xs ${getStatusColor(project.status)}`}>
           {getStatusText(project.status)}
@@ -60,11 +60,11 @@ const ProjectCard = ({ project }: { project: Project }) => {
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
         <div>
           <p className="text-gray-500 dark:text-gray-300">Valor aprovado:</p>
-          <p className="font-medium dark:text-white-off">{project.value}</p>
+          <p className="font-medium dark:text-white-off">{project.valorTotal}</p>
         </div>
         <div>
           <p className="text-gray-500 dark:text-gray-300">Lei de incentivo:</p>
-          <p className="font-medium">{project.incentiveLaw}</p>
+          <p className="font-medium">{project.lei}</p>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
         </Link>
       </div>
       
-        {project.pendingForm && (
+        {project.formularioPendente && (
           <div className="mt-4 p-3 bg-yellow-50 dark:bg-[#5A5A72] rounded-lg flex items-center">
             <FaExclamationCircle className="text-yellow-500 mr-2" />
             <p className="text-sm text-yellow-700 dark:text-yellow-500">
@@ -98,7 +98,7 @@ export default function ExternalUserHomePage() {
   const [currentTime, setCurrentTime] = useState('');
   const [greeting, setGreeting] = useState('');
   const { darkMode, toggleDarkMode } = useTheme();
-  const [userProjects, setUserProjects] = useState<Project[]>([]);
+  const [userProjects, setUserProjects] = useState<ProjetoExt[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
   useEffect(() => {
@@ -139,10 +139,10 @@ export default function ExternalUserHomePage() {
             }
 
             // Para cada ID, buscar os detalhes completos do projeto
-            const projectsDataPromises = projetosIDs.map(async (projetoId): Promise<Project | null> => {
-              let institution = '';
-              let incentiveLaw = '';
-              let pendingForm = false;
+            const projectsDataPromises = projetosIDs.map(async (projetoId): Promise<ProjetoExt | null> => {
+              let instituicao = '';
+              let lei = '';
+              let formularioPendente = false;
 
               // Tentar buscar informações do formulário de acompanhamento primeiro
               const acompanhamentoRef = collection(db, 'forms-acompanhamento');
@@ -152,12 +152,12 @@ export default function ExternalUserHomePage() {
               if (!acompanhamentoSnap.empty) {
                 // Se encontrou um formulário de acompanhamento, use seus dados
                 const acompanhamentoData = acompanhamentoSnap.docs[0].data() as formsAcompanhamentoDados;
-                institution = acompanhamentoData.instituicao;
-                incentiveLaw = acompanhamentoData.lei;
-                pendingForm = false; // Há um formulário de acompanhamento
+                instituicao = acompanhamentoData.instituicao;
+                lei = acompanhamentoData.lei;
+                formularioPendente = false;
               } else {
-                // Se não há formulário de acompanhamento, o pendingForm é true
-                pendingForm = true;
+                // Se não há formulário de acompanhamento, o formularioPendente é true
+                formularioPendente = true;
 
                 // Buscar informações do formulário de cadastro como fallback
                 const projetoDocRef = doc(db, 'projetos', projetoId);
@@ -170,8 +170,8 @@ export default function ExternalUserHomePage() {
                     const cadastroDocSnap = await getDoc(cadastroDocRef);
                     if (cadastroDocSnap.exists()) {
                       const cadastroData = cadastroDocSnap.data() as formsCadastroDados;
-                      institution = cadastroData.instituicao;
-                      incentiveLaw = cadastroData.lei;
+                      instituicao = cadastroData.instituicao;
+                      lei = cadastroData.lei;
                     }
                   }
                 }
@@ -188,22 +188,22 @@ export default function ExternalUserHomePage() {
 
               const projetoData = projetoDocSnap.data() as Projetos;
 
-              const status = projetoData.aprovado;
-              const value = (projetoData.valorAportadoReal || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-              const name = projetoData.nome;
+              const status = projetoData.status;
+              const valorTotal = (projetoData.valorAportadoReal || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+              const nome = projetoData.nome;
 
               return {
                 id: projetoId,
-                name: name,
-                institution: institution,
+                nome: nome,
+                instituicao: instituicao,
                 status: status,
-                value: value,
-                incentiveLaw: incentiveLaw,
-                pendingForm: pendingForm,
+                valorTotal: valorTotal,
+                lei: lei,
+                formularioPendente: formularioPendente,
               };
             });
 
-            const resolvedProjects = (await Promise.all(projectsDataPromises)).filter((p): p is Project => p !== null);
+            const resolvedProjects = (await Promise.all(projectsDataPromises)).filter((p): p is ProjetoExt => p !== null);
             setUserProjects(resolvedProjects);
 
           } catch (error) {
