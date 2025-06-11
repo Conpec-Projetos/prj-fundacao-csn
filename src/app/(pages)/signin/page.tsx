@@ -11,9 +11,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
-import { auth } from "@/firebase/firebase-config";
-import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification} from "firebase/auth";
+import { auth, db } from "@/firebase/firebase-config";
+import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signOut} from "firebase/auth";
 import { getUserIdFromLocalStorage } from "@/lib/utils"; // Importar a função
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 const schema = z.object({
     name: z.string().min(1, {message: "Nome inválido!"}),
@@ -49,6 +50,7 @@ export default function Signin(){
                 if (emailDomain === "conpec.com.br") {
                     router.push("/")
                 } else {
+
                     router.push("inicio-externo")
                 }
                 
@@ -78,21 +80,63 @@ export default function Signin(){
         mode: "onChange"
      });
 
+    async function projetoValido(email: String): Promise<Boolean> {
+        const emailDomain = email.split('@')[1];
+
+        if (emailDomain === "conpec.com.br") {
+            return true;
+        }
+
+        const cadastroRef = collection(db, "forms-cadastro");
+        const qCadastro = query(cadastroRef, where("emailResponsavel", "==", email));
+        const snapshotCadastro = await getDocs(qCadastro);
+
+        if (snapshotCadastro.empty) {
+            toast.error("Não encontramos nenhum projeto cadastro no sistema associado a esse e-mail.");
+            return false;
+        }
+
+        // Para cada cadastro encontrado, verificamos se há projeto aprovado
+        for (const docCadastro of snapshotCadastro.docs) {
+            const idCadastro = docCadastro.id;
+            const projetoRef = collection(db, "projetos");
+            const qProjeto = query(projetoRef, 
+                                where("ultimoFormulario", "==", idCadastro), 
+                                where("aprovado", "==", "aprovado"));
+            const snapshotProjeto = await getDocs(qProjeto);
+
+            if (!snapshotProjeto.empty) {
+                return true;  // Se encontrou pelo menos 1 projeto aprovado, retorna true
+            }
+        }
+
+        // Se percorreu todos e não encontrou nenhum projeto aprovado:
+        toast.error("Não é possível cadastrar esse usuário pois não há nenhum projeto aprovado.");
+        return false;
+    }
+
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
         setLoadingAuth(true); // Inicia o loading do processo de autenticação
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+            const valido = await projetoValido(data.email);
 
-            const userVerification = userCredential.user;
-            await sendEmailVerification(userVerification);
-            toast.success("E-mail de verificação enviado. Verifique sua caixa de entrada!");
-            
-            setTimeout(() => {
-              router.push("./login"); // volta para tela de login
-            }, 6000); // 6 segundos
-            console.log("E-mail de verificação enviado para:", data.email);
+            if (valido) {
+                const userVerification = userCredential.user;
+                await sendEmailVerification(userVerification);
+                toast.success("E-mail de verificação enviado. Verifique sua caixa de entrada para terminar o cadastro!");
+
+                await signOut(auth); // Desloga o usuário antes de ir para o login, pois se por algum motivo ele quiser voltar para a tela de cadastro sem ter clicado no email de verificacao essa pagina ficara carregando ate que ele clique ou o email expire
+
+                setTimeout(() => {
+                    router.push("./login");
+                    
+                }, 6000);
+            } else {
+                await userCredential.user.delete();
+                // A mensagem de erro já foi exibida dentro do projetoValido()
+            }
         }
-            
         catch (error: any) { // Adicionar tipo para error
             // Tratar erros específicos do Firebase aqui, se necessário
             if (error.code === 'auth/email-already-in-use') {
@@ -162,7 +206,7 @@ export default function Signin(){
                             className="w-full h-12 md:h-14 mt-1
                                     bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn2
                                     transition-all duration-300 px-4
-                                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn"
+                                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn dark:focus:bg-blue-fcsn3"
                         />
                     </div>
 
@@ -177,7 +221,7 @@ export default function Signin(){
                             className="w-full h-12 md:h-14 mt-1
                                     bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn
                                     transition-all duration-300 px-4
-                                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn"
+                                    focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn dark:focus:bg-blue-fcsn3"
                         />
                         {/* Se possuir erro exibiremos uma mensagem abaixo do input, div className="min-h-[24px] (define um espaço para a mensagem de erro e impede que o conteudo "pule" ao exibir a mensagem*/}
                         <div className="min-h-[24px] mt-1">
@@ -203,7 +247,7 @@ export default function Signin(){
                                     className="w-full h-12 md:h-14
                                             bg-white dark:bg-blue-fcsn3 rounded-xl border border-blue-fcsn
                                             transition-all duration-300 px-4 pr-10
-                                            focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn"
+                                            focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn dark:focus:bg-blue-fcsn3"
                                 />
                                 <button
                                     className="absolute right-3 top-1/2 transform -translate-y-1/2
