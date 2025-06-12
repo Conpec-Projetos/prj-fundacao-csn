@@ -3,6 +3,8 @@ import React from "react";
 import { Dispatch, SetStateAction, useEffect, useState, useMemo, useRef } from 'react';
 import { State, City } from "country-state-city";
 import { Upload } from "lucide-react";
+import { AiOutlineClose } from "react-icons/ai";
+
 
 
 // Props são como parâmetros, atributos. Como uma classe
@@ -302,6 +304,77 @@ export const EstadoInput: React.FC<LocationProps> = (props) => {
     );
 }
 
+interface LocationDashboardProps{
+    text: string;
+    estado: string;
+    setEstado: React.Dispatch<React.SetStateAction<string>>;
+    setCidades: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) => {
+    const estadosFirebase: {[key: string]: string} = {
+        'Acre': 'acre',
+        'Alagoas': 'alagoas',
+        'Amapá': 'amapa',
+        'Amazonas': 'amazonas',
+        'Bahia': 'bahia',
+        'Ceará': 'ceara',
+        'Distrito Federal': 'distrito_federal',
+        'Espírito Santo': 'espirito_santo',
+        'Goiás': 'goias',
+        'Maranhão': 'maranhao',
+        'MatoGrosso': 'mato_grosso',
+        'Mato Grosso do Sul': 'mato_grosso_do_sul',
+        'Minas Gerais': 'minas_gerais',
+        'Pará': 'para',
+        'Paraíba': 'paraiba',
+        'Paraná': 'parana',
+        'Pernambuco': 'pernambuco',
+        'Piauí': 'piaui',
+        'Rio de Janeiro': 'rio_de_janeiro',
+        'Rio Grande do Norte': 'rio_grande_do_norte',
+        'Rio Grande do Sul': 'rio_grande_do_sul',
+        'Rondônia': 'rondonia',
+        'Roraima': 'roraima',
+        'Santa Catarina': 'santa_catarina',
+        'São Paulo': 'sao_paulo',
+        'Sergipe': 'sergipe',
+        'Tocantins': 'tocantins'
+        }
+
+    return(
+        <div className="flex flex-col justify-center items-center gap-2 py-3 mx-2">
+            <div className="flex flex-row justify-center items-center w-full h-fit gap-2">
+                <button onClick={() => {props.setEstado(""); props.setCidades([])}}
+                    className="text-blue-fcsn dark:text-white-off cursor-pointer"
+                    ><AiOutlineClose /></button>
+                <div className="flex flex-col justify-center w-full h-fit border-1 border-blue-fcsn rounded-[7px]">
+
+                    <select
+                        value={props.estado}
+                        onChange={(event) => {
+                            props.setEstado(event.target.value);
+                        }} 
+                        className="h-full w-full text-blue-fcsn dark:text-white-off cursor-pointer bg-white dark:bg-blue-fcsn3 pl-5 rounded-[7px]">
+                        
+                        <option 
+                            disabled 
+                            value={""}
+                        >Escolha uma opção</option>
+                        
+                        {State.getStatesOfCountry("BR").map((state, index) => (
+                            <option
+                                key={index}
+                                value={estadosFirebase[state.name]}
+                            >{state.name}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export const CidadeInput: React.FC<LocationProps> = (props) => {
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -475,6 +548,152 @@ export const CidadeInput: React.FC<LocationProps> = (props) => {
                             props.estados.length > 0 && <p className="text-xs text-gray-400 dark:text-gray-500 px-2">Nenhuma cidade selecionada.</p>
                         )}
                          {props.estados.length === 0 && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 p-2">Selecione estados para ver opções de cidades.</p>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+interface CidadesDashboardProps{
+    text: string;
+    estado: string;
+    cidades: string[];
+    setCidades: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+export const CidadeInputDashboard: React.FC<CidadesDashboardProps> = (props) => {
+    const estadosBrasil = useMemo(() => ({
+  'acre': 'Acre',
+  'alagoas': 'Alagoas',
+  'amapa': 'Amapá',
+  'amazonas': 'Amazonas',
+  'bahia': 'Bahia',
+  'ceara': 'Ceará',
+  'distrito_federal': 'Distrito Federal',
+  'espirito_santo': 'Espírito Santo',
+  'goias': 'Goiás',
+  'maranhao': 'Maranhão',
+  'mato_grosso': 'Mato Grosso',
+  'mato_grosso_do_sul': 'Mato Grosso do Sul',
+  'minas_gerais': 'Minas Gerais',
+  'para': 'Pará',
+  'paraiba': 'Paraíba',
+  'parana': 'Paraná',
+  'pernambuco': 'Pernambuco',
+  'piaui': 'Piauí',
+  'rio_de_janeiro': 'Rio de Janeiro',
+  'rio_grande_do_norte': 'Rio Grande do Norte',
+  'rio_grande_do_sul': 'Rio Grande do Sul',
+  'rondonia': 'Rondônia',
+  'roraima': 'Roraima',
+  'santa_catarina': 'Santa Catarina',
+  'sao_paulo': 'São Paulo',
+  'sergipe': 'Sergipe',
+  'tocantins': 'Tocantins'
+}), []);
+
+    const [searchTerm, setSearchTerm] = useState<string>("");
+    const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+
+    // Helper para obter todos os estados brasileiros. Pode ser otimizado se já disponível do componente pai.
+    const getAllBrazilianStates = () => State.getStatesOfCountry("BR");
+
+    // Memoize todos os nomes de cidades disponíveis dos estados selecionados
+    const allCityNames = useMemo(() => {
+        const cityNames: string[] = [];
+        if (props.estado) {
+            const brazilianStates = getAllBrazilianStates();
+            const stateObject = brazilianStates.find(s => s.name === estadosBrasil[props.estado]);
+                if (stateObject) {
+                    const stateIsoCode = stateObject.isoCode;
+                    const citiesFromState = City.getCitiesOfState("BR", stateIsoCode);
+                    cityNames.push(...citiesFromState.map(city => city.name));
+                }
+            };
+        return [...new Set(cityNames)]; // Remove duplicatas, caso haja
+    }, [props.estado, estadosBrasil]);
+
+    // Memoize a lista de cidades filtradas para as sugestões do autocomplete
+    const filteredCitySuggestions = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return []; // Não mostrar sugestões se o input estiver vazio ou nenhum estado selecionado
+        }
+        return allCityNames.filter(cityName =>
+            cityName.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            !props.cidades.includes(cityName) // Não sugerir cidades já selecionadas
+        );
+    }, [searchTerm, allCityNames, props.cidades]);
+
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value);
+        setShowSuggestions(true); // Mostra sugestões ao digitar
+    };
+
+    const handleSelectCity = (cityName: string) => {
+        if (!props.cidades.includes(cityName)) {
+            props.setCidades(prevCities => [...prevCities, cityName]);
+        }
+        setSearchTerm(""); // Limpa o input após seleção
+        setShowSuggestions(false);
+    };
+
+    const handleRemoveAllCities = () => {
+        props.setCidades([]);
+    };
+
+    
+    return(
+        <div className="flex flex-row justify-between items-start h-auto py-3">            
+            <div className="flex flex-col justify-start w-full max-h-[45vh] border border-blue-fcsn rounded-[7px] bg-white dark:bg-blue-fcsn3 relative m-2">
+                {/* Input de busca de cidade */}
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleInputChange}
+                    onFocus={() => {setShowSuggestions(true);}}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                    placeholder={props.estado === '' ? "Selecione um estado primeiro" : "Buscar cidade..."}
+                    className="w-full min-h-[50px] text-blue-fcsn dark:text-white-off bg-transparent pl-5 rounded-t-[7px] focus:outline-none box-border"
+                    disabled={props.estado === ''}
+                />
+
+                {showSuggestions && filteredCitySuggestions.length > 0 && (
+                    <ul className="absolute top-[50px] left-[-1px] right-[-1px] z-15 bg-white dark:bg-blue-fcsn3 border-l border-r border-b border-blue-fcsn rounded-b-[7px] max-h-[50vh] overflow-y-auto shadow-lg">
+                        {filteredCitySuggestions.map((cityName, index) => (
+                            <li
+                                key={`city-sugg-${index}-${cityName}`}
+                                onClick={() => handleSelectCity(cityName)}
+                                className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off"
+                            >
+                                {cityName}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                
+                <div className="border-t border-blue-fcsn3 dark:border-blue-fcsn"></div>
+                
+                <div className="h-[calc(100%-51px)] overflow-y-auto scrollbar-thin">
+                    <div className="p-2">
+                        {props.cidades.length > 0 ? props.cidades.map((cidade, index) => (
+                            <button
+                                key={`${cidade}-${index}-selected`}
+                                type="button" 
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    props.setCidades(prev => prev.filter(item => item !== cidade));
+                                }}
+                                className="text-sm bg-blue-50 hover:bg-blue-100 dark:bg-blue-fcsn2 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off cursor-pointer px-2 py-1 rounded m-1 inline-flex"
+                            >
+                                {cidade}
+                            </button>
+                        )) : (
+                            props.estado != '' && <p className="text-xs text-gray-400 dark:text-gray-500 px-2">Nenhuma cidade selecionada.</p>
+                        )}
+                         {props.estado === '' && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 p-2">Selecione estados para ver opções de cidades.</p>
                         )}
                     </div>

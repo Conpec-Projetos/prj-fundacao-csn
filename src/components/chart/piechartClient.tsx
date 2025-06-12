@@ -21,12 +21,14 @@ interface PieChartProps {
   data: number[];
   labels: string[];
   colors?: string[];
+  ehCelular?: boolean;
 }
 
-export default function PieChart({data, labels, colors = [
+export default function PieChart({data, labels, ehCelular, colors = [
   '#e74c3c','#8e44ad','#39c2e0','#2ecc40','#f1c40f',] }
   : PieChartProps) {
   const { darkMode } = useTheme();
+
   const chartData = {
     labels,
     datasets: [
@@ -43,16 +45,16 @@ export default function PieChart({data, labels, colors = [
     responsive: true,
     plugins: {
       legend: {
-        position: 'right' as const,
+        position: ehCelular ? 'bottom' as const : 'right' as const,
         labels: {
           color: darkMode ? '#FFFFFF' : '#292944'
         }
       },
       title: {
-        display: true,
+        display: false,
       },
     },
-  }), [darkMode]);
+  }), [darkMode, ehCelular]);
 
   return <Pie data={chartData} options={options} />;
 }
