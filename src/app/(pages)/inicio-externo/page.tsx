@@ -13,7 +13,7 @@ import Image from "next/image";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import Botao_Logout from '@/components/botoes/Botao_Logout';
 import { Moon, Sun } from 'lucide-react';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'; 
 import { Projetos, formsAcompanhamentoDados, formsCadastroDados, Associacao } from '@/firebase/schema/entities';
 
 interface ProjetoExt {
@@ -103,123 +103,121 @@ export default function ExternalUserHomePage() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user && user.email) {
-        if (!user.emailVerified) {
-          router.push("./login");
-          return;
-        }
-        const emailDomain = user.email.split('@')[1];
-        if (emailDomain !== "teste.com.br") {
-          const usuarioExtRef = collection(db, 'usuarioExt');
-          const qUsuarioExt = query(usuarioExtRef, where('email', '==', user.email))
-          const usuarioExt = await getDocs(qUsuarioExt);
-          setUserName(usuarioExt.docs[0].data().nome.split(" ")[0]);
-          setIsLoading(false); // Autenticação verificada
-
-          try {
-            // Encontra o documento na coleção associacao
-            const associacaoRef = collection(db, 'associacao');
-            const qAssociacao = query(associacaoRef, where('usuarioID', '==', user.uid));
-            const associacaoSnapshot = await getDocs(qAssociacao);
-
-            if (associacaoSnapshot.empty) {
-              console.log("Nenhuma associação encontrada para o usuário.");
-              setUserProjects([]);
-              setIsLoadingProjects(false);
-              return;
+        if (user && user.email) {
+            // Redireciona se o e-mail não estiver verificado
+            if (!user.emailVerified) {
+                router.push("./login");
+                return;
             }
 
-            const associacaoDoc = associacaoSnapshot.docs[0].data() as Associacao;
-            const projetosIDs = associacaoDoc.projetosIDs || [];
+            // Verifica se o usuário é interno
+            const userIntRef = doc(db, 'usuarioInt', user.uid);
+            const userIntSnap = await getDoc(userIntRef);
 
-            if (projetosIDs.length === 0) {
-              setUserProjects([]);
-              setIsLoadingProjects(false);
-              return;
+            if (userIntSnap.exists()) {
+                // Se for usuário interno, redireciona para a página principal
+                router.push("/");
+                return;
             }
 
-            // Para cada ID, buscar os detalhes completos do projeto
-            const projectsDataPromises = projetosIDs.map(async (projetoId): Promise<ProjetoExt | null> => {
-              let instituicao = '';
-              let lei = '';
-              let formularioPendente = false;
+            // Se não for interno, assume que é externo e busca os dados
+            const userExtRef = doc(db, 'usuarioExt', user.uid);
+            const userExtSnap = await getDoc(userExtRef);
 
-              // Tentar buscar informações do formulário de acompanhamento primeiro
-              const acompanhamentoRef = collection(db, 'forms-acompanhamento');
-              const qAcompanhamento = query(acompanhamentoRef, where('projetoID', '==', projetoId));
-              const acompanhamentoSnap = await getDocs(qAcompanhamento);
+            if (userExtSnap.exists()) {
+                const userData = userExtSnap.data();
+                setUserName(userData.nome.split(" ")[0]);
+            }
+            setIsLoading(false); // Permite a renderização da página para o usuário externo
 
-              if (!acompanhamentoSnap.empty) {
-                // Se encontrou um formulário de acompanhamento, use seus dados
-                const acompanhamentoData = acompanhamentoSnap.docs[0].data() as formsAcompanhamentoDados;
-                instituicao = acompanhamentoData.instituicao;
-                lei = acompanhamentoData.lei;
-                formularioPendente = false;
-              } else {
-                // Se não há formulário de acompanhamento, o formularioPendente é true
-                formularioPendente = true;
+            // Inicia o carregamento dos projetos do usuário
+            setIsLoadingProjects(true);
+            try {
+                const associacaoRef = collection(db, 'associacao');
+                const qAssociacao = query(associacaoRef, where('usuarioID', '==', user.uid));
+                const associacaoSnapshot = await getDocs(qAssociacao);
 
-                // Buscar informações do formulário de cadastro como fallback
-                const projetoDocRef = doc(db, 'projetos', projetoId);
-                const projetoDocSnap = await getDoc(projetoDocRef);
+                if (associacaoSnapshot.empty) {
+                    setUserProjects([]);
+                    return;
+                }
 
-                if (projetoDocSnap.exists()) {
-                  const projetoDataForCadastro = projetoDocSnap.data() as Projetos;
-                  if (projetoDataForCadastro.ultimoFormulario) {
-                    const cadastroDocRef = doc(db, 'forms-cadastro', projetoDataForCadastro.ultimoFormulario);
-                    const cadastroDocSnap = await getDoc(cadastroDocRef);
-                    if (cadastroDocSnap.exists()) {
-                      const cadastroData = cadastroDocSnap.data() as formsCadastroDados;
-                      instituicao = cadastroData.instituicao;
-                      lei = cadastroData.lei;
+                const associacaoDoc = associacaoSnapshot.docs[0].data() as Associacao;
+                const projetosIDs = associacaoDoc.projetosIDs || [];
+
+                if (projetosIDs.length === 0) {
+                    setUserProjects([]);
+                    return;
+                }
+
+                // Busca os detalhes de cada projeto associado
+                const projectsDataPromises = projetosIDs.map(async (projetoId): Promise<ProjetoExt | null> => {
+                  let instituicao = '';
+                  let lei = '';
+                  let formularioPendente = false;
+
+                  const acompanhamentoRef = collection(db, 'forms-acompanhamento');
+                  const qAcompanhamento = query(acompanhamentoRef, where('projetoID', '==', projetoId));
+                  const acompanhamentoSnap = await getDocs(qAcompanhamento);
+
+                  if (!acompanhamentoSnap.empty) {
+                    const acompanhamentoData = acompanhamentoSnap.docs[0].data() as formsAcompanhamentoDados;
+                    instituicao = acompanhamentoData.instituicao;
+                    lei = acompanhamentoData.lei;
+                    formularioPendente = false;
+                  } else {
+                    formularioPendente = true;
+                    const projetoDocRef = doc(db, 'projetos', projetoId);
+                    const projetoDocSnap = await getDoc(projetoDocRef);
+
+                    if (projetoDocSnap.exists()) {
+                      const projetoDataForCadastro = projetoDocSnap.data() as Projetos;
+                      if (projetoDataForCadastro.ultimoFormulario) {
+                        const cadastroDocRef = doc(db, 'forms-cadastro', projetoDataForCadastro.ultimoFormulario);
+                        const cadastroDocSnap = await getDoc(cadastroDocRef);
+                        if (cadastroDocSnap.exists()) {
+                          const cadastroData = cadastroDocSnap.data() as formsCadastroDados;
+                          instituicao = cadastroData.instituicao;
+                          lei = cadastroData.lei;
+                        }
+                      }
                     }
                   }
-                }
-              }
 
-              // Buscar informações do projeto na coleção 'projetos'
-              const projetoDocRef = doc(db, 'projetos', projetoId);
-              const projetoDocSnap = await getDoc(projetoDocRef);
+                  const projetoDocRef = doc(db, 'projetos', projetoId);
+                  const projetoDocSnap = await getDoc(projetoDocRef);
 
-              if (!projetoDocSnap.exists()) {
-                console.warn(`Projeto com ID ${projetoId} não encontrado na coleção 'projetos'.`);
-                return null;
-              }
+                  if (!projetoDocSnap.exists()) {
+                    return null;
+                  }
 
-              const projetoData = projetoDocSnap.data() as Projetos;
+                  const projetoData = projetoDocSnap.data() as Projetos;
+                  const valorTotal = (projetoData.valorAportadoReal || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+                  
+                  return {
+                    id: projetoId,
+                    nome: projetoData.nome,
+                    instituicao: instituicao,
+                    status: projetoData.status,
+                    valorTotal: valorTotal,
+                    lei: lei,
+                    formularioPendente: formularioPendente,
+                  };
+                });
 
-              const status = projetoData.status;
-              const valorTotal = (projetoData.valorAportadoReal || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-              const nome = projetoData.nome;
+                const resolvedProjects = (await Promise.all(projectsDataPromises)).filter((p): p is ProjetoExt => p !== null);
+                setUserProjects(resolvedProjects);
 
-              return {
-                id: projetoId,
-                nome: nome,
-                instituicao: instituicao,
-                status: status,
-                valorTotal: valorTotal,
-                lei: lei,
-                formularioPendente: formularioPendente,
-              };
-            });
-
-            const resolvedProjects = (await Promise.all(projectsDataPromises)).filter((p): p is ProjetoExt => p !== null);
-            setUserProjects(resolvedProjects);
-
-          } catch (error) {
-            console.error("Erro ao buscar projetos do usuário:", error);
-          } finally {
-            setIsLoadingProjects(false);
-          }
+            } catch (error) {
+                console.error("Erro ao buscar projetos do usuário:", error);
+            } finally {
+                setIsLoadingProjects(false);
+            }
 
         } else {
-          setIsLoading(false);
-          setIsLoadingProjects(false);
-          router.push("/");
+            // Se não houver usuário logado, redireciona para a página de login
+            router.push("./login");
         }
-      } else {
-        router.push("./login"); // Usuário não logado
-      }
     });
 
     return () => unsubscribe();
