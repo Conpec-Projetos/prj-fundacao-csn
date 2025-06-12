@@ -11,10 +11,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
-
 import { auth } from "@/firebase/firebase-config";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signOut } from "firebase/auth";
-import { collection, query, where, getDocs, addDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, updateDoc, arrayUnion, doc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import { Associacao, Projetos, usuarioInt, usuarioExt } from "@/firebase/schema/entities";
 
@@ -82,7 +81,7 @@ export default function Signin(){
     async function projetoValido(email: string): Promise<{ valido: boolean, projetosIDs: string[] }> {
         const emailDomain = email.split('@')[1];
 
-        if (emailDomain === "conpec.com.br") {
+        if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") {
             return { valido: true, projetosIDs: [] };
         }
 
@@ -95,35 +94,32 @@ export default function Signin(){
             return { valido: false, projetosIDs: [] };
         }
 
-        const foundProjetosIDs: string[] = [];
-        let hasApprovedProject = false;
+        const ProjetosIDs: string[] = [];
+        let hasProjetoAprovado = false;
 
         for (const docCadastro of formsSnapshot.docs) {
             const idCadastro = docCadastro.id;
             const projetoRef = collection(db, "projetos");
-            const qProjeto = query(projetoRef,
-                                where("ultimoFormulario", "==", idCadastro));
+            const qProjeto = query(projetoRef, where("ultimoFormulario", "==", idCadastro));
             const snapshotProjeto = await getDocs(qProjeto);
 
             if (!snapshotProjeto.empty) {
                 snapshotProjeto.forEach(projDoc => {
                     const projetoData = projDoc.data() as Projetos;
-                    if (projetoData.status === "aprovado") { // Checa se o projeto está aprovado
-                        hasApprovedProject = true;
+                    if (projetoData.status === "aprovado") { 
+                        hasProjetoAprovado = true;
                     }
-                    if (!foundProjetosIDs.includes(projDoc.id)) {
-                        foundProjetosIDs.push(projDoc.id);
+                    if (!ProjetosIDs.includes(projDoc.id)) {
+                        ProjetosIDs.push(projDoc.id);
                     }
                 });
             }
         }
-
-        if (!hasApprovedProject) {
+        if (!hasProjetoAprovado) {
             toast.error("Não é possível cadastrar esse usuário pois não há nenhum projeto aprovado associado a este e-mail.");
             return { valido: false, projetosIDs: [] };
         }
-
-        return { valido: true, projetosIDs: foundProjetosIDs };
+        return { valido: true, projetosIDs: ProjetosIDs };
     }
 
 
@@ -147,42 +143,37 @@ export default function Signin(){
             // Lógica para criar o documento na coleção 'usuarioInt' ou 'usuarioExt'
             const emailDomain = data.email.split('@')[1];
 
-            if (emailDomain === "conpec.com.br") {
+            if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") {
                 const newUserInt: usuarioInt = {
                     nome: data.name,
                     email: data.email,
                     administrador: false,
                 };
-                await addDoc(collection(db, "usuarioInt"), newUserInt);
-                console.log("Documento de usuário interno criado.");
+                await setDoc(doc(db, "usuarioInt", user.uid), newUserInt);
+                // Se for uusuário interno ele não cria o documento em 'associacao'
             } else {
                 const newUserExt: usuarioExt = {
                     nome: data.name,
                     email: data.email,
                 };
-                await addDoc(collection(db, "usuarioExt"), newUserExt);
-                console.log("Documento de usuário externo criado.");
+                await setDoc(doc(db, "usuarioExt", user.uid), newUserExt);
 
-                // Cria ou atualiza o documento da coleção 'associacao'
-                if (user && user.uid) {
-                    const associacaoRef = collection(db, "associacao");
-                    const q = query(associacaoRef, where("usuarioID", "==", user.uid));
-                    const querySnapshot = await getDocs(q);
+                // Cria ou atualiza o documento da coleção 'associacao' para usuários externos
+                const associacaoRef = collection(db, "associacao");
+                const q = query(associacaoRef, where("usuarioID", "==", user.uid));
+                const querySnapshot = await getDocs(q);
 
-                    if (!querySnapshot.empty) {
-                        const existingDocRef = querySnapshot.docs[0].ref;
-                        await updateDoc(existingDocRef, {
-                            projetosIDs: arrayUnion(...projetosIDs)
-                        });
-                        console.log("Documento de associação existente foi atualizado.");
-                    } else {
-                        const newAssociacaoDoc: Associacao = {
-                            usuarioID: user.uid,
-                            projetosIDs: projetosIDs
-                        };
-                        await addDoc(collection(db, "associacao"), newAssociacaoDoc);
-                        console.log("Novo documento de associação foi criado.");
-                    }
+                if (!querySnapshot.empty) {
+                    const existingDocRef = querySnapshot.docs[0].ref;
+                    await updateDoc(existingDocRef, {
+                        projetosIDs: arrayUnion(...projetosIDs)
+                    });
+                } else {
+                    const newAssociacaoDoc: Associacao = {
+                        usuarioID: user.uid,
+                        projetosIDs: projetosIDs
+                    };
+                    await addDoc(collection(db, "associacao"), newAssociacaoDoc);
                 }
             }
 
