@@ -43,10 +43,10 @@ export function getUserIdFromLocalStorage(): string | null {
   return null;
 }
 
-export async function getFileUrl(files: File[], projetoID: string, filename?: string): Promise<string[]> {
+export async function getFileUrl(files: File[], forms: string, projetoID: string, filename?: string): Promise<string[]> {
   const fileUrl: string[] = [];
   for (const file of files) {
-      const storageRef = ref(storage, `forms-cadastro/${projetoID}/${Date.now()}-${filename || file.name}`);
+      const storageRef = ref(storage, `${forms}/${projetoID}/${Date.now()}-${filename || file.name}`);
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
       fileUrl.push(downloadURL);

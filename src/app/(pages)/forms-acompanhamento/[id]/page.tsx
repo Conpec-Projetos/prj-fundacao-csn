@@ -85,7 +85,7 @@ export default function FormsAcompanhamento() {
         const loadingToastId = toast.loading("Enviando formulário...");
 
         try {
-            const fotoURLs = await getFileUrl(fotos, projetoID);
+            const fotoURLs = await getFileUrl(fotos, 'forms-acompanhamento', projetoID);
 
             const uploadFirestore: formsAcompanhamentoDados = {
                 projetoID: projetoID,
