@@ -147,10 +147,10 @@ export default function FormsCadastro(){
             const docProjetoRef = await addDoc(collection(db, "projetos"), createProjeto);
             const projetoID = docProjetoRef.id;
 
-            const diarioUrl = await getFileUrl(diario, projetoID, "diario");
-            const apresentacaoUrl = await getFileUrl(apresentacao, projetoID, "apresentacao");
-            const complianceUrl = await getFileUrl(compliance, projetoID, "compliance");
-            const documentosUrl = await getFileUrl(documentos, projetoID);
+            const diarioUrl = await getFileUrl(diario, 'forms-cadastro',projetoID, "diario");
+            const apresentacaoUrl = await getFileUrl(apresentacao, 'forms-cadastro', projetoID, "apresentacao");
+            const complianceUrl = await getFileUrl(compliance, 'forms-cadastro', projetoID, "compliance");
+            const documentosUrl = await getFileUrl(documentos, 'forms-cadastro', projetoID);
 
             const updateDocumentos : formsCadastroDocumentos = {
                 projetoID: docProjetoRef.id,
