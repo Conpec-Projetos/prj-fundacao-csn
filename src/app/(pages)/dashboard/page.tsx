@@ -218,7 +218,6 @@ export default function DashboardPage() {
 
         if (formsSnapshot.exists()) {
           const dado = formsSnapshot.data();
-          console.log(dado.instituicao)
           const dadoFiltrado: dadosProjeto = {
             instituicao: dado.instituicao,
             qtdProjetos: dado.qtdProjetos,
@@ -230,8 +229,26 @@ export default function DashboardPage() {
             lei: {nome:dado.lei, qtdProjetos: 1}
           }
           todosDados.push(dadoFiltrado)
-        }
+        } else {
+            const refFormsCadastro = doc(db, 'forms-cadastro', id)
+            const formsCadastroSnapshot = await getDoc(refFormsCadastro)
+
+            if (formsCadastroSnapshot.exists()) {
+              const dado = formsCadastroSnapshot.data();
+              const dadoFiltrado: dadosProjeto = {
+                instituicao: dado.instituicao,
+                qtdProjetos: dado.qtdProjetos,
+                valorAportadoReal: {valorAportado: valoresAportados[id], nome:nomesProjetos[id]},
+                beneficiariosDireto: dado.beneficiariosDiretos,
+                beneficiariosIndireto: dado.beneficiariosIndiretos,
+                ods: dado.ods,
+                segmento: {nome: dado.segmento, qtdProjetos: 1},
+                lei: {nome:dado.lei, qtdProjetos: 1}
+              }
+            todosDados.push(dadoFiltrado)
+          }
       }
+    }
       return somarDadosMunicipios(todosDados)
     }, [])
 
