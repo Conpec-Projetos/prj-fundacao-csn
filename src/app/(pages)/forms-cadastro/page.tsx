@@ -137,7 +137,7 @@ export default function FormsCadastro(){
                 municipios: cidades,
                 status: "pendente",
                 ativo: false,
-                compliance: "pendente", // De início, o projeto não tem nenhum dos trës aprovados
+                compliance: "pendente", // De início, o projeto não tem nenhum dos três aprovados
                 empresas: [""],
                 indicacao: "",
                 ultimoFormulario: docRef.id, 
