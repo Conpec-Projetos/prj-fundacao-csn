@@ -1,6 +1,7 @@
 "use client";
 import Footer from "@/components/footer/footer";
 import BarChart from "@/components/chart/barchartClient";
+import BarChartLeis from "@/components/chart/barchartLeisClient"
 import PieChart from "@/components/chart/piechartClient";
 import BrazilMap from "@/components/map/brazilMap";
 import { FaCaretDown } from "react-icons/fa";
@@ -9,6 +10,50 @@ import { EstadoInputDashboard, CidadeInputDashboard } from "@/components/inputs/
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import { dadosEstados, dadosProjeto } from "@/firebase/schema/entities";
+
+const estadosSiglas: {[key:string]: string} = {
+  "Acre" : "AC",
+  "Alagoas" : "AL",
+  "Amapá" : "AP",
+  "Amazonas" : "AM",
+  "Bahia" : "BA",
+  "Ceará" : "CE",
+  "Distrito Federal" : "DF",
+  "Espírito Santo" : "ES",
+  "Goiás" : "GO",
+  "Maranhão" : "MA",
+  "Mato Grosso" : "MT",
+  "Mato Grosso do Sul" : "MS",
+  "Minas Gerais" : "MG",
+  "Pará" : "PA",
+  "Paraíba" : "PB",
+  "Paraná" : "PR",
+  "Pernambuco" : "PE",
+  "Piauí" : "PI",
+  "Rio de Janeiro" : "RJ",
+  "Rio Grande do Norte" : "RN",
+  "Rio Grande do Sul" : "RS",
+  "Rondônia" : "RO",
+  "Roraima" : "RR",
+  "Santa Catarina" : "SC",
+  "São Paulo" : "SP",
+  "Sergipe" : "SE",
+  "Tocantins" : "TO",
+};
+
+export const leisSiglas: { [key: string]: string } = {
+  "Lei de Incentivo à Cultura": "LIC",
+  "PROAC - Programa de Ação Cultural": "PROAC",
+  "FIA - Lei Fundo para a Infância e Adolescência": "FIA",
+  "LIE - Lei de Incentivo ao Esporte": "LIE",
+  "Lei da Pessoa Idosa": "LPI",
+  "Pronas - Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência": "Pronas",
+  "Pronon - Programa Nacional de Apoio à Atenção Oncológica": "Pronon",
+  "Promac - Programa de Incentivo à Cultura do Município de São Paulo": "Promac",
+  "ICMS - MG Imposto sobre Circulação de Mercadoria e Serviços": "ICMS - MG",
+  "ICMS - RJ Imposto sobre Circulação de Mercadoria e Serviços": "ICMS - RJ",
+  "PIE - Lei Paulista de Incentivo ao Esporte": "PIE",
+};
 
 export default function DashboardPage() {
   async function buscarDadosEstado(
@@ -275,36 +320,6 @@ export default function DashboardPage() {
       "ODS 17: Parcerias e Meios de Implementação",
     ],
   };
-  // Sample Estados de Atuação data
-  const estadosSiglas = {
-    "Acre" : "AC",
-    "Alagoas" : "AL",
-    "Amapá" : "AP",
-    "Amazonas" : "AM",
-    "Bahia" : "BA",
-    "Ceará" : "CE",
-    "Distrito Federal" : "DF",
-    "Espírito Santo" : "ES",
-    "Goiás" : "GO",
-    "Maranhão" : "MA",
-    "Mato Grosso" : "MT",
-    "Mato Grosso do Sul" : "MS",
-    "Minas Gerais" : "MG",
-    "Pará" : "PA",
-    "Paraíba" : "PB",
-    "Paraná" : "PR",
-    "Pernambuco" : "PE",
-    "Piauí" : "PI",
-    "Rio de Janeiro" : "RJ",
-    "Rio Grande do Norte" : "RN",
-    "Rio Grande do Sul" : "RS",
-    "Rondônia" : "RO",
-    "Roraima" : "RR",
-    "Santa Catarina" : "SC",
-    "São Paulo" : "SP",
-    "Sergipe" : "SE",
-    "Tocantins" : "TO",
-  };
 
   const [ehCelular, setEhCelular] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -320,6 +335,7 @@ export default function DashboardPage() {
   const segmentoValores: number[] =
     dados?.segmento.map((item) => item.qtdProjetos) ?? [];
   const leiNomes: string[] = dados?.lei.map((item) => item.nome) ?? [];
+  const leiSiglas: string[] = dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
   const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
 
   useEffect(() => {
@@ -482,7 +498,6 @@ export default function DashboardPage() {
           <div className="w-full sm:overflow-x-auto md:overflow-x-hidden">
             <div className="min-h-96 h-fit min-w-[600]px md:min-w-0">
               <BarChart
-                title=""
                 data={dados?.projetosODS ?? []}
                 labels={odsData.labels}
                 colors={["#b37b97"]}
@@ -514,7 +529,6 @@ export default function DashboardPage() {
               {/* box for the bar chart */}
               <div className="min-h-96 h-fit w-full">
                 <BarChart
-                  title=""
                   data={Object.values(dadosMapa)}
                   labels={Object.keys(dadosMapa).map(nome => estadosSiglas[nome] ?? nome)}
                   colors={["#b37b97"]}
@@ -541,14 +555,13 @@ export default function DashboardPage() {
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 h-full flex flex-col">
             <h2 className="text-2xl font-bold mb-4">Lei de Incentivo</h2>
             <div className="flex-grow w-full overflow-x-auto">
-              <div className="min-w-[1000px]">
-                <BarChart
-                  title=""
+              <div className="">
+                <BarChartLeis
                   colors={["#b37b97"]}
                   data={leiValores}
+                  siglas={leiSiglas}
                   labels={leiNomes}
                   horizontal={true}
-                  useIcons={false}
                 />
               </div>
             </div>
