@@ -4,6 +4,8 @@ import Footer from "@/components/footer/footer";
 import { useEffect, useRef, useState } from "react";
 import { FaCaretDown, FaCheckCircle, FaFilter, FaMoneyBillAlt, FaSearch, FaTimesCircle } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/firebase/firebase-config';
 
 
 // Interface (base) para cada projeto
