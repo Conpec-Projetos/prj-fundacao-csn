@@ -147,7 +147,7 @@ export default function FormsCadastro(){
             const docProjetoRef = await addDoc(collection(db, "projetos"), createProjeto);
             const projetoID = docProjetoRef.id;
 
-            const diarioUrl = await getFileUrl(diario, 'forms-cadastro',projetoID, "diario");
+            const diarioUrl = await getFileUrl(diario, 'forms-cadastro', projetoID, "diario");
             const apresentacaoUrl = await getFileUrl(apresentacao, 'forms-cadastro', projetoID, "apresentacao");
             const complianceUrl = await getFileUrl(compliance, 'forms-cadastro', projetoID, "compliance");
             const documentosUrl = await getFileUrl(documentos, 'forms-cadastro', projetoID);
@@ -298,7 +298,7 @@ export default function FormsCadastro(){
                                     text="Complemento:"
                                     attribute={ complemento }
                                     setAttribute={ setComplemento }
-                                    isNotMandatory={true}
+                                    isNotMandatory={false}
                                 ></GrowInput>
                         </div>
                         
@@ -580,7 +580,7 @@ export default function FormsCadastro(){
                                 text={"Documentos adicionais:"}
                                 files={documentos}
                                 setFiles={setDocumentos}
-                                isNotMandatory={true}
+                                isNotMandatory={false}
                             />
                             <div className="flex flex-row gap-x-2 items-center pt-7">
                                 <input 
@@ -588,7 +588,7 @@ export default function FormsCadastro(){
                                 className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"
                                 checked={termosPrivacidade}
                                 onChange={(select) => setTermosPrivacidade(select.target.checked)}/>
-                                <p className="text-xl">Eu declaro ter lido e concordado com os Termos de Uso e a Política de Privacidade<span className="text-[#B15265]"> *</span></p>
+                                <p className="text-xl text-blue-fcsn">Eu declaro ter lido e concordado com os Termos de Uso e a Política de Privacidade<span className="text-[#B15265]"> *</span></p>
                             </div>
                         </div>
                         <div className="flex flex-row w-11/12 justify-between gap-4">

@@ -593,7 +593,7 @@ export const CidadeInputDashboard: React.FC<CidadesDashboardProps> = (props) => 
   'sao_paulo': 'São Paulo',
   'sergipe': 'Sergipe',
   'tocantins': 'Tocantins'
-}), []);
+} as Record<string, string>), []);
 
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
@@ -639,11 +639,6 @@ export const CidadeInputDashboard: React.FC<CidadesDashboardProps> = (props) => 
         setSearchTerm(""); // Limpa o input após seleção
         setShowSuggestions(false);
     };
-
-    const handleRemoveAllCities = () => {
-        props.setCidades([]);
-    };
-
     
     return(
         <div className="flex flex-row justify-between items-start h-auto py-3">            
@@ -742,9 +737,9 @@ export const DateInputs: React.FC<DateProps> = (props) => {
 interface YesNoProps{
     text: string;
     list: string[];
-    attribute: boolean;
+    attribute: boolean | undefined;
     isNotMandatory: boolean;
-    setAttribute: Dispatch<SetStateAction<boolean>>; 
+    setAttribute: Dispatch<SetStateAction<boolean | undefined>>; 
 }
 
 export const YesNoInput: React.FC<YesNoProps> = (props) => {
@@ -805,7 +800,7 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
             const newArray = props.list.map((_, i) => !!props.attribute[i]);
             props.setAttribute(newArray);
         }
-    }, [props.list.length, props.attribute, props.setAttribute]);
+    }, [props, props.list.length, props.attribute, props.setAttribute]);
 
     // Acompanha a ordem de seleção
     const [selectionOrder, setSelectionOrder] = useState<number[]>([]);
@@ -838,7 +833,7 @@ export const VerticalSelects: React.FC<VerticalProps> = (props) => {
 
     return(
         <div className="flex flex-col justify-between items-start py-3 gap-y-2">
-            <h1 className="w-full xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
+            <h1 className="w-full text-xl text-blue-fcsn dark:text-white-off font-bold"
             >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
 
                 <p className="text-lg text-blue-fcsn dark:text-white-off"

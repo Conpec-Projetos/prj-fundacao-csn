@@ -31,7 +31,7 @@ const ProjectCard = ({ project }: { project: ProjetoExt }) => {
     switch (status) {
       case 'aprovado': return 'bg-green-100 dark:bg-green-500 text-green-800 dark:text-white';
       case 'pendente': return 'bg-yellow-100 dark:bg-yellow-500 text-yellow-800 dark:text-white';
-      case 'rejeitado': return 'bg-red-100 dark:bg-red-500 text-red-800 dark:text-white';
+      case 'reprovado': return 'bg-red-100 dark:bg-red-500 text-red-800 dark:text-white';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -64,7 +64,7 @@ const ProjectCard = ({ project }: { project: ProjetoExt }) => {
         </div>
         <div>
           <p className="text-gray-500 dark:text-gray-300">Lei de incentivo:</p>
-          <p className="font-medium">{project.lei}</p>
+          <p className="font-medium text-blue-fcsn dark:text-white-off">{project.lei}</p>
         </div>
       </div>
 
@@ -289,7 +289,7 @@ export default function ExternalUserHomePage() {
         {/* Seção de boas-vindas */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold">{greeting}, {userName}!</h1>
+            <h1 className="text-2xl text-blue-fcsn dark:text-white font-bold">{greeting}, {userName}!</h1>
             <p className="text-gray-500 dark:text-gray-300">{currentTime}</p>
           </div>
           <div className="text-right">
