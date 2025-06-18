@@ -639,11 +639,6 @@ export const CidadeInputDashboard: React.FC<CidadesDashboardProps> = (props) => 
         setSearchTerm(""); // Limpa o input após seleção
         setShowSuggestions(false);
     };
-
-    const handleRemoveAllCities = () => {
-        props.setCidades([]);
-    };
-
     
     return(
         <div className="flex flex-row justify-between items-start h-auto py-3">            

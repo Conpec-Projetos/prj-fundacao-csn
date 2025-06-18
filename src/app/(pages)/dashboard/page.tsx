@@ -542,8 +542,6 @@ export default function DashboardPage() {
             <h2 className="text-2xl font-bold mb-4">Lei de Incentivo</h2>
             <div className="flex-grow w-full overflow-x-auto">
               <div className="min-w-[1000px]">
-                {" "}
-                {/* Adjust min-width as needed */}
                 <BarChart
                   title=""
                   colors={["#b37b97"]}
