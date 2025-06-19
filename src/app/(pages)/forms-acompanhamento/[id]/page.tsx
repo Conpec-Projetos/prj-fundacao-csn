@@ -20,10 +20,10 @@ import {
     CidadeInput
     } from "@/components/inputs/inputs";
 import { Toaster, toast } from "sonner";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, updateDoc, query, where, getDocs, runTransaction, doc, orderBy, limit } from "firebase/firestore";
 import { db, auth } from "@/firebase/firebase-config";
-import { formsAcompanhamentoDados, odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
-import { getFileUrl, getOdsIds, getItemNome } from "@/lib/utils";
+import { formsAcompanhamentoDados, formsCadastroDados, dadosEstados, odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
+import { getFileUrl, getOdsIds, getItemNome, slugifyEstado } from "@/lib/utils";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
@@ -83,12 +83,186 @@ const acompanhamentoSchema = z.object({
 
 type FormFields = z.infer<typeof acompanhamentoSchema>;
 
+type DadosComparaveisProjeto = {
+    beneficiariosDiretos: number;
+    beneficiariosIndiretos?: number;
+    lei: string;
+    segmento: string;
+    municipios: string[];
+    estados: string[];
+    ods: number[];
+};
+
+async function handleInfoRemovida(ultimoForm: DadosComparaveisProjeto, nomeEstado: string) {
+    const estadoDocID = slugifyEstado(nomeEstado);
+    const docRef = doc(db, "dadosEstados", estadoDocID);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const docSnapshot = await transaction.get(docRef);
+            if (!docSnapshot.exists()) return;
+            
+            const updates: Partial<dadosEstados> = {};
+            const dadosAtuais = docSnapshot.data() as dadosEstados;
+
+            // Reverte as contagens
+            updates.beneficiariosDireto = (dadosAtuais.beneficiariosDireto || 0) - (ultimoForm.beneficiariosDiretos || 0);
+            updates.beneficiariosIndireto = (dadosAtuais.beneficiariosIndireto || 0) - (ultimoForm.beneficiariosIndiretos || 0);
+            updates.qtdProjetos = (dadosAtuais.qtdProjetos || 0) - 1;
+            // Assumimos que a organização também sai junto com o único projeto dela naquele estado
+            updates.qtdOrganizacoes = (dadosAtuais.qtdOrganizacoes || 0) - 1;
+            
+            // Reverte ODS
+            const antigoOdsIds = ultimoForm.ods;
+            const novosProjetosODS = [...(dadosAtuais.projetosODS || [])];
+            antigoOdsIds.forEach(id => {
+                 if (id >= 0 && id < novosProjetosODS.length) { 
+                    novosProjetosODS[id] = Math.max(0, (novosProjetosODS[id] || 0) - 1);
+                 }
+            });
+            updates.projetosODS = novosProjetosODS;
+
+            // Reverte Lei e Segmento
+            updates.lei = dadosAtuais.lei.map(item => item.nome === ultimoForm.lei ? { ...item, qtdProjetos: Math.max(0, (item.qtdProjetos || 0) - 1) } : item);
+            updates.segmento = dadosAtuais.segmento.map(item => item.nome === ultimoForm.segmento ? { ...item, qtdProjetos: Math.max(0, (item.qtdProjetos || 0) - 1) } : item);
+
+            // Reverte Municípios
+            const antigoMunicipios = ultimoForm.municipios.filter(m => City.getAllCities().find(c => c.name === m)?.stateCode === State.getAllStates().find(s => s.name === nomeEstado)?.isoCode);
+            updates.municipios = dadosAtuais.municipios.filter(m => !antigoMunicipios.includes(m));
+            updates.qtdMunicipios = (dadosAtuais.qtdMunicipios || 0) - antigoMunicipios.length;
+
+            transaction.update(docRef, updates);
+        });
+    } catch (e) {
+        console.error("Erro ao reverter dados do estado removido:", e);
+        throw e;
+    }
+}
+
+async function handleInfoAdicionada(novoForm: FormFields, nomeEstado: string) {
+    const estadoDocID = slugifyEstado(nomeEstado);
+    const docRef = doc(db, "dadosEstados", estadoDocID);
+    
+    try {
+        await runTransaction(db, async (transaction) => {
+            const docSnapshot = await transaction.get(docRef);
+            if (!docSnapshot.exists()) return;
+
+            const dadosAtuais = docSnapshot.data() as dadosEstados;
+            const updates: Partial<dadosEstados> = {};
+
+            // Adiciona novas contagens
+            updates.beneficiariosDireto = (dadosAtuais.beneficiariosDireto || 0) + novoForm.beneficiariosDiretos;
+            updates.beneficiariosIndireto = (dadosAtuais.beneficiariosIndireto || 0) + novoForm.beneficiariosIndiretos;
+            updates.qtdProjetos = (dadosAtuais.qtdProjetos || 0) + 1;
+            updates.qtdOrganizacoes = (dadosAtuais.qtdOrganizacoes || 0) + 1;
+
+             // Adiciona ODS
+            const novoOdsIds = getOdsIds(novoForm.ods);
+            const novosProjetosODS = [...(dadosAtuais.projetosODS || Array(17).fill(0))];
+            novoOdsIds.forEach(id => {
+                if (id >= 0 && id < novosProjetosODS.length) {
+                    novosProjetosODS[id] = (novosProjetosODS[id] || 0) + 1;
+                }
+            });
+            updates.projetosODS = novosProjetosODS;
+
+            // Adiciona Lei e Segmento
+            const leiSelecionadaNome = getItemNome(novoForm.lei, leiList);
+            updates.lei = dadosAtuais.lei.map(item => item.nome === leiSelecionadaNome ? { ...item, qtdProjetos: (item.qtdProjetos || 0) + 1 } : item);
+            
+            const segmentoSelecionadoNome = getItemNome(novoForm.segmento, segmentoList);
+            updates.segmento = dadosAtuais.segmento.map(item => item.nome === segmentoSelecionadoNome ? { ...item, qtdProjetos: (item.qtdProjetos || 0) + 1 } : item);
+
+            // Adiciona Municípios
+            const novoMunicipios = novoForm.municipios.filter(m => City.getAllCities().find(c => c.name === m)?.stateCode === State.getAllStates().find(s => s.name === nomeEstado)?.isoCode);
+            const novoMunicipiosSet = new Set([...dadosAtuais.municipios, ...novoMunicipios]);
+            updates.municipios = Array.from(novoMunicipiosSet);
+            updates.qtdMunicipios = (dadosAtuais.qtdMunicipios || 0) + novoMunicipios.length;
+
+            transaction.update(docRef, updates);
+        });
+    } catch (e) {
+        console.error("Erro ao adicionar dados ao novo estado:", e);
+        throw e;
+    }
+}
+
+async function handleInfoPersistida(ultimoForm: DadosComparaveisProjeto, novoForm: FormFields, nomeEstado: string) {
+    const estadoDocID = slugifyEstado(nomeEstado);
+    const docRef = doc(db, "dadosEstados", estadoDocID);
+    
+    try {
+        await runTransaction(db, async (transaction) => {
+            const docSnapshot = await transaction.get(docRef);
+            if (!docSnapshot.exists()) return;
+
+            const dadosAtuais = docSnapshot.data() as dadosEstados;
+            const updates: Partial<dadosEstados> = {};
+
+            // Beneficiários
+            const diffBeneficiarios = novoForm.beneficiariosDiretos - (ultimoForm.beneficiariosDiretos || 0);
+            updates.beneficiariosDireto = (dadosAtuais.beneficiariosDireto || 0) + diffBeneficiarios;
+            const diffBeneficiariosIndiretos = novoForm.beneficiariosIndiretos - (ultimoForm.beneficiariosIndiretos || 0);
+            updates.beneficiariosIndireto = (dadosAtuais.beneficiariosIndireto || 0) + diffBeneficiariosIndiretos;
+
+            // Lei
+            const antigoLei = ultimoForm.lei;
+            const novaLei = getItemNome(novoForm.lei, leiList);
+            if (antigoLei !== novaLei) {
+                updates.lei = dadosAtuais.lei.map(item => {
+                    if (item.nome === antigoLei) return { ...item, qtdProjetos: Math.max(0, (item.qtdProjetos || 0) - 1) };
+                    if (item.nome === novaLei) return { ...item, qtdProjetos: (item.qtdProjetos || 0) + 1 };
+                    return item;
+                });
+            }
+
+            // Segmento
+            const antigoSegmento = ultimoForm.segmento;
+            const novoSegmento = getItemNome(novoForm.segmento, segmentoList);
+             if (antigoSegmento !== novoSegmento) {
+                updates.segmento = dadosAtuais.segmento.map(item => {
+                    if (item.nome === antigoSegmento) return { ...item, qtdProjetos: Math.max(0, (item.qtdProjetos || 0) - 1) };
+                    if (item.nome === novoSegmento) return { ...item, qtdProjetos: (item.qtdProjetos || 0) + 1 };
+                    return item;
+                });
+            }
+
+            // ODS
+            const antigoOdsIds = new Set(ultimoForm.ods);
+            const novoOdsIds = new Set(getOdsIds(novoForm.ods));
+            const novosProjetosODS = [...(dadosAtuais.projetosODS || Array(17).fill(0))];
+            
+            antigoOdsIds.forEach(id => { if (!novoOdsIds.has(id)) novosProjetosODS[id] = Math.max(0, (novosProjetosODS[id] || 0) - 1) });
+            novoOdsIds.forEach(id => { if (!antigoOdsIds.has(id)) novosProjetosODS[id] = (novosProjetosODS[id] || 0) + 1 });
+            updates.projetosODS = novosProjetosODS;
+
+            // Municípios
+            const oldMunicipios = new Set(ultimoForm.municipios);
+            const newMunicipios = new Set(novoForm.municipios);
+            const atualTotalMunicipios = new Set(dadosAtuais.municipios);
+
+            oldMunicipios.forEach(m => { if (!newMunicipios.has(m)) atualTotalMunicipios.delete(m) });
+            newMunicipios.forEach(m => atualTotalMunicipios.add(m));
+
+            updates.municipios = Array.from(atualTotalMunicipios);
+            updates.qtdMunicipios = atualTotalMunicipios.size;
+
+
+            transaction.update(docRef, updates);
+        });
+    } catch (e) {
+        console.error("Erro ao atualizar dados do estado persistente:", e);
+        throw e;
+    }
+}
+
 export default function FormsAcompanhamento() {
 
     const router = useRouter();
     const routeParams = useParams<{ id: string }>();
     const { darkMode } = useTheme();
-    const [isCheckingUser, setIsCheckingUser] = useState(true); // Estado para verificar o login
+    const [isCheckingUser, setIsCheckingUser] = useState(true); // useState para verificar o login
 
     const projetoID = routeParams.id;
     const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
@@ -152,7 +326,73 @@ export default function FormsAcompanhamento() {
         const loadingToastId = toast.loading("Enviando formulário...");
 
         try {
-            // Acessa os dados validados do objeto 'data'
+            let ultimoForm: DadosComparaveisProjeto | null = null;
+
+            // Tenta buscar o forms-acompanhamento mais recente
+            const acompanhamentoQuery = query(
+                collection(db, "forms-acompanhamento"),
+                where("projetoID", "==", projetoID),
+                orderBy("dataResposta", "desc"),
+                limit(1)
+            );
+            const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
+
+            if (!acompanhamentoSnapshot.empty) {
+                // Se encontrou, usa este como 'ultimoForm'
+                console.log("Usando o último formulário de acompanhamento como base.");
+                const ultimoFormAcompanhamento = acompanhamentoSnapshot.docs[0].data() as formsAcompanhamentoDados;
+                ultimoForm = {
+                    beneficiariosDiretos: ultimoFormAcompanhamento.beneficiariosDiretos,
+                    beneficiariosIndiretos: ultimoFormAcompanhamento.beneficiariosIndiretos,
+                    lei: ultimoFormAcompanhamento.lei,
+                    segmento: ultimoFormAcompanhamento.segmento,
+                    municipios: ultimoFormAcompanhamento.municipios,
+                    estados: ultimoFormAcompanhamento.estados,
+                    ods: ultimoFormAcompanhamento.ods,
+                };
+            } else {
+                // Se não encontrou, faz o fallback para o forms-cadastro
+                console.log("Nenhum acompanhamento anterior encontrado. Usando o formulário de cadastro como base.");
+                const cadastroQuery = query(collection(db, "forms-cadastro"), where("projetoID", "==", projetoID));
+                const cadastroSnapshot = await getDocs(cadastroQuery);
+
+                if (!cadastroSnapshot.empty) {
+                    const originalCadastro = cadastroSnapshot.docs[0].data() as formsCadastroDados;
+                    ultimoForm = {
+                        beneficiariosDiretos: originalCadastro.beneficiariosDiretos,
+                        // forms-cadastro não tem o campo de beneficiariosIndireto
+                        lei: originalCadastro.lei,
+                        segmento: originalCadastro.segmento,
+                        municipios: originalCadastro.municipios,
+                        estados: originalCadastro.estados,
+                        ods: originalCadastro.ods,
+                    };
+                }
+            }
+
+            if (!ultimoForm) {
+                toast.error("Não foi possível encontrar uma referência a esse projeto.");
+                toast.dismiss(loadingToastId);
+                return;
+            }
+
+            // Determinar quais estados foram adicionados, removidos ou mantidos
+            const antigoEstados = new Set(ultimoForm.estados);
+            const novoEstados = new Set(data.estados);
+
+            const estadosRemovidos = [...antigoEstados].filter(s => !novoEstados.has(s));
+            const estadosAdicionados = [...novoEstados].filter(s => !antigoEstados.has(s));
+            const estadosPersistidos = [...antigoEstados].filter(s => novoEstados.has(s));
+
+            // Executar as atualizações em paralelo
+            const updatePromises = [
+                ...estadosRemovidos.map(state => handleInfoRemovida(ultimoForm, state)),
+                ...estadosAdicionados.map(state => handleInfoAdicionada(data, state)),
+                ...estadosPersistidos.map(state => handleInfoPersistida(ultimoForm, data, state))
+            ];
+            
+            await Promise.all(updatePromises);
+
             const fotoURLs = await getFileUrl(data.fotos, 'forms-acompanhamento', projetoID);
 
             const uploadFirestore: formsAcompanhamentoDados = {
@@ -198,7 +438,14 @@ export default function FormsAcompanhamento() {
                 contrapartidasExecutadas: data.contrapartidasExecutadas,
             };
 
-            await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
+            const formsAcompanhamentoRef = await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
+
+            const projetoDocRef = doc(db, "projetos", projetoID);
+            await updateDoc(projetoDocRef, {
+                municipios: data.municipios,
+                ultimoFormulario: formsAcompanhamentoRef.id
+            });
+
             toast.dismiss(loadingToastId);
             toast.success(`Formulário enviado com sucesso!`);
             
@@ -329,9 +576,9 @@ export default function FormsAcompanhamento() {
                         name="estados"
                         control={control}
                         render={({ field, fieldState: { error } }) => {
-                            const handleStateRemoval = (stateName: string) => {
+                            const handleStateRemoval = (nomeEstado: string) => {
                                 const allStates = State.getStatesOfCountry("BR");
-                                const stateObject = allStates.find(s => s.name === stateName);
+                                const stateObject = allStates.find(s => s.name === nomeEstado);
                                 if (stateObject) {
                                     const estadoUF = stateObject.isoCode;
                                     const cidadesDoEstado = new Set(City.getCitiesOfState("BR", estadoUF).map(c => c.name));
