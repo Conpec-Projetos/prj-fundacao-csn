@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import {
     NormalInput,
     LongInput,
+    NumeroEndInput,
     NumberInput,
     HorizontalSelects,
     VerticalSelects,
@@ -15,185 +16,206 @@ import {
     GrowInput,
     PublicoBeneficiadoInput,
     SingleEstadoInput
-    } from "@/components/inputs/inputs";
+} from "@/components/inputs/inputs";
+import { State, City } from "country-state-city";
 import { Toaster, toast } from "sonner";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion } from "firebase/firestore";
 import { db, auth } from "@/firebase/firebase-config";
-import { formsCadastroDados, odsList, leiList, segmentoList, formsCadastroDocumentos, Projetos, Associacao } from "@/firebase/schema/entities";
+import { formsCadastroDados, odsList, leiList, segmentoList, formsCadastroDocumentos, Projetos, publicoList } from "@/firebase/schema/entities";
 import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome } from "@/lib/utils";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
 
+const MAX_FILE_SIZE_MB = 5;
+const fileArraySchema = z.array(z.instanceof(File), {
+        required_error: "O envio de arquivos é obrigatório.",
+    })
+    .min(1, "É necessário enviar pelo menos um arquivo.")
+    .refine(files => files.every(file => file.size <= MAX_FILE_SIZE_MB * 1024 * 1024), 
+        `Tamanho máximo por arquivo é de ${MAX_FILE_SIZE_MB}MB.`);
 
-export default function FormsCadastro(){
+const outroPublicoIndex = publicoList.findIndex(p => p.nome.toLowerCase().startsWith('outro'));
+
+const formsCadastroSchema = z.object({
+  instituicao: z.string().trim().min(1, "O nome da instituição é obrigatório."),
+  cnpj: z.string().trim().min(14, "O CNPJ é obrigatório e deve ter 14 dígitos."),
+  representanteLegal: z.string().trim().min(1, "O nome do representante é obrigatório."),
+  telefone: z.string().trim().min(10, "O telefone é obrigatório."),
+  emailRepLegal: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do representante é obrigatório."),
+  emailResponsavel: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do responsável é obrigatório."),
+  cep: z.string().trim().min(8, "O CEP é obrigatório."),
+  endereco: z.string().trim().min(1, "O endereço é obrigatório."),
+  numeroEndereco: z.coerce.number({ invalid_type_error: "Número inválido" }).min(1, "O número é obrigatório."),
+  complemento: z.string().optional(),
+  cidade: z.string().trim().min(1, "A cidade é obrigatória."),
+  estado: z.string().trim().min(1, "O estado é obrigatório."),
+  nomeProjeto: z.string().trim().min(1, "O nome do projeto é obrigatório."),
+  website: z.string().trim().url({ message: "URL inválida." }),
+  valorAprovado: z.coerce.number({ invalid_type_error: "Valor inválido" }).positive("O valor aprovado deve ser maior que zero."),
+  valorApto: z.coerce.number({ invalid_type_error: "Valor inválido" }).positive("O valor apto a captar deve ser maior que zero."),
+  dataComeco: z.string().min(1, "A data de início é obrigatória."),
+  dataFim: z.string().min(1, "A data de fim é obrigatória."),
+  banco: z.string().trim().min(1, "O nome do banco é obrigatório."),
+  agencia: z.string().trim().min(1, "A agência é obrigatória."),
+  conta: z.string().trim().min(1, "A conta corrente é obrigatória."),
+  segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória." }).min(0, "A seleção do segmento é obrigatória."),
+  descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres."),
+  publico: z.array(z.boolean()).refine(val => val.some(v => v), { message: "Selecione pelo menos um público." }),
+  outroPublico: z.string().optional(),
+  ods: z.array(z.boolean()).refine(val => val.filter(Boolean).length > 0, { message: "Selecione pelo menos uma ODS." }).refine(val => val.filter(Boolean).length <= 3, { message: "Selecione no máximo 3 ODSs." }),
+  beneficiariosDiretos: z.coerce.number({ invalid_type_error: "Número inválido" }).min(1, "O número de beneficiários é obrigatório."),
+  estados: z.array(z.string()).min(1, "Selecione pelo menos um estado."),
+  municipios: z.array(z.string()).min(1, "Selecione pelo menos um município."),
+  lei: z.coerce.number({ required_error: "A seleção da lei é obrigatória." }).min(0, "A seleção da lei é obrigatória."),
+  numeroLei: z.string().trim().min(1, "O número de aprovação da lei é obrigatório."),
+  contrapartidasProjeto: z.string().trim().min(10, "A descrição das contrapartidas é obrigatória."),
+  observacoes: z.string().trim().min(10, "As observações devem ter no mínimo 10 caracteres."),
+  diario: fileArraySchema,
+  apresentacao: fileArraySchema,
+  compliance: fileArraySchema,
+  documentos: fileArraySchema,
+  termosPrivacidade: z.literal(true, {
+    errorMap: () => ({ message: "Você deve aceitar os termos de privacidade para continuar." }),
+  }),
+}).refine(data => {
+    if (data.publico[outroPublicoIndex] && !data.outroPublico?.trim()) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Por favor, especifique o público.",
+    path: ["outroPublico"], 
+});
+
+type FormFields = z.infer<typeof formsCadastroSchema>;
+
+export default function FormsCadastro() {
     const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [instituicao, setInstituicao] = useState<string>("");
-    const [cnpj, setCnpj] = useState<string>("");
-    const [representanteLegal, setRepresentanteLegal] = useState<string>("");
-    const [telefone, setTelefone] = useState<string>("");
-    const [emailRepLegal, setEmailRepLegal] = useState<string>("");
-    const [emailResponsavel, setEmailResponsavel] = useState<string>("");
-    const [cep, setCep] = useState<string>("");
-    const [endereco, setEndereco] = useState<string>("");
-    const [numero, setNumero] = useState<number[]>([0]);
-    const [complemento, setComplemento] = useState<string>("");
-    const [cidade, setCidade] = useState<string>("");
-    const [estado, setEstado] = useState<string>("");
-    const [nomeProjeto, setNomeProjeto] = useState<string>("");
-    const [website, setWebsite] = useState<string>("");
-    const [valores, setValores] = useState<number[]>([0,0]);
-    const [dataComeco, setDataComeco] = useState<string>("");
-    const [dataFim, setDataFim] = useState<string>("");
-    const [diario, setDiario] = useState<File[]>([]);
-    const [banco, setBanco] = useState<string>("");
-    const [agencia, setAgencia] = useState<string>("");
-    const [conta, setConta] = useState<string>("");
-    const [segmento, setSegmento] = useState<number>(-1);
-    const [descricao, setDescricao] = useState<string>("");
-    const [apresentacao, setApresentacao] = useState<File[]>([]);
-    const [publico, setPublico] = useState<boolean[]>([]);
-    const [outroPublico, setOutroPublico] = useState<string>("");
-    const [ODS, setODS] = useState<boolean[]>(new Array(odsList.length).fill(false));
-    const [numPublico, setNumPublico] = useState<number[]>([0]);
-    const [estados, setEstados] = useState<string[]>([]);
-    const [cidades, setCidades] = useState<string[]>([]);
-    const [lei, setLei] = useState<number>(-1);
-    const [numeroLei, setNumeroLei] = useState<string>("");
-    const [contrapartidas, setContrapartidas] = useState<string>("");
-    const [observacoes, setObservacoes] = useState<string>("");
-    const [termosPrivacidade, setTermosPrivacidade] = useState<boolean>(false);
-
-    const [compliance, setCompliance] = useState<File[]>([]);
-    const [documentos, setDocumentos] = useState<File[]>([]);
-
+    
+    const {
+        register,
+        handleSubmit,
+        control,
+        setValue,
+        watch,
+        formState: { errors, isSubmitting },
+    } = useForm<FormFields>({
+        resolver: zodResolver(formsCadastroSchema),
+        mode: "onBlur",
+        defaultValues: {
+            estados: [],
+            municipios: [],
+            ods: new Array(odsList.length).fill(false),
+            publico: new Array(publicoList.length).fill(false),
+            // @ts-expect-error O erro aqui é esperado porque o usuário vai precisar escolher uma opção
+            lei: "", 
+            // @ts-expect-error O erro de tipagem aqui é esperado e pode ser ignorado
+            termosPrivacidade: false,
+            diario: [],
+            apresentacao: [],
+            compliance: [],
+            documentos: [],
+        },
+    });
+    
+    const watchedEstados = watch('estados');
+    
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // Se o usuário estiver logado, define o ID dele no estado
-                setUsuarioAtualID(user.uid);
-            } else {
-                // Se não houver usuário logado, define o estado como null
-                setUsuarioAtualID(null);
-            }
+            setUsuarioAtualID(user ? user.uid : null);
         });
         return () => unsubscribe();
     }, []);
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        
-        // Impede o envio se os termos não forem aceitos
-        if (!termosPrivacidade) {
-            toast.error("Você deve aceitar os Termos de Uso e a Política de Privacidade para continuar.");
-            return;
-        }
-
+    const onSubmit: SubmitHandler<FormFields> = async (data) => {
         const loadingToastId = toast.loading("Enviando formulário...");
 
         try {
-            const uploadFirestore: formsCadastroDados = {
-                dataPreenchido: new Date().toISOString().split('T')[0],
-                instituicao: instituicao,
-                cnpj: cnpj,
-                representante: representanteLegal,
-                telefone: telefone,
-                emailLegal: emailRepLegal,
-                emailResponsavel: emailResponsavel,
-                cep: cep,
-                endereco: endereco,
-                numeroEndereco: numero[0],
-                complemento: complemento || "",
-                cidade: cidade,
-                estado: estado,
-                nomeProjeto: nomeProjeto,
-                website: website,
-                valorAprovado: valores[0],
-                valorApto: valores[1],
-                dataInicial: dataComeco,
-                dataFinal: dataFim,
-                banco: banco,
-                agencia: agencia,
-                conta: conta,
-                segmento: getItemNome(segmento, segmentoList),
-                descricao: descricao,
-                publico: getPublicoNomes(publico, outroPublico),
-                ods: getOdsIds(ODS),
-                beneficiariosDiretos: numPublico[0],
-                qtdEstados: estados.length,
-                estados: estados,
-                qtdMunicipios: cidades.length,
-                municipios: cidades,
-                lei: getItemNome(lei, leiList),
-                numeroLei: numeroLei,
-                contrapartidasProjeto: contrapartidas,
-                observacoes: observacoes,
-                termosPrivacidade: termosPrivacidade,
-            };
-
-            const docRef = await addDoc(collection(db, "forms-cadastro"), uploadFirestore);
-
-            const createProjeto: Projetos = {
-                nome: nomeProjeto,
-                municipios: cidades,
+            const projetoData: Projetos = {
+                nome: data.nomeProjeto,
+                municipios: data.municipios,
                 status: "pendente",
                 ativo: false,
-                compliance: "pendente", // De início, o projeto não tem nenhum dos três aprovados
-                empresas: [""],
+                compliance: "pendente",
+                empresas: [],
                 indicacao: "",
-                ultimoFormulario: docRef.id, 
+                ultimoFormulario: "",
                 valorAportadoReal: 0
-            }
+            };
 
-            const docProjetoRef = await addDoc(collection(db, "projetos"), createProjeto);
+            const docProjetoRef = await addDoc(collection(db, "projetos"), projetoData);
             const projetoID = docProjetoRef.id;
 
-            const diarioUrl = await getFileUrl(diario, 'forms-cadastro', projetoID, "diario");
-            const apresentacaoUrl = await getFileUrl(apresentacao, 'forms-cadastro', projetoID, "apresentacao");
-            const complianceUrl = await getFileUrl(compliance, 'forms-cadastro', projetoID, "compliance");
-            const documentosUrl = await getFileUrl(documentos, 'forms-cadastro', projetoID);
-
-            const updateDocumentos : formsCadastroDocumentos = {
-                projetoID: docProjetoRef.id,
+            const [diarioUrl, apresentacaoUrl, complianceUrl, documentosUrl] = await Promise.all([
+                getFileUrl(data.diario, 'forms-cadastro', projetoID, "diario"),
+                getFileUrl(data.apresentacao, 'forms-cadastro', projetoID, "apresentacao"),
+                getFileUrl(data.compliance, 'forms-cadastro', projetoID, "compliance"),
+                getFileUrl(data.documentos, 'forms-cadastro', projetoID)
+            ]);
+            
+            const formData: formsCadastroDados & formsCadastroDocumentos = {
+                dataPreenchido: new Date().toISOString().split('T')[0],
+                instituicao: data.instituicao,
+                cnpj: data.cnpj,
+                representante: data.representanteLegal,
+                telefone: data.telefone,
+                emailLegal: data.emailRepLegal,
+                emailResponsavel: data.emailResponsavel,
+                cep: data.cep,
+                endereco: data.endereco,
+                numeroEndereco: data.numeroEndereco,
+                complemento: data.complemento || "",
+                cidade: data.cidade,
+                estado: data.estado,
+                nomeProjeto: data.nomeProjeto,
+                website: data.website,
+                valorAprovado: data.valorAprovado,
+                valorApto: data.valorApto,
+                dataInicial: data.dataComeco,
+                dataFinal: data.dataFim,
+                banco: data.banco,
+                agencia: data.agencia,
+                conta: data.conta,
+                segmento: getItemNome(data.segmento, segmentoList),
+                descricao: data.descricao,
+                publico: getPublicoNomes(data.publico, data.outroPublico || ""),
+                ods: getOdsIds(data.ods),
+                beneficiariosDiretos: data.beneficiariosDiretos,
+                qtdEstados: data.estados.length,
+                estados: data.estados,
+                qtdMunicipios: data.municipios.length,
+                municipios: data.municipios,
+                lei: getItemNome(data.lei, leiList),
+                numeroLei: data.numeroLei,
+                contrapartidasProjeto: data.contrapartidasProjeto,
+                observacoes: data.observacoes,
+                termosPrivacidade: data.termosPrivacidade,
+                projetoID: projetoID,
                 diario: diarioUrl,
                 apresentacao: apresentacaoUrl,
                 compliance: complianceUrl,
                 documentos: documentosUrl,
             };
 
-            await updateDoc(doc(db, "forms-cadastro", docRef.id), { ...updateDocumentos });
+            const docCadastroRef = await addDoc(collection(db, "forms-cadastro"), formData);
+            await updateDoc(doc(db, "projetos", projetoID), { ultimoFormulario: docCadastroRef.id });
 
-            // A lógica de associação só será executada se houver um usuário logado
             if (usuarioAtualID) {
-                // Procura por um documento de associação existente para o usuário
-                const associacaoRef = collection(db, "associacao");
-                const q = query(associacaoRef, where("usuarioID", "==", usuarioAtualID));
+                const q = query(collection(db, "associacao"), where("usuarioID", "==", usuarioAtualID));
                 const querySnapshot = await getDocs(q);
-
                 if (!querySnapshot.empty) {
-                    // Se existir, atualiza o documento adicionando o novo ID do projeto
-                    const existingDocRef = querySnapshot.docs[0].ref;
-                    await updateDoc(existingDocRef, {
-                        projetosIDs: arrayUnion(projetoID)
-                    });
-                    console.log("Documento de associação existente foi atualizado.");
+                    await updateDoc(querySnapshot.docs[0].ref, { projetosIDs: arrayUnion(projetoID) });
                 } else {
-                    // Se não existir, cria um novo documento
-                    const createAssociacao: Associacao = {
-                        usuarioID: usuarioAtualID,
-                        projetosIDs: [projetoID] 
-                    };
-                    await addDoc(collection(db, "associacao"), createAssociacao);
-                    console.log("Novo documento de associação foi criado.");
+                    await addDoc(collection(db, "associacao"), { usuarioID: usuarioAtualID, projetosIDs: [projetoID] });
                 }
-            } else {
-                // Caso o usuário não esteja logado, apenas informa no console.
-                console.log("Usuário não logado. Pulando a criação/atualização de associação.");
             }
 
-
             toast.dismiss(loadingToastId);
+            console.log("Formulário enviado com sucesso:", docCadastroRef.id);
             toast.success(`Formulário enviado com sucesso!`);
-
         } catch (error) {
             console.error("Erro ao enviar formulário: ", error);
             toast.dismiss(loadingToastId);
@@ -201,412 +223,413 @@ export default function FormsCadastro(){
         }
     };
 
-    return(
-        <main className="flex flex-col justify-between items-center w-[screen] h-[dvh] overflow-hidden no-scrollbar">
-            
-            <div className="flex flex-col items-center justify-center w-full h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh] text-blue-fcsn dark:text-white-off text-7xl font-bold"
-            >
-                <h1 className="text-center w-[90dvw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl"
-                 >Inscrição de Projeto</h1>
+    return (
+      <main className="flex flex-col justify-between items-center w-screen min-h-screen">
+            <div className="flex flex-col items-center justify-center w-full py-12 text-blue-fcsn dark:text-white-off">
+                <h1 className="text-center w-[90vw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold">
+                    Inscrição de Projeto
+                </h1>
             </div>
             
             <form 
-                className="flex flex-col justify-center items-center w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw] h-90/100 mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-sm  shadow-md shadow-gray-400 dark:shadow-gray-900 overflow-hidden no-scrollbar"
-                onSubmit={(event) => handleSubmit(event)}>
-                    
-                {/* Pagina 1 do formulario */}
-                <div className={currentPage === 1 ? 'block w-full' : 'hidden'}>
-                    <div className="flex flex-col items-center">
-                        <div className="flex flex-col justify-around w-11/12 h-23/24 my-10">
+                className="flex flex-col justify-center items-center w-[90vw] sm:w-[80vw] xl:w-[70vw] mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-lg"
+                onSubmit={handleSubmit(onSubmit)}
+                noValidate
+            >
 
-                        {/* Nome da instituição */}
-                            <NormalInput
-                                text="Nome da instituição:"
-                                attribute={ instituicao }
-                                setAttribute={ setInstituicao }
-                                isNotMandatory={false}
-                            ></NormalInput>
-
-                        {/* CNPJ */}
-                            <NormalInput
-                                text="CNPJ:"
-                                attribute={ cnpj }
-                                setAttribute={ setCnpj }
-                                isNotMandatory={false}
-                            ></NormalInput>
-
-                        {/* Representante legal */}
-                            <NormalInput
-                                text="Representante legal:"
-                                attribute={ representanteLegal }
-                                setAttribute={ setRepresentanteLegal }
-                                isNotMandatory={false}
-                            ></NormalInput>
-
-                        {/* Telefone do representante legal */}
-                            <NormalInput
-                                text="Telefone do representante legal:"
-                                attribute={ telefone }
-                                setAttribute={ setTelefone }
-                                isNotMandatory={false}
-                            ></NormalInput>
+              {currentPage === 1 && (
+                    <div className="w-full">
+                        <div className="flex flex-col items-center">
+                            <div className="flex flex-col justify-around w-11/12 my-10 space-y-4">
                                 
-                        {/* Email do representante legal */}
-                            <NormalInput
-                                text="E-mail do representante legal:"
-                                attribute={ emailRepLegal }
-                                setAttribute={ setEmailRepLegal }
-                                isNotMandatory={false}
-                            ></NormalInput>
-
-                        {/* Email do responsável */}
-                            <NormalInput
-                                text="E-mail do responsável:"
-                                attribute={ emailResponsavel }
-                                setAttribute={ setEmailResponsavel }
-                                isNotMandatory={false}
-                            ></NormalInput>
-
-                        {/* CEP */}
-                            <NormalInput
-                                text="CEP:"
-                                attribute={ cep }
-                                setAttribute={ setCep }
-                                isNotMandatory={false}
-                            ></NormalInput>
-
-                        {/* Endereço */}
-                            <NormalInput
-                                text="Endereço:"
-                                attribute={ endereco }
-                                setAttribute={ setEndereco }
-                                isNotMandatory={false}
-                            ></NormalInput>
-
-                        <div className="flex flex-row h-full w-full justify-between items-center gap-5">
-                            {/* Número */}
-                            <NumberInput
-                                    text="Número:"
-                                    index={0}
-                                    attribute={ numero }
-                                    setAttribute={ setNumero }
-                                    isNotMandatory={false}
-                                ></NumberInput>
-
-                            {/* Complemento */}
-                            <GrowInput
-                                    text="Complemento:"
-                                    attribute={ complemento }
-                                    setAttribute={ setComplemento }
-                                    isNotMandatory={false}
-                                ></GrowInput>
-                        </div>
-                        
-                        <div className="flex flex-row h-full w-full justify-between items-center gap-5">      
-                            {/* Cidade */}
-                            <GrowInput
-                                    text="Cidade:"
-                                    attribute={ cidade }
-                                    setAttribute={ setCidade }
-                                    isNotMandatory={false}
-                                ></GrowInput>
-
-                            {/* Estado */}
-                            <SingleEstadoInput
-                                    text="Estado:"
-                                    attribute={ estado }
-                                    setAttribute={ setEstado}
-                                    isNotMandatory={false}
-                                ></SingleEstadoInput>
-                        </div>
-
-                        {/* Nome do Projeto */}
-                            <NormalInput
-                                text="Nome do Projeto:"
-                                attribute={ nomeProjeto }
-                                setAttribute={ setNomeProjeto }
-                                isNotMandatory={false}
-                            ></NormalInput>
-
-                        {/* Link para website */}
-                            <NormalInput
-                                text="Link para website:"
-                                attribute={ website }
-                                setAttribute={ setWebsite }
-                                isNotMandatory={false}
-                            ></NormalInput>
-
-                        {/* Valor Aprovado */}
-                            <NumberInput
-                                text="Valor aprovado:"
-                                index={0}
-                                attribute={ valores }
-                                setAttribute={ setValores }
-                                isNotMandatory={false}
-                            ></NumberInput>
-
-                        {/* Valor Apto a Captar */}
-                            <NumberInput
-                                text="Valor apto a captar:"
-                                index={1}
-                                attribute={ valores }
-                                setAttribute={ setValores }
-                                isNotMandatory={false}
-                            ></NumberInput>
-
-                        {/* Período de Captação */}
-                            <DateInputs
-                                text="Período de captação:" 
-                                firstAttribute={ dataComeco } 
-                                setFirstAttribute={ setDataComeco } 
-                                secondAttribute={ dataFim } 
-                                setSecondAttribute={ setDataFim }
-                                isNotMandatory={false}
-                            ></DateInputs>
-
-                        {/* Diário Oficial */}
-                            <FileInput 
-                                text={"Diário Oficial:"}
-                                files={diario}
-                                setFiles={setDiario}
-                                isNotMandatory={false}
-                            ></FileInput>
-
-                        <h1 className="mt-5 text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
-                        >Dados Bancários</h1>
-                        
-                        <div className="flex flex-col mx-7">
-                            {/* Banco */}
                                 <NormalInput
-                                    text="Banco:"
-                                    attribute={ banco }
-                                    setAttribute={ setBanco }
+                                    text="Nome da instituição:"
                                     isNotMandatory={false}
-                                ></NormalInput>
+                                    registration={register("instituicao")}
+                                    error={errors.instituicao}
+                                />
 
-                            <div className="flex flex-row h-full w-full justify-between items-center gap-x-4">
-                                {/* Agência */}
                                 <NormalInput
-                                        text="Agência"
-                                        attribute={ agencia }
-                                        setAttribute={ setAgencia }
-                                        isNotMandatory={false}
-                                    ></NormalInput>
+                                    text="CNPJ:"
+                                    isNotMandatory={false}
+                                    registration={register("cnpj")}
+                                    error={errors.cnpj}
+                                />
 
-                                {/* Conta Corrente */}
-                                <GrowInput
-                                        text="Conta Corrente:"
-                                        attribute={ conta }
-                                        setAttribute={ setConta }
+                                <NormalInput
+                                    text="Representante legal:"
+                                    isNotMandatory={false}
+                                    registration={register("representanteLegal")}
+                                    error={errors.representanteLegal}
+                                />
+
+                                <NormalInput
+                                    text="Telefone do representante legal:"
+                                    isNotMandatory={false}
+                                    registration={register("telefone")}
+                                    error={errors.telefone}
+                                />
+
+                                <NormalInput
+                                    text="E-mail do representante legal:"
+                                    isNotMandatory={false}
+                                    registration={register("emailRepLegal")}
+                                    error={errors.emailRepLegal}
+                                />
+                                
+                                <NormalInput
+                                    text="E-mail do responsável:"
+                                    isNotMandatory={false}
+                                    registration={register("emailResponsavel")}
+                                    error={errors.emailResponsavel}
+                                />
+
+                                <NormalInput
+                                    text="CEP:"
+                                    isNotMandatory={false}
+                                    registration={register("cep")}
+                                    error={errors.cep}
+                                />
+
+                                <NormalInput
+                                    text="Endereço:"
+                                    isNotMandatory={false}
+                                    registration={register("endereco")}
+                                    error={errors.endereco}
+                                />
+
+                                <div className="flex flex-row min-h-[60px] h-fit w-full justify-center items-start gap-x-5">
+                                    <NumeroEndInput
+                                        text="Número:"
                                         isNotMandatory={false}
-                                    ></GrowInput>
+                                        registration={register("numeroEndereco")}
+                                        error={errors.numeroEndereco}
+                                    />
+
+                                    <GrowInput
+                                        text="Complemento:"
+                                        isNotMandatory={true}
+                                        registration={register("complemento")}
+                                        error={errors.complemento}
+                                    />
+                                </div>
+                                
+                                <div className="flex flex-row h-full w-full justify-between items-start gap-x-4">      
+                                    <GrowInput
+                                        text="Cidade:"
+                                        isNotMandatory={false}
+                                        registration={register("cidade")}
+                                        error={errors.cidade}
+                                    />
+
+                                    <Controller
+                                        name="estado"
+                                        control={control}
+                                        render={({ field, fieldState: { error } }) => (
+                                            <SingleEstadoInput
+                                                text="Estado:"
+                                                isNotMandatory={false}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                error={error}
+                                            />
+                                        )}
+                                    />
+                                </div>
+                                
+                                <NormalInput
+                                    text="Nome do Projeto:"
+                                    isNotMandatory={false}
+                                    registration={register("nomeProjeto")}
+                                    error={errors.nomeProjeto}
+                                />
+
+                                <NormalInput
+                                    text="Link para website:"
+                                    isNotMandatory={false}
+                                    registration={register("website")}
+                                    error={errors.website}
+                                />
+
+                                <NumberInput
+                                    text="Valor aprovado:"
+                                    isNotMandatory={false}
+                                    registration={register("valorAprovado")}
+                                    error={errors.valorAprovado}
+                                />
+
+                                <NumberInput
+                                    text="Valor apto a captar:"
+                                    isNotMandatory={false}
+                                    registration={register("valorApto")}
+                                    error={errors.valorApto}
+                                />
+                                
+                                <DateInputs
+                                    text="Período de captação:" 
+                                    isNotMandatory={false}
+                                    startRegistration={register("dataComeco")}
+                                    endRegistration={register("dataFim")}
+                                    error_start={errors.dataComeco}
+                                    error_end={errors.dataFim}
+                                />
+                                
+                                <Controller
+                                    name="diario"
+                                    control={control}
+                                    render={({ field: { onChange, value }, fieldState: { error } }) => (
+                                        <FileInput 
+                                            text={"Diário Oficial:"}
+                                            isNotMandatory={false}
+                                            value={value || []}
+                                            onChange={onChange}
+                                            error={error}
+                                        />
+                                    )}
+                                />
+
+                                <h1 className="mt-5 text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
+                                    >Dados Bancários
+                                </h1>
+
+                                <div className="flex flex-col gap-y-4 mx-7">
+                                    <NormalInput
+                                        text="Banco:"
+                                        isNotMandatory={false}
+                                        registration={register("banco")}
+                                        error={errors.banco}
+                                    />
+
+                                    <div className="flex flex-col md:flex-row h-full w-full justify-between md:items-center gap-y-3 md:gap-x-4">
+                                        <GrowInput
+                                            text="Agência:"
+                                            isNotMandatory={false}
+                                            registration={register("agencia")}
+                                            error={errors.agencia}
+                                        />
+
+                                        <NormalInput
+                                            text="Conta Corrente:"
+                                            isNotMandatory={false}
+                                            registration={register("conta")}
+                                            error={errors.conta}
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <Controller
+                                    name="segmento"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => (
+                                        <HorizontalSelects
+                                            text="Segmento do projeto:"
+                                            isNotMandatory={false}
+                                            list={segmentoList.map(s => s.nome)}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            error={error}
+                                        />
+                                    )}
+                                />
+
+                                <LongInput text="Breve descrição do projeto:" isNotMandatory={false} registration={register("descricao")} error={errors.descricao}/>
+                                
+                                <Controller
+                                    name="apresentacao"
+                                    control={control}
+                                    render={({ field: { onChange, value }, fieldState: { error } }) => (
+                                        <FileInput 
+                                            text={"Apresentação do projeto:"}
+                                            isNotMandatory={false}
+                                            value={value || []}
+                                            onChange={onChange}
+                                            error={error}
+                                        />
+                                    )}
+                                />
+
+                                <PublicoBeneficiadoInput
+                                    text="Público beneficiado:"
+                                    isNotMandatory={false}
+                                    list={publicoList.map(p => p.nome)}
+                                    control={control}
+                                    checkboxesName="publico"
+                                    outroFieldName="outroPublico"
+                                    errors={errors}
+                                />
+                                
+                                <Controller
+                                    name="ods"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => (
+
+                                        <VerticalSelects
+                                            text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
+                                            subtext="Selecione até 3 opções."
+                                            list={odsList.map(o => o.nome)}
+                                            isNotMandatory={false}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            error={error as FieldError}
+                                        />
+                                    )}
+                                />
+                                
+                                <NumberInput
+                                    text="Número de público direto que será beneficiado:"
+                                    isNotMandatory={false}
+                                    registration={register("beneficiariosDiretos")}
+                                    error={errors.beneficiariosDiretos}
+                                />
+                                
+                                <Controller
+                                    name="estados"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => {
+                                        const handleStateRemoval = (stateName: string) => {
+                                            const allStates = State.getStatesOfCountry("BR");
+                                            const stateObject = allStates.find(s => s.name === stateName);
+                                            if (stateObject) {
+                                                const estadoUF = stateObject.isoCode;
+                                                const cidadesDoEstado = new Set(City.getCitiesOfState("BR", estadoUF).map(c => c.name));
+                                                const cidadesAtuais = watch('municipios');
+                                                const novasCidades = cidadesAtuais.filter(cidade => !cidadesDoEstado.has(cidade));
+                                                setValue('municipios', novasCidades, { shouldValidate: true });
+                                            }
+                                        };
+                                        return (
+                                            <EstadoInput
+                                                text="Estados onde o projeto atua:"
+                                                isNotMandatory={false}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                onStateRemove={handleStateRemoval}
+                                                error={error as FieldError}
+                                            />
+                                        );
+                                    }}
+                                />
+
+                                <Controller
+                                    name="municipios"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => (
+                                        <CidadeInput
+                                            text="Municípios onde o projeto atua:"
+                                            isNotMandatory={false}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            selectedStates={watchedEstados}
+                                            error={error as FieldError}
+                                        />
+                                    )}
+                                />
+
+                                <LeiSelect
+                                    text="Lei de incentivo do projeto:"
+                                    list={leiList.map(l => l.nome)}
+                                    isNotMandatory={false}
+                                    registration={register("lei")}
+                                    error={errors.lei}
+                                />
+
+                                <NormalInput
+                                    text="Número de aprovação do projeto por lei:"
+                                    isNotMandatory={false}
+                                    registration={register("numeroLei")}
+                                    error={errors.numeroLei}
+                                />
+
+                                <LongInput
+                                    text="Contrapartidas:"
+                                    isNotMandatory={false}
+                                    registration={register("contrapartidasProjeto")}
+                                    error={errors.contrapartidasProjeto}
+                                />
+
+                                <LongInput
+                                    text="Observações:"
+                                    isNotMandatory={false}
+                                    registration={register("observacoes")}
+                                    error={errors.observacoes}
+                                />
+
+                            </div>
+                            <div className="flex justify-end w-full px-[5%]">
+                                <button type="button" className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10" onClick={() => setCurrentPage(2)}>Próxima página</button>
                             </div>
                         </div>
-                        
-                        {/* Segmento do projeto */}
-                            <HorizontalSelects
-                                text="Segmento do projeto:"
-                                list={[
-                                    "Cultura", 
-                                    "Esporte", 
-                                    "Pessoa Idosa", 
-                                    "Criança e Adolescente", 
-                                    "Saúde"
-                                ]}
-                                attribute={ segmento }
-                                setAttribute={ setSegmento }
-                                isNotMandatory={false}
-                            ></HorizontalSelects>
-
-                        {/* Breve descrição do projeto */}
-                            <LongInput
-                                text="Breve descrição do projeto:"
-                                attribute={ descricao }
-                                setAttribute={ setDescricao }
-                                isNotMandatory={false}
-                            ></LongInput>
-
-                        {/* Apresentação do projeto */}
-                            <FileInput
-                                text={"Apresentação do projeto:"}
-                                files={apresentacao}
-                                setFiles={setApresentacao}
-                                isNotMandatory={false}
-                            ></FileInput>
-
-                        {/* Público beneficiado */}
-                            <PublicoBeneficiadoInput 
-                                text="Publico beneficiado:"
-                                list={[
-                                    "Crianças",
-                                    "Adolescentes",
-                                    "Jovens",
-                                    "Adultos",
-                                    "Idosos",
-                                    "Outro:"
-                                ]}
-                                attribute={ publico }
-                                setAttribute={ setPublico }
-                                outroAttribute= { outroPublico }
-                                setOutroAttribute= { setOutroPublico }
-                                isNotMandatory={false}
-                            ></PublicoBeneficiadoInput>
-
-                        {/* ODSs: */}
-                            <VerticalSelects 
-                                text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
-                                subtext="Selecione até 3 opções."
-                                list={[
-                                    "Erradicação da Pobreza",
-                                    "Fome Zero e Agricultura Sustentável",
-                                    "Saúde e Bem-estar",
-                                    "Educação de qualidade",
-                                    "Igualdade de Gênero",
-                                    "Agua potável e Saneamento",
-                                    "Energia Acessível e Limpa",
-                                    "Trabalho decente e Crescimento Econômico",
-                                    "Indústria, Inovação e Infraestrutura",
-                                    "Redução das Desigualdades",
-                                    "Cidades e Comunidades Sustentáveis",
-                                    "Consumo e Produção Responsáveis",
-                                    "Ação contra a Mudança Global do Clima",
-                                    "Vida na Água",
-                                    "Vida Terrestre",
-                                    "Paz, Justiça e Instituições Eficazes",
-                                    "Parcerias e Meios de Implementação"
-                                ]}
-                                attribute={ ODS }
-                                setAttribute={ setODS }
-                                isNotMandatory={false}
-                            ></VerticalSelects>
-
-                        {/* Número de público direto que será impactado */}
-                            <NumberInput
-                                text="Número de público direto que será impactado:"
-                                index={0}
-                                attribute={ numPublico }
-                                setAttribute={ setNumPublico }
-                                isNotMandatory={false}
-                            ></NumberInput>
-
-                        {/* Estados onde o projeto atua */}
-                            <EstadoInput
-                                text="Estados onde o projeto atua:"
-                                estados={ estados }
-                                setEstados={ setEstados }
-                                cidades={ cidades }
-                                setCidades={ setCidades }
-                                isNotMandatory={false}
-                            ></EstadoInput>
-
-                        {/* Municípios onde o projeto atua */}
-                            <CidadeInput
-                                text="Municípios onde o projeto atua:"
-                                estados={ estados }
-                                setEstados={ setEstados }
-                                cidades={ cidades }
-                                setCidades={ setCidades }
-                                isNotMandatory={false}
-                            ></CidadeInput>
-
-                        {/* Lei de incentivo do projeto */}
-                            <LeiSelect
-                                text="Lei de incentivo do projeto:"
-                                list={[
-                                    "Lei de Incentivo à Cultura",
-                                    "PROAC - Programa de Ação Cultural",
-                                    "FIA - Lei Fundo para a Infância e Adolescência", 
-                                    "LIE - Lei de Incentivo ao Esporte", 
-                                    "Lei da Pessoa Idosa", 
-                                    "Pronas - Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência", 
-                                    "Pronon - Programa Nacional de Apoio à Atenção Oncológica", 
-                                    "Promac - Programa de Incentivo à Cultura do Município de São Paulo", 
-                                    "ICMS - MG Imposto sobre Circulação de Mercadoria e Serviços", 
-                                    "ICMS - RJ Imposto sobre Circulação de Mercadoria e Serviços", 
-                                    "PIE - Lei Paulista de Incentivo ao Esporte"
-                                ]}
-                                attribute={ lei }
-                                setAttribute={ setLei }
-                                isNotMandatory={false}
-                            ></LeiSelect>
-
-                        {/* Número de aprovação do projeto por lei */}
-                            <NormalInput
-                                text="Número de aprovação do projeto por lei:"
-                                attribute={ numeroLei }
-                                setAttribute={ setNumeroLei }
-                                isNotMandatory={false}
-                            ></NormalInput>
-
-                        {/* Contrapartida */}
-                            <LongInput
-                                text="Contrapartidas:"
-                                attribute={ contrapartidas }
-                                setAttribute={ setContrapartidas }
-                                isNotMandatory={false}
-                            ></LongInput>
-
-                        {/* Observações */}
-                            <LongInput
-                                text="Observações:"
-                                attribute={ observacoes }
-                                setAttribute={ setObservacoes }
-                                isNotMandatory={false}
-                            ></LongInput>
-                        
-                        </div>
-
-                        <div className="flex justify-end w-full px-[5%]">
-                            <button 
-                                type="button"
-                                className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10"
-                                onClick={() => setCurrentPage(2)}
-                            >Próxima página</button>
-                        </div>
                     </div>
-                </div>
+                )}
+                
+                {currentPage === 2 && (
+                     <div className="w-full">
+                        <div className="flex flex-col w-full items-center gap-8 mt-10">
+                            <div className="w-11/12">
+                                <Controller
+                                    name="compliance"
+                                    control={control}
+                                    render={({ field: { onChange, value }, fieldState: { error } }) => (
+                                        <FileInput 
+                                            text={"Formulário de compliance:"}
+                                            isNotMandatory={false}
+                                            value={value || []}
+                                            onChange={onChange}
+                                            error={error as FieldError}
+                                        />
+                                    )}
+                                />
+                                
+                                <Controller
+                                    name="documentos"
+                                    control={control}
+                                    render={({ field: { onChange, value }, fieldState: { error } }) => (
+                                        <FileInput 
+                                            text={"Documentos adicionais:"}
+                                            isNotMandatory={false}
+                                            value={value || []}
+                                            onChange={onChange}
+                                            error={error as FieldError}
+                                        />
+                                    )}
+                                />
 
-                {/* Pagina 2 do formulario */}
-                <div className={currentPage === 2 ? 'block w-full' : 'hidden'}>
-                    <div className="flex flex-col w-full items-center gap-8 mt-10">
-                        <div className="w-11/12">
-                            <FileInput
-                                text={"Formulário de compliance:"}
-                                files={compliance}
-                                setFiles={setCompliance}
-                                isNotMandatory={false}
-                            />
-                            <FileInput
-                                text={"Documentos adicionais:"}
-                                files={documentos}
-                                setFiles={setDocumentos}
-                                isNotMandatory={false}
-                            />
-                            <div className="flex flex-row gap-x-2 items-center pt-7">
-                                <input 
-                                type="checkbox" 
-                                className="w-[20px] h-[20px] focus:ring focus:ring-blue-fcsn accent-blue-fcsn cursor-pointer"
-                                checked={termosPrivacidade}
-                                onChange={(select) => setTermosPrivacidade(select.target.checked)}/>
-                                <p className="text-xl text-blue-fcsn">Eu declaro ter lido e concordado com os Termos de Uso e a Política de Privacidade<span className="text-[#B15265]"> *</span></p>
+                                <div className="flex flex-col pt-7">
+                                    <div className="flex flex-row gap-x-2 items-center">
+                                        <input 
+                                            type="checkbox" 
+                                            className="w-5 h-5 accent-blue-fcsn cursor-pointer"
+                                            {...register("termosPrivacidade")}
+                                        />
+                                        <p className="text-lg text-blue-fcsn dark:text-white">
+                                            Eu declaro ter lido e concordado com os Termos de Uso e a Política de Privacidade
+                                            <span className="text-[#B15265]">*</span>
+                                        </p>
+                                    </div>
+                                    {errors.termosPrivacidade && <p className="text-red-500 text-sm mt-1 pl-7">{errors.termosPrivacidade.message}</p>}
+                                </div>
+                            </div>
+                            <div className="flex flex-row w-11/12 justify-between gap-4 mt-8">
+                                <button
+                                    type="button"
+                                    className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-gray-100 hover:bg-white rounded-[7px] text-md md:text-lg font-bold text-blue-fcsn cursor-pointer shadow-md mb-10"
+                                    onClick={() => setCurrentPage(1)}
+                                    >Página anterior
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10"
+                                    >{isSubmitting ? "Enviando..." : "Enviar"}
+                                </button>
                             </div>
                         </div>
-                        <div className="flex flex-row w-11/12 justify-between gap-4">
-                            <button
-                                type="button"
-                                className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-gray-100 hover:bg-white rounded-[7px] text-md md:text-lg font-bold text-blue-fcsn cursor-pointer shadow-md mb-10"
-                                onClick={() => setCurrentPage(1)}
-                            >Página anterior</button>
-                            <button
-                                type="submit"
-                                className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10"
-                            >Enviar</button>
-                        </div>
                     </div>
-                </div>
+                )}
             </form>
-            <Toaster richColors />
-            <Footer></Footer>
+            <Toaster richColors closeButton />
+            <Footer/>
         </main>
     );
 }
