@@ -196,7 +196,7 @@ export const publicoList: Publico[] = [
   { id: 2, nome: "Jovens" },
   { id: 3, nome: "Adultos" },
   { id: 4, nome: "Idosos" },
-  { id: 5, nome: "" },
+  { id: 5, nome: "Outro:" },
 ];
 
 export interface Ods {

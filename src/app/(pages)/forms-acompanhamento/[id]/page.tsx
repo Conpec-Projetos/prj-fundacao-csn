@@ -26,6 +26,62 @@ import { formsAcompanhamentoDados, odsList, leiList, segmentoList, ambitoList } 
 import { getFileUrl, getOdsIds, getItemNome } from "@/lib/utils";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
+import { State, City } from "country-state-city";
+
+const MAX_FILE_SIZE_MB = 5;
+const fileArraySchema = z.array(z.instanceof(File), {
+        required_error: "O envio de fotos é obrigatório.",
+    })
+    .min(1, "É necessário enviar pelo menos uma foto.")
+    .max(5, "Você pode enviar no máximo 5 fotos.")
+    .refine(files => files.every(file => file.size <= MAX_FILE_SIZE_MB * 1024 * 1024), 
+        `Tamanho máximo por arquivo é de ${MAX_FILE_SIZE_MB}MB.`);
+
+const acompanhamentoSchema = z.object({
+  instituicao: z.string().trim().min(1, "O nome da instituição é obrigatório."),
+  descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres."),
+  segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória." }).min(0, "A seleção do segmento é obrigatória."),
+  lei: z.coerce.number({ required_error: "A seleção da lei é obrigatória." }).min(0, "A seleção da lei é obrigatória."),
+  positivos: z.string().optional(),
+  negativos: z.string().optional(),
+  atencao: z.string().optional(),
+  ambito: z.coerce.number({ required_error: "A seleção do âmbito é obrigatória." }).min(0, "A seleção do âmbito é obrigatória."),
+  estados: z.array(z.string()).min(1, "Selecione pelo menos um estado."),
+  municipios: z.array(z.string()).min(1, "Selecione pelo menos um município."),
+  especificacoes: z.string().trim().min(1, "As especificações do território são obrigatórias."),
+  dataComeco: z.string().min(1, "A data de início é obrigatória."),
+  dataFim: z.string().min(1, "A data de fim é obrigatória."),
+  contrapartidasProjeto: z.string().trim().min(10, "A descrição das contrapartidas é obrigatória."),
+  beneficiariosDiretos: z.coerce.number({ invalid_type_error: "Número inválido" }).min(0, "O valor deve ser zero ou maior."),
+  beneficiariosIndiretos: z.coerce.number({ invalid_type_error: "Número inválido" }).min(0, "O valor deve ser zero ou maior."),
+  diversidade: z.string({ required_error: "A seleção é obrigatória." }),
+  qtdAmarelas: z.coerce.number().min(0),
+  qtdBrancas: z.coerce.number().min(0),
+  qtdIndigenas: z.coerce.number().min(0),
+  qtdPardas: z.coerce.number().min(0),
+  qtdPretas: z.coerce.number().min(0),
+  qtdMulherCis: z.coerce.number().min(0),
+  qtdMulherTrans: z.coerce.number().min(0),
+  qtdHomemCis: z.coerce.number().min(0),
+  qtdHomemTrans: z.coerce.number().min(0),
+  qtdNaoBinarios: z.coerce.number().min(0),
+  qtdPCD: z.coerce.number().min(0),
+  qtdLGBT: z.coerce.number().min(0),
+  ods: z.array(z.boolean()).refine(val => val.filter(Boolean).length > 0, { message: "Selecione pelo menos uma ODS." }).refine(val => val.filter(Boolean).length <= 3, { message: "Selecione no máximo 3 ODSs." }),
+  relato: z.string().optional(),
+  fotos: fileArraySchema,
+  website: z.string().trim().url({ message: "URL inválida." }),
+  links: z.string().trim().min(1, "Insira pelo menos um link."),
+  contrapartidasExecutadas: z.string().optional(),
+}).refine(data => new Date(data.dataFim) > new Date(data.dataComeco), {
+    message: "A data final deve ser posterior à data inicial.",
+    path: ["dataFim"],
+});
+
+type FormFields = z.infer<typeof acompanhamentoSchema>;
 
 export default function FormsAcompanhamento() {
 
@@ -35,31 +91,43 @@ export default function FormsAcompanhamento() {
     const [isCheckingUser, setIsCheckingUser] = useState(true); // Estado para verificar o login
 
     const projetoID = routeParams.id;
-
     const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
-    const [instituicao, setInstituicao] = useState<string>("");
-    const [descricao, setDescricao] = useState<string>("");
-    const [segmento, setSegmento] = useState<number>(-1);
-    const [lei, setLei] = useState<number>(-1);
-    const [positivos, setPositivos] = useState<string>("");
-    const [negativos, setNegativos] = useState<string>("");
-    const [atencao, setAtencao] = useState<string>("");
-    const [ambito, setAmbito] = useState<number>(-1);
-    const [estados, setEstados] = useState<string[]>([]);
-    const [cidades, setCidades] = useState<string[]>([]);
-    const [especificacoes, setEspecificacoes] = useState<string>("");
-    const [dataComeco, setDataComeco] = useState<string>("");
-    const [dataFim, setDataFim] = useState<string>("");
-    const [contrapartidas, setContrapartidas] = useState<string>("");
-    const [beneficiarios, setBeneficiarios] = useState<number[]>([0, 0]);
-    const [diversidade, setDiversidade] = useState<boolean | undefined>(undefined);
-    const [etnias, setEtnias] = useState<number[]>(new Array(12).fill(0));
-    const [ODS, setODS] = useState<boolean[]>(new Array(odsList.length).fill(false));
-    const [relato, setRelato] = useState<string>("");
-    const [fotos, setFotos] = useState<File[]>([]);
-    const [website, setWebsite] = useState<string>("");
-    const [links, setLinks] = useState<string>("");
-    const [executadas, setExecutadas] = useState<string>("");
+
+    const {
+        register,
+        handleSubmit,
+        control,
+        watch,
+        setValue,
+        formState: { errors, isSubmitting },
+    } = useForm<FormFields>({
+        resolver: zodResolver(acompanhamentoSchema),
+        mode: "onBlur", // Valida quando o campo perde o foco
+        defaultValues: {
+            instituicao: "",
+            descricao: "",
+            // @ts-expect-error O erro aqui é esperado porque o usuário vai precisar escolher uma opção
+            lei: "", 
+            positivos: "",
+            negativos: "",
+            atencao: "",
+            estados: [],
+            municipios: [],
+            especificacoes: "",
+            dataComeco: "",
+            dataFim: "",
+            contrapartidasProjeto: "",
+            diversidade: "",
+            ods: new Array(odsList.length).fill(false),
+            relato: "",
+            fotos: [],
+            website: "",
+            links: "",
+            contrapartidasExecutadas: "",
+        }
+    });
+
+    const watchedEstados = watch('estados');
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -74,8 +142,7 @@ export default function FormsAcompanhamento() {
         return () => unsubscribe();
     }, [router]);
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    const onSubmit: SubmitHandler<FormFields> = async (data) => {
 
         if (!usuarioAtualID) {
             toast.error("Usuário não autenticado. Por favor, faça login.");
@@ -85,49 +152,50 @@ export default function FormsAcompanhamento() {
         const loadingToastId = toast.loading("Enviando formulário...");
 
         try {
-            const fotoURLs = await getFileUrl(fotos, 'forms-acompanhamento', projetoID);
+            // Acessa os dados validados do objeto 'data'
+            const fotoURLs = await getFileUrl(data.fotos, 'forms-acompanhamento', projetoID);
 
             const uploadFirestore: formsAcompanhamentoDados = {
                 projetoID: projetoID,
                 dataResposta: new Date().toISOString().split('T')[0],
                 usuarioID: usuarioAtualID,
-                instituicao: instituicao,
-                descricao: descricao,
-                segmento: getItemNome(segmento, segmentoList),
-                lei: getItemNome(lei, leiList),
-                pontosPositivos: positivos || "",
-                pontosNegativos: negativos || "",
-                pontosAtencao: atencao || "",
-                ambito: getItemNome(ambito, ambitoList),
-                qtdEstados: estados.length,
-                estados: estados,
-                qtdMunicipios: cidades.length,
-                municipios: cidades,
-                especificacoes: especificacoes,
-                dataInicial: dataComeco,
-                dataFinal: dataFim,
-                contrapartidasProjeto: contrapartidas,
-                beneficiariosDiretos: beneficiarios[0],
-                beneficiariosIndiretos: beneficiarios[1],
-                diversidade: diversidade ?? false,
-                qtdAmarelas: etnias[0],
-                qtdBrancas: etnias[1],
-                qtdIndigenas: etnias[2],
-                qtdPardas: etnias[3],
-                qtdPretas: etnias[4],
-                qtdMulherCis: etnias[5],
-                qtdMulherTrans: etnias[6],
-                qtdHomemCis: etnias[7],
-                qtdHomemTrans: etnias[8],
-                qtdNaoBinarios: etnias[9],
-                qtdPCD: etnias[10],
-                qtdLGBT: etnias[11],
-                ods: getOdsIds(ODS),
-                relato: relato || "",
+                instituicao: data.instituicao,
+                descricao: data.descricao,
+                segmento: getItemNome(data.segmento, segmentoList),
+                lei: getItemNome(data.lei, leiList),
+                pontosPositivos: data.positivos,
+                pontosNegativos: data.negativos,
+                pontosAtencao: data.atencao,
+                ambito: getItemNome(data.ambito, ambitoList),
+                qtdEstados: data.estados.length,
+                estados: data.estados,
+                qtdMunicipios: data.municipios.length,
+                municipios: data.municipios,
+                especificacoes: data.especificacoes,
+                dataInicial: data.dataComeco,
+                dataFinal: data.dataFim,
+                contrapartidasProjeto: data.contrapartidasProjeto,
+                beneficiariosDiretos: data.beneficiariosDiretos,
+                beneficiariosIndiretos: data.beneficiariosIndiretos,
+                diversidade: data.diversidade === 'true',
+                qtdAmarelas: data.qtdAmarelas,
+                qtdBrancas: data.qtdBrancas,
+                qtdIndigenas: data.qtdIndigenas,
+                qtdPardas: data.qtdPardas,
+                qtdPretas: data.qtdPretas,
+                qtdMulherCis: data.qtdMulherCis,
+                qtdMulherTrans: data.qtdMulherTrans,
+                qtdHomemCis: data.qtdHomemCis,
+                qtdHomemTrans: data.qtdHomemTrans,
+                qtdNaoBinarios: data.qtdNaoBinarios,
+                qtdPCD: data.qtdPCD,
+                qtdLGBT: data.qtdLGBT,
+                ods: getOdsIds(data.ods),
+                relato: data.relato,
                 fotos: fotoURLs,
-                website: website,
-                links: links,
-                contrapartidasExecutadas: executadas || "",
+                website: data.website,
+                links: data.links,
+                contrapartidasExecutadas: data.contrapartidasExecutadas,
             };
 
             await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
@@ -166,360 +234,361 @@ export default function FormsAcompanhamento() {
             <div className="flex flex-col items-center justify-center w-full h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh] text-blue-fcsn dark:text-white-off text-7xl font-bold"
             >
                 <h1 className="text-center w-[90dvw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl
-                ">Acompanhamento de projetos</h1>
+                ">Acompanhamento de projeto</h1>
             </div>
             
             <form 
                 className="flex flex-col justify-center items-center w-[90svw] sm:w-[80dvw] md:w-[80dvw] xl:w-[70dvw] h-90/100 mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-sm shadow-md shadow-gray-400 dark:shadow-gray-900 overflow-hidden no-scrollbar"
-                onSubmit={(event) => handleSubmit(event)}>
+                onSubmit={handleSubmit(onSubmit)}
+                noValidate>
                 
 
                 <div className="flex flex-col justify-around w-11/12 h-23/24 py-10">
                 {/* Nome da instituição */}
                     <NormalInput
                         text="Nome da instituição:"
-                        attribute={ instituicao }
-                        setAttribute={ setInstituicao }
                         isNotMandatory={false}
-                    ></NormalInput>
+                        registration={register("instituicao")}
+                        error={errors.instituicao}
+                    />
 
                 {/* Breve descrição do prj */}
                     <LongInput
                         text="Breve descrição do projeto:"
-                        attribute={ descricao }
-                        setAttribute={ setDescricao }
+                        registration={register("descricao")}
+                        error={errors.descricao}
                         isNotMandatory={false}
-                    ></LongInput>
-
+                    />
                 {/* Seg do Projeto */}
-                    <HorizontalSelects
-                        text="Segmento do projeto:"
-                        list={[
-                            "Cultura", 
-                            "Esporte", 
-                            "Pessoa Idosa", 
-                            "Criança e Adolescente", 
-                            "Saúde"
-                        ]}
-                        attribute={ segmento }
-                        setAttribute={ setSegmento }
-                        isNotMandatory={false}
-                    ></HorizontalSelects>
+                    <Controller
+                        name="segmento"
+                        control={control}
+                        render={({ field, fieldState: { error } }) => (
+                            <HorizontalSelects
+                                text="Segmento do projeto:"
+                                isNotMandatory={false}
+                                list={segmentoList.map(s => s.nome)}
+                                value={field.value}
+                                onChange={field.onChange}
+                                error={error}
+                            />
+                        )}
+                    />
 
                 {/* Lei de incentivo do prj*/}
                     <LeiSelect
                         text="Lei de incentivo do projeto:"
-                        list={[
-                            "Lei de Incentivo à Cultura",
-                            "PROAC - Programa de Ação Cultural",
-                            "FIA - Lei Fundo para a Infância e Adolescência", 
-                            "LIE - Lei de Incentivo ao Esporte", 
-                            "Lei da Pessoa Idosa", 
-                            "Pronas - Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência", 
-                            "Pronon - Programa Nacional de Apoio à Atenção Oncológica", 
-                            "Promac - Programa de Incentivo à Cultura do Município de São Paulo", 
-                            "ICMS - MG Imposto sobre Circulação de Mercadoria e Serviços", 
-                            "ICMS - RJ Imposto sobre Circulação de Mercadoria e Serviços", 
-                            "PIE - Lei Paulista de Incentivo ao Esporte"
-                        ]}
-                        attribute={ lei }
-                        setAttribute={ setLei }
+                        list={leiList.map(l => l.nome)}
                         isNotMandatory={false}
-                    ></LeiSelect>
+                        registration={register("lei")}
+                        error={errors.lei}
+                    />
                         
                 {/* Pontos positivos do prj */}
                     <LongInput
                         text="Pontos positivos do projeto:"
-                        attribute={ positivos }
-                        setAttribute={ setPositivos }
                         isNotMandatory={true}
-                    ></LongInput>
+                        registration={register("positivos")}
+                        error={errors.positivos}
+                    />
 
                 {/* Pontos negtivos do prj */}
                     <LongInput
                         text="Pontos negativos do projeto:" 
-                        attribute={ negativos }
-                        setAttribute={ setNegativos }
                         isNotMandatory={true}
-                    ></LongInput>
+                        registration={register("negativos")}
+                        error={errors.negativos}
+                    />
 
                 {/* Pontos de atenção do prj */}
                     <LongInput
                         text="Pontos de atenção do projeto:"
-                        attribute={ atencao }
-                        setAttribute={ setAtencao }
                         isNotMandatory={true}
-                    ></LongInput>
+                        registration={register("atencao")}
+                        error={errors.atencao}
+                    />
                 
                 {/* Ambito de desenvolvimento do prj */}
-                    <HorizontalSelects
-                        text="Âmbito de desenvolvimento do projeto:"
-                        list={[
-                            "Nacional",
-                            "Estadual",
-                            "Municipal"
-                        ]}
-                        attribute={ ambito }
-                        setAttribute={ setAmbito }
-                        isNotMandatory={false}
-                    ></HorizontalSelects>
+                    <Controller
+                        name="ambito"
+                        control={control}
+                        render={({ field, fieldState: { error } }) => (
+                            <HorizontalSelects
+                                text="Âmbito de desenvolvimento do projeto:"
+                                isNotMandatory={false}
+                                list={ambitoList.map(s => s.nome)}
+                                value={field.value}
+                                onChange={field.onChange}
+                                error={error}
+                            />
+                        )}
+                    />
 
                 {/* Estados onde ele atua: */}
-                    <EstadoInput
-                        text="Estados onde o projeto atua:"
-                        estados={ estados }
-                        setEstados={ setEstados }
-                        cidades={ cidades }
-                        setCidades={ setCidades }
-                        isNotMandatory={false}
-                    ></EstadoInput>
+                    <Controller
+                        name="estados"
+                        control={control}
+                        render={({ field, fieldState: { error } }) => {
+                            const handleStateRemoval = (stateName: string) => {
+                                const allStates = State.getStatesOfCountry("BR");
+                                const stateObject = allStates.find(s => s.name === stateName);
+                                if (stateObject) {
+                                    const estadoUF = stateObject.isoCode;
+                                    const cidadesDoEstado = new Set(City.getCitiesOfState("BR", estadoUF).map(c => c.name));
+                                    const cidadesAtuais = watch('municipios');
+                                    const novasCidades = cidadesAtuais.filter(cidade => !cidadesDoEstado.has(cidade));
+                                    setValue('municipios', novasCidades, { shouldValidate: true });
+                                }
+                            };
+                            return (
+                                <EstadoInput
+                                    text="Estados onde o projeto atua:"
+                                    isNotMandatory={false}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onStateRemove={handleStateRemoval}
+                                    error={error as FieldError}
+                                />
+                            );
+                        }}
+                    />
 
                 {/* Municipios onde ele atua: */}
-                    <CidadeInput
-                        text="Municípios onde o projeto atua:"
-                        estados={ estados }
-                        setEstados={ setEstados }
-                        cidades={ cidades }
-                        setCidades={ setCidades }
-                        isNotMandatory={false}
-                    ></CidadeInput>
+                    <Controller
+                        name="municipios"
+                        control={control}
+                        render={({ field, fieldState: { error } }) => (
+                            <CidadeInput
+                                text="Municípios onde o projeto atua:"
+                                isNotMandatory={false}
+                                value={field.value}
+                                onChange={field.onChange}
+                                selectedStates={watchedEstados}
+                                error={error as FieldError}
+                            />
+                        )}
+                    />
 
                 {/* Especificações do territorio de atuação do prj: */}
                     <LongInput
                         text="Especificações do territorio de atuação do projeto:"
-                        attribute={ especificacoes }
-                        setAttribute={ setEspecificacoes }
                         isNotMandatory={false}
-                    ></LongInput>
+                        registration={register("especificacoes")}
+                        error={errors.especificacoes}
+                    />
 
                 {/* Periodo de execução do prj: */}
                     <DateInputs
                         text="Período de execução do projeto:" 
-                        firstAttribute={ dataComeco } 
-                        setFirstAttribute={ setDataComeco } 
-                        secondAttribute={ dataFim } 
-                        setSecondAttribute={ setDataFim }
                         isNotMandatory={false}
-                    ></DateInputs>
+                        startRegistration={register("dataComeco")}
+                        endRegistration={register("dataFim")}
+                        error_start={errors.dataComeco}
+                        error_end={errors.dataFim}
+                    />
 
                 {/* Contrapartidas do projeto: */}
                     <LongInput 
                         text="Contrapartidas do projeto:" 
-                        attribute={ contrapartidas } 
-                        setAttribute={ setContrapartidas }
                         isNotMandatory={false}
-                    ></LongInput>
+                        registration={register("contrapartidasProjeto")}
+                        error={errors.contrapartidasProjeto}
+                    />
+                    <div className="flex flex-col gap-3 py-4">
+                    {/* Numero total de beneficiários diretos: */}
+                        <NumberInput 
+                            text="Número total de beneficiários diretos no projeto:" 
+                            isNotMandatory={false}
+                            registration={register("beneficiariosDiretos")}
+                            error={errors.beneficiariosDiretos}
+                        />
+                    
+                    {/* Numero total de beneficiários indiretos: */}
+                        <NumberInput 
+                            text="Número total de beneficiários indiretos no projeto:" 
+                            isNotMandatory={false}
+                            registration={register("beneficiariosIndiretos")}
+                            error={errors.beneficiariosIndiretos}
+                        />
 
-                {/* Numero total de beneficiários diretos: */}
-                    <NumberInput 
-                        text="Número total de beneficiários diretos no projeto:" 
-                        index={0}
-                        attribute={ beneficiarios }
-                        setAttribute={ setBeneficiarios }
-                        isNotMandatory={false}
-                    ></NumberInput>
-                
-                {/* Numero total de beneficiários indiretos: */}
-                    <NumberInput 
-                        text="Número total de beneficiários indiretos no projeto:" 
-                        index={1}
-                        attribute={ beneficiarios }
-                        setAttribute={ setBeneficiarios }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* Adota politicas de diversidade?: */}
+                        <YesNoInput 
+                            text="Sua instituição adota políticas de diversidade?" 
+                            list={["Sim", "Não"]}
+                            isNotMandatory={false}
+                            registration={register("diversidade")}
+                            error={errors.diversidade}
+                        />
 
-                {/* Adota politicas de diversidade?: */}
-                    <YesNoInput 
-                        text="Sua instituição adota políticas de diversidade?" 
-                        list={["Sim", "Não"]}
-                        attribute={ diversidade }
-                        setAttribute={ setDiversidade }
-                        isNotMandatory={false}
-                    ></YesNoInput>
+                    {/* Amarelas: */}
+                        <NumberInput 
+                            text="Quantidade de pessoas Amarelas na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdAmarelas")}
+                            error={errors.qtdAmarelas}
+                        />
 
-                {/* Amarelas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Amarelas na sua instituição:" 
-                        index={0}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* Brancas: */}
+                        <NumberInput 
+                            text="Quantidade de pessoas Brancas na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdBrancas")}
+                            error={errors.qtdBrancas}
+                            />
 
-                {/* Brancas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Brancas na sua instituição:" 
-                        index={1}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* Indígenas: */}
+                        <NumberInput 
+                            text="Quantidade de pessoas Indígenas na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdIndigenas")}
+                            error={errors.qtdIndigenas}
+                        />
 
-                {/* Indígenas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Indígenas na sua instituição:" 
-                        index={2}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* Pardas: */}
+                        <NumberInput 
+                            text="Quantidade de pessoas Pardas na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdPardas")}
+                            error={errors.qtdPardas}
+                            />
 
-                {/* Pardas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Pardas na sua instituição:" 
-                        index={3}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* Pretas: */}
+                        <NumberInput 
+                            text="Quantidade de pessoas Pretas na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdPretas")}
+                            error={errors.qtdPretas}
+                        />
 
-                {/* Pretas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Pretas na sua instituição:" 
-                        index={4}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* Mulher cis: */}
+                        <NumberInput 
+                            text="Quantidade de Mulheres Cisgênero na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdMulherCis")}
+                            error={errors.qtdMulherCis}
+                            />
 
-                {/* Mulher cis: */}
-                    <NumberInput 
-                        text="Quantidade de Mulheres Cisgênero na sua instituição:" 
-                        index={5}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* Mulher trans: */}
+                        <NumberInput 
+                            text="Quantidade de Mulheres Transgênero na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdMulherTrans")}
+                            error={errors.qtdMulherTrans}
+                        />
 
-                {/* Mulher trans: */}
-                    <NumberInput 
-                        text="Quantidade de Mulheres Transgênero na sua instituição:" 
-                        index={6}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* Homem cis: */}
+                        <NumberInput 
+                            text="Quantidade de Homens Cisgênero na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdHomemCis")}
+                            error={errors.qtdHomemCis}
+                        />
 
-                {/* Homem cis: */}
-                    <NumberInput 
-                        text="Quantidade de Homens Cisgênero na sua instituição:" 
-                        index={7}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* Homem trans: */}
+                        <NumberInput 
+                            text="Quantidade de Homens Transgênero na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdHomemTrans")}
+                            error={errors.qtdHomemTrans}
+                        />
 
-                {/* Homem trans: */}
-                    <NumberInput 
-                        text="Quantidade de Homens Transgênero na sua instituição:" 
-                        index={8}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* NBs: */}
+                        <NumberInput 
+                            text="Quantidade de pessoas Não-Binárias na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdNaoBinarios")}
+                            error={errors.qtdNaoBinarios}
+                        />
 
-                {/* NBs: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Não-Binárias na sua instituição:" 
-                        index={9}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* PCDs: */}
+                        <NumberInput 
+                            text="Quantidade de Pessoas Com Deficiência (PCD) na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdPCD")}
+                            error={errors.qtdPCD}
+                        />
 
-                {/* PCDs: */}
-                    <NumberInput 
-                        text="Quantidade de Pessoas Com Deficiência (PCD) na sua instituição:" 
-                        index={10}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
+                    {/* LGBTs: */}
+                        <NumberInput 
+                            text="Quantidade de pessoas da comunidade LGBTQIA+ na sua instituição:" 
+                            isNotMandatory={false}
+                            registration={register("qtdLGBT")}
+                            error={errors.qtdLGBT}
+                            />
 
-                {/* LGBTs: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas da comunidade LGBTQIA+ na sua instituição:" 
-                        index={11}
-                        attribute={ etnias }
-                        setAttribute={ setEtnias }
-                        isNotMandatory={false}
-                    ></NumberInput>
-
+                    </div>
                 {/* ODSs: */}
-                    <VerticalSelects 
-                        text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
-                        subtext="Selecione até 3 opções."
-                        list={[
-                            "Erradicação da Pobreza",
-                            "Fome Zero e Agricultura Sustentável",
-                            "Saúde e Bem-estar",
-                            "Educação de qualidade",
-                            "Igualdade de Gênero",
-                            "Agua potável e Saneamento",
-                            "Energia Acessível e Limpa",
-                            "Trabalho decente e Crescimento Econômico",
-                            "Indústria, Inovação e Infraestrutura",
-                            "Redução das Desigualdades",
-                            "Cidades e Comunidades Sustentáveis",
-                            "Consumo e Produção Responsáveis",
-                            "Ação contra a Mudança Global do Clima",
-                            "Vida na Água",
-                            "Vida Terrestre",
-                            "Paz, Justiça e Instituições Eficazes",
-                            "Parcerias e Meios de Implementação"
-                        ]}
-                        attribute={ ODS }
-                        setAttribute={ setODS }
-                        isNotMandatory={false}
-                    ></VerticalSelects>
+                    <Controller
+                        name="ods"
+                        control={control}
+                        render={({ field, fieldState: { error } }) => (
+
+                            <VerticalSelects
+                                text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
+                                subtext="Selecione até 3 opções."
+                                list={odsList.map(o => o.nome)}
+                                isNotMandatory={false}
+                                value={field.value}
+                                onChange={field.onChange}
+                                error={error as FieldError}
+                            />
+                        )}
+                    />
 
                 {/* Relato de um beneficiário: */}
                     <LongInput 
                         text="Breve relato de um beneficiário do projeto:" 
-                        attribute={ relato } 
-                        setAttribute={ setRelato }
                         isNotMandatory={true}
-                    ></LongInput>
-
+                        registration={register("relato")}
+                        error={errors.relato}
+                    />
                 {/* Cinco fotos: */}
-                    <FileInput 
-                        text={"Cinco fotos das atividades do projeto:"}
-                        files={fotos}
-                        setFiles={setFotos}
-                        isNotMandatory={false}
-                    ></FileInput>
+                    <Controller
+                        name="fotos"
+                        control={control}
+                        render={({ field: { onChange, value }, fieldState: { error } }) => (
+                            <FileInput 
+                                text={"Cinco fotos das atividades do projeto:"}
+                                isNotMandatory={false}
+                                value={value || []}
+                                onChange={onChange}
+                                error={error}
+                            />
+                        )}
+                    />
 
                 {/* Links para as website: */}
-                    <NormalInput 
-                        text="Link para website:" 
-                        attribute={ website } 
-                        setAttribute={ setWebsite }
+                    <NormalInput
+                        text="Link para website:"
                         isNotMandatory={false}
-                    ></NormalInput>
+                        registration={register("website")}
+                        error={errors.website}
+                    />
 
                 {/* Links para as redes sociais */}
                     <LongInput 
                         text="Links para as redes sociais:" 
-                        attribute={ links } 
-                        setAttribute={ setLinks }
                         isNotMandatory={false}
-                    ></LongInput>
+                        registration={register("links")}
+                        error={errors.links}
+                    />
 
                 {/* Contrapartidas apresentadas e executadas: */}
                     <LongInput 
                         text="Contrapartidas apresentadas e contrapartidas executadas:" 
-                        attribute={ executadas } 
-                        setAttribute={ setExecutadas }
                         isNotMandatory={true}
-                    ></LongInput>
-                    
+                        registration={register("contrapartidasExecutadas")}
+                        error={errors.contrapartidasExecutadas}
+                    />
+
                 </div>
                     
-                <div className="flex flex-grow items-start w-full">
+                <div className="flex w-11/12 items-start">
                     <button 
                         type="submit"
-                        className="w-[110px] md:w-[150px] h-[60px] md:h-[75px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-xl md:text-3xl font-bold text-white  ease-in-out cursor-pointer ml-[3dvw] mb-10"
-                    >Enviar</button>
+                        disabled={isSubmitting}
+                        className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10"
+                    >{isSubmitting ? "Enviando..." : "Enviar"}</button>
                 </div>
             </form>
             <Toaster richColors />
