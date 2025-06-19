@@ -20,10 +20,10 @@ import {
 import { State, City } from "country-state-city";
 import { Toaster, toast } from "sonner";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion } from "firebase/firestore";
+import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion, runTransaction } from "firebase/firestore";
 import { db, auth } from "@/firebase/firebase-config";
-import { formsCadastroDados, odsList, leiList, segmentoList, formsCadastroDocumentos, Projetos, publicoList } from "@/firebase/schema/entities";
-import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome } from "@/lib/utils";
+import { formsCadastroDados, odsList, leiList, segmentoList, formsCadastroDocumentos, Projetos, publicoList, dadosEstados } from "@/firebase/schema/entities";
+import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome, slugifyEstado } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
@@ -39,57 +39,151 @@ const fileArraySchema = z.array(z.instanceof(File), {
 const outroPublicoIndex = publicoList.findIndex(p => p.nome.toLowerCase().startsWith('outro'));
 
 const formsCadastroSchema = z.object({
-  instituicao: z.string().trim().min(1, "O nome da instituição é obrigatório."),
-  cnpj: z.string().trim().min(14, "O CNPJ é obrigatório e deve ter 14 dígitos."),
-  representanteLegal: z.string().trim().min(1, "O nome do representante é obrigatório."),
-  telefone: z.string().trim().min(10, "O telefone é obrigatório."),
-  emailRepLegal: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do representante é obrigatório."),
-  emailResponsavel: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do responsável é obrigatório."),
-  cep: z.string().trim().min(8, "O CEP é obrigatório."),
-  endereco: z.string().trim().min(1, "O endereço é obrigatório."),
-  numeroEndereco: z.coerce.number({ invalid_type_error: "Número inválido" }).min(1, "O número é obrigatório."),
-  complemento: z.string().optional(),
-  cidade: z.string().trim().min(1, "A cidade é obrigatória."),
-  estado: z.string().trim().min(1, "O estado é obrigatório."),
-  nomeProjeto: z.string().trim().min(1, "O nome do projeto é obrigatório."),
-  website: z.string().trim().url({ message: "URL inválida." }),
-  valorAprovado: z.coerce.number({ invalid_type_error: "Valor inválido" }).positive("O valor aprovado deve ser maior que zero."),
-  valorApto: z.coerce.number({ invalid_type_error: "Valor inválido" }).positive("O valor apto a captar deve ser maior que zero."),
-  dataComeco: z.string().min(1, "A data de início é obrigatória."),
-  dataFim: z.string().min(1, "A data de fim é obrigatória."),
-  banco: z.string().trim().min(1, "O nome do banco é obrigatório."),
-  agencia: z.string().trim().min(1, "A agência é obrigatória."),
-  conta: z.string().trim().min(1, "A conta corrente é obrigatória."),
-  segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória." }).min(0, "A seleção do segmento é obrigatória."),
-  descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres."),
-  publico: z.array(z.boolean()).refine(val => val.some(v => v), { message: "Selecione pelo menos um público." }),
-  outroPublico: z.string().optional(),
-  ods: z.array(z.boolean()).refine(val => val.filter(Boolean).length > 0, { message: "Selecione pelo menos uma ODS." }).refine(val => val.filter(Boolean).length <= 3, { message: "Selecione no máximo 3 ODSs." }),
-  beneficiariosDiretos: z.coerce.number({ invalid_type_error: "Número inválido" }).min(1, "O número de beneficiários é obrigatório."),
-  estados: z.array(z.string()).min(1, "Selecione pelo menos um estado."),
-  municipios: z.array(z.string()).min(1, "Selecione pelo menos um município."),
-  lei: z.coerce.number({ required_error: "A seleção da lei é obrigatória." }).min(0, "A seleção da lei é obrigatória."),
-  numeroLei: z.string().trim().min(1, "O número de aprovação da lei é obrigatório."),
-  contrapartidasProjeto: z.string().trim().min(10, "A descrição das contrapartidas é obrigatória."),
-  observacoes: z.string().trim().min(10, "As observações devem ter no mínimo 10 caracteres."),
-  diario: fileArraySchema,
-  apresentacao: fileArraySchema,
-  compliance: fileArraySchema,
-  documentos: fileArraySchema,
-  termosPrivacidade: z.literal(true, {
+    instituicao: z.string().trim().min(1, "O nome da instituição é obrigatório."),
+    cnpj: z.string().trim().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}\-\d{2}$/, {message: "Formato inválido (ex: 12.345.678/0001-00)."}),
+    representanteLegal: z.string().trim().min(1, "O nome do representante é obrigatório."),
+    telefone: z.string().trim().min(10, "O telefone é obrigatório."),
+    emailRepLegal: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do representante é obrigatório."),
+    emailResponsavel: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do responsável é obrigatório."),
+    cep: z.string().trim().min(8, "O CEP é obrigatório."),
+    endereco: z.string().trim().min(1, "O endereço é obrigatório."),
+    numeroEndereco: z.coerce.number({ invalid_type_error: "Número inválido" }).min(1, "O número é obrigatório."),
+    complemento: z.string().optional(),
+    cidade: z.string().trim().min(1, "A cidade é obrigatória."),
+    estado: z.string().trim().min(1, "O estado é obrigatório."),
+    nomeProjeto: z.string().trim().min(1, "O nome do projeto é obrigatório."),
+    website: z.string().trim().url({ message: "URL inválida." }),
+    valorAprovado: z.coerce.number({ invalid_type_error: "Valor inválido" }).positive("O valor aprovado deve ser maior que zero."),
+    valorApto: z.coerce.number({ invalid_type_error: "Valor inválido" }).positive("O valor apto a captar deve ser maior que zero."),
+    dataComeco: z.string().min(1, "A data de início é obrigatória."),
+    dataFim: z.string().min(1, "A data de fim é obrigatória."),
+    banco: z.string().trim().min(1, "O nome do banco é obrigatório."),
+    agencia: z.string().trim().min(1, "A agência é obrigatória."),
+    conta: z.string().trim().min(1, "A conta corrente é obrigatória."),
+    segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória." }).min(0, "A seleção do segmento é obrigatória."),
+    descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres."),
+    publico: z.array(z.boolean()).refine(val => val.some(v => v), { message: "Selecione pelo menos um público." }),
+    outroPublico: z.string().optional(),
+    ods: z.array(z.boolean()).refine(val => val.filter(Boolean).length > 0, { message: "Selecione pelo menos uma ODS." }).refine(val => val.filter(Boolean).length <= 3, { message: "Selecione no máximo 3 ODSs." }),
+    beneficiariosDiretos: z.coerce.number({ invalid_type_error: "Número inválido" }).min(1, "O número de beneficiários é obrigatório."),
+    estados: z.array(z.string()).min(1, "Selecione pelo menos um estado."),
+    municipios: z.array(z.string()).min(1, "Selecione pelo menos um município."),
+    lei: z.coerce.number({ required_error: "A seleção da lei é obrigatória." }).min(0, "A seleção da lei é obrigatória."),
+    numeroLei: z.string().trim().min(1, "O número de aprovação da lei é obrigatório."),
+    contrapartidasProjeto: z.string().trim().min(10, "A descrição das contrapartidas é obrigatória."),
+    observacoes: z.string().trim().min(10, "As observações devem ter no mínimo 10 caracteres."),
+    diario: fileArraySchema,
+    apresentacao: fileArraySchema,
+    compliance: fileArraySchema,
+    documentos: fileArraySchema,
+    termosPrivacidade: z.literal(true, {
     errorMap: () => ({ message: "Você deve aceitar os termos de privacidade para continuar." }),
-  }),
-}).refine(data => {
-    if (data.publico[outroPublicoIndex] && !data.outroPublico?.trim()) {
-        return false;
-    }
-    return true;
-}, {
+        }),
+    }).refine(data => {
+        if (data.publico[outroPublicoIndex] && !data.outroPublico?.trim()) {
+            return false;
+        }
+        return true;
+    }, {
     message: "Por favor, especifique o público.",
     path: ["outroPublico"], 
 });
 
 type FormFields = z.infer<typeof formsCadastroSchema>;
+
+async function updateDadosEstado(formData: FormFields, stateName: string) {
+    // Converte o nome do estado (ex: "São Paulo") para o ID do documento (ex: "sao_paulo")
+    const estadoDocID = slugifyEstado(stateName);
+    const docRef = doc(db, "dadosEstados", estadoDocID);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const docSnapshot = await transaction.get(docRef);
+
+            if (!docSnapshot.exists()) {
+                console.error(`Documento para o estado ${stateName} (${estadoDocID}) não encontrado!`);
+                return;
+            }
+
+            const dadosAtuais = docSnapshot.data() as dadosEstados;
+            type UpdatesType = Partial<{
+                beneficiariosDireto: number;
+                lei: typeof dadosAtuais.lei;
+                municipios: string[];
+                qtdMunicipios: number;
+                projetosODS: number[];
+                qtdOrganizacoes: number;
+                qtdProjetos: number;
+                segmento: typeof dadosAtuais.segmento;
+            }>;
+            const updates: UpdatesType = {};
+
+            // beneficiariosDireto
+            updates.beneficiariosDireto = (dadosAtuais.beneficiariosDireto || 0) + formData.beneficiariosDiretos;
+
+            // lei
+            const leiSelecionadaNome = getItemNome(formData.lei, leiList);
+            updates.lei = dadosAtuais.lei.map(item =>
+                item.nome === leiSelecionadaNome
+                    ? { ...item, qtdProjetos: (item.qtdProjetos || 0) + 1 }
+                    : item
+            );
+
+            // municipios
+            const municipiosAtuais = new Set(dadosAtuais.municipios || []); 
+
+            const estadoObject = State.getAllStates().find(s => s.name === stateName && s.countryCode === 'BR');
+
+            if (estadoObject) {
+                // Pega a lista de cidades APENAS desse estado
+                const municipiosDoEstado = City.getCitiesOfState('BR', estadoObject.isoCode);
+                const nomeMunicipios = new Set(municipiosDoEstado.map(c => c.name));
+
+                // Filtra os municípios do formulário para garantir que eles pertencem a este estado
+                const formMunicipios = formData.municipios.filter(m => nomeMunicipios.has(m));
+
+                const novoMunicipiosSet = new Set([...municipiosAtuais, ...formMunicipios]);
+                const municipiosAdicionados = novoMunicipiosSet.size - municipiosAtuais.size;
+                
+                updates.municipios = Array.from(novoMunicipiosSet);
+                updates.qtdMunicipios = (dadosAtuais.qtdMunicipios || 0) + municipiosAdicionados;
+            } else {
+                console.warn(`Não foi possível encontrar o objeto do estado para: ${stateName}`);
+            }
+
+            // projetosODS
+            const odsIds = getOdsIds(formData.ods);
+            const novosProjetosODS = [...(dadosAtuais.projetosODS || Array(17).fill(0))];
+            odsIds.forEach(id => {
+                // ODSs são base 1, array é base 0.
+                if (id >= 0 && id < novosProjetosODS.length) {
+                    novosProjetosODS[id] = (novosProjetosODS[id] || 0) + 1;
+                }
+            });
+            updates.projetosODS = novosProjetosODS;
+
+            // qtdOrganizacoes & qtdProjetos
+            updates.qtdOrganizacoes = (dadosAtuais.qtdOrganizacoes || 0) + 1;
+            updates.qtdProjetos = (dadosAtuais.qtdProjetos || 0) + 1;
+
+            // segmento
+            const segmentoSelecionadoNome = getItemNome(formData.segmento, segmentoList);
+            updates.segmento = dadosAtuais.segmento.map(item =>
+                item.nome === segmentoSelecionadoNome
+                    ? { ...item, qtdProjetos: (item.qtdProjetos || 0) + 1 }
+                    : item
+            );
+
+            // Aplica todas as atualizações na transação
+            transaction.update(docRef, updates);
+        });
+        console.log(`Documento do estado ${stateName} atualizado com sucesso.`);
+    } catch (error) {
+        console.error(`Erro ao atualizar dados para o estado ${stateName}:`, error);
+        // Lançar o erro novamente para que o `onSubmit` principal possa capturá-lo
+        throw error;
+    }
+}
 
 export default function FormsCadastro() {
     const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
@@ -203,6 +297,9 @@ export default function FormsCadastro() {
             const docCadastroRef = await addDoc(collection(db, "forms-cadastro"), formData);
             await updateDoc(doc(db, "projetos", projetoID), { ultimoFormulario: docCadastroRef.id });
 
+            const updatePromises = data.estados.map(estado => updateDadosEstado(data, estado));
+            await Promise.all(updatePromises);
+
             if (usuarioAtualID) {
                 const q = query(collection(db, "associacao"), where("usuarioID", "==", usuarioAtualID));
                 const querySnapshot = await getDocs(q);
@@ -232,7 +329,7 @@ export default function FormsCadastro() {
             </div>
             
             <form 
-                className="flex flex-col justify-center items-center w-[90vw] sm:w-[80vw] xl:w-[70vw] mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-lg"
+                className="flex flex-col justify-center items-center max-w-[1500px] w-[90vw] sm:w-[80vw] xl:w-[70vw] mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-lg"
                 onSubmit={handleSubmit(onSubmit)}
                 noValidate
             >
@@ -254,6 +351,7 @@ export default function FormsCadastro() {
                                     isNotMandatory={false}
                                     registration={register("cnpj")}
                                     error={errors.cnpj}
+                                    placeholder="xx.xxx.xxx/xxxx-xx"
                                 />
 
                                 <NormalInput
@@ -401,7 +499,7 @@ export default function FormsCadastro() {
                                     />
 
                                     <div className="flex flex-col md:flex-row h-full w-full justify-between md:items-center gap-y-3 md:gap-x-4">
-                                        <GrowInput
+                                        <NormalInput
                                             text="Agência:"
                                             isNotMandatory={false}
                                             registration={register("agencia")}
@@ -488,9 +586,9 @@ export default function FormsCadastro() {
                                     render={({ field, fieldState: { error } }) => {
                                         const handleStateRemoval = (stateName: string) => {
                                             const allStates = State.getStatesOfCountry("BR");
-                                            const stateObject = allStates.find(s => s.name === stateName);
-                                            if (stateObject) {
-                                                const estadoUF = stateObject.isoCode;
+                                            const estadoObject = allStates.find(s => s.name === stateName);
+                                            if (estadoObject) {
+                                                const estadoUF = estadoObject.isoCode;
                                                 const cidadesDoEstado = new Set(City.getCitiesOfState("BR", estadoUF).map(c => c.name));
                                                 const cidadesAtuais = watch('municipios');
                                                 const novasCidades = cidadesAtuais.filter(cidade => !cidadesDoEstado.has(cidade));

@@ -53,3 +53,11 @@ export function getItemNome(selectedItem: number, ItemList: { id: number; nome: 
     const itemObj = ItemList.find((item) => item.id === selectedItem);
     return itemObj ? itemObj.nome : "";
 }
+
+export function slugifyEstado(stateName: string): string {
+    return stateName
+        .toLowerCase()
+        .normalize("NFD") // Remove acentos
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, '_'); // Substitui espaços por underscores
+}

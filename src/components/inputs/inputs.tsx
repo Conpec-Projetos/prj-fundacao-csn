@@ -197,8 +197,8 @@ export const LeiSelect: React.FC<HookFormSelectProps> = ({ text, list, isNotMand
 
 export const NumeroEndInput: React.FC<HookFormInputProps> = ({ text, isNotMandatory, registration, error }) => {
     return (
-        <div className="flex flex-col lg:flex-row w-auto justify-start items-start sm:items-center">
-            <label htmlFor={registration.name} className="text-xl text-blue-fcsn dark:text-white-off self-center font-bold pr-1">
+        <div className="flex flex-col lg:flex-row w-auto justify-start items-start">
+            <label htmlFor={registration.name} className="text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center font-bold pr-1">
                 {text} {isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </label>
             
@@ -321,7 +321,7 @@ export const EstadoInput: React.FC<EstadoInputProps> = ({ text, isNotMandatory, 
 
                     {/* Lista de sugestões */}
                     {showSuggestions && filteredStates.length > 0 && (
-                        <ul className="absolute top-[50px] left-[-1px] right-[-1px] z-10 bg-white dark:bg-blue-fcsn3 border-l border-r border-b border-blue-fcsn rounded-b-[7px] max-h-[50vh] overflow-y-auto shadow-lg">
+                        <ul className="absolute top-[50px] left-[-1px] right-[-1px] z-20 bg-white dark:bg-blue-fcsn3 border-l border-r border-b border-blue-fcsn rounded-b-[7px] max-h-[50vh] overflow-y-auto shadow-lg">
                             {filteredStates.map((state) => (
                                 <li
                                     key={state.isoCode}
