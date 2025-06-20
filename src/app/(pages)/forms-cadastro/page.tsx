@@ -22,37 +22,46 @@ import { Toaster, toast } from "sonner";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion, runTransaction } from "firebase/firestore";
 import { db, auth } from "@/firebase/firebase-config";
-import { formsCadastroDados, odsList, leiList, segmentoList, formsCadastroDocumentos, Projetos, publicoList, dadosEstados } from "@/firebase/schema/entities";
-import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome, slugifyEstado } from "@/lib/utils";
+import { formsCadastroDados, odsList, leiList, segmentoList, Projetos, publicoList, dadosEstados } from "@/firebase/schema/entities";
+import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome, slugifyEstado, validaCNPJ } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
+import { useForm, SubmitHandler, Controller, FieldError} from "react-hook-form";
 
-const MAX_FILE_SIZE_MB = 5;
-const fileArraySchema = z.array(z.instanceof(File), {
+const MAX_FILE_SIZE_MB = 10;
+const fileArraySchema = (acceptedTypes: string[], typeName: string) => z.array(z.instanceof(File), {
         required_error: "O envio de arquivos é obrigatório.",
     })
     .min(1, "É necessário enviar pelo menos um arquivo.")
     .refine(files => files.every(file => file.size <= MAX_FILE_SIZE_MB * 1024 * 1024), 
-        `Tamanho máximo por arquivo é de ${MAX_FILE_SIZE_MB}MB.`);
+        `Tamanho máximo por arquivo é de ${MAX_FILE_SIZE_MB}MB.`)
+    .refine(files => files.every(file => acceptedTypes.includes(file.type)),
+        `Tipo de arquivo inválido. Apenas ${typeName} são aceitos.`
+    );
 
 const outroPublicoIndex = publicoList.findIndex(p => p.nome.toLowerCase().startsWith('outro'));
 
 const formsCadastroSchema = z.object({
     instituicao: z.string().trim().min(1, "O nome da instituição é obrigatório."),
-    cnpj: z.string().trim().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}\-\d{2}$/, {message: "Formato inválido (ex: 12.345.678/0001-00)."}),
+    cnpj: z.string().trim()
+    .min(1, "O CNPJ é obrigatório.") // Garante que o campo não seja enviado vazio
+    .refine((cnpj) => {
+        const apenasDigitos = cnpj.replace(/\D/g, '');
+        return apenasDigitos.length === 14;
+    }, "O CNPJ deve conter 14 dígitos.")
+    .refine(validaCNPJ, "O CNPJ informado não é válido."),
     representanteLegal: z.string().trim().min(1, "O nome do representante é obrigatório."),
     telefone: z.string().trim().min(10, "O telefone é obrigatório."),
     emailRepLegal: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do representante é obrigatório."),
     emailResponsavel: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do responsável é obrigatório."),
-    cep: z.string().trim().min(8, "O CEP é obrigatório."),
-    endereco: z.string().trim().min(1, "O endereço é obrigatório."),
+    cep: z.string().trim().regex(/^\d{5}-\d{3}$/, { message: "Formato de CEP inválido (ex: 12345-678)."}),
+    endereco: z.string({ required_error: "" }).trim().min(1, "O endereço é obrigatório."),
     numeroEndereco: z.coerce.number({ invalid_type_error: "Número inválido" }).min(1, "O número é obrigatório."),
     complemento: z.string().optional(),
-    cidade: z.string().trim().min(1, "A cidade é obrigatória."),
-    estado: z.string().trim().min(1, "O estado é obrigatório."),
+    cidade: z.string({ required_error: "" }).trim().min(1, "A cidade é obrigatória."),
+    estado: z.string({ required_error: "" }).trim().min(1, "O estado é obrigatório."),
     nomeProjeto: z.string().trim().min(1, "O nome do projeto é obrigatório."),
-    website: z.string().trim().url({ message: "URL inválida." }),
+    website: z.string().url({ message: "URL inválida." }),
     valorAprovado: z.coerce.number({ invalid_type_error: "Valor inválido" }).positive("O valor aprovado deve ser maior que zero."),
     valorApto: z.coerce.number({ invalid_type_error: "Valor inválido" }).positive("O valor apto a captar deve ser maior que zero."),
     dataComeco: z.string().min(1, "A data de início é obrigatória."),
@@ -60,7 +69,7 @@ const formsCadastroSchema = z.object({
     banco: z.string().trim().min(1, "O nome do banco é obrigatório."),
     agencia: z.string().trim().min(1, "A agência é obrigatória."),
     conta: z.string().trim().min(1, "A conta corrente é obrigatória."),
-    segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória." }).min(0, "A seleção do segmento é obrigatória."),
+    segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória.", invalid_type_error: "Selecione uma das opções" }).min(0, "A seleção do segmento é obrigatória."),
     descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres."),
     publico: z.array(z.boolean()).refine(val => val.some(v => v), { message: "Selecione pelo menos um público." }),
     outroPublico: z.string().optional(),
@@ -72,10 +81,10 @@ const formsCadastroSchema = z.object({
     numeroLei: z.string().trim().min(1, "O número de aprovação da lei é obrigatório."),
     contrapartidasProjeto: z.string().trim().min(10, "A descrição das contrapartidas é obrigatória."),
     observacoes: z.string().trim().min(10, "As observações devem ter no mínimo 10 caracteres."),
-    diario: fileArraySchema,
-    apresentacao: fileArraySchema,
-    compliance: fileArraySchema,
-    documentos: fileArraySchema,
+    diario: fileArraySchema(['application/pdf', 'image/jpeg', 'image/png'], 'PDF ou Imagens'),
+    apresentacao: fileArraySchema(['application/pdf', 'image/jpeg', 'image/png'], 'PDF ou Imagens'),
+    compliance: fileArraySchema(['application/pdf'], 'PDF'),
+    documentos: fileArraySchema(['application/pdf', 'image/jpeg', 'image/png'], 'PDF ou Imagens'),
     termosPrivacidade: z.literal(true, {
     errorMap: () => ({ message: "Você deve aceitar os termos de privacidade para continuar." }),
         }),
@@ -200,22 +209,85 @@ export default function FormsCadastro() {
         resolver: zodResolver(formsCadastroSchema),
         mode: "onBlur",
         defaultValues: {
+            instituicao: "",
+            cnpj: "",
+            representanteLegal: "",
+            telefone: "",
+            emailRepLegal: "",
+            emailResponsavel: "",
+            cep: "",
+            endereco: "",
+            numeroEndereco: undefined,
+            complemento: "",
+            cidade: "",
+            estado: "",
+            nomeProjeto: "",
+            website: "",
+            valorAprovado: undefined,
+            valorApto: undefined,
+            dataComeco: "",
+            dataFim: "",
+            banco: "",
+            agencia: "",
+            conta: "",
+            segmento: undefined,
+            descricao: "",
+            publico: new Array(publicoList.length).fill(false),
+            outroPublico: "",
+            ods: new Array(odsList.length).fill(false),
+            beneficiariosDiretos: undefined,
             estados: [],
             municipios: [],
-            ods: new Array(odsList.length).fill(false),
-            publico: new Array(publicoList.length).fill(false),
             // @ts-expect-error O erro aqui é esperado porque o usuário vai precisar escolher uma opção
             lei: "", 
-            // @ts-expect-error O erro de tipagem aqui é esperado e pode ser ignorado
-            termosPrivacidade: false,
+            numeroLei: "",
+            contrapartidasProjeto: "",
+            observacoes: "",
             diario: [],
             apresentacao: [],
             compliance: [],
             documentos: [],
+            // @ts-expect-error O erro de tipagem aqui é esperado e pode ser ignorado
+            termosPrivacidade: false,
         },
     });
     
+    const watchedCep = watch('cep'); // Observa alterações no campo CEP
     const watchedEstados = watch('estados');
+
+    useEffect(() => {
+        const fetchAddress = async (cep: string) => {
+            // Remove caracteres não numéricos do CEP
+            const cepFormatado = cep.replace(/\D/g, '');
+
+            if (cepFormatado.length !== 8) {
+                return; // Sai se o CEP não estiver completo
+            }
+
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cepFormatado}/json/`);
+
+                if (!response.ok) {
+                    throw new Error('CEP não encontrado');
+                }
+
+                const data = await response.json();
+
+                // Adiciona o bairro junto ao nome da rua, se o bairro existir
+                const fullAddress = data.bairro ? `${data.logradouro} - ${data.bairro}` : data.logradouro;
+
+                // Preenche os campos do formulário com os dados do endereço
+                setValue("endereco", fullAddress, { shouldValidate: true });
+                setValue("cidade", data.localidade, { shouldValidate: true });
+                setValue("estado", data.uf, { shouldValidate: true });
+            
+            } catch (error) {
+                console.error("Erro ao buscar CEP:", error);
+            }
+        };
+
+        fetchAddress(watchedCep);
+    }, [watchedCep, setValue]); // O useEffect será executado quando watchedCep ou setValue mudarem
     
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -230,6 +302,7 @@ export default function FormsCadastro() {
         try {
             const projetoData: Projetos = {
                 nome: data.nomeProjeto,
+                // estados: data.estados, // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
                 municipios: data.municipios,
                 status: "pendente",
                 ativo: false,
@@ -250,7 +323,7 @@ export default function FormsCadastro() {
                 getFileUrl(data.documentos, 'forms-cadastro', projetoID)
             ]);
             
-            const formData: formsCadastroDados & formsCadastroDocumentos = {
+            const formData: formsCadastroDados = {
                 dataPreenchido: new Date().toISOString().split('T')[0],
                 instituicao: data.instituicao,
                 cnpj: data.cnpj,
@@ -346,12 +419,37 @@ export default function FormsCadastro() {
                                     error={errors.instituicao}
                                 />
 
-                                <NormalInput
-                                    text="CNPJ:"
-                                    isNotMandatory={false}
-                                    registration={register("cnpj")}
-                                    error={errors.cnpj}
-                                    placeholder="xx.xxx.xxx/xxxx-xx"
+                                <Controller
+                                    name="cnpj"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => {
+                                        const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                            const valorCNPJ = e.target.value;
+
+                                            // Aplica a máscara XX.XXX.XXX/XXXX-XX
+                                            const cnpjFormatado = valorCNPJ
+                                                .replace(/\D/g, '') // Remove tudo que não for dígito
+                                                .slice(0, 14) // Limita a 14 caracteres
+                                                .replace(/^(\d{2})/, '$1.')
+                                                .replace(/^(\d{2})\.(\d{3})/, '$1.$2.')
+                                                .replace(/\.(\d{3})\/$/, '.$1/')
+                                                .replace(/^(\d{2})\.(\d{3})\.(\d{3})/, '$1.$2.$3/')
+                                                .replace(/\/(\d{4})-/, '/$1')
+                                                .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})/, '$1.$2.$3/$4-');
+                                            
+                                            field.onChange(cnpjFormatado);
+                                        };
+
+                                        return (
+                                            <NormalInput
+                                                text="CNPJ:"
+                                                isNotMandatory={false}
+                                                registration={{ ...field, onChange: handleCnpjChange }}
+                                                error={error}
+                                                placeholder="00.000.000/0000-00"
+                                            />
+                                        );
+                                    }}
                                 />
 
                                 <NormalInput
@@ -382,11 +480,32 @@ export default function FormsCadastro() {
                                     error={errors.emailResponsavel}
                                 />
 
-                                <NormalInput
-                                    text="CEP:"
-                                    isNotMandatory={false}
-                                    registration={register("cep")}
-                                    error={errors.cep}
+                                <Controller
+                                    name="cep"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => {
+                                        const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                            const valorCEP = e.target.value;
+                                            
+                                            const cepFormatado = valorCEP
+                                                .replace(/\D/g, '') // Remove tudo que não for dígito
+                                                .slice(0, 8) // Limita a 8 dígitos
+                                                .replace(/(\d{5})(\d)/, '$1-$2'); // Aplica a máscara xxxxx-xxx
+
+                                            // Atualiza o valor do formulário
+                                            field.onChange(cepFormatado);
+                                        };
+
+                                        return (
+                                            <NormalInput
+                                                text="CEP:"
+                                                isNotMandatory={false}
+                                                registration={{ ...field, onChange: handleCepChange }}
+                                                error={error}
+                                                placeholder="00000-000"
+                                            />
+                                        );
+                                    }}
                                 />
 
                                 <NormalInput
@@ -482,6 +601,7 @@ export default function FormsCadastro() {
                                             value={value || []}
                                             onChange={onChange}
                                             error={error}
+                                            acceptedFileTypes={['application/pdf', 'image/jpeg', 'image/png']}
                                         />
                                     )}
                                 />
@@ -542,6 +662,7 @@ export default function FormsCadastro() {
                                             value={value || []}
                                             onChange={onChange}
                                             error={error}
+                                            acceptedFileTypes={['application/pdf', 'image/jpeg', 'image/png']}
                                         />
                                     )}
                                 />
@@ -674,6 +795,7 @@ export default function FormsCadastro() {
                                             value={value || []}
                                             onChange={onChange}
                                             error={error as FieldError}
+                                            acceptedFileTypes={['application/pdf']}
                                         />
                                     )}
                                 />
@@ -688,6 +810,7 @@ export default function FormsCadastro() {
                                             value={value || []}
                                             onChange={onChange}
                                             error={error as FieldError}
+                                            acceptedFileTypes={['application/pdf', 'image/jpeg', 'image/png']}
                                         />
                                     )}
                                 />

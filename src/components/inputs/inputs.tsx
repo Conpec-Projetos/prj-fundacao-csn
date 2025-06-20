@@ -940,23 +940,39 @@ interface ControlledFileInputProps {
     value: File[]; // O array de arquivos vindo do react-hook-form
     onChange: (files: File[]) => void; // A função para atualizar o array de arquivos
     error?: FieldError;
+    acceptedFileTypes?: string[];
 }
 
-export const FileInput: React.FC<ControlledFileInputProps> = ({ text, isNotMandatory, value, onChange, error }) => {
-    const [fileSize, setFileSize] = useState<number>(0)
+export const FileInput: React.FC<ControlledFileInputProps> = ({ text, isNotMandatory, value, onChange, error, acceptedFileTypes = [] }) => {
     const [isDragging, setIsDragging] = useState(false);
-
-    
-    // Garante que 'value' (que vem do react-hook-form) seja sempre um array para evitar erros.
     const files = useMemo(() => value || [], [value]);
 
-    const handleAddFiles = (newFiles: File[]) => {
-        // Adiciona os novos arquivos à lista existente e notifica o react-hook-form
-        onChange([...files, ...newFiles]);
+    const handleAddFiles = (newFiles: FileList | null) => {
+        if (!newFiles) return;
+
+        const filesToAdd = Array.from(newFiles);
+        const validFiles: File[] = [];
+        const invalidFiles: string[] = [];
+
+        if (acceptedFileTypes.length > 0) {
+            filesToAdd.forEach(file => {
+                if (acceptedFileTypes.includes(file.type)) {
+                    validFiles.push(file);
+                } else {
+                    invalidFiles.push(file.name);
+                }
+            });
+        } else {
+            // Se nenhum tipo é especificado, aceita todos
+            validFiles.push(...filesToAdd);
+        }
+
+        if (validFiles.length > 0) {
+            onChange([...files, ...validFiles]);
+        }
     };
 
     const handleRemoveFile = (indexToRemove: number) => {
-        // Remove um arquivo da lista e notifica o react-hook-form
         onChange(files.filter((_, index) => index !== indexToRemove));
     };
 
@@ -977,49 +993,39 @@ export const FileInput: React.FC<ControlledFileInputProps> = ({ text, isNotManda
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
-    const droppedFiles = Array.from(e.dataTransfer.files);
-        if (droppedFiles.length > 0) {
-            handleAddFiles(droppedFiles);
-        }
+        handleAddFiles(e.dataTransfer.files);
     };
 
-    useEffect(() => {
-        const totalSize = files.reduce((acc, file) => acc + file.size, 0);
-        setFileSize(totalSize);
-    }, [files]);
-
-    return(
-        <div className={`flex ${fileSize === 0 ? 'flex-col md:flex-row md:items-center gap-2 md:gap-4' : 'flex-col gap-2'} py-3`}>
-            <h2 className={`${fileSize === 0 ? 'flex-shrink-0' : 'w-full'} text-xl text-blue-fcsn dark:text-white-off font-bold md:text-nowrap flex flex-row justify-start items-center`}>
-                { text } {isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
+    return (
+        <div className={`flex ${files.length === 0 ? 'flex-col md:flex-row md:items-center gap-2 md:gap-4' : 'flex-col gap-2'} py-3`}>
+            <h2 className={`${files.length === 0 ? 'flex-shrink-0' : 'w-full'} text-xl text-blue-fcsn dark:text-white-off font-bold md:text-nowrap flex flex-row justify-start items-center`}>
+                {text} {isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </h2>
             <div className="flex flex-col">
-                <label 
+                <label
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     className={`
-                        ${fileSize === 0 ? 'h-[80px] w-full md:max-w-[290px] flex-grow' : 'w-full min-h-[100px] max-h-[300px] overflow-y-auto'} 
+                        ${files.length === 0 ? 'h-[80px] w-full md:max-w-[290px] flex-grow' : 'w-full min-h-[100px] max-h-[300px] overflow-y-auto'} 
                         flex flex-col items-center justify-center
-                        bg-white dark:bg-blue-fcsn3 border-1 border-blue-fcsn rounded-[7px] 
+                        bg-white dark:bg-blue-fcsn3 border-1 rounded-[7px] 
                         cursor-pointer p-4
-                        ${isDragging ? 'border-dashed bg-blue-50' : 'hover:bg-gray-50 dark:hover:bg-blue-fcsn'}
+                        ${isDragging ? 'border-dashed border-blue-fcsn bg-blue-50' : 'hover:bg-gray-50 dark:hover:bg-blue-fcsn'}
                         ${error ? bordaErro : bordaBase}
                     `}>
-                    <input 
-                        type="file" 
-                        className="hidden" 
+                    <input
+                        type="file"
+                        className="hidden"
                         multiple
+                        // Converte o array de tipos para uma string aceita pelo input
+                        accept={acceptedFileTypes.join(",")}
                         onChange={(event) => {
-                            const selectedFiles = event.target.files;
-                            if (selectedFiles) {
-                                handleAddFiles(Array.from(selectedFiles));
-                            }
-                            // Reseta o valor do input para permitir a seleção do mesmo arquivo novamente
+                            handleAddFiles(event.target.files);
                             event.target.value = '';
                         }}
                     />
-                    
+
                     {files.length === 0 ? (
                         <div className="flex flex-row items-center gap-2 text-blue-fcsn dark:text-white-off">
                             <Upload className="min-w-[30px] min-h-[30px] w-7 h-7" />
@@ -1030,18 +1036,11 @@ export const FileInput: React.FC<ControlledFileInputProps> = ({ text, isNotManda
                     ) : (
                         <div className="w-full space-y-2">
                             {files.map((file, index) => (
-                                <div 
-                                    key={`${file.name}-${index}`}
-                                    className="flex flex-row justify-between items-center w-full hover:bg-gray-100 dark:hover:bg-blue-fcsn2 rounded-md group py-2 px-4">
+                                <div
+                                key={`${file.name}-${file.lastModified}-${file.size}`}
+                                className="flex flex-row justify-between items-center w-full hover:bg-gray-100 dark:hover:bg-blue-fcsn2 rounded-md group py-2 px-4">
                                     <span className="text-blue-fcsn3 dark:text-white-off truncate pr-2">{file.name}</span>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            handleRemoveFile(index);
-                                        }}
-                                        className="text-red-600 dark:text-red-50 bg-red-100 dark:bg-red-fcsn hover:bg-red-200 dark:hover:bg-red-400 rounded-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer p-1 text-xs">
+                                    <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveFile(index); }} className="text-red-600 dark:text-red-50 bg-red-100 dark:bg-red-fcsn hover:bg-red-200 dark:hover:bg-red-400 rounded-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer p-1 text-xs">
                                         Remover
                                     </button>
                                 </div>
@@ -1049,7 +1048,6 @@ export const FileInput: React.FC<ControlledFileInputProps> = ({ text, isNotManda
                         </div>
                     )}
                 </label>
-                {/* Exibe a mensagem de erro se a validação falhar */}
                 {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
             </div>
         </div>
