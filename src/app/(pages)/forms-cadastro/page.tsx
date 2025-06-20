@@ -26,7 +26,7 @@ import { formsCadastroDados, odsList, leiList, segmentoList, Projetos, publicoLi
 import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome, slugifyEstado, validaCNPJ } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, SubmitHandler, Controller, FieldError} from "react-hook-form";
+import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
 
 const MAX_FILE_SIZE_MB = 10;
 const fileArraySchema = (acceptedTypes: string[], typeName: string) => z.array(z.instanceof(File), {
@@ -42,7 +42,7 @@ const fileArraySchema = (acceptedTypes: string[], typeName: string) => z.array(z
 const outroPublicoIndex = publicoList.findIndex(p => p.nome.toLowerCase().startsWith('outro'));
 
 const formsCadastroSchema = z.object({
-    instituicao: z.string().trim().min(1, "O nome da instituição é obrigatório."),
+    instituicao: z.string().trim().min(1, "O nome da instituição é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
     cnpj: z.string().trim()
     .min(1, "O CNPJ é obrigatório.") // Garante que o campo não seja enviado vazio
     .refine((cnpj) => {
@@ -50,37 +50,37 @@ const formsCadastroSchema = z.object({
         return apenasDigitos.length === 14;
     }, "O CNPJ deve conter 14 dígitos.")
     .refine(validaCNPJ, "O CNPJ informado não é válido."),
-    representanteLegal: z.string().trim().min(1, "O nome do representante é obrigatório."),
+    representanteLegal: z.string().trim().min(1, "O nome do representante é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
     telefone: z.string().trim().min(10, "O telefone é obrigatório."),
-    emailRepLegal: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do representante é obrigatório."),
-    emailResponsavel: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do responsável é obrigatório."),
+    emailRepLegal: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do representante é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
+    emailResponsavel: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do responsável é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
     cep: z.string().trim().regex(/^\d{5}-\d{3}$/, { message: "Formato de CEP inválido (ex: 12345-678)."}),
-    endereco: z.string({ required_error: "" }).trim().min(1, "O endereço é obrigatório."),
+    endereco: z.string({ required_error: "" }).trim().min(1, "O endereço é obrigatório.").max(200, "Máximo de 200 caracteres permitidos"),
     numeroEndereco: z.coerce.number({ invalid_type_error: "Número inválido" }).min(1, "O número é obrigatório."),
-    complemento: z.string().optional(),
-    cidade: z.string({ required_error: "" }).trim().min(1, "A cidade é obrigatória."),
+    complemento: z.string().max(150, "Máximo de 150 caracteres permitidos").optional(),
+    cidade: z.string({ required_error: "" }).trim().min(1, "A cidade é obrigatória.").max(30, "Máximo de 30 caracteres permitidos"),
     estado: z.string({ required_error: "" }).trim().min(1, "O estado é obrigatório."),
-    nomeProjeto: z.string().trim().min(1, "O nome do projeto é obrigatório."),
-    website: z.string().url({ message: "URL inválida." }),
+    nomeProjeto: z.string().trim().min(1, "O nome do projeto é obrigatório.").max(150, "Máximo de 150 caracteres permitidos"),
+    website: z.string().trim().url({ message: "URL inválida." }),
     valorAprovado: z.coerce.number({ invalid_type_error: "Valor inválido" }).positive("O valor aprovado deve ser maior que zero."),
     valorApto: z.coerce.number({ invalid_type_error: "Valor inválido" }).positive("O valor apto a captar deve ser maior que zero."),
     dataComeco: z.string().min(1, "A data de início é obrigatória."),
     dataFim: z.string().min(1, "A data de fim é obrigatória."),
-    banco: z.string().trim().min(1, "O nome do banco é obrigatório."),
-    agencia: z.string().trim().min(1, "A agência é obrigatória."),
-    conta: z.string().trim().min(1, "A conta corrente é obrigatória."),
+    banco: z.string().trim().min(1, "O nome do banco é obrigatório.").max(50, "Máximo de 50 caracteres permitidos"),
+    agencia: z.string().trim().min(1, "A agência é obrigatória.").max(20, "Máximo de 20 caracteres permitidos"),
+    conta: z.string().trim().min(1, "A conta corrente é obrigatória.").max(20, "Máximo de 20 caracteres permitidos"),
     segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória.", invalid_type_error: "Selecione uma das opções" }).min(0, "A seleção do segmento é obrigatória."),
-    descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres."),
+    descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres.").max(500, "Máximo de 500 caracteres permitidos"),
     publico: z.array(z.boolean()).refine(val => val.some(v => v), { message: "Selecione pelo menos um público." }),
-    outroPublico: z.string().optional(),
+    outroPublico: z.string().max(40, "Máximo de 40 caracteres permitidos").optional(),
     ods: z.array(z.boolean()).refine(val => val.filter(Boolean).length > 0, { message: "Selecione pelo menos uma ODS." }).refine(val => val.filter(Boolean).length <= 3, { message: "Selecione no máximo 3 ODSs." }),
     beneficiariosDiretos: z.coerce.number({ invalid_type_error: "Número inválido" }).min(1, "O número de beneficiários é obrigatório."),
     estados: z.array(z.string()).min(1, "Selecione pelo menos um estado."),
     municipios: z.array(z.string()).min(1, "Selecione pelo menos um município."),
     lei: z.coerce.number({ required_error: "A seleção da lei é obrigatória." }).min(0, "A seleção da lei é obrigatória."),
-    numeroLei: z.string().trim().min(1, "O número de aprovação da lei é obrigatório."),
-    contrapartidasProjeto: z.string().trim().min(10, "A descrição das contrapartidas é obrigatória."),
-    observacoes: z.string().trim().min(10, "As observações devem ter no mínimo 10 caracteres."),
+    numeroLei: z.string().trim().min(1, "O número de aprovação da lei é obrigatório.").max(20, "Máximo de 20 caracteres permitidos"),
+    contrapartidasProjeto: z.string().trim().min(10, "A descrição das contrapartidas é obrigatória.").max(500, "Máximo de 500 caracteres permitidos"),
+    observacoes: z.string().trim().min(10, "As observações devem ter no mínimo 10 caracteres.").max(500, "Máximo de 500 caracteres permitidos"),
     diario: fileArraySchema(['application/pdf', 'image/jpeg', 'image/png'], 'PDF ou Imagens'),
     apresentacao: fileArraySchema(['application/pdf', 'image/jpeg', 'image/png'], 'PDF ou Imagens'),
     compliance: fileArraySchema(['application/pdf'], 'PDF'),
@@ -424,19 +424,25 @@ export default function FormsCadastro() {
                                     control={control}
                                     render={({ field, fieldState: { error } }) => {
                                         const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                                            const valorCNPJ = e.target.value;
-
-                                            // Aplica a máscara XX.XXX.XXX/XXXX-XX
-                                            const cnpjFormatado = valorCNPJ
-                                                .replace(/\D/g, '') // Remove tudo que não for dígito
-                                                .slice(0, 14) // Limita a 14 caracteres
-                                                .replace(/^(\d{2})/, '$1.')
-                                                .replace(/^(\d{2})\.(\d{3})/, '$1.$2.')
-                                                .replace(/\.(\d{3})\/$/, '.$1/')
-                                                .replace(/^(\d{2})\.(\d{3})\.(\d{3})/, '$1.$2.$3/')
-                                                .replace(/\/(\d{4})-/, '/$1')
-                                                .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})/, '$1.$2.$3/$4-');
-                                            
+                                            const valorCNPJ = e.target.value.replace(/\D/g, '').slice(0, 14); // Máximo de 14 digitos
+                                        
+                                            let cnpjFormatado = valorCNPJ;
+                                            if (valorCNPJ.length > 2) {
+                                                cnpjFormatado = valorCNPJ.replace(/^(\d{2})(\d)/, '$1.$2');
+                                            }
+                                            if (valorCNPJ.length > 5) {
+                                                cnpjFormatado = cnpjFormatado.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                                            }
+                                            if (valorCNPJ.length > 8) {
+                                                cnpjFormatado = cnpjFormatado.replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4');
+                                            }
+                                            if (valorCNPJ.length > 12) {
+                                                cnpjFormatado = cnpjFormatado.replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d{1,2})/, '$1.$2.$3/$4-$5');
+                                            }
+                                            if (valorCNPJ.length === 0) {
+                                                cnpjFormatado = '';
+                                            }
+                                        
                                             field.onChange(cnpjFormatado);
                                         };
 
