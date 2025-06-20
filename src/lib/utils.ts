@@ -61,3 +61,48 @@ export function slugifyEstado(stateName: string): string {
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/\s+/g, '_'); // Substitui espaços por underscores
 }
+
+export function validaCNPJ(cnpj: string): boolean {
+  // Remove caracteres de formatação
+  const cleanCnpj = cnpj.replace(/[^\d]/g, '');
+
+  // Verifica o tamanho e se todos os dígitos são iguais
+  if (cleanCnpj.length !== 14 || /^(\d)\1+$/.test(cleanCnpj)) {
+    return false;
+  }
+
+  let size = cleanCnpj.length - 2;
+  let numbers = cleanCnpj.substring(0, size);
+  const digits = cleanCnpj.substring(size);
+  let sum = 0;
+  let pos = size - 7;
+
+  for (let i = size; i >= 1; i--) {
+    sum += parseInt(numbers.charAt(size - i), 10) * pos--;
+    if (pos < 2) {
+      pos = 9;
+    }
+  }
+
+  let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+
+  if (result !== parseInt(digits.charAt(0), 10)) {
+    return false;
+  }
+
+  size = size + 1;
+  numbers = cleanCnpj.substring(0, size);
+  sum = 0;
+  pos = size - 7;
+
+  for (let i = size; i >= 1; i--) {
+    sum += parseInt(numbers.charAt(size - i), 10) * pos--;
+    if (pos < 2) {
+      pos = 9;
+    }
+  }
+
+  result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+
+  return result === parseInt(digits.charAt(1), 10);
+}

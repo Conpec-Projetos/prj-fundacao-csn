@@ -32,54 +32,56 @@ import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form"
 import { State, City } from "country-state-city";
 
 const MAX_FILE_SIZE_MB = 5;
-const fileArraySchema = z.array(z.instanceof(File), {
-        required_error: "O envio de fotos é obrigatório.",
+const fileArraySchema = (acceptedTypes: string[], typeName: string) => z.array(z.instanceof(File), {
+        required_error: "O envio de arquivos é obrigatório.",
     })
-    .min(1, "É necessário enviar pelo menos uma foto.")
-    .max(5, "Você pode enviar no máximo 5 fotos.")
+    .min(1, "É necessário enviar pelo menos um arquivo.")
     .refine(files => files.every(file => file.size <= MAX_FILE_SIZE_MB * 1024 * 1024), 
-        `Tamanho máximo por arquivo é de ${MAX_FILE_SIZE_MB}MB.`);
+        `Tamanho máximo por arquivo é de ${MAX_FILE_SIZE_MB}MB.`)
+    .refine(files => files.every(file => acceptedTypes.includes(file.type)),
+        `Tipo de arquivo inválido. Apenas ${typeName} são aceitos.`
+    );
 
 const acompanhamentoSchema = z.object({
-  instituicao: z.string().trim().min(1, "O nome da instituição é obrigatório."),
-  descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres."),
-  segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória." }).min(0, "A seleção do segmento é obrigatória."),
-  lei: z.coerce.number({ required_error: "A seleção da lei é obrigatória." }).min(0, "A seleção da lei é obrigatória."),
-  positivos: z.string().optional(),
-  negativos: z.string().optional(),
-  atencao: z.string().optional(),
-  ambito: z.coerce.number({ required_error: "A seleção do âmbito é obrigatória." }).min(0, "A seleção do âmbito é obrigatória."),
-  estados: z.array(z.string()).min(1, "Selecione pelo menos um estado."),
-  municipios: z.array(z.string()).min(1, "Selecione pelo menos um município."),
-  especificacoes: z.string().trim().min(1, "As especificações do território são obrigatórias."),
-  dataComeco: z.string().min(1, "A data de início é obrigatória."),
-  dataFim: z.string().min(1, "A data de fim é obrigatória."),
-  contrapartidasProjeto: z.string().trim().min(10, "A descrição das contrapartidas é obrigatória."),
-  beneficiariosDiretos: z.coerce.number({ invalid_type_error: "Número inválido" }).min(0, "O valor deve ser zero ou maior."),
-  beneficiariosIndiretos: z.coerce.number({ invalid_type_error: "Número inválido" }).min(0, "O valor deve ser zero ou maior."),
-  diversidade: z.string({ required_error: "A seleção é obrigatória." }),
-  qtdAmarelas: z.coerce.number().min(0),
-  qtdBrancas: z.coerce.number().min(0),
-  qtdIndigenas: z.coerce.number().min(0),
-  qtdPardas: z.coerce.number().min(0),
-  qtdPretas: z.coerce.number().min(0),
-  qtdMulherCis: z.coerce.number().min(0),
-  qtdMulherTrans: z.coerce.number().min(0),
-  qtdHomemCis: z.coerce.number().min(0),
-  qtdHomemTrans: z.coerce.number().min(0),
-  qtdNaoBinarios: z.coerce.number().min(0),
-  qtdPCD: z.coerce.number().min(0),
-  qtdLGBT: z.coerce.number().min(0),
-  ods: z.array(z.boolean()).refine(val => val.filter(Boolean).length > 0, { message: "Selecione pelo menos uma ODS." }).refine(val => val.filter(Boolean).length <= 3, { message: "Selecione no máximo 3 ODSs." }),
-  relato: z.string().optional(),
-  fotos: fileArraySchema,
-  website: z.string().trim().url({ message: "URL inválida." }),
-  links: z.string().trim().min(1, "Insira pelo menos um link."),
-  contrapartidasExecutadas: z.string().optional(),
-}).refine(data => new Date(data.dataFim) > new Date(data.dataComeco), {
-    message: "A data final deve ser posterior à data inicial.",
-    path: ["dataFim"],
-});
+    instituicao: z.string().trim().min(1, "O nome da instituição é obrigatório."),
+    descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres."),
+    segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória." }).min(0, "A seleção do segmento é obrigatória."),
+    lei: z.coerce.number({ required_error: "A seleção da lei é obrigatória." }).min(0, "A seleção da lei é obrigatória."),
+    positivos: z.string().optional(),
+    negativos: z.string().optional(),
+    atencao: z.string().optional(),
+    ambito: z.coerce.number({ required_error: "A seleção do âmbito é obrigatória." }).min(0, "A seleção do âmbito é obrigatória."),
+    estados: z.array(z.string()).min(1, "Selecione pelo menos um estado."),
+    municipios: z.array(z.string()).min(1, "Selecione pelo menos um município."),
+    especificacoes: z.string().trim().min(1, "As especificações do território são obrigatórias."),
+    dataComeco: z.string().min(1, "A data de início é obrigatória."),
+    dataFim: z.string().min(1, "A data de fim é obrigatória."),
+    contrapartidasProjeto: z.string().trim().min(10, "A descrição das contrapartidas é obrigatória."),
+    beneficiariosDiretos: z.coerce.number({ invalid_type_error: "Número inválido" }).min(0, "O valor deve ser zero ou maior."),
+    beneficiariosIndiretos: z.coerce.number({ invalid_type_error: "Número inválido" }).min(0, "O valor deve ser zero ou maior."),
+    diversidade: z.string({ required_error: "A seleção é obrigatória." }),
+    qtdAmarelas: z.coerce.number().min(0),
+    qtdBrancas: z.coerce.number().min(0),
+    qtdIndigenas: z.coerce.number().min(0),
+    qtdPardas: z.coerce.number().min(0),
+    qtdPretas: z.coerce.number().min(0),
+    qtdMulherCis: z.coerce.number().min(0),
+    qtdMulherTrans: z.coerce.number().min(0),
+    qtdHomemCis: z.coerce.number().min(0),
+    qtdHomemTrans: z.coerce.number().min(0),
+    qtdNaoBinarios: z.coerce.number().min(0),
+    qtdPCD: z.coerce.number().min(0),
+    qtdLGBT: z.coerce.number().min(0),
+    ods: z.array(z.boolean()).refine(val => val.filter(Boolean).length > 0, { message: "Selecione pelo menos uma ODS." }).refine(val => val.filter(Boolean).length <= 3, { message: "Selecione no máximo 3 ODSs." }),
+    relato: z.string().optional(),
+    fotos: fileArraySchema(['image/jpeg', 'image/png'], 'Imagens (JPG ou PNG)'),
+    website: z.string().trim().url({ message: "URL inválida." }),
+    links: z.string().trim().min(1, "Insira pelo menos um link."),
+    contrapartidasExecutadas: z.string().optional(),
+    }).refine(data => new Date(data.dataFim) > new Date(data.dataComeco), {
+        message: "A data final deve ser posterior à data inicial.",
+        path: ["dataFim"],
+    });
 
 type FormFields = z.infer<typeof acompanhamentoSchema>;
 
@@ -442,6 +444,7 @@ export default function FormsAcompanhamento() {
 
             const projetoDocRef = doc(db, "projetos", projetoID);
             await updateDoc(projetoDocRef, {
+                // estados: data.estados, // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
                 municipios: data.municipios,
                 ultimoFormulario: formsAcompanhamentoRef.id
             });
@@ -800,6 +803,7 @@ export default function FormsAcompanhamento() {
                                 value={value || []}
                                 onChange={onChange}
                                 error={error}
+                                acceptedFileTypes={['image/jpeg', 'image/png']}
                             />
                         )}
                     />
