@@ -139,6 +139,7 @@ export default function ExternalUserHomePage() {
 
                 if (associacaoSnapshot.empty) {
                     setUserProjects([]);
+                    setIsLoadingProjects(false);
                     return;
                 }
 
@@ -147,51 +148,74 @@ export default function ExternalUserHomePage() {
 
                 if (projetosIDs.length === 0) {
                     setUserProjects([]);
+                    setIsLoadingProjects(false);
                     return;
                 }
 
+                const tresMesesAtras = new Date();
+                tresMesesAtras.setMonth(tresMesesAtras.getMonth() - 3);
+
                 // Busca os detalhes de cada projeto associado
                 const projectsDataPromises = projetosIDs.map(async (projetoId): Promise<ProjetoExt | null> => {
+                  const projetoDocRef = doc(db, 'projetos', projetoId);
+                  const projetoDocSnap = await getDoc(projetoDocRef);
+
+                  if (!projetoDocSnap.exists()) {
+                    console.warn(`Projeto com ID ${projetoId} não encontrado.`);
+                    return null;
+                  }
+
+                  const projetoData = projetoDocSnap.data() as Projetos;
+                  
+                  // Valores padrão
                   let instituicao = '';
                   let lei = '';
                   let formularioPendente = false;
+                  let dataUltimoForm: string | undefined;
 
-                  const acompanhamentoRef = collection(db, 'forms-acompanhamento');
-                  const qAcompanhamento = query(acompanhamentoRef, where('projetoID', '==', projetoId));
-                  const acompanhamentoSnap = await getDocs(qAcompanhamento);
-
-                  if (!acompanhamentoSnap.empty) {
-                    const acompanhamentoData = acompanhamentoSnap.docs[0].data() as formsAcompanhamentoDados;
-                    instituicao = acompanhamentoData.instituicao;
-                    lei = acompanhamentoData.lei;
-                    formularioPendente = false;
-                  } else {
+                  if (projetoData.status === "aprovado") {
                     formularioPendente = true;
-                    const projetoDocRef = doc(db, 'projetos', projetoId);
-                    const projetoDocSnap = await getDoc(projetoDocRef);
 
-                    if (projetoDocSnap.exists()) {
-                      const projetoDataForCadastro = projetoDocSnap.data() as Projetos;
-                      if (projetoDataForCadastro.ultimoFormulario) {
-                        const cadastroDocRef = doc(db, 'forms-cadastro', projetoDataForCadastro.ultimoFormulario);
-                        const cadastroDocSnap = await getDoc(cadastroDocRef);
-                        if (cadastroDocSnap.exists()) {
-                          const cadastroData = cadastroDocSnap.data() as formsCadastroDados;
+                    if (projetoData.ultimoFormulario) {
+                      const formAcompanhamentoRef = doc(db, "forms-acompanhamento", projetoData.ultimoFormulario);
+                      const formAcompanhamentoSnap = await getDoc(formAcompanhamentoRef);
+
+                      if (formAcompanhamentoSnap.exists()) {
+                        const acompanhamentoData = formAcompanhamentoSnap.data() as formsAcompanhamentoDados;
+                        dataUltimoForm = acompanhamentoData.dataResposta;
+                        instituicao = acompanhamentoData.instituicao;
+                        lei = acompanhamentoData.lei;
+                      } else {
+                        const formCadastroRef = doc(db, "forms-cadastro", projetoData.ultimoFormulario);
+                        const formCadastroSnap = await getDoc(formCadastroRef);
+                        if (formCadastroSnap.exists()) {
+                          const cadastroData = formCadastroSnap.data() as formsCadastroDados;
+                          dataUltimoForm = cadastroData.dataPreenchido;
                           instituicao = cadastroData.instituicao;
                           lei = cadastroData.lei;
                         }
                       }
                     }
+
+                    if (dataUltimoForm) {
+                      const dataFormulario = new Date(dataUltimoForm);
+                      if (dataFormulario >= tresMesesAtras) {
+                        formularioPendente = false;
+                      }
+                    }
+                  } else {
+                    // Se o status não for 'aprovado', garantimos que os dados básicos do card sejam carregados, mas 'formularioPendente' permanece 'false'.
+                    if (projetoData.ultimoFormulario) {
+                      const formCadastroRef = doc(db,"forms-cadastro", projetoData.ultimoFormulario);
+                      const formCadastroSnap = await getDoc(formCadastroRef);
+                      if (formCadastroSnap.exists()) {
+                          const cadastroData = formCadastroSnap.data() as formsCadastroDados;
+                          instituicao = cadastroData.instituicao;
+                          lei = cadastroData.lei;
+                      }
+                    }
                   }
-
-                  const projetoDocRef = doc(db, 'projetos', projetoId);
-                  const projetoDocSnap = await getDoc(projetoDocRef);
-
-                  if (!projetoDocSnap.exists()) {
-                    return null;
-                  }
-
-                  const projetoData = projetoDocSnap.data() as Projetos;
+                  
                   const valorTotal = (projetoData.valorAportadoReal || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
                   
                   return {
@@ -206,7 +230,7 @@ export default function ExternalUserHomePage() {
                 });
 
                 const resolvedProjects = (await Promise.all(projectsDataPromises)).filter((p): p is ProjetoExt => p !== null);
-                setUserProjects(resolvedProjects);
+                setUserProjects(resolvedProjects.reverse());
 
             } catch (error) {
                 console.error("Erro ao buscar projetos do usuário:", error);
