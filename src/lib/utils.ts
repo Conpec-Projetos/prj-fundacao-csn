@@ -62,6 +62,26 @@ export function slugifyEstado(stateName: string): string {
         .replace(/\s+/g, '_'); // Substitui espaços por underscores
 }
 
+export function formatCNPJ(value: string): string {
+  const digitsOnly = value.replace(/\D/g, '').slice(0, 14);
+
+  if (!digitsOnly) return "";
+
+  return digitsOnly
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2');
+}
+
+export function formatCEP(value: string): string {
+  const digitsOnly = value.replace(/\D/g, '').slice(0, 8);
+
+  if (!digitsOnly) return "";
+
+  return digitsOnly.replace(/(\d{5})(\d)/, '$1-$2');
+}
+
 export function validaCNPJ(cnpj: string): boolean {
   // Remove caracteres de formatação
   const cleanCnpj = cnpj.replace(/[^\d]/g, '');
@@ -105,4 +125,35 @@ export function validaCNPJ(cnpj: string): boolean {
   result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
 
   return result === parseInt(digits.charAt(1), 10);
+}
+
+
+export function formatTelefone(value: string): string {
+  if (!value) return "";
+  const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
+
+  if (digitsOnly.length <= 2) {
+    return `(${digitsOnly}`;
+  }
+  if (digitsOnly.length <= 6) {
+    return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2)}`;
+  }
+  if (digitsOnly.length <= 10) {
+    return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 6)}-${digitsOnly.slice(6)}`;
+  }
+  return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 7)}-${digitsOnly.slice(7)}`;
+}
+
+export function formatMoeda(value: number): string {
+  if (isNaN(value)) return "";
+
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+}
+
+export function filtraDigitos(value: string): string {
+  if (!value) return "";
+  return value.replace(/\D/g, ''); // Remove tudo que não for dígito
 }

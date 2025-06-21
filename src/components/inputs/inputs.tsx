@@ -99,7 +99,7 @@ export const ShortInput: React.FC<TextProps> = (props) => {
 
 export const LongInput: React.FC<HookFormInputProps> = ({ text, isNotMandatory, registration, error }) => {
     return(
-        <div className="flex flex-col justify-between h-[23dvh] mt-2">
+        <div className="flex flex-col justify-between h-[23dvh] my-2">
             <label htmlFor={registration.name} className="w-full text-xl text-blue-fcsn dark:text-white-off font-bold pb-1">
                 {text} {isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </label>

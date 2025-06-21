@@ -23,7 +23,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion, runTransaction } from "firebase/firestore";
 import { db, auth } from "@/firebase/firebase-config";
 import { formsCadastroDados, odsList, leiList, segmentoList, Projetos, publicoList, dadosEstados } from "@/firebase/schema/entities";
-import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome, slugifyEstado, validaCNPJ } from "@/lib/utils";
+import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome, slugifyEstado, validaCNPJ, formatCNPJ, formatCEP, formatTelefone, formatMoeda, filtraDigitos } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
@@ -51,7 +51,7 @@ const formsCadastroSchema = z.object({
     }, "O CNPJ deve conter 14 dígitos.")
     .refine(validaCNPJ, "O CNPJ informado não é válido."),
     representanteLegal: z.string().trim().min(1, "O nome do representante é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
-    telefone: z.string().trim().min(10, "O telefone é obrigatório."),
+    telefone: z.string().trim().min(14, "Forneça um número de telefone válido.").max(15, "O telefone deve ter no máximo 11 dígitos."),
     emailRepLegal: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do representante é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
     emailResponsavel: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do responsável é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
     cep: z.string().trim().regex(/^\d{5}-\d{3}$/, { message: "Formato de CEP inválido (ex: 12345-678)."}),
@@ -67,8 +67,8 @@ const formsCadastroSchema = z.object({
     dataComeco: z.string().min(1, "A data de início é obrigatória."),
     dataFim: z.string().min(1, "A data de fim é obrigatória."),
     banco: z.string().trim().min(1, "O nome do banco é obrigatório.").max(50, "Máximo de 50 caracteres permitidos"),
-    agencia: z.string().trim().min(1, "A agência é obrigatória.").max(20, "Máximo de 20 caracteres permitidos"),
-    conta: z.string().trim().min(1, "A conta corrente é obrigatória.").max(20, "Máximo de 20 caracteres permitidos"),
+    agencia: z.string().trim().min(1, "A agência é obrigatória.").max(10, "Máximo de 10 caracteres permitidos"),
+    conta: z.string().trim().min(1, "A conta corrente é obrigatória.").max(15, "Máximo de 15 caracteres permitidos"),
     segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória.", invalid_type_error: "Selecione uma das opções" }).min(0, "A seleção do segmento é obrigatória."),
     descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres.").max(500, "Máximo de 500 caracteres permitidos"),
     publico: z.array(z.boolean()).refine(val => val.some(v => v), { message: "Selecione pelo menos um público." }),
@@ -396,7 +396,7 @@ export default function FormsCadastro() {
     return (
       <main className="flex flex-col justify-between items-center w-screen min-h-screen">
             <div className="flex flex-col items-center justify-center w-full py-12 text-blue-fcsn dark:text-white-off">
-                <h1 className="text-center w-[90vw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold">
+                <h1 className="text-center text-blue-fcsn w-[90vw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold">
                     Inscrição de Projeto
                 </h1>
             </div>
@@ -424,26 +424,8 @@ export default function FormsCadastro() {
                                     control={control}
                                     render={({ field, fieldState: { error } }) => {
                                         const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                                            const valorCNPJ = e.target.value.replace(/\D/g, '').slice(0, 14); // Máximo de 14 digitos
-                                        
-                                            let cnpjFormatado = valorCNPJ;
-                                            if (valorCNPJ.length > 2) {
-                                                cnpjFormatado = valorCNPJ.replace(/^(\d{2})(\d)/, '$1.$2');
-                                            }
-                                            if (valorCNPJ.length > 5) {
-                                                cnpjFormatado = cnpjFormatado.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-                                            }
-                                            if (valorCNPJ.length > 8) {
-                                                cnpjFormatado = cnpjFormatado.replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4');
-                                            }
-                                            if (valorCNPJ.length > 12) {
-                                                cnpjFormatado = cnpjFormatado.replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d{1,2})/, '$1.$2.$3/$4-$5');
-                                            }
-                                            if (valorCNPJ.length === 0) {
-                                                cnpjFormatado = '';
-                                            }
-                                        
-                                            field.onChange(cnpjFormatado);
+                                            const valorFormatado = formatCNPJ(e.target.value);
+                                            field.onChange(valorFormatado);
                                         };
 
                                         return (
@@ -452,7 +434,6 @@ export default function FormsCadastro() {
                                                 isNotMandatory={false}
                                                 registration={{ ...field, onChange: handleCnpjChange }}
                                                 error={error}
-                                                placeholder="00.000.000/0000-00"
                                             />
                                         );
                                     }}
@@ -465,11 +446,24 @@ export default function FormsCadastro() {
                                     error={errors.representanteLegal}
                                 />
 
-                                <NormalInput
-                                    text="Telefone do representante legal:"
-                                    isNotMandatory={false}
-                                    registration={register("telefone")}
-                                    error={errors.telefone}
+                                <Controller
+                                    name="telefone"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => {
+                                        const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                            const valorFormatado = formatTelefone(e.target.value);
+                                            field.onChange(valorFormatado);
+                                        };
+
+                                        return (
+                                            <NormalInput
+                                                text="Telefone do representante legal:"
+                                                isNotMandatory={false}
+                                                registration={{ ...field, onChange: handleTelefoneChange }}
+                                                error={error}
+                                            />
+                                        );
+                                    }}
                                 />
 
                                 <NormalInput
@@ -491,15 +485,8 @@ export default function FormsCadastro() {
                                     control={control}
                                     render={({ field, fieldState: { error } }) => {
                                         const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                                            const valorCEP = e.target.value;
-                                            
-                                            const cepFormatado = valorCEP
-                                                .replace(/\D/g, '') // Remove tudo que não for dígito
-                                                .slice(0, 8) // Limita a 8 dígitos
-                                                .replace(/(\d{5})(\d)/, '$1-$2'); // Aplica a máscara xxxxx-xxx
-
-                                            // Atualiza o valor do formulário
-                                            field.onChange(cepFormatado);
+                                            const valorFormatado = formatCEP(e.target.value);
+                                            field.onChange(valorFormatado);
                                         };
 
                                         return (
@@ -508,7 +495,6 @@ export default function FormsCadastro() {
                                                 isNotMandatory={false}
                                                 registration={{ ...field, onChange: handleCepChange }}
                                                 error={error}
-                                                placeholder="00000-000"
                                             />
                                         );
                                     }}
@@ -574,18 +560,54 @@ export default function FormsCadastro() {
                                     error={errors.website}
                                 />
 
-                                <NumberInput
-                                    text="Valor aprovado:"
-                                    isNotMandatory={false}
-                                    registration={register("valorAprovado")}
-                                    error={errors.valorAprovado}
+                                <Controller
+                                    name="valorAprovado"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => {
+                                        const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                            // Remove tudo que não é dígito
+                                            const digitsOnly = filtraDigitos(e.target.value);
+                                            // Converte para número (em Reais, não centavos)
+                                            const numericValue = digitsOnly ? parseInt(digitsOnly, 10) / 100 : undefined;
+                                            // Atualiza o estado do formulário com o número puro
+                                            field.onChange(numericValue);
+                                        };
+
+                                        return (
+                                            <NormalInput
+                                                text="Valor aprovado:"
+                                                isNotMandatory={false}
+                                                // O valor exibido é formatado, mas o valor do campo (field.value) é um número
+                                                registration={{ ...field, value: field.value ? formatMoeda(field.value) : "", onChange: handleValueChange }}
+                                                error={error}
+                                                placeholder="R$ "
+                                                type="text"
+                                            />
+                                        );
+                                    }}
                                 />
 
-                                <NumberInput
-                                    text="Valor apto a captar:"
-                                    isNotMandatory={false}
-                                    registration={register("valorApto")}
-                                    error={errors.valorApto}
+                                <Controller
+                                    name="valorApto"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => {
+                                        const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                            const digitsOnly = filtraDigitos(e.target.value);
+                                            const numericValue = digitsOnly ? parseInt(digitsOnly, 10) / 100 : undefined;
+                                            field.onChange(numericValue);
+                                        };
+
+                                        return (
+                                            <NormalInput
+                                                text="Valor apto a captar:"
+                                                isNotMandatory={false}
+                                                registration={{ ...field, value: field.value ? formatMoeda(field.value) : "", onChange: handleValueChange }}
+                                                error={error}
+                                                placeholder="R$ "
+                                                type="text"
+                                            />
+                                        );
+                                    }}
                                 />
                                 
                                 <DateInputs
@@ -624,19 +646,45 @@ export default function FormsCadastro() {
                                         error={errors.banco}
                                     />
 
-                                    <div className="flex flex-col md:flex-row h-full w-full justify-between md:items-center gap-y-3 md:gap-x-4">
-                                        <NormalInput
-                                            text="Agência:"
-                                            isNotMandatory={false}
-                                            registration={register("agencia")}
-                                            error={errors.agencia}
+                                    <div className="flex flex-col md:flex-row h-full w-full justify-between md:items-start gap-y-4 md:gap-x-4">
+                                        <Controller
+                                            name="agencia"
+                                            control={control}
+                                            render={({ field, fieldState: { error } }) => {
+                                                const handleAgenciaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                                    const valorFiltrado = filtraDigitos(e.target.value);
+                                                    field.onChange(valorFiltrado);
+                                                };
+
+                                                return (
+                                                    <NormalInput
+                                                        text="Agência:"
+                                                        isNotMandatory={false}
+                                                        registration={{ ...field, onChange: handleAgenciaChange }}
+                                                        error={error}
+                                                    />
+                                                );
+                                            }}
                                         />
 
-                                        <NormalInput
-                                            text="Conta Corrente:"
-                                            isNotMandatory={false}
-                                            registration={register("conta")}
-                                            error={errors.conta}
+                                        <Controller
+                                            name="conta"
+                                            control={control}
+                                            render={({ field, fieldState: { error } }) => {
+                                                const handleContaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                                    const valorFiltrado = filtraDigitos(e.target.value);
+                                                    field.onChange(valorFiltrado);
+                                                };
+
+                                                return (
+                                                    <NormalInput
+                                                        text="Conta Corrente:"
+                                                        isNotMandatory={false}
+                                                        registration={{ ...field, onChange: handleContaChange }}
+                                                        error={error}
+                                                    />
+                                                );
+                                            }}
                                         />
                                     </div>
                                 </div>
