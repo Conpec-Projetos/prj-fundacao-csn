@@ -652,7 +652,7 @@ export const PublicoBeneficiadoInput: React.FC<Omit<VerticalProps, 'subtext'>> =
                     
                     <input 
                     type="checkbox" 
-                    checked={attribute[index]} 
+                    checked={attribute[index] == null ? false : attribute[index]}
                     onChange={() => handleCheckboxChange(index)}
                     className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
                 </div>
