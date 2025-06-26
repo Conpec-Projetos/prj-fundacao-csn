@@ -4,9 +4,20 @@ import Footer from "@/components/footer/footer";
 import { useEffect, useRef, useState } from "react";
 import { FaCaretDown, FaCheckCircle, FaFilter, FaMoneyBillAlt, FaSearch, FaTimesCircle } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
+<<<<<<< HEAD
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/firebase-config';
 
+=======
+import Botao from "../../../components/botoes/botoes_todos-proj/Botao";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/firebase/firebase-config";
+import darkLogo from "@/assets/fcsn-logo-dark.svg"
+import logo from "@/assets/fcsn-logo.svg"
+import Image from "next/image";
+import { useTheme } from "@/context/themeContext";
+>>>>>>> 113f02180d24006bfdeba35b83c2ec8706c2da02
 
 // Interface (base) para cada projeto
 interface ProjectProps {
@@ -23,7 +34,7 @@ interface ProjectProps {
 const Project: React.FC<ProjectProps> = ({ id, name, status, value, incentiveLaw, description, ODS}) => (
   <div className="bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 md:1/2 sm:1/4">
     <section className="flex flex-col col-span-2 mr-2">
-        <div className="flex flex-row gap-2 mb-2">
+        <div className="flex flex-row gap-3 mb-2">
             <div className="text-2xl font-bold">{name}</div>
             <div className="mt-1">
             {status === 'aprovado' && (
@@ -36,8 +47,8 @@ const Project: React.FC<ProjectProps> = ({ id, name, status, value, incentiveLaw
               <FaTimesCircle color="red" size={22}/>
             )}
             </div>
+            <div className="ml-8"> <Botao/> </div>
         </div>
-
         <p className="mb-2 text-lg"> {value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
         <div className=" bg-pink-fcsn dark:bg-pink-light2 rounded-2xl px-4 py-2 size-fit text-base text-center mb-2 text-white ">{incentiveLaw}</div>
         <p className="mr-2 mt-3 text-base text-justify">{description}</p>
@@ -262,6 +273,50 @@ export default function TodosProjetos(){
       setFilteredProjects([]);
       setCtrl(false);
     }
+
+    // verificando se o usuario ja realizou login
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
+    const { darkMode } = useTheme();
+
+
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user && user.email) {
+            const emailDomain = user.email.split('@')[1];
+            if ((emailDomain === "conpec.com.br") && user.emailVerified) {
+              setIsLoading(false);
+            } else {
+              router.push("./inicio-externo");
+            }
+        } else {
+            // Se não está logado, permite que a página de login seja renderizada
+            router.push("./login");
+        }});
+
+      return () => unsubscribe();
+    }, [router]);
+
+
+
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
+                <Image
+                    src={darkMode ? darkLogo : logo}
+                    alt="csn-logo"
+                    width={600}
+                    className=""
+                    priority
+                />
+                <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
+                    Verificando sessão...
+                </div>
+            </div>
+        );
+    }
+
 
     return(
     <div className="flex flex-col min-h-[180vh]">
