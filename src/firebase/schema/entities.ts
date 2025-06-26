@@ -16,10 +16,11 @@ export interface usuarioInt {
 
 export interface Projetos {
   nome: string;
+  // estados: string[]; // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
   municipios: string[];
-  aprovado: boolean;
+  status: "pendente" | "aprovado" | "reprovado";
   ativo: boolean;
-  compliance: boolean;
+  compliance: "pendente" | "aprovado" | "reprovado";
   empresas: string[];
   indicacao?: string;
   ultimoFormulario?: string;
@@ -27,6 +28,8 @@ export interface Projetos {
 }
 
 export interface formsCadastroDados {
+  projetoID: string;
+  dataPreenchido: string;
   instituicao: string;
   cnpj: string;
   representante: string;
@@ -62,10 +65,6 @@ export interface formsCadastroDados {
   contrapartidasProjeto: string;
   observacoes: string;
   termosPrivacidade: boolean;
-}
-
-export interface formsCadastroDocumentos {
-  projetoID: string;
   diario: string[];
   apresentacao: string[];
   compliance: string[];
@@ -108,7 +107,7 @@ export interface formsAcompanhamentoDados {
   qtdPCD: number;
   qtdLGBT: number;
   ods: number[];
-  relato? : string;
+  relato?: string;
   fotos: string[];
   website: string;
   links: string;
@@ -120,28 +119,25 @@ export interface dadosEstados {
   qtdProjetos: number;
   qtdMunicipios: number;
   valorTotal: number;
-  maiorAporte: number;
-  beneficiariosDiretos: number;
-  beneficiariosIndiretos: number;
+  maiorAporte: {nome: string, valorAportado: number};
+  beneficiariosDireto: number;
+  beneficiariosIndireto: number;
   qtdOrganizacoes: number;
-  ods: number[];
-  segmento: Map<string, number>[];
-  lei: Map<string, number>[];
+  projetosODS: number[];
+  segmento: { nome: string; qtdProjetos: number }[];
+  lei: { nome: string; qtdProjetos: number }[];
 }
 
-// export interface dadosMunicipios {
-//   nomeCidade: string;
-//   nomeEstado: string;
-//   qtdProjetos: number;
-//   valorTotal: number;
-//   maiorAporte: number;
-//   beneficiariosDiretos: number;
-//   beneficiariosIndiretos: number;
-//   qtdOrganizacoes: number;
-//   ods: number[];
-//   segmento: number[];
-//   lei: number[];
-// }
+ export interface dadosProjeto {
+   qtdProjetos: number;
+   instituicao: string;
+   valorAportadoReal: {nome: string, valorAportado: number};
+   beneficiariosDireto: number;
+   beneficiariosIndireto: number;
+   ods: number[];
+   segmento: { nome: string; qtdProjetos: number };
+   lei: { nome: string; qtdProjetos: number };
+}
 
 export interface ambito {
   id: number;
@@ -198,7 +194,7 @@ export const publicoList: Publico[] = [
   { id: 2, nome: "Jovens" },
   { id: 3, nome: "Adultos" },
   { id: 4, nome: "Idosos" },
-  { id: 5, nome: "Outro" }
+  { id: 5, nome: "Outro:" },
 ];
 
 export interface Ods {
