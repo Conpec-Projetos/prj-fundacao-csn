@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useRef, useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -10,6 +10,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  TooltipItem,
 } from 'chart.js';
 import { useTheme } from '@/context/themeContext';
 
@@ -64,8 +65,8 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 interface BarChartProps {
   data: number[];
   labels: string[];
+  siglas: string[]
   colors?: string[];
-  useIcons?: boolean;
   horizontal?: boolean;
   celular?: boolean;
 }
@@ -73,75 +74,22 @@ interface BarChartProps {
 export default function BarChart({
   data,
   labels,
+  siglas,
   colors = ['pink-fcsn'],
-  useIcons = false,
   horizontal = false,
   celular = false,
 }: BarChartProps) {
-  const { darkMode } = useTheme(); // Access the dark mode state
+  const { darkMode } = useTheme(); 
 
   const chartRef = useRef<ChartJS<'bar', number[], string> | null>(null);
-  const [iconsLoaded, setIconsLoaded] = useState(false);
-  const iconsRef = useRef<HTMLImageElement[]>([]);
 
-  // Load ODS icons
-  useEffect(() => {
-    const loadIcons = async () => {
-      const icons: HTMLImageElement[] = [];
-
-      for (let i = 1; i <= 17; i++) {
-        const img = new Image();
-        img.src = `/ods/ods${i}.png`;
-        await new Promise((resolve) => {
-          img.onload = resolve;
-          img.onerror = resolve;
-        });
-        icons.push(img);
-      }
-
-      iconsRef.current = icons;
-      setIconsLoaded(true);
-    };
-
-    loadIcons();
-  }, []);
-
-  const iconPlugin = {
-    id: 'iconLabels',
-    afterDatasetsDraw: (chart: ChartJS<'bar'>) => {
-      const { ctx, scales } = chart;
-      const xAxis = scales.x;
-      const yAxis = scales.y;
-
-      if (!xAxis || !yAxis || !iconsRef.current.length) return;
-
-      chart.data.labels?.forEach((_: unknown, index: number) => {
-        const icon = iconsRef.current[index];
-        if (!icon) return;
-
-        //alinhar os ODS
-        const x = !horizontal ? xAxis.getPixelForValue(index) : xAxis.left + 10;
-        const y = !horizontal ? yAxis.bottom + 10 : yAxis.getPixelForValue(index);
-
-        const iconeTamanho = !horizontal ? Math.min(60, chart.width / 20) : Math.min(60, chart.width / 8);
-        // Draw the icon centered under the bar
-        if (!horizontal) {
-          ctx.drawImage(icon, x - iconeTamanho / 2, y, iconeTamanho, iconeTamanho);
-        } else {
-          ctx.drawImage(icon, x - iconeTamanho * 2, y - iconeTamanho / 2.5, iconeTamanho, iconeTamanho);
-        }
-      })
-    }
-  };
-
-  // Dynamically update chart options based on dark mode
   const options = useMemo(() => ({
     responsive: true,
     indexAxis: horizontal ? 'y' : 'x',
     maintainAspectRatio: false,
     layout: {
       padding: {
-        bottom: useIcons && !horizontal ? 80 : 0,
+        bottom: 0,
         left: horizontal ? (celular ? 60 : 0) : 0,
         right: 25,
       },
@@ -152,6 +100,21 @@ export default function BarChart({
       },
       title: {
         display: false,
+      },
+    tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor:'#FFFFFF',
+        bodyColor:'#FFFFFF',
+        callbacks: {
+            title: function(context: TooltipItem<'bar'>[]) {
+                const dataIndex = context[0].dataIndex;
+                return labels[dataIndex];
+            },
+            label: function(context: TooltipItem<'bar'>) {
+                const dataIndex = context.dataIndex;
+                return data[dataIndex];
+            },
+}
       },
     },
     scales: {
@@ -166,25 +129,19 @@ export default function BarChart({
         grid: { display: false },
         ticks: {
           display: true,
-          color: darkMode ? '#FFFFFF' : '#292944', // White in dark mode, black in light mode
+          color: darkMode ? '#FFFFFF' : '#292944',
         },
       },
     },
     animation: {},
-  }), [darkMode, useIcons, horizontal, celular]); // Recreate options when darkMode changes
+  }), [darkMode, horizontal, celular,labels, data]);
 
   const chartData = {
-    labels: useIcons ? labels.map(() => '') : labels,
+    labels: siglas,
     datasets: [
       {
         data,
-        backgroundColor: useIcons
-          ? [
-            '#E5243B', '#DDA63A', '#4C9F38', '#C5192D', '#FF3A21', '#26BDE2',
-            '#FCC30B', '#A21942', '#FD6925', '#DD1367', '#FD9D24', '#BF8B2E',
-            '#3F7E44', '#0A97D9', '#56C02B', '#00689D', '#19486A',
-          ]
-          : generateGradientColors(data, colors[0]),
+        backgroundColor: generateGradientColors(data, colors[0]),
         borderWidth: 1,
         borderRadius: 8,
       },
@@ -193,14 +150,11 @@ export default function BarChart({
 
   return (
     <div className={`relative w-full ${celular ? 'h-[800px]' : 'h-[600px]'}`}>
-      {(!useIcons || iconsLoaded) && (
-        <Bar
-          ref={chartRef}
-          data={chartData}
-          options={options}
-          plugins={useIcons ? [iconPlugin] : []}
-        />
-      )}
+      <Bar
+        ref={chartRef}
+        data={chartData}
+        options={options}
+      />
     </div>
   );
 }
