@@ -47,11 +47,7 @@ export default function Botao_Logout() {
 
     return (
         <button
-<<<<<<< HEAD
             onClick={(e) => LogOut()}
-=======
-            onClick={() => LogOut()}
->>>>>>> 113f02180d24006bfdeba35b83c2ec8706c2da02
             className="bg-gray-100 border border-gray-300 text-black px-3 py-2 rounded flex items-center gap-1"
         >
             <CiLogout className="text-lg" />
