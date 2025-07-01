@@ -5,7 +5,8 @@ import BarChartLeis from "@/components/chart/barchartLeisClient"
 import PieChart from "@/components/chart/piechartClient";
 import BrazilMap from "@/components/map/brazilMap";
 import { FaCaretDown } from "react-icons/fa";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
+import GeradorPDF from "@/components/pdf/geradorPDF";
 import { EstadoInputDashboard, CidadeInputDashboard } from "@/components/inputs/inputs";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
@@ -321,6 +322,8 @@ export default function DashboardPage() {
     ],
   };
 
+  const refConteudo = useRef<HTMLDivElement>(null);
+
   const [ehCelular, setEhCelular] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [estado, setEstado] = useState<string>("");
@@ -369,42 +372,45 @@ export default function DashboardPage() {
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
-      <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10">
+      <main ref={refConteudo} className="flex flex-col gap-5 p-4 sm:p-6 md:p-10">
         <div className="flex flex-row items-center w-full justify-between">
           <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
-          <div className="relative">
-            {" "}
-            {/* <-- Add relative here */}
-            <button
-              className="flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              <FaCaretDown /> Aplicar Filtros
-            </button>
-            {isOpen && (
-              <div className="absolute right-4 top-full flex flex-col justify-center items-center mt-2 min-w-[250px] max-w-sm w-fit rounded-lg bg-white dark:bg-blue-fcsn2 shadow-lg">
-                <button className="cursor-pointer bg-blue-fcsn dark:bg-blue-fcsn3 text-white-off rounded-md m-4 p-3 text-lg font-bold"
-                onClick={() => setFiltrarPorEstado(!filtrarPorEstado)}>
-                  Filtrar por {filtrarPorEstado ? 'estado' : 'município'}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
+              <GeradorPDF refConteudo={refConteudo} nomeArquivo="dashboard-relatorio" />
+              <div className="relative"> 
+                <button
+                  className="flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer"
+                  onClick={() => setIsOpen(!isOpen)}
+                >
+                  <FaCaretDown /> Aplicar Filtros
                 </button>
-                <div className=''>
-                  <EstadoInputDashboard
-                    text="Filtre por estado"
-                    estado={estado}
-                    setEstado={setEstado}
-                    setCidades={setCidades}
-                  />
-                </div>
-                <div className={`${filtrarPorEstado ? '' : 'hidden'}`}> 
-                  <CidadeInputDashboard
-                  text="Filtre por cidade"
-                  estado={estado}
-                  cidades={cidades}
-                  setCidades={setCidades}
-                  />
-                </div>
+                {isOpen && (
+                  <div className="absolute right-4 top-full flex flex-col justify-center items-center mt-2 min-w-[250px] max-w-sm w-fit rounded-lg bg-white dark:bg-blue-fcsn2 shadow-lg">
+                    <button className="cursor-pointer bg-blue-fcsn dark:bg-blue-fcsn3 text-white-off rounded-md m-4 p-3 text-lg font-bold"
+                    onClick={() => setFiltrarPorEstado(!filtrarPorEstado)}>
+                      Filtrar por {filtrarPorEstado ? 'estado' : 'município'}
+                    </button>
+                    <div className=''>
+                      <EstadoInputDashboard
+                        text="Filtre por estado"
+                        estado={estado}
+                        setEstado={setEstado}
+                        setCidades={setCidades}
+                      />
+                    </div>
+                    <div className={`${filtrarPorEstado ? '' : 'hidden'}`}> 
+                      <CidadeInputDashboard
+                      text="Filtre por cidade"
+                      estado={estado}
+                      cidades={cidades}
+                      setCidades={setCidades}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
