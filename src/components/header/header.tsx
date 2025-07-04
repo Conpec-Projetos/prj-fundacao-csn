@@ -45,7 +45,7 @@ export default function Header(){
 
     return(
         <div className={`${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
-            <header className="flex flex-row justify-between w-full h-[10vh] bg-blue-fcsn2 z-50 shadow-md/20 px-10">
+            <header className="fixed top-0 flex flex-row justify-between w-full h-[10vh] bg-blue-fcsn2 z-50 shadow-md/20 px-10 mb-56">
                 
                 <div className="hidden sm:flex flex-row justify-start items-center w-[85%] text-white dark:text-white-off text-xl gap-4 sm:w-3/4 lg:w-1/2 lg:text-2xl font-bold ml-1">
                     
@@ -89,7 +89,7 @@ export default function Header(){
                     <FaBars size={20} className="text-white" />
                 </button>
 
-                <div className="py-4">
+                <div className="py-6">
                     <Botao_Logout />
                 </div>
                 {/* Mobile Menu */}

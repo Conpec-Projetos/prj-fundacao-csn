@@ -155,7 +155,7 @@ export default function AdminHomePage() {
   return (
     <div className={`flex flex-col grow min-h-[90vh] ${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
       
-      <main className="flex flex-col gap-8 px-8 pb-8 flex-1 sm:mx-12 md:mx-20"> 
+      <main className="flex flex-col gap-8 px-8 pb-8 flex-1 sm:mx-12 md:mx-20 pt-12"> 
         {/* Seção de boas-vindas */}
           <div className="flex justify-between items-center">
             <div>
