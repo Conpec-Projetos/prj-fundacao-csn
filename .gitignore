@@ -135,3 +135,14 @@ dist
 .yarn/install-state.gz
 .pnp.*
 .vercel
+
+# firebase functions
+.firebaserc
+firebase.json
+functions/.eslintrc.js
+functions/.gitignore
+functions/package-lock.json
+functions/package.json
+functions/tsconfig.dev.json
+functions/tsconfig.json
+functions/src/index.ts

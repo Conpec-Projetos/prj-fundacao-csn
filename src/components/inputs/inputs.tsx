@@ -99,7 +99,7 @@ export const ShortInput: React.FC<TextProps> = (props) => {
 
 export const LongInput: React.FC<HookFormInputProps> = ({ text, isNotMandatory, registration, error }) => {
     return(
-        <div className="flex flex-col justify-between h-[23dvh] my-2">
+        <div className={`flex flex-col justify-between h-[23dvh] mt-2 ${error ? "mb-4" : ""}`}>
             <label htmlFor={registration.name} className="w-full text-xl text-blue-fcsn dark:text-white-off font-bold pb-1">
                 {text} {isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </label>
@@ -347,7 +347,7 @@ export const EstadoInput: React.FC<EstadoInputProps> = ({ text, isNotMandatory, 
                                 className="text-sm bg-blue-50 hover:bg-blue-100 dark:bg-blue-fcsn2 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off cursor-pointer px-2 py-1 rounded m-1 inline-flex items-center"
                             >
                                 {estado}
-                                <AiOutlineClose className="ml-2"/>
+                                <AiOutlineClose className="text-blue-fcsn hover:text-red-800 dark:text-white-off dark:hover:text-red-400 ml-1"/>
                             </button>
                         ))}
                         {value.length === 0 && (
