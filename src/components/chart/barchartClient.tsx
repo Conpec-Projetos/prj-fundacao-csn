@@ -10,8 +10,6 @@ import {
   Title,
   Tooltip,
   Legend,
-  Chart,
-  ChartOptions,
 } from 'chart.js';
 import { useTheme } from '@/context/themeContext';
 
@@ -74,7 +72,6 @@ interface BarChartProps {
 }
 
 export default function BarChart({
-  title,
   data,
   labels,
   colors = ['pink-fcsn'],

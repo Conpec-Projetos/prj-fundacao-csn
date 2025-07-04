@@ -7,10 +7,20 @@ import { FaCaretDown } from "react-icons/fa";
 import { useCallback, useEffect, useState } from "react";
 import { EstadoInputDashboard, CidadeInputDashboard } from "@/components/inputs/inputs";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/firebase/firebase-config";
+import { auth, db } from "@/firebase/firebase-config";
 import { dadosEstados, dadosProjeto } from "@/firebase/schema/entities";
+import { useRouter } from "next/navigation";
+import { useTheme } from "@/context/themeContext";
+import { onAuthStateChanged } from "firebase/auth";
+import Image from "next/image";
+import logo from "@/assets/fcsn-logo.svg"
+import darkLogo from "@/assets/fcsn-logo-dark.svg"
+import { Divide } from "lucide-react";
+import Header from "@/components/header/header";
+import HeaderSecundario from "@/components/header/headerSecundario";
 
 export default function DashboardPage() {
+
   async function buscarDadosEstado(
     estado: string
   ): Promise<dadosEstados | null> {
@@ -305,6 +315,7 @@ export default function DashboardPage() {
     "Sergipe" : "SE",
     "Tocantins" : "TO",
   };
+  
 
   const [ehCelular, setEhCelular] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -350,10 +361,70 @@ export default function DashboardPage() {
     }
   }, [estado, buscarDadosGerais, cidades, buscarDadosMunicipios]);
 
+  // verificando se o usuario ja realizou login
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const { darkMode } = useTheme();
+
+  // Para controlar o header utilizei:
+  const [changeHeader, setChangeHeader] = useState(true); //T rue significa que é o header do ADM
+
+    // Vamos verificar se é ADM
+    async function IsADM(email: string): Promise<boolean>{
+      const usuarioInt = collection(db, "usuarioInt");
+      const qADM = query(usuarioInt, where("email", "==", email), where("administrador", "==", true));
+      const snapshotADM = await getDocs(qADM );
+      return !snapshotADM.empty; // Se não estiver vazio, é um adm
+    }
+
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (!user || !user.email || !user.emailVerified) { // Checa se o usuário tem email verificado tambem
+            router.push("/login"); // Como não está logado, permite que a página de login seja renderizada
+            return;
+          }
+          const emailDomain = user.email.split('@')[1];
+          const isAdm = await IsADM(user.email);
+
+          // Verificamos se possui o dominio da csn (usamos afim de teste o dominio da conpec)
+          // se o usuario verificou o email recebido e se é ADM
+          if ((emailDomain === "conpec.com.br") && isAdm ){ // Verificamos se possui o dominio da csn e se é ADM
+            setIsLoading(false);
+          } else if (emailDomain === "conpec.com.br"){ // Se não for verificamos se possui o dominio da csn apenas 
+            setIsLoading(false);
+            setChangeHeader(false);
+          } else { // Se chegar aqui significa que é um usuario externo
+            router.push("/inicio-externo");
+          }
+        });
+
+    return () => unsubscribe();
+    }, [router]);
+
+  if (isLoading) {
+      return (
+          <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
+              <Image
+                  src={darkMode ? darkLogo : logo}
+                  alt="csn-logo"
+                  width={600}
+                  className=""
+                  priority
+              />
+              <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
+                  Verificando sessão...
+              </div>
+          </div>
+      );
+  }
+
   //começo do código em si
   return (
+    <>
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
-      <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10">
+      {changeHeader ? <Header /> : <HeaderSecundario />}
+      <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10 ">
         <div className="flex flex-row items-center w-full justify-between">
           <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
           <div className="relative">
@@ -493,7 +564,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
+        
         {/* Section 3: Map and Chart */}
+        
         {estado === "" && (
           <section
             className={`grid ${
@@ -510,13 +583,14 @@ export default function DashboardPage() {
                 <BrazilMap data={dadosMapa} />
               </div>
             </div>
+             
             <div className="flex flex-col">
-              {/* box for the bar chart */}
+              
               <div className="min-h-96 h-fit w-full">
                 <BarChart
                   title=""
                   data={Object.values(dadosMapa)}
-                  labels={Object.keys(dadosMapa).map(nome => estadosSiglas[nome] ?? nome)}
+                  labels={Object.keys(dadosMapa).map(nome => estadosSiglas[nome] ?? nome)} 
                   colors={["#b37b97"]}
                   horizontal={true}
                   useIcons={false}
@@ -525,6 +599,7 @@ export default function DashboardPage() {
             </div>
           </section>
         )}
+        
 
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-10">
@@ -559,5 +634,6 @@ export default function DashboardPage() {
       </main>
       <Footer />
     </div>
+  </>
   );
 }
