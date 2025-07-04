@@ -22,6 +22,7 @@ import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion }
 import { db, auth } from "@/firebase/firebase-config";
 import { formsCadastroDados, odsList, leiList, segmentoList, formsCadastroDocumentos, Projetos, Associacao } from "@/firebase/schema/entities";
 import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome } from "@/lib/utils";
+import HeaderSecundario from "@/components/header/headerSecundario";
 
 
 export default function FormsCadastro(){
@@ -203,7 +204,7 @@ export default function FormsCadastro(){
 
     return(
         <main className="flex flex-col justify-between items-center w-[screen] h-[dvh] overflow-hidden no-scrollbar">
-            
+            <HeaderSecundario />
             <div className="flex flex-col items-center justify-center w-full h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh] text-blue-fcsn dark:text-white-off text-7xl font-bold"
             >
                 <h1 className="text-center w-[90dvw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl"
