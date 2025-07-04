@@ -422,9 +422,9 @@ export default function DashboardPage() {
   //começo do código em si
   return (
     <>
-    <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off pt-24">
       {changeHeader ? <Header /> : <HeaderSecundario />}
-      <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10 ">
+      <main className="flex flex-col gap-5 p-4 sm:p-6 md:p-10  ">
         <div className="flex flex-row items-center w-full justify-between">
           <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
           <div className="relative">

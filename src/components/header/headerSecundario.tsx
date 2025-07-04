@@ -10,7 +10,7 @@ export default function HeaderSecundario() {
   const pathname = usePathname(); // Aqui pegamos o caminho atual para sabermos se esconderemos o batão sair (Se for o forms-cadastro) ou não
 
   return (
-    <header className="w-full bg-blue-fcsn2 dark:bg-blue-fcsn2 px-4 py-6 md:px-20 flex justify-between items-center">
+    <header className="fixed top-0 z-50 w-full bg-blue-fcsn2 dark:bg-blue-fcsn2 px-4 py-6 md:px-20 flex justify-between items-center">
       <Image
         src={darkLogo}
         alt="csn-logo"
