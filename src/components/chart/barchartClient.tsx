@@ -10,6 +10,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  ChartOptions
 } from 'chart.js';
 import { useTheme } from '@/context/themeContext';
 import { usePDF } from '@/context/pdfContext';
@@ -137,9 +138,9 @@ export default function BarChart({
   };
 
   // Dynamically update chart options based on dark mode
-  const options = useMemo(() => ({
+  const options:ChartOptions<'bar'> = useMemo(() => ({
     responsive: true,
-    animation: !isPdfMode,
+    animation: isPdfMode ? false : {},
     indexAxis: horizontal ? 'y' : 'x',
     maintainAspectRatio: false,
     layout: {
