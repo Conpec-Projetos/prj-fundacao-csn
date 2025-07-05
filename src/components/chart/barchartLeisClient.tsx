@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
   TooltipItem,
+  ChartOptions
 } from 'chart.js';
 import { useTheme } from '@/context/themeContext';
 import { usePDF } from '@/context/pdfContext';
@@ -85,7 +86,7 @@ export default function BarChart({
 
   const chartRef = useRef<ChartJS<'bar', number[], string> | null>(null);
 
-  const options = useMemo(() => ({
+  const options:ChartOptions<'bar'> = useMemo(() => ({
     responsive: true,
     indexAxis: horizontal ? 'y' : 'x',
     maintainAspectRatio: false,
@@ -114,7 +115,7 @@ export default function BarChart({
             },
             label: function(context: TooltipItem<'bar'>) {
                 const dataIndex = context.dataIndex;
-                return data[dataIndex];
+                return String(data[dataIndex]);
             },
 }
       },
@@ -135,7 +136,7 @@ export default function BarChart({
         },
       },
     },
-    animation: !isPdfMode,
+    animation: isPdfMode ? false : undefined,
   }), [darkMode, horizontal, celular, labels, data, isPdfMode]);
 
   const chartData = {
