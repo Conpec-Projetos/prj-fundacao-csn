@@ -7,7 +7,7 @@ import { useTheme } from '@/context/themeContext';
 import { usePDF } from '@/context/pdfContext'; // Importe o hook
 
 interface GeradorPDFProps {
-  refConteudo: RefObject<HTMLDivElement>; 
+  refConteudo: RefObject<HTMLDivElement | null>; 
   nomeArquivo: string;
 }
 
@@ -30,15 +30,15 @@ const GeradorPDF: React.FC<GeradorPDFProps> = ({ refConteudo, nomeArquivo }) => 
         await new Promise(resolve => setTimeout(resolve, 500)); 
 
         try {
+          const fatorEscala = 2;
+
+
           const tela = await html2canvas(elementoDeCaptura, {
-            scale: 2,
             useCORS: true,
             backgroundColor: darkMode ? '#292944' : '#ffffff',
-            width: elementoDeCaptura.scrollWidth,
-            height: elementoDeCaptura.scrollHeight + 50,
-            windowWidth: elementoDeCaptura.scrollWidth,
-            windowHeight: elementoDeCaptura.scrollHeight,
-          });
+            width: (elementoDeCaptura.scrollWidth * fatorEscala) - elementoDeCaptura.scrollWidth,
+            height: ((elementoDeCaptura.scrollHeight + 50) * fatorEscala) - elementoDeCaptura.scrollHeight,
+          } as Html2Canvas.Html2CanvasOptions & { backgroundColor?: string });
 
           const imgWidth = tela.width;
           const imgHeight = tela.height;
