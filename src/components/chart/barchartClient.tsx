@@ -12,6 +12,7 @@ import {
   Legend,
 } from 'chart.js';
 import { useTheme } from '@/context/themeContext';
+import { usePDF } from '@/context/pdfContext';
 
 // Gradiente com base na quantidade de projetos
 export function generateGradientColors(data: number[], baseColor: string = '#b37b97'): string[] {
@@ -78,7 +79,8 @@ export default function BarChart({
   horizontal = false,
   celular = false,
 }: BarChartProps) {
-  const { darkMode } = useTheme(); // Access the dark mode state
+  const { darkMode } = useTheme(); 
+  const { isPdfMode } = usePDF();
 
   const chartRef = useRef<ChartJS<'bar', number[], string> | null>(null);
   const [iconsLoaded, setIconsLoaded] = useState(false);
@@ -137,6 +139,7 @@ export default function BarChart({
   // Dynamically update chart options based on dark mode
   const options = useMemo(() => ({
     responsive: true,
+    animation: !isPdfMode,
     indexAxis: horizontal ? 'y' : 'x',
     maintainAspectRatio: false,
     layout: {
@@ -170,8 +173,7 @@ export default function BarChart({
         },
       },
     },
-    animation: {},
-  }), [darkMode, useIcons, horizontal, celular]); // Recreate options when darkMode changes
+  }), [darkMode, useIcons, horizontal, celular, isPdfMode]); // Recreate options when darkMode changes
 
   const chartData = {
     labels: useIcons ? labels.map(() => '') : labels,

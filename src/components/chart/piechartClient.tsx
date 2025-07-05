@@ -10,6 +10,7 @@ import {
 } from 'chart.js';
 import { useTheme } from '@/context/themeContext';
 import { useMemo } from 'react';
+import { usePDF } from '@/context/pdfContext';
 
 ChartJS.register(
   ArcElement,
@@ -28,6 +29,7 @@ export default function PieChart({data, labels, ehCelular, colors = [
   '#e74c3c','#8e44ad','#39c2e0','#2ecc40','#f1c40f',] }
   : PieChartProps) {
   const { darkMode } = useTheme();
+  const { isPdfMode } = usePDF();
 
   const chartData = {
     labels,
@@ -43,6 +45,7 @@ export default function PieChart({data, labels, ehCelular, colors = [
 
   const options = useMemo(() => ({
     responsive: true,
+    animation: !isPdfMode,
     plugins: {
       legend: {
         position: ehCelular ? 'bottom' as const : 'right' as const,
@@ -54,7 +57,7 @@ export default function PieChart({data, labels, ehCelular, colors = [
         display: false,
       },
     },
-  }), [darkMode, ehCelular]);
+  }), [darkMode, ehCelular, isPdfMode]);
 
   return <Pie data={chartData} options={options} />;
 }

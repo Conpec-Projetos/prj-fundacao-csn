@@ -11,6 +11,7 @@ import { EstadoInputDashboard, CidadeInputDashboard } from "@/components/inputs/
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import { dadosEstados, dadosProjeto } from "@/firebase/schema/entities";
+import { usePDF } from "@/context/pdfContext";
 
 const estadosSiglas: {[key:string]: string} = {
   "Acre" : "AC",
@@ -323,6 +324,7 @@ export default function DashboardPage() {
   };
 
   const refConteudo = useRef<HTMLDivElement>(null);
+  const { isPdfMode } = usePDF();
 
   const [ehCelular, setEhCelular] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -372,7 +374,7 @@ export default function DashboardPage() {
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
-      <main ref={refConteudo} className="flex flex-col gap-5 p-4 sm:p-6 md:p-10">
+      <main ref={refConteudo} className="flex flex-col space-y-5 p-4 sm:p-6 md:p-10">
         <div className="flex flex-row items-center w-full justify-between">
           <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-2">
@@ -380,7 +382,7 @@ export default function DashboardPage() {
               <GeradorPDF refConteudo={refConteudo} nomeArquivo="dashboard-relatorio" />
               <div className="relative"> 
                 <button
-                  className="flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer"
+                  className={`flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer ${isPdfMode ? 'hidden' : ''}`}
                   onClick={() => setIsOpen(!isOpen)}
                 >
                   <FaCaretDown /> Aplicar Filtros
@@ -414,89 +416,116 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Section 1: Summary Cards */}
-        <section className="grid md:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 gap-4 text-right">
-          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
-            <div className="mb-2">
-              <h1 className="text-lg text-blue-fcsn dark:text-white-off font-light mb-2">
-                Valor total investido em projetos
+        {/* Section 1: Summary Cards*/}
+        <section className={`my-2 text-right ${isPdfMode ? 'pdf-parent-float-container' : 'flex'}`}>
+          <div className={isPdfMode ? 'pdf-float-left pdf-w-50 pdf-px-2' : 'w-full sm:w-1/2 lg:w-1/2 p-2'}>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 h-full">
+              <div className="mb-2">
+                <h1 className="text-lg text-blue-fcsn dark:text-white-off font-light mb-2">
+                  Valor total investido em projetos
+                </h1>
+              </div>
+              <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
+                R$ {dados?.valorTotal},00
+              </h1>
+              <h1 className="text-base text-blue-fcsn dark:text-white-off font-light">
+                Investido em Projeto {dados?.maiorAporte.nome}
               </h1>
             </div>
-            <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
-              R$ {dados?.valorTotal},00
-            </h1>
           </div>
-          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
-            <div className="mb-2">
-              <h1 className="text-lg text-blue-fcsn dark:text-white-off font-light mb-2">
-                Maior Aporte
+          <div className={isPdfMode ? 'pdf-float-left pdf-w-50 pdf-px-2' : 'w-full sm:w-1/2 lg:w-1/2 p-2'}>
+            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 h-full">
+              <div className="mb-2">
+                <h1 className="text-lg text-blue-fcsn dark:text-white-off font-light mb-2">
+                  Maior Aporte
+                </h1>
+              </div>
+              <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
+                R$ {dados?.maiorAporte.valorAportado},00
+              </h1>
+              <h1 className="text-base text-blue-fcsn dark:text-white-off font-light">
+                Investido em Projeto {dados?.maiorAporte.nome}
               </h1>
             </div>
-            <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
-              R$ {dados?.maiorAporte.valorAportado},00
-            </h1>
-            <h1 className="text-base text-blue-fcsn dark:text-white-off font-light">
-              Investido em Projeto {dados?.maiorAporte.nome}
-            </h1>
           </div>
         </section>
 
-          {cidades.length > 0 && <section className="grid grid-rows-1 gap-5 text-left">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-              <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
-              <h2 className="text-lg mb-2">Projetos no total</h2>
+        {/* Section 2: Stats*/}
+        {cidades.length > 0 && (
+          <section className="flex flex-wrap my-2.5 text-left">
+            <div className="w-full md:w-1/4 pb-2.5 pr-2.5">
+              <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 h-full">
+                <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
+                <h2 className="text-lg mb-2">Projetos no total</h2>
+              </div>
             </div>
-            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-              <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
-              <h2 className="text-lg">Beneficiários diretos</h2>
+            <div className="w-full md:w-1/4 pb-2.5 pr-2.5">
+              <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 h-full">
+                <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
+                <h2 className="text-lg">Beneficiários diretos</h2>
+              </div>
             </div>
-            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-              <p className="text-xl font-bold">
-                {dados?.beneficiariosIndireto}
-              </p>
-              <h2 className="text-lg">Beneficiários indiretos</h2>
+            <div className="w-full md:w-1/4 pb-2.5 pr-2.5">
+              <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 h-full">
+                <p className="text-xl font-bold">{dados?.beneficiariosIndireto}</p>
+                <h2 className="text-lg">Beneficiários indiretos</h2>
+              </div>
             </div>
-            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-              <p className="text-xl font-bold">{dados?.qtdOrganizacoes}</p>
-              <h2 className="text-lg">Organizações envolvidas</h2>
+            <div className="w-full md:w-1/4 pb-2.5">
+              <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 h-full">
+                <p className="text-xl font-bold">{dados?.qtdOrganizacoes}</p>
+                <h2 className="text-lg">Organizações envolvidas</h2>
+              </div>
             </div>
-          </div>
-        </section>}
+          </section>
+        )}
 
-          {cidades.length == 0 && <section className="grid grid-rows-2 gap-5 text-left">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-              <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
-              <h2 className="text-lg mb-2">Projetos no total</h2>
+        {cidades.length === 0 && (
+          <section className="space-y-5 text-left">
+            <div className="flex flex-wrap -m-2.5">
+              <div className="w-full md:w-1/3 p-2.5">
+                <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 h-full">
+                  <p className="text-xl font-bold">{dados?.qtdProjetos}</p>
+                  <h2 className="text-lg mb-2">Projetos no total</h2>
+                </div>
+              </div>
+              <div className="w-full md:w-1/3 p-2.5">
+                <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 h-full">
+                  <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
+                  <h2 className="text-lg">Beneficiários diretos</h2>
+                </div>
+              </div>
+              <div className="w-full md:w-1/3 p-2.5">
+                <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 h-full">
+                  <p className="text-xl font-bold">{dados?.beneficiariosIndireto}</p>
+                  <h2 className="text-lg">Beneficiários indiretos</h2>
+                </div>
+              </div>
             </div>
-            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-              <p className="text-xl font-bold">{dados?.beneficiariosDireto}</p>
-              <h2 className="text-lg">Beneficiários diretos</h2>
+            <div className="flex flex-wrap -m-2.5">
+              <div className={`p-2.5 ${estado === '' ? 'w-full md:w-1/3' : 'w-full md:w-1/2'}`}>
+                <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 h-full">
+                  <p className="text-xl font-bold">{dados?.qtdOrganizacoes}</p>
+                  <h2 className="text-lg">Organizações envolvidas</h2>
+                </div>
+              </div>
+              <div className={`p-2.5 ${estado === '' ? 'w-full md:w-1/3' : 'hidden'}`}>
+                <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 h-full">
+                  <p className="text-xl font-bold">{estadosAtendidos}</p>
+                  <h2 className="text-lg">Estados atendidos</h2>
+                </div>
+              </div>
+              <div className={`p-2.5 ${estado === '' ? 'w-full md:w-1/3' : 'w-full md:w-1/2'}`}>
+                <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 h-full">
+                  <p className="text-xl font-bold">{dados?.qtdMunicipios}</p>
+                  <h2 className="text-lg">Municípios atendidos</h2>
+                </div>
+              </div>
             </div>
-            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-              <p className="text-xl font-bold">
-                {dados?.beneficiariosIndireto}
-              </p>
-              <h2 className="text-lg">Beneficiários indiretos</h2>
-            </div>
-          </div>
-          <div className={`grid gap-5 ${estado === '' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
-            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-              <p className="text-xl font-bold">{dados?.qtdOrganizacoes}</p>
-              <h2 className="text-lg">Organizações envolvidas</h2>
-            </div>
-            <div className={`bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3 ${estado === '' ? '' : 'hidden'}`}>
-              <p className="text-xl font-bold">{estadosAtendidos}</p>
-              <h2 className="text-lg">Estados atendidos</h2>
-            </div>
-            <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-3">
-              <p className="text-xl font-bold">{dados?.qtdMunicipios}</p>
-              <h2 className="text-lg">Municípios atendidos</h2>
-            </div>
-          </div>
-        </section>}
-        {/* Section 2: ODS Chart */}
+          </section>
+        )}
+
+        {/* Section 3: ODS Chart */}
         <section className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
           <h2 className="text-2xl font-bold mb-5">
             Objetivos de Desenvolvimento Sustentável
@@ -514,65 +543,64 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
-        {/* Section 3: Map and Chart */}
+
+        {/* Section 4: Map and Chart*/}
         {estado === "" && (
-          <section
-            className={`grid ${
-              ehCelular ? "" : "grid-cols-2"
-            } gap-4 bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5`}
-          >
-            <div className="flex flex-col overflow-x-auto md:overflow-x-hidden">
-              <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
-              <div
-                className={`lg:h-120 md:h-100 sm:h-80 w-full p-3 ${
-                  ehCelular ? "hidden" : ""
-                }`}
-              >
-                <BrazilMap data={dadosMapa} />
-              </div>
-            </div>
-            <div className="flex flex-col">
-              {/* box for the bar chart */}
-              <div className="min-h-96 h-fit w-full">
-                <BarChart
-                  data={Object.values(dadosMapa)}
-                  labels={Object.keys(dadosMapa).map(nome => estadosSiglas[nome] ?? nome)}
-                  colors={["#b37b97"]}
-                  horizontal={true}
-                  useIcons={false}
-                />
-              </div>
+          <section className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5">
+            <div className="flex flex-wrap -m-2">
+                <div className={`w-full ${ehCelular ? 'hidden' : 'lg:w-1/2'} p-2`}>
+                    <h2 className="text-2xl font-bold mb-4">Estados de atuação</h2>
+                    <div className="lg:h-120 md:h-100 sm:h-80 w-full p-3">
+                        <BrazilMap data={dadosMapa} />
+                    </div>
+                </div>
+                <div className={`w-full ${ehCelular ? '' : 'lg:w-1/2'} p-2`}>
+                    <div className="min-h-96 h-fit w-full">
+                        <BarChart
+                        data={Object.values(dadosMapa)}
+                        labels={Object.keys(dadosMapa).map(nome => estadosSiglas[nome] ?? nome)}
+                        colors={["#b37b97"]}
+                        horizontal={true}
+                        useIcons={false}
+                        />
+                    </div>
+                </div>
             </div>
           </section>
         )}
 
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-10">
-            <h2 className="text-2xl font-bold mb-4">Segmento do projeto</h2>
-            <div className="sm:h-120 h-fit">
-              <PieChart
-                data={segmentoValores}
-                labels={segmentoNomes}
-                colors={["#e74c3c", "#8e44ad", "#39c2e0", "#2ecc40", "#f1c40f"]}
-                ehCelular={ehCelular}
-              />
-            </div>
+  {/* Section 5: Pie and Bar Charts*/}  
+  <section className={isPdfMode ? 'pdf-parent-float-container' : 'flex flex-wrap -m-4'}>
+    <div className={isPdfMode ? 'pdf-float-left pdf-w-50 pdf-px-4 h-[700px]' : 'w-full md:w-1/2 p-4'}>
+      <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-10 h-full">
+        <h2 className="text-2xl font-bold mb-4">Segmento do projeto</h2>
+        <div className="sm:h-120 h-fit">
+          <PieChart
+            data={segmentoValores}
+            labels={segmentoNomes}
+            colors={["#e74c3c", "#8e44ad", "#39c2e0", "#2ecc40", "#f1c40f"]}
+            ehCelular={ehCelular}
+          />
+        </div>
+      </div>
+    </div>
+    <div className={isPdfMode ? 'pdf-float-left pdf-w-50 pdf-px-4 h-[700px]' : 'w-full md:w-1/2 p-4'}>
+      <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 h-full flex flex-col">
+        <h2 className="text-2xl font-bold mb-4">Lei de Incentivo</h2>
+        <div className="flex-grow w-full overflow-x-auto">
+          <div className="">
+            <BarChartLeis
+              colors={["#b37b97"]}
+              data={leiValores}
+              siglas={leiSiglas}
+              labels={leiNomes}
+              horizontal={true}
+            />
           </div>
-          <div className="bg-white-off dark:bg-blue-fcsn3 rounded-xl shadow-sm p-5 h-full flex flex-col">
-            <h2 className="text-2xl font-bold mb-4">Lei de Incentivo</h2>
-            <div className="flex-grow w-full overflow-x-auto">
-              <div className="">
-                <BarChartLeis
-                  colors={["#b37b97"]}
-                  data={leiValores}
-                  siglas={leiSiglas}
-                  labels={leiNomes}
-                  horizontal={true}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
+        </div>
+      </div>
+    </div>
+  </section>
       </main>
       <Footer />
     </div>
