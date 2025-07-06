@@ -1,4 +1,3 @@
-// components/pdf/geradorPDF.tsx
 import React, { useState, RefObject, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';

@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import { useTheme } from '@/context/themeContext';
 import { usePDF } from '@/context/pdfContext';
+import { useEhCelular } from '@/context/ehCelular';
 
 // Gradiente com base na quantidade de projetos
 export function generateGradientColors(data: number[], baseColor: string = '#b37b97'): string[] {
@@ -69,7 +70,7 @@ interface BarChartProps {
   colors?: string[];
   useIcons?: boolean;
   horizontal?: boolean;
-  celular?: boolean;
+  responsivo?: boolean;
 }
 
 export default function BarChart({
@@ -78,14 +79,19 @@ export default function BarChart({
   colors = ['pink-fcsn'],
   useIcons = false,
   horizontal = false,
-  celular = false,
+  responsivo = false,
 }: BarChartProps) {
   const { darkMode } = useTheme(); 
   const { isPdfMode } = usePDF();
+  const celular = useEhCelular();
 
   const chartRef = useRef<ChartJS<'bar', number[], string> | null>(null);
   const [iconsLoaded, setIconsLoaded] = useState(false);
   const iconsRef = useRef<HTMLImageElement[]>([]);
+
+  if (responsivo)  {
+    horizontal = celular
+  }
 
   // Load ODS icons
   useEffect(() => {

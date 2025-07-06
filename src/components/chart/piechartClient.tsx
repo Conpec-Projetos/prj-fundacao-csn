@@ -11,6 +11,7 @@ import {
 import { useTheme } from '@/context/themeContext';
 import { useMemo } from 'react';
 import { usePDF } from '@/context/pdfContext';
+import { useEhCelular } from '@/context/ehCelular';
 
 ChartJS.register(
   ArcElement,
@@ -22,14 +23,14 @@ interface PieChartProps {
   data: number[];
   labels: string[];
   colors?: string[];
-  ehCelular?: boolean;
 }
 
-export default function PieChart({data, labels, ehCelular, colors = [
+export default function PieChart({data, labels, colors = [
   '#e74c3c','#8e44ad','#39c2e0','#2ecc40','#f1c40f',] }
   : PieChartProps) {
   const { darkMode } = useTheme();
   const { isPdfMode } = usePDF();
+  const ehCelular = useEhCelular();
 
   const chartData = {
     labels,
