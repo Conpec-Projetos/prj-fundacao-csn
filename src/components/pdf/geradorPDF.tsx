@@ -30,14 +30,12 @@ const GeradorPDF: React.FC<GeradorPDFProps> = ({ refConteudo, nomeArquivo }) => 
         await new Promise(resolve => setTimeout(resolve, 500)); 
 
         try {
-          const fatorEscala = 2;
-
-
           const tela = await html2canvas(elementoDeCaptura, {
+            scale: 2,
             useCORS: true,
             backgroundColor: darkMode ? '#292944' : '#ffffff',
-            width: (elementoDeCaptura.scrollWidth * fatorEscala) - elementoDeCaptura.scrollWidth,
-            height: ((elementoDeCaptura.scrollHeight + 50) * fatorEscala) - elementoDeCaptura.scrollHeight,
+            width: elementoDeCaptura.scrollWidth,
+            height: elementoDeCaptura.scrollHeight + 50
           } as Html2Canvas.Html2CanvasOptions & { backgroundColor?: string });
 
           const imgWidth = tela.width;
@@ -77,7 +75,7 @@ const GeradorPDF: React.FC<GeradorPDFProps> = ({ refConteudo, nomeArquivo }) => 
     <button
       onClick={lidarDownloadPDF}
       disabled={isCarregando}
-      className={`flex items-center gap-2 text-white-off bg-red-500 hover:bg-red-600 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer transition-colors ${isPdfMode ? 'hidden' : ''}`}
+      className={`flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 hover:bg-stone-300 dark:hover:bg-blue-fcsn3 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer transition-colors ${isPdfMode ? 'hidden' : ''}`}
       title="Baixar a página como PDF"
     >
       <FaFilePdf />

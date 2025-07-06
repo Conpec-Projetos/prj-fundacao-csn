@@ -382,7 +382,7 @@ export default function DashboardPage() {
               <GeradorPDF refConteudo={refConteudo} nomeArquivo="dashboard-relatorio" />
               <div className="relative"> 
                 <button
-                  className={`flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer ${isPdfMode ? 'hidden' : ''}`}
+                  className={`flex items-center gap-2 text-blue-fcsn dark:text-white-off bg-white-off dark:bg-blue-fcsn2 hover:bg-stone-300 dark:hover:bg-blue-fcsn3 rounded-xl text-lg font-bold px-5 py-3 cursor-pointer ${isPdfMode ? 'hidden' : ''}`}
                   onClick={() => setIsOpen(!isOpen)}
                 >
                   <FaCaretDown /> Aplicar Filtros
