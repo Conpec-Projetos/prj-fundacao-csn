@@ -9,7 +9,6 @@ import presentation from "@/assets/Presentation-svg.svg";
 import positivo from "@/assets/positivo-svg.svg";
 import negativo from "@/assets/negativo-svg.svg";
 import atencao from "@/assets/atencao-svg.svg";
-import setinha from "@/assets/seta-svg.svg";
 import carrossel from "@/assets/carrossel.jpeg";
 import {
   Carousel,
