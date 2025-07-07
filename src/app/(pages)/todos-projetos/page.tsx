@@ -2,6 +2,7 @@
 
 import Footer from "@/components/footer/footer";
 import { useEffect, useRef, useState } from "react";
+
 import {
   FaCaretDown,
   FaCheckCircle,
@@ -9,15 +10,18 @@ import {
   FaSearch,
   FaTimesCircle, // Este ícone não será mais usado, mas podemos manter o import
 } from "react-icons/fa";
+
 import { FaClockRotateLeft } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@/firebase/firebase-config";
+
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import logo from "@/assets/fcsn-logo.svg";
 import Image from "next/image";
 import { useTheme } from "@/context/themeContext";
 import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
+
 
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj"; 
 
@@ -225,6 +229,7 @@ export default function TodosProjetos() {
     if (filtered.length > 0) {
       setSearch("");
     }
+
   }
 
   function clearFilters() {
@@ -269,7 +274,9 @@ export default function TodosProjetos() {
     );
   }
 
+
   const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -279,6 +286,7 @@ export default function TodosProjetos() {
             Projetos
           </h1>
           <div className="flex flex-row gap-x-4 mt-3">
+
             <div className="bg-white-off dark:bg-blue-fcsn2 p-2 rounded-lg shadow-md">
               <FaSearch size={24} />
             </div>

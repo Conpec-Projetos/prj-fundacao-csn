@@ -22,6 +22,7 @@ import { Toaster, toast } from "sonner";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion, runTransaction } from "firebase/firestore";
 import { db, auth } from "@/firebase/firebase-config";
+
 import { formsCadastroDados, odsList, leiList, segmentoList, Projetos, publicoList, dadosEstados } from "@/firebase/schema/entities";
 import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome, slugifyEstado, validaCNPJ, formatCNPJ, formatCEP, formatTelefone, formatMoeda, filtraDigitos } from "@/lib/utils";
 import { z } from "zod";
@@ -113,6 +114,7 @@ async function updateDadosEstado(formData: FormFields, stateName: string) {
                 console.error(`Documento para o estado ${stateName} (${estadoDocID}) não encontrado!`);
                 return;
             }
+
 
             const dadosAtuais = docSnapshot.data() as dadosEstados;
             type UpdatesType = Partial<{
@@ -393,12 +395,15 @@ export default function FormsCadastro() {
         }
     };
 
-    return (
-      <main className="flex flex-col justify-between items-center w-screen min-h-screen">
-            <div className="flex flex-col items-center justify-center w-full py-12 text-blue-fcsn dark:text-white-off">
-                <h1 className="text-center text-blue-fcsn w-[90vw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold">
-                    Inscrição de Projeto
-                </h1>
+
+    return(
+        <main className="flex flex-col justify-between items-center w-[screen] h-[dvh] overflow-hidden no-scrollbar">
+            <HeaderSecundario />
+            <div className="flex flex-col items-center justify-center w-full h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[35vh] text-blue-fcsn dark:text-white-off text-7xl font-bold"
+            >
+                <h1 className="text-center w-[90dvw] text-wrap text-4xl sm:text-5xl lg:text-6xl xl:text-7xl"
+                 >Inscrição de Projeto</h1>
+
             </div>
             
             <form 
