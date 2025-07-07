@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { odsList, leiList, segmentoList, publicoList } from "@/firebase/schema/entities";
 import { formatCNPJ, formatCEP, formatTelefone, formatMoeda, filtraDigitos } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
+import { useForm, Controller, FieldError } from "react-hook-form";
 import { submitCadastroForm } from '@/app/actions/formsCadastroActions';
 import { auth } from "@/firebase/firebase-config";
 import { onAuthStateChanged } from "firebase/auth";
@@ -114,57 +114,54 @@ export default function CadastroForm() {
             setUsuarioAtualID(user ? user.uid : null);
         });
     }, []);
-
-    // A função onSubmit agora chama a Server Action
-    const onSubmit: SubmitHandler<FormsCadastroFormFields> = async (data) => {
-        if (!usuarioAtualID) {
-            toast.error("Sessão inválida. Por favor, faça login novamente.");
-            return;
-        }
-
-        const loadingToastId = toast.loading("Enviando formulário...");
-
-        const formData = new FormData();
-        
-        Object.entries(data).forEach(([key, value]) => {
-            if (Array.isArray(value) && value.every(item => item instanceof File)) {
-
-            } else if (typeof value === 'object' && value !== null) {
-                formData.append(key, JSON.stringify(value));
-            } else if (value !== undefined && value !== null) {
-                formData.append(key, String(value));
-            }
-        });
-
-        data.diario.forEach(file => formData.append('diario', file));
-        data.apresentacao.forEach(file => formData.append('apresentacao', file));
-        data.compliance.forEach(file => formData.append('compliance', file));
-        data.documentos.forEach(file => formData.append('documentos', file));
-        
-        formData.append('usuarioAtualID', usuarioAtualID);
-
-        try {
-            const result = await submitCadastroForm(formData);
-
-            toast.dismiss(loadingToastId);
-
-            if (result.success) {
-                toast.success("Formulário enviado com sucesso!");
-                // TODO: Lógica de resetar o formulário ou redirecionar o usuário
-            } else {
-                toast.error(`Erro: ${result.error}`);
-            }
-        } catch (error) {
-            toast.dismiss(loadingToastId);
-            toast.error("Ocorreu um erro inesperado ao enviar o formulário.");
-            console.error(error);
-        }
-    };
     
     return (
         <form 
             className="flex flex-col justify-center items-center max-w-[1500px] w-[90vw] sm:w-[80vw] xl:w-[70vw] mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-lg"
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(async (data) => {
+                if (!usuarioAtualID) {
+                    toast.error("Sessão inválida. Por favor, faça login novamente.");
+                    return;
+                }
+        
+                const loadingToastId = toast.loading("Enviando formulário...");
+        
+                const formData = new FormData();
+                
+                Object.entries(data).forEach(([key, value]) => {
+                    if (Array.isArray(value) && value.every(item => item instanceof File)) {
+                        // Tratado separadamente abaixo
+                    } else if (typeof value === 'object' && value !== null) {
+                        formData.append(key, JSON.stringify(value));
+                    } else if (value !== undefined && value !== null) {
+                        formData.append(key, String(value));
+                    }
+                });
+        
+                data.diario.forEach((file: File) => formData.append('diario', file));
+                data.apresentacao.forEach((file: File) => formData.append('apresentacao', file));
+                data.compliance.forEach((file: File) => formData.append('compliance', file));
+                data.documentos.forEach((file: File) => formData.append('documentos', file));
+                
+                formData.append('usuarioAtualID', usuarioAtualID);
+        
+                try {
+                    const result = await submitCadastroForm(formData);
+        
+                    toast.dismiss(loadingToastId);
+        
+                    if (result.success) {
+                        toast.success("Formulário enviado com sucesso!");
+                        // TODO: Lógica de resetar o formulário ou redirecionar o usuário
+                    } else {
+                        toast.error(`Erro: ${result.error}`);
+                    }
+                } catch (error) {
+                    toast.dismiss(loadingToastId);
+                    toast.error("Ocorreu um erro inesperado ao enviar o formulário.");
+                    console.error(error);
+                }
+            })}
             noValidate
         >
 
@@ -183,21 +180,26 @@ export default function CadastroForm() {
                             <Controller
                                 name="cnpj"
                                 control={control}
-                                render={({ field, fieldState: { error } }) => {
-                                    const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                                        const valorFormatado = formatCNPJ(e.target.value);
-                                        field.onChange(valorFormatado);
-                                    };
-
-                                    return (
-                                        <NormalInput
-                                            text="CNPJ:"
-                                            isNotMandatory={false}
-                                            registration={{ ...field, onChange: handleCnpjChange }}
-                                            error={error}
-                                        />
-                                    );
-                                }}
+                                render={({ field, fieldState: { error } }) => (
+                                    <div className="flex flex-col lg:flex-row w-auto md:gap-x-4 items-start sm:items-center grow">
+                                        <label htmlFor="cnpj" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                            CNPJ: <span className="text-[#B15265]">*</span>
+                                        </label>
+                                        <div className="w-full">
+                                            <input
+                                                id="cnpj"
+                                                type="text"
+                                                {...field}
+                                                onChange={(e) => {
+                                                    const valorFormatado = formatCNPJ(e.target.value);
+                                                    field.onChange(valorFormatado);
+                                                }}
+                                                className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
+                                            />
+                                            {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                        </div>
+                                    </div>
+                                )}
                             />
 
                             <NormalInput
@@ -210,21 +212,29 @@ export default function CadastroForm() {
                             <Controller
                                 name="telefone"
                                 control={control}
-                                render={({ field, fieldState: { error } }) => {
-                                    const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                                        const valorFormatado = formatTelefone(e.target.value);
-                                        field.onChange(valorFormatado);
-                                    };
-
-                                    return (
-                                        <NormalInput
-                                            text="Telefone do representante legal:"
-                                            isNotMandatory={false}
-                                            registration={{ ...field, onChange: handleTelefoneChange }}
-                                            error={error}
-                                        />
-                                    );
-                                }}
+                                render={({ field, fieldState: { error } }) => (
+                                    <div className="flex flex-col lg:flex-row w-auto md:gap-x-4 items-start sm:items-center grow">
+                                        <label htmlFor="telefone" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                            Telefone do representante legal: <span className="text-[#B15265]">*</span>
+                                        </label>
+                                        <div className="w-full">
+                                            <input
+                                                id="telefone"
+                                                type="tel"
+                                                // Espalha as propriedades do field (name, onBlur, ref, value)
+                                                {...field}
+                                                // Sobrescreve o onChange para incluir a formatação
+                                                onChange={(e) => {
+                                                    const valorFormatado = formatTelefone(e.target.value);
+                                                    // Chama o onChange do Controller com o valor já formatado
+                                                    field.onChange(valorFormatado);
+                                                }}
+                                                className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
+                                            />
+                                            {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                        </div>
+                                    </div>
+                                )}
                             />
 
                             <NormalInput
@@ -244,21 +254,26 @@ export default function CadastroForm() {
                             <Controller
                                 name="cep"
                                 control={control}
-                                render={({ field, fieldState: { error } }) => {
-                                    const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                                        const valorFormatado = formatCEP(e.target.value);
-                                        field.onChange(valorFormatado);
-                                    };
-
-                                    return (
-                                        <NormalInput
-                                            text="CEP:"
-                                            isNotMandatory={false}
-                                            registration={{ ...field, onChange: handleCepChange }}
-                                            error={error}
-                                        />
-                                    );
-                                }}
+                                render={({ field, fieldState: { error } }) => (
+                                    <div className="flex flex-col lg:flex-row w-auto md:gap-x-4 items-start sm:items-center grow">
+                                        <label htmlFor="cep" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                            CEP: <span className="text-[#B15265]">*</span>
+                                        </label>
+                                        <div className="w-full">
+                                            <input
+                                                id="cep"
+                                                type="text"
+                                                {...field}
+                                                onChange={(e) => {
+                                                    const valorFormatado = formatCEP(e.target.value);
+                                                    field.onChange(valorFormatado);
+                                                }}
+                                                className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
+                                            />
+                                            {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                        </div>
+                                    </div>
+                                )}
                             />
 
                             <NormalInput
@@ -324,53 +339,63 @@ export default function CadastroForm() {
                             <Controller
                                 name="valorAprovado"
                                 control={control}
-                                render={({ field, fieldState: { error } }) => {
-                                    const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                                        // Remove tudo que não é dígito
-                                        const digitsOnly = filtraDigitos(e.target.value);
-                                        const limitedDigits = digitsOnly.slice(0, 18);
-                                        // Converte para número (em Reais, não centavos)
-                                        const numericValue = limitedDigits ? parseInt(limitedDigits, 10) / 100 : undefined;
-                                        // Atualiza o estado do formulário com o número puro
-                                        field.onChange(numericValue);
-                                    };
-
-                                    return (
-                                        <NormalInput
-                                            text="Valor aprovado:"
-                                            isNotMandatory={false}
-                                            // O valor exibido é formatado, mas o valor do campo (field.value) é um número
-                                            registration={{ ...field, value: field.value ? formatMoeda(field.value) : "", onChange: handleValueChange }}
-                                            error={error}
-                                            placeholder="R$"
-                                            type="text"
-                                        />
-                                    );
-                                }}
+                                render={({ field, fieldState: { error } }) => (
+                                    <div className="flex flex-col lg:flex-row w-auto md:gap-x-4 items-start sm:items-center grow">
+                                        <label htmlFor="valorAprovado" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                            Valor aprovado: <span className="text-[#B15265]">*</span>
+                                        </label>
+                                        <div className="w-full">
+                                            <input
+                                                id="valorAprovado"
+                                                type="text"
+                                                placeholder="R$"
+                                                onBlur={field.onBlur}
+                                                ref={field.ref}
+                                                name={field.name}
+                                                value={field.value ? formatMoeda(field.value) : ""}
+                                                onChange={(e) => {
+                                                    const digitsOnly = filtraDigitos(e.target.value);
+                                                    const limitedDigits = digitsOnly.slice(0, 18);
+                                                    const numericValue = limitedDigits ? parseInt(limitedDigits, 10) / 100 : undefined;
+                                                    field.onChange(numericValue);
+                                                }}
+                                                className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
+                                            />
+                                            {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                        </div>
+                                    </div>
+                                )}
                             />
 
                             <Controller
                                 name="valorApto"
                                 control={control}
-                                render={({ field, fieldState: { error } }) => {
-                                    const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                                        const digitsOnly = filtraDigitos(e.target.value);
-                                        const limitedDigits = digitsOnly.slice(0, 18);
-                                        const numericValue = limitedDigits ? parseInt(limitedDigits, 10) / 100 : undefined;
-                                        field.onChange(numericValue);
-                                    };
-
-                                    return (
-                                        <NormalInput
-                                            text="Valor apto a captar:"
-                                            isNotMandatory={false}
-                                            registration={{ ...field, value: field.value ? formatMoeda(field.value) : "", onChange: handleValueChange }}
-                                            error={error}
-                                            placeholder="R$"
-                                            type="text"
-                                        />
-                                    );
-                                }}
+                                render={({ field, fieldState: { error } }) => (
+                                    <div className="flex flex-col lg:flex-row w-auto md:gap-x-4 items-start sm:items-center grow">
+                                        <label htmlFor="valorApto" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                            Valor apto a captar: <span className="text-[#B15265]">*</span>
+                                        </label>
+                                        <div className="w-full">
+                                            <input
+                                                id="valorApto"
+                                                type="text"
+                                                placeholder="R$"
+                                                onBlur={field.onBlur}
+                                                ref={field.ref}
+                                                name={field.name}
+                                                value={field.value ? formatMoeda(field.value) : ""}
+                                                onChange={(e) => {
+                                                    const digitsOnly = filtraDigitos(e.target.value);
+                                                    const limitedDigits = digitsOnly.slice(0, 18);
+                                                    const numericValue = limitedDigits ? parseInt(limitedDigits, 10) / 100 : undefined;
+                                                    field.onChange(numericValue);
+                                                }}
+                                                className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
+                                            />
+                                            {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                        </div>
+                                    </div>
+                                )}
                             />
                             
                             <DateInputs
@@ -410,44 +435,54 @@ export default function CadastroForm() {
                                 />
 
                                 <div className="flex flex-col md:flex-row h-full w-full justify-between md:items-start gap-y-4 md:gap-x-4">
-                                    <Controller
-                                        name="agencia"
-                                        control={control}
-                                        render={({ field, fieldState: { error } }) => {
-                                            const handleAgenciaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                                                const valorFiltrado = filtraDigitos(e.target.value);
-                                                field.onChange(valorFiltrado);
-                                            };
-
-                                            return (
-                                                <NormalInput
-                                                    text="Agência:"
-                                                    isNotMandatory={false}
-                                                    registration={{ ...field, onChange: handleAgenciaChange }}
-                                                    error={error}
+                                <Controller
+                                    name="agencia"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => (
+                                        <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
+                                            <label htmlFor="agencia" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                                Agência: <span className="text-[#B15265]">*</span>
+                                            </label>
+                                            <div className="w-full">
+                                                <input
+                                                    id="agencia"
+                                                    type="text"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const valorFiltrado = filtraDigitos(e.target.value);
+                                                        field.onChange(valorFiltrado);
+                                                    }}
+                                                    className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
                                                 />
-                                            );
-                                        }}
-                                    />
+                                                {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                            </div>
+                                        </div>
+                                    )}
+                                />
 
-                                    <Controller
-                                        name="conta"
-                                        control={control}
-                                        render={({ field, fieldState: { error } }) => {
-                                            const handleContaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                                                const valorFiltrado = filtraDigitos(e.target.value);
-                                                field.onChange(valorFiltrado);
-                                            };
-
-                                            return (
-                                                <NormalInput
-                                                    text="Conta Corrente:"
-                                                    isNotMandatory={false}
-                                                    registration={{ ...field, onChange: handleContaChange }}
-                                                    error={error}
+                                <Controller
+                                    name="conta"
+                                    control={control}
+                                    render={({ field, fieldState: { error } }) => (
+                                        <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
+                                            <label htmlFor="conta" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                                Conta Corrente: <span className="text-[#B15265]">*</span>
+                                            </label>
+                                            <div className="w-full">
+                                                <input
+                                                    id="conta"
+                                                    type="text"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const valorFiltrado = filtraDigitos(e.target.value);
+                                                        field.onChange(valorFiltrado);
+                                                    }}
+                                                    className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
                                                 />
-                                            );
-                                        }}
+                                                {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                            </div>
+                                        </div>
+                                    )}
                                     />
                                 </div>
                             </div>
@@ -491,7 +526,8 @@ export default function CadastroForm() {
                                 control={control}
                                 checkboxesName="publico"
                                 outroFieldName="outroPublico"
-                                errors={errors}
+                                checkboxesError={errors.publico as FieldError}
+                                outroFieldError={errors.outroPublico as FieldError}
                             />
                             
                             <Controller
