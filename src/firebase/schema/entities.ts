@@ -20,7 +20,7 @@ export interface Projetos {
   municipios: string[];
   status: "pendente" | "aprovado" | "reprovado";
   ativo: boolean;
-  compliance: "pendente" | "aprovado" | "reprovado";
+  compliance: boolean;
   empresas: string[];
   indicacao?: string;
   ultimoFormulario?: string;
