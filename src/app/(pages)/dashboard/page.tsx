@@ -15,10 +15,7 @@ import DashboardContent from "@/components/dashboard/dashboardContent";
 
 //interface para o searchParams
 interface DashboardPageProps {
-  searchParams?: {
-    estado?: string;
-    cidades?: string | string[];
-  };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 const estadosSiglas: { [key: string]: string } = {
@@ -67,7 +64,7 @@ const leisSiglas: { [key: string]: string } = {
   "PIE - Lei Paulista de Incentivo ao Esporte": "PIE",
 };
 
-export async function DashboardPage({ searchParams }: DashboardPageProps) {
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
 
   async function buscarDadosEstado(
     estado: string
@@ -352,11 +349,13 @@ export async function DashboardPage({ searchParams }: DashboardPageProps) {
     return somarDadosMunicipios(todosDados);
   }
 
-  const estado = searchParams?.estado || "";
-  const cidades = Array.isArray(searchParams?.cidades)
-    ? searchParams.cidades
-    : searchParams?.cidades
-    ? [searchParams.cidades]
+  const resolvedSearchParams = await searchParams;
+  const estadoParam = resolvedSearchParams?.estado;
+  const estado = Array.isArray(estadoParam) ? estadoParam[0] ?? "" : estadoParam ?? "";
+  const cidades = Array.isArray(resolvedSearchParams?.cidades)
+    ? resolvedSearchParams.cidades
+    : resolvedSearchParams?.cidades
+    ? [resolvedSearchParams.cidades]
     : [];
 
   let dados: dadosEstados | null = null;
@@ -431,4 +430,3 @@ export async function DashboardPage({ searchParams }: DashboardPageProps) {
     </div>
   );
 }
-export default DashboardPage as any;
