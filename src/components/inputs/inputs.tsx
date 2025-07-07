@@ -4,7 +4,7 @@ import { Dispatch, SetStateAction, useEffect, useState, useMemo, useRef } from '
 import { State, City } from "country-state-city";
 import { Upload } from "lucide-react";
 import { AiOutlineClose } from "react-icons/ai";
-import { Control, Controller, FieldError, UseFormRegisterReturn, Path } from "react-hook-form";
+import { Control, Controller, FieldError, UseFormRegisterReturn } from "react-hook-form";
 import { FormsCadastroFormFields } from "@/lib/schemas";
 
 
@@ -851,8 +851,8 @@ interface PublicoInputProps {
     isNotMandatory: boolean;
     list: string[];
     control: Control<FormsCadastroFormFields>;
-    checkboxesName: Path<FormsCadastroFormFields>;
-    outroFieldName: Path<FormsCadastroFormFields>;
+    checkboxesName: "publico";
+    outroFieldName: "outroPublico";
     checkboxesError?: FieldError;
     outroFieldError?: FieldError;
 }
@@ -873,13 +873,12 @@ export const PublicoBeneficiadoInput = ({
             <h2 className="w-full text-xl text-blue-fcsn dark:text-white-off font-bold">
                 {text} {isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </h2>
-            
+
             <Controller
                 name={checkboxesName}
                 control={control}
                 render={({ field }) => {
                     const handleCheckboxChange = (index: number) => {
-                        // O valor do campo é garantido como um array de booleans
                         const currentValue = (field.value as boolean[] | undefined) || [];
                         const newValue = [...currentValue];
                         newValue[index] = !newValue[index];
@@ -900,7 +899,7 @@ export const PublicoBeneficiadoInput = ({
                                         onChange={() => handleCheckboxChange(index)}
                                         className="w-5 h-5 accent-blue-fcsn dark:accent-gray-100 cursor-pointer"
                                     />
-                                    
+
                                     <label htmlFor={`publico-${index}`} className="text-lg text-blue-fcsn dark:text-white-off mr-2 cursor-pointer">
                                         {itemLabel}
                                     </label>

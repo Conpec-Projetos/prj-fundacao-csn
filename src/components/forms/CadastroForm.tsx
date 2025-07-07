@@ -526,7 +526,8 @@ export default function CadastroForm() {
                                 control={control}
                                 checkboxesName="publico"
                                 outroFieldName="outroPublico"
-                                errors={errors}
+                                checkboxesError={errors.publico as FieldError}
+                                outroFieldError={errors.outroPublico as FieldError}
                             />
                             
                             <Controller
