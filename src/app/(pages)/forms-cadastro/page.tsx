@@ -28,6 +28,7 @@ import { getFileUrl, getOdsIds, getPublicoNomes, getItemNome, slugifyEstado, val
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
+import HeaderSecundario from "@/components/header/headerSecundario";
 
 const MAX_FILE_SIZE_MB = 10;
 const fileArraySchema = (acceptedTypes: string[], typeName: string) => z.array(z.instanceof(File), {
