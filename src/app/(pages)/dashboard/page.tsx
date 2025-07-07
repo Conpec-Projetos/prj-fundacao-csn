@@ -15,10 +15,7 @@ import DashboardContent from "@/components/dashboard/dashboardContent";
 
 //interface para o searchParams
 interface DashboardPageProps {
-  searchParams?: {
-    estado?: string;
-    cidades?: string | string[];
-  };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 const estadosSiglas: { [key: string]: string } = {
@@ -67,14 +64,7 @@ const leisSiglas: { [key: string]: string } = {
   "PIE - Lei Paulista de Incentivo ao Esporte": "PIE",
 };
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams?: {
-    estado?: string;
-    cidades?: string | string[];
-  };
-}) {
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
 
   async function buscarDadosEstado(
     estado: string
@@ -131,6 +121,10 @@ export default async function DashboardPage({
           : curr.projetosODS ?? [],
         lei: [] as { nome: string; qtdProjetos: number }[],
         segmento: [] as { nome: string; qtdProjetos: number }[],
+        municipios: [
+          ...(acc.municipios ?? []),
+          ...(curr.municipios ?? []),
+        ],
       };
 
       // Agora agrupa e soma os segmentos
@@ -232,6 +226,7 @@ export default async function DashboardPage({
       projetosODS: projetosODS,
       lei: [],
       segmento: [],
+      municipios: [],
     };
 
     return array.reduce(
@@ -359,11 +354,13 @@ export default async function DashboardPage({
     return somarDadosMunicipios(todosDados);
   }
 
-  const estado = searchParams?.estado || "";
-  const cidades = Array.isArray(searchParams?.cidades)
-    ? searchParams.cidades
-    : searchParams?.cidades
-    ? [searchParams.cidades]
+  const resolvedSearchParams = await searchParams;
+  const estadoParam = resolvedSearchParams?.estado;
+  const estado = Array.isArray(estadoParam) ? estadoParam[0] ?? "" : estadoParam ?? "";
+  const cidades = Array.isArray(resolvedSearchParams?.cidades)
+    ? resolvedSearchParams.cidades
+    : resolvedSearchParams?.cidades
+    ? [resolvedSearchParams.cidades]
     : [];
 
   let dados: dadosEstados | null = null;
