@@ -13,6 +13,6 @@ interface BarChartProps {
   horizontal?: boolean;
 }
 
-export default function BarChart(props: BarChartProps) {
+export default function BarChartLeis(props: BarChartProps) {
   return <BarChartLeisClient {...props} />;
 }
