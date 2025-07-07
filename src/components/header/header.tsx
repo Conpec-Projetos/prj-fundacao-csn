@@ -77,7 +77,7 @@ export default function Header() {
     if (adm) {
         return (
             <div className={`${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
-                <header className="fixed top-0 flex flex-row justify-between w-full h-[10vh] bg-blue-fcsn2 z-50 shadow-md/20 px-10 mb-56">
+                <header className="fixed top-0 flex flex-row justify-between w-full h-[10vh] bg-blue-fcsn2 z-50 shadow-md/20 px-10 mb-56 shadow-lg">
                     <div className="hidden sm:flex flex-row justify-start items-center w-[85%] text-white dark:text-white-off text-xl gap-4 sm:w-3/4 lg:w-1/2 lg:text-2xl font-bold ml-1">
                         <button onClick={() => router.push("/")} className="cursor-pointer">Início</button>
                         <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
