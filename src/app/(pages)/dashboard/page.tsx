@@ -121,6 +121,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           : curr.projetosODS ?? [],
         lei: [] as { nome: string; qtdProjetos: number }[],
         segmento: [] as { nome: string; qtdProjetos: number }[],
+        municipios: [
+          ...(acc.municipios ?? []),
+          ...(curr.municipios ?? []),
+        ],
       };
 
       // Agora agrupa e soma os segmentos
@@ -222,6 +226,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       projetosODS: projetosODS,
       lei: [],
       segmento: [],
+      municipios: [],
     };
 
     return array.reduce(
