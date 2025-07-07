@@ -30,7 +30,7 @@ const ProjectCard = ({ project }: { project: ProjetoExt }) => {
     switch (status) {
       case 'aprovado': return 'bg-green-100 dark:bg-green-500 text-green-800 dark:text-white';
       case 'pendente': return 'bg-yellow-100 dark:bg-yellow-500 text-yellow-800 dark:text-white';
-      case 'rejeitado': return 'bg-red-100 dark:bg-red-500 text-red-800 dark:text-white';
+      case 'reprovado': return 'bg-red-100 dark:bg-red-500 text-red-800 dark:text-white';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -64,7 +64,7 @@ const ProjectCard = ({ project }: { project: ProjetoExt }) => {
         </div>
         <div>
           <p className="text-gray-500 dark:text-gray-300">Lei de incentivo:</p>
-          <p className="font-medium">{project.lei}</p>
+          <p className="font-medium text-blue-fcsn dark:text-white-off">{project.lei}</p>
         </div>
       </div>
 
@@ -139,6 +139,7 @@ export default function ExternalUserHomePage() {
 
                 if (associacaoSnapshot.empty) {
                     setUserProjects([]);
+                    setIsLoadingProjects(false);
                     return;
                 }
 
@@ -147,51 +148,74 @@ export default function ExternalUserHomePage() {
 
                 if (projetosIDs.length === 0) {
                     setUserProjects([]);
+                    setIsLoadingProjects(false);
                     return;
                 }
 
+                const tresMesesAtras = new Date();
+                tresMesesAtras.setMonth(tresMesesAtras.getMonth() - 3);
+
                 // Busca os detalhes de cada projeto associado
                 const projectsDataPromises = projetosIDs.map(async (projetoId): Promise<ProjetoExt | null> => {
+                  const projetoDocRef = doc(db, 'projetos', projetoId);
+                  const projetoDocSnap = await getDoc(projetoDocRef);
+
+                  if (!projetoDocSnap.exists()) {
+                    console.warn(`Projeto com ID ${projetoId} não encontrado.`);
+                    return null;
+                  }
+
+                  const projetoData = projetoDocSnap.data() as Projetos;
+                  
+                  // Valores padrão
                   let instituicao = '';
                   let lei = '';
                   let formularioPendente = false;
+                  let dataUltimoForm: string | undefined;
 
-                  const acompanhamentoRef = collection(db, 'forms-acompanhamento');
-                  const qAcompanhamento = query(acompanhamentoRef, where('projetoID', '==', projetoId));
-                  const acompanhamentoSnap = await getDocs(qAcompanhamento);
-
-                  if (!acompanhamentoSnap.empty) {
-                    const acompanhamentoData = acompanhamentoSnap.docs[0].data() as formsAcompanhamentoDados;
-                    instituicao = acompanhamentoData.instituicao;
-                    lei = acompanhamentoData.lei;
-                    formularioPendente = false;
-                  } else {
+                  if (projetoData.status === "aprovado") {
                     formularioPendente = true;
-                    const projetoDocRef = doc(db, 'projetos', projetoId);
-                    const projetoDocSnap = await getDoc(projetoDocRef);
 
-                    if (projetoDocSnap.exists()) {
-                      const projetoDataForCadastro = projetoDocSnap.data() as Projetos;
-                      if (projetoDataForCadastro.ultimoFormulario) {
-                        const cadastroDocRef = doc(db, 'forms-cadastro', projetoDataForCadastro.ultimoFormulario);
-                        const cadastroDocSnap = await getDoc(cadastroDocRef);
-                        if (cadastroDocSnap.exists()) {
-                          const cadastroData = cadastroDocSnap.data() as formsCadastroDados;
+                    if (projetoData.ultimoFormulario) {
+                      const formAcompanhamentoRef = doc(db, "forms-acompanhamento", projetoData.ultimoFormulario);
+                      const formAcompanhamentoSnap = await getDoc(formAcompanhamentoRef);
+
+                      if (formAcompanhamentoSnap.exists()) {
+                        const acompanhamentoData = formAcompanhamentoSnap.data() as formsAcompanhamentoDados;
+                        dataUltimoForm = acompanhamentoData.dataResposta;
+                        instituicao = acompanhamentoData.instituicao;
+                        lei = acompanhamentoData.lei;
+                      } else {
+                        const formCadastroRef = doc(db, "forms-cadastro", projetoData.ultimoFormulario);
+                        const formCadastroSnap = await getDoc(formCadastroRef);
+                        if (formCadastroSnap.exists()) {
+                          const cadastroData = formCadastroSnap.data() as formsCadastroDados;
+                          dataUltimoForm = cadastroData.dataPreenchido;
                           instituicao = cadastroData.instituicao;
                           lei = cadastroData.lei;
                         }
                       }
                     }
+
+                    if (dataUltimoForm) {
+                      const dataFormulario = new Date(dataUltimoForm);
+                      if (dataFormulario >= tresMesesAtras) {
+                        formularioPendente = false;
+                      }
+                    }
+                  } else {
+                    // Se o status não for 'aprovado', garantimos que os dados básicos do card sejam carregados, mas 'formularioPendente' permanece 'false'.
+                    if (projetoData.ultimoFormulario) {
+                      const formCadastroRef = doc(db,"forms-cadastro", projetoData.ultimoFormulario);
+                      const formCadastroSnap = await getDoc(formCadastroRef);
+                      if (formCadastroSnap.exists()) {
+                          const cadastroData = formCadastroSnap.data() as formsCadastroDados;
+                          instituicao = cadastroData.instituicao;
+                          lei = cadastroData.lei;
+                      }
+                    }
                   }
-
-                  const projetoDocRef = doc(db, 'projetos', projetoId);
-                  const projetoDocSnap = await getDoc(projetoDocRef);
-
-                  if (!projetoDocSnap.exists()) {
-                    return null;
-                  }
-
-                  const projetoData = projetoDocSnap.data() as Projetos;
+                  
                   const valorTotal = (projetoData.valorAportadoReal || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
                   
                   return {
@@ -206,7 +230,7 @@ export default function ExternalUserHomePage() {
                 });
 
                 const resolvedProjects = (await Promise.all(projectsDataPromises)).filter((p): p is ProjetoExt => p !== null);
-                setUserProjects(resolvedProjects);
+                setUserProjects(resolvedProjects.reverse());
 
             } catch (error) {
                 console.error("Erro ao buscar projetos do usuário:", error);
@@ -275,7 +299,7 @@ export default function ExternalUserHomePage() {
         {/* Seção de boas-vindas */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-2xl font-bold">{greeting}, {userName}!</h1>
+            <h1 className="text-2xl text-blue-fcsn dark:text-white font-bold">{greeting}, {userName}!</h1>
             <p className="text-gray-500 dark:text-gray-300">{currentTime}</p>
           </div>
           <div className="text-right">
