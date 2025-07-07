@@ -7,7 +7,7 @@ import {
   FaCheckCircle,
   FaFilter,
   FaSearch,
-  FaTimesCircle,
+  FaTimesCircle, // Este ícone não será mais usado, mas podemos manter o import
 } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
@@ -17,22 +17,15 @@ import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import logo from "@/assets/fcsn-logo.svg";
 import Image from "next/image";
 import { useTheme } from "@/context/themeContext";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
 
-// Importe o seu componente de botão (ajuste o caminho se necessário)
-import BotaoAprovarProj from "../../../components/botoes/botoes_todos-proj/BotaoAprovarProj";
+import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj"; 
 
-// --- INTERFACES ---
-interface ODS {
-  numberODS: number;
-  src: string;
-}
-
-// Interface para os props do componente Project, incluindo o callback
+// --- MUDANÇA 1: Simplificar a interface. 'reprovado' não existe mais ---
 interface ProjectComponentProps {
   id: string;
   name: string;
-  status: "aprovado" | "pendente" | "reprovado";
+  status: "aprovado" | "pendente"; // 'reprovado' removido
   value: number;
   incentiveLaw: string;
   description: string;
@@ -40,8 +33,12 @@ interface ProjectComponentProps {
   onApprovalSuccess: (projectId: string) => void;
 }
 
+interface ODS {
+  numberODS: number;
+  src: string;
+}
+
 // --- COMPONENTE DE APRESENTAÇÃO 'PROJECT' ---
-// Este componente apenas exibe os dados e passa as props para o botão
 const Project: React.FC<ProjectComponentProps> = ({
   id,
   name,
@@ -66,13 +63,13 @@ const Project: React.FC<ProjectComponentProps> = ({
           {status === "pendente" && (
             <FaClockRotateLeft color="darkOrange" size={22} />
           )}
-          {status === "reprovado" && <FaTimesCircle color="red" size={22} />}
+          {/* --- MUDANÇA 2: Lógica para o ícone 'reprovado' removida --- */}
         </div>
         
-        {/* Renderiza o seu BotaoAprovarProj apenas se o status for 'pendente' */}
         {status === 'pendente' && (
            <BotaoAprovarProj
              projectId={id}
+             projectName={name}
              onApprovalSuccess={onApprovalSuccess}
            />
         )}
@@ -99,10 +96,9 @@ const Project: React.FC<ProjectComponentProps> = ({
   </div>
 );
 
-
 // --- INTERFACE PARA OS FILTROS ---
 interface Filters {
-  status: { situation: string; state: boolean }[];
+  status: { situation: "aprovado" | "pendente"; state: boolean }[]; // 'reprovado' removido
   value: {
     initialValue: number;
     finalValue: number | undefined;
@@ -114,32 +110,35 @@ interface Filters {
 
 // --- COMPONENTE PRINCIPAL DA PÁGINA ---
 export default function TodosProjetos() {
-  // Estado para armazenar os projetos combinados
   const [allProjects, setAllProjects] = useState<ProjectComponentProps[]>([]);
   const [search, setSearch] = useState("");
+  const [filteredProjects, setFilteredProjects] = useState<ProjectComponentProps[]>([]);
+  const [ctrl, setCtrl] = useState(false);
   const resSearch = allProjects.filter((project) =>
     project.name.toLowerCase().startsWith(search.toLowerCase())
   );
 
-  // --- LÓGICA DE BUSCA DE DADOS (COMBINANDO AS DUAS COLEÇÕES) ---
   useEffect(() => {
     async function fetchAllProjects() {
       const querySnapshot = await getDocs(collection(db, "forms-cadastro"));
-
       const projectsPromises = querySnapshot.docs.map(async (formDoc) => {
         const rawData = formDoc.data();
-        const projectId = formDoc.id;
+        const formId = formDoc.id;
+        const projectName = rawData.nomeProjeto;
 
-        const complianceDocRef = doc(db, "projetos", projectId);
-        const complianceDoc = await getDoc(complianceDocRef);
+        // --- MUDANÇA 3: Lógica de interpretação do status foi atualizada ---
+        let complianceStatus: "aprovado" | "pendente" = "pendente"; // Padrão é pendente
         
-        let complianceStatus: "aprovado" | "pendente" | "reprovado" = "pendente";
-        if (complianceDoc.exists()) {
-          const complianceData = complianceDoc.data();
-          if (complianceData.compliance === true) {
-            complianceStatus = "aprovado";
-          } else if (complianceData.compliance === false) {
-            complianceStatus = "reprovado";
+        if (projectName) {
+          const projetosQuery = query(collection(db, "projetos"), where("nome", "==", projectName));
+          const complianceQuerySnapshot = await getDocs(projetosQuery);
+          
+          if (!complianceQuerySnapshot.empty) {
+            const complianceData = complianceQuerySnapshot.docs[0].data();
+            // `true` é Aprovado. `false` (ou qualquer outro valor/ausência) é Pendente.
+            if (complianceData.compliance === true) {
+              complianceStatus = "aprovado";
+            }
           }
         }
         
@@ -153,10 +152,9 @@ export default function TodosProjetos() {
             }
         }
 
-        // Retorna o objeto combinado para cada projeto
         return {
-          id: projectId,
-          name: rawData.nomeProjeto || "Nome Indisponível",
+          id: formId,
+          name: projectName || "Nome Indisponível",
           status: complianceStatus,
           value: rawData.valorApto || 0,
           incentiveLaw: rawData.lei ? rawData.lei.split('-')[0].trim() : "Não informada",
@@ -171,7 +169,6 @@ export default function TodosProjetos() {
     fetchAllProjects();
   }, []);
   
-  // --- FUNÇÃO DE CALLBACK PARA ATUALIZAR A UI APÓS APROVAÇÃO ---
   const handleApprovalSuccessOnParent = (approvedProjectId: string) => {
     setAllProjects(currentProjects => 
       currentProjects.map(p => 
@@ -180,7 +177,6 @@ export default function TodosProjetos() {
     );
   };
 
-  // --- LÓGICA DE FILTROS E AUTENTICAÇÃO (SEU CÓDIGO ORIGINAL) ---
   const [isOpen, setIsOpen] = useState(false);
   const caixaRef = useRef<HTMLDivElement>(null);
 
@@ -197,24 +193,25 @@ export default function TodosProjetos() {
     };
   }, [isOpen]);
 
-  const [filteredProjects, setFilteredProjects] = useState<ProjectComponentProps[]>([]);
-  const [ctrl, setCtrl] = useState(false);
   const [filters, setFilters] = useState<Filters>({
-    status: [{ situation: "aprovado", state: false }, { situation: "pendente", state: false }, { situation: "reprovado", state: false }],
+    // --- MUDANÇA 4: Estado inicial dos filtros atualizado sem 'reprovado' ---
+    status: [{ situation: "aprovado", state: false }, { situation: "pendente", state: false }],
     value: [{ initialValue: 0, finalValue: 1000, state: false }, { initialValue: 1000.01, finalValue: 100000, state: false }, { initialValue: 100000.01, finalValue: 1000000, state: false }, { initialValue: 1000000.01, finalValue: undefined, state: false }],
     incentiveLaw: [{ law: "CULTURA", state: false }, { law: "PROAC", state: false }, { law: "FIA", state: false }, { law: "LIE", state: false }, { law: "IDOSO", state: false }, { law: "PRONAS", state: false }, { law: "PRONON", state: false }, { law: "PROMAC", state: false }, { law: "ICMS-MG", state: false }, { law: "ICMS-RJ", state: false }, { law: "PIE", state: false }],
     ODS: [{ numberODS: 1, state: false }, { numberODS: 2, state: false }, { numberODS: 3, state: false }, { numberODS: 4, state: false }, { numberODS: 5, state: false }, { numberODS: 6, state: false }, { numberODS: 7, state: false }, { numberODS: 8, state: false }, { numberODS: 9, state: false }, { numberODS: 10, state: false }, { numberODS: 11, state: false }, { numberODS: 12, state: false }, { numberODS: 13, state: false }, { numberODS: 14, state: false }, { numberODS: 15, state: false }, { numberODS: 16, state: false }, { numberODS: 17, state: false }],
   });
 
-  function situationFilters(situacao: string) { setFilters((prevFilters) => ({ ...prevFilters, status: prevFilters.status.map((item) => item.situation === situacao ? { ...item, state: !item.state } : item ) })); }
+  function situationFilters(situacao: "aprovado" | "pendente") { setFilters((prevFilters) => ({ ...prevFilters, status: prevFilters.status.map((item) => item.situation === situacao ? { ...item, state: !item.state } : item ) })); }
   function valueFilters(value1: number, value2: number | undefined) { setFilters((prevFilters) => ({ ...prevFilters, value: prevFilters.value.map((item) => item.initialValue === value1 && item.finalValue === value2 ? { ...item, state: !item.state } : item ) })); }
   function incentiveLawFilters(law: string) { setFilters((prevFilters) => ({ ...prevFilters, incentiveLaw: prevFilters.incentiveLaw.map((item) => item.law === law ? { ...item, state: !item.state } : item ) })); }
   function ODSFilters(number: number) { setFilters((prevFilters) => ({ ...prevFilters, ODS: prevFilters.ODS.map((item) => item.numberODS === number ? { ...item, state: !item.state } : item ) })); }
+  
   function applyFilters() {
     const activeStatus = filters.status.filter((f) => f.state).map((f) => f.situation);
     const activeValues = filters.value.filter((f) => f.state);
     const activeLaws = filters.incentiveLaw.filter((f) => f.state).map((f) => f.law);
     const activeODS = filters.ODS.filter((f) => f.state).map((f) => f.numberODS);
+    
     const filtered = allProjects.filter((project) => {
       const matchStatus = activeStatus.length === 0 || activeStatus.includes(project.status);
       const matchValue = activeValues.length === 0 || activeValues.some((range) => project.value >= range.initialValue && (range.finalValue === undefined || project.value <= range.finalValue));
@@ -222,12 +219,14 @@ export default function TodosProjetos() {
       const matchODS = activeODS.length === 0 || project.ODS.some((ods) => activeODS.includes(ods.numberODS));
       return matchStatus && matchValue && matchLaw && matchODS;
     });
+    
     setFilteredProjects(filtered);
     setCtrl(true);
     if (filtered.length > 0) {
       setSearch("");
     }
   }
+
   function clearFilters() {
     setFilters((prevFilters) => ({
       status: prevFilters.status.map((item) => ({ ...item, state: false })),
@@ -272,7 +271,6 @@ export default function TodosProjetos() {
 
   const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
 
-  // --- RENDERIZAÇÃO FINAL ---
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex flex-1 flex-col px-4 sm:px-8 md:px-20 lg:px-32 py-4 gap-y-10 ">
@@ -292,7 +290,81 @@ export default function TodosProjetos() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          {/* O seu código de Filtros pode ir aqui, se desejar */}
+          
+          <div className="flex flex-row gap-x-4 mt-3">
+            <div className="bg-white-off dark:bg-blue-fcsn2 p-2 rounded-lg shadow-md">
+              <FaFilter size={24} />
+            </div>
+            <div
+              onMouseEnter={() => setIsOpen(true)}
+              className="relative z-10"
+            >
+              <div className="bg-white-off dark:bg-blue-fcsn2 p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center gap-2">
+                Aplicar filtros <FaCaretDown />
+              </div>
+              {isOpen && (
+                <div
+                  ref={caixaRef}
+                  className="absolute top-full left-0 w-[90vw] md:w-[700px] lg:w-[768px] xl:w-[768px] bg-white dark:bg-blue-fcsn2 p-4 rounded shadow-md z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                >
+                  <div>
+                    <p className="py-2 text-xl font-semibold">Situação</p>
+                    {/* --- MUDANÇA 5: Filtro de 'reprovado' removido do JSX --- */}
+                    {filters.status.map(filter => (
+                      <label key={filter.situation} className="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" checked={filter.state} onChange={() => situationFilters(filter.situation)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300"/>
+                        <span>{filter.situation.charAt(0).toUpperCase() + filter.situation.slice(1)}</span>
+                      </label>
+                    ))}
+                    <p className="py-2 mt-4 text-xl font-semibold">Valor</p>
+                    {filters.value.map(filter => (
+                      <label key={filter.initialValue} className="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" checked={filter.state} onChange={() => valueFilters(filter.initialValue, filter.finalValue)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300"/>
+                        <span>{`De ${filter.initialValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ${filter.finalValue ? `a ${filter.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : 'acima'}`}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div>
+                    <p className="py-2 text-xl font-semibold">Lei de Incentivo</p>
+                    {filters.incentiveLaw.map(filter => (
+                      <label key={filter.law} className="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" checked={filter.state} onChange={() => incentiveLawFilters(filter.law)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300"/>
+                        <span>{filter.law}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="lg:col-span-2">
+                    <p className="py-2 text-xl font-semibold">ODS</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                      {filters.ODS.map(filter => (
+                        <label key={filter.numberODS} className="flex items-center space-x-2 cursor-pointer">
+                          <input type="checkbox" checked={filter.state} onChange={() => ODSFilters(filter.numberODS)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300"/>
+                          <span>ODS {filter.numberODS}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="col-span-full flex justify-end gap-4 mt-4">
+                    <button
+                      className="bg-gray-500 hover:bg-gray-600 rounded-lg p-2 px-4 text-white cursor-pointer"
+                      onClick={clearFilters}
+                    >
+                      Limpar filtros
+                    </button>
+                    <button
+                      className="bg-blue-fcsn hover:bg-blue-800 rounded-lg p-2 px-4 text-white cursor-pointer"
+                      onClick={applyFilters}
+                    >
+                      Aplicar filtros
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </section>
 
         <section>
