@@ -13,6 +13,14 @@ import { dadosEstados, dadosProjeto } from "@/firebase/schema/entities";
 import DashboardClientArea from "@/components/dashboard/dashboardAreaClient";
 import DashboardContent from "@/components/dashboard/dashboardContent";
 
+//interface para o searchParams
+interface DashboardPageProps {
+  searchParams?: {
+    estado?: string;
+    cidades?: string | string[];
+  };
+}
+
 const estadosSiglas: { [key: string]: string } = {
   "Acre": "AC",
   "Alagoas": "AL",
