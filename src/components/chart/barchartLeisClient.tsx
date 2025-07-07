@@ -11,8 +11,10 @@ import {
   Tooltip,
   Legend,
   TooltipItem,
+  ChartOptions
 } from 'chart.js';
 import { useTheme } from '@/context/themeContext';
+import { usePDF } from '@/context/pdfContext';
 
 // Gradiente com base na quantidade de projetos
 export function generateGradientColors(data: number[], baseColor: string = '#b37b97'): string[] {
@@ -80,10 +82,11 @@ export default function BarChart({
   celular = false,
 }: BarChartProps) {
   const { darkMode } = useTheme(); 
+  const { isPdfMode } = usePDF();
 
   const chartRef = useRef<ChartJS<'bar', number[], string> | null>(null);
 
-  const options = useMemo(() => ({
+  const options:ChartOptions<'bar'> = useMemo(() => ({
     responsive: true,
     indexAxis: horizontal ? 'y' : 'x',
     maintainAspectRatio: false,
@@ -112,7 +115,7 @@ export default function BarChart({
             },
             label: function(context: TooltipItem<'bar'>) {
                 const dataIndex = context.dataIndex;
-                return data[dataIndex];
+                return String(data[dataIndex]);
             },
 }
       },
@@ -133,8 +136,8 @@ export default function BarChart({
         },
       },
     },
-    animation: {},
-  }), [darkMode, horizontal, celular,labels, data]);
+    animation: isPdfMode ? false : undefined,
+  }), [darkMode, horizontal, celular, labels, data, isPdfMode]);
 
   const chartData = {
     labels: siglas,
