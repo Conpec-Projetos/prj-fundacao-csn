@@ -328,8 +328,9 @@ export default function CadastroForm() {
                                     const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                         // Remove tudo que não é dígito
                                         const digitsOnly = filtraDigitos(e.target.value);
+                                        const limitedDigits = digitsOnly.slice(0, 18);
                                         // Converte para número (em Reais, não centavos)
-                                        const numericValue = digitsOnly ? parseInt(digitsOnly, 10) / 100 : undefined;
+                                        const numericValue = limitedDigits ? parseInt(limitedDigits, 10) / 100 : undefined;
                                         // Atualiza o estado do formulário com o número puro
                                         field.onChange(numericValue);
                                     };
@@ -341,7 +342,7 @@ export default function CadastroForm() {
                                             // O valor exibido é formatado, mas o valor do campo (field.value) é um número
                                             registration={{ ...field, value: field.value ? formatMoeda(field.value) : "", onChange: handleValueChange }}
                                             error={error}
-                                            placeholder="R$ "
+                                            placeholder="R$"
                                             type="text"
                                         />
                                     );
@@ -354,7 +355,8 @@ export default function CadastroForm() {
                                 render={({ field, fieldState: { error } }) => {
                                     const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                                         const digitsOnly = filtraDigitos(e.target.value);
-                                        const numericValue = digitsOnly ? parseInt(digitsOnly, 10) / 100 : undefined;
+                                        const limitedDigits = digitsOnly.slice(0, 18);
+                                        const numericValue = limitedDigits ? parseInt(limitedDigits, 10) / 100 : undefined;
                                         field.onChange(numericValue);
                                     };
 
@@ -364,7 +366,7 @@ export default function CadastroForm() {
                                             isNotMandatory={false}
                                             registration={{ ...field, value: field.value ? formatMoeda(field.value) : "", onChange: handleValueChange }}
                                             error={error}
-                                            placeholder="R$ "
+                                            placeholder="R$"
                                             type="text"
                                         />
                                     );

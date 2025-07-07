@@ -118,6 +118,7 @@ export interface dadosEstados {
   nomeEstado: string;
   qtdProjetos: number;
   qtdMunicipios: number;
+  municipios: string[]
   valorTotal: number;
   maiorAporte: {nome: string, valorAportado: number};
   beneficiariosDireto: number;
