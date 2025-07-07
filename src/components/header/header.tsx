@@ -11,7 +11,7 @@ interface promoteAdminProps {
     name: string;
 }
 
-const PromoteAdmin = ({ id, name }: promoteAdminProps) => (
+const PromoteAdmin = ({name }: promoteAdminProps) => ( //tirei o "id" para consertar o run build, mas pode ser usado se necessário no funturo
     <div className="flex flex-col items-center justify-center w-[98%] h-fit bg-white-off dark:bg-blue-fcsn3 rounded shadow-md text-white-off text-md m-2 text-center">
         <span className="m-2 text-blue-fcsn dark:text-white font-medium">Você deseja promover o colaborador {name} a administrador?</span>
         <div className="flex flex-row gap-4">
