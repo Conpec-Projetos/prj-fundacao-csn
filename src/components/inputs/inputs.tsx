@@ -972,53 +972,9 @@ export const FileInput: React.FC<ControlledFileInputProps> = ({ text, isNotManda
         }
     };
 
-<<<<<<< HEAD
-    return(
-        <div className="flex flex-col justify-between items-start py-3 gap-y-2">
-            <h1 className="w-full text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
-            >{ props.text } {props.isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}</h1>
-            
-            <div className="flex flex-col gap-y-2">
-            {props.list.map((string, index) => (
-                <div 
-                key={index} 
-                className="flex flex-row gap-x-2 md:gap-x-0 gap-y-2">
-                <div className="flex flex-col justify-center items-center w-[3vw] gap-y-2">
-                    
-                    <input 
-                    type="checkbox" 
-                    checked={attribute[index] == null ? false : attribute[index]}
-                    onChange={() => handleCheckboxChange(index)}
-                    className="w-[20px] h-[20px] accent-blue-fcsn dark:accent-gray-100 cursor-pointer"/>
-                </div>
-                <h1 className="text-xl text-blue-fcsn dark:text-white-off"
-                >{string}</h1>
-                </div>
-            ))}
-            </div>
-        </div>
-    )
-}
-
-interface FileProps{
-    text: string;
-    files: File[];
-    isNotMandatory: boolean;
-    setFiles: Dispatch<SetStateAction<File[]>>;
-}
-
-export const FileInput: React.FC<FileProps> = (props) => {
-    const [fileSize, setFileSize] = useState<number>(0)
-    const [isDragging, setIsDragging] = useState(false);
-    
-    useEffect(() => {
-        setFileSize(props.files.length);
-    }, [props.files]);
-=======
     const handleRemoveFile = (indexToRemove: number) => {
         onChange(files.filter((_, index) => index !== indexToRemove));
     };
->>>>>>> 113f02180d24006bfdeba35b83c2ec8706c2da02
 
     // Funções para o efeito visual de arrastar e soltar
     const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
