@@ -108,8 +108,8 @@ async function getInitialFormData(projetoID: string): Promise<Partial<FormsAcomp
     return {};
 }
 
-export default async function FormsAcompanhamento({ params }: { params: { id: string } }) {
-    const { id: projetoID } = params;
+export default async function FormsAcompanhamento({ params }: { params: Promise<{ id: string }> }) {
+    const { id: projetoID } = await params;
 
     // Busca de dados no Servidor
     const initialData = await getInitialFormData(projetoID);
