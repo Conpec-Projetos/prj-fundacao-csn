@@ -428,6 +428,6 @@ export default async function DashboardPage({
 
       <Footer />
     </div>
-  </>
+
   );
 }
