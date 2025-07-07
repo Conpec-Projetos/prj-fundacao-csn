@@ -16,6 +16,7 @@ export interface usuarioInt {
 
 export interface Projetos {
   nome: string;
+  // estados: string[]; // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
   municipios: string[];
   status: "pendente" | "aprovado" | "reprovado";
   ativo: boolean;
@@ -27,6 +28,7 @@ export interface Projetos {
 }
 
 export interface formsCadastroDados {
+  projetoID: string;
   dataPreenchido: string;
   instituicao: string;
   cnpj: string;
@@ -63,10 +65,6 @@ export interface formsCadastroDados {
   contrapartidasProjeto: string;
   observacoes: string;
   termosPrivacidade: boolean;
-}
-
-export interface formsCadastroDocumentos {
-  projetoID: string;
   diario: string[];
   apresentacao: string[];
   compliance: string[];
@@ -196,7 +194,7 @@ export const publicoList: Publico[] = [
   { id: 2, nome: "Jovens" },
   { id: 3, nome: "Adultos" },
   { id: 4, nome: "Idosos" },
-  { id: 5, nome: "" },
+  { id: 5, nome: "Outro:" },
 ];
 
 export interface Ods {

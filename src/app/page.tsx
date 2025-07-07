@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FaClipboardList, FaChartPie, FaMapMarkedAlt, FaFileAlt} from 'react-icons/fa';
+
+import { FaClipboardList, FaChartPie, FaMapMarkedAlt, FaFileAlt } from 'react-icons/fa';
 import Footer from '@/components/footer/footer';
 import { useTheme } from '@/context/themeContext';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -61,7 +62,7 @@ const PendingProjectCard: React.FC<{ project: Project }> = ({ project }) => (
 
 export default function AdminHomePage() {
   const router = useRouter();
-  const [userName, setUserName] = useState('Administrador');
+  const userName = "Administrador";
   const [currentTime, setCurrentTime] = useState('');
   const [greeting, setGreeting] = useState('');
   const { darkMode } = useTheme();
