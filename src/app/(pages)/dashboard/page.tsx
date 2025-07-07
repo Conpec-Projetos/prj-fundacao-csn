@@ -67,14 +67,7 @@ const leisSiglas: { [key: string]: string } = {
   "PIE - Lei Paulista de Incentivo ao Esporte": "PIE",
 };
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams?: {
-    estado?: string;
-    cidades?: string | string[];
-  };
-}) {
+export async function DashboardPage({ searchParams }: DashboardPageProps) {
 
   async function buscarDadosEstado(
     estado: string
@@ -438,3 +431,4 @@ export default async function DashboardPage({
     </div>
   );
 }
+export default DashboardPage as any;
