@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import BotaoAprovarProj from "./BotaoAprovarProj";
 import BotaoDownload from "./BotaoDownload";
 
-export default function Botao() {
+export default function Botao({ projectId, projectName }: { projectId: string; projectName: string }) {
     // usado para exibir o dropdown
     const [isOpen, setIsOpen] = useState(false);
 
@@ -17,6 +17,14 @@ export default function Botao() {
 
     // caixaRef é a referencia de um elemento html, no caso nosso dropdown
     const caixaRef = useRef<HTMLDivElement>(null);
+
+    // Função para lidar com o sucesso da aprovação
+    const handleApprovalSuccess = (approvedProjectId: string) => {
+        console.log('Projeto aprovado:', approvedProjectId);
+        setAprovado(true);
+        setConfirmar(false);
+        setIsOpen(false);
+    };
 
     //Usamos isso para fechar o dropdown quando clicarmos fora da caixa
     useEffect(() => {
@@ -56,7 +64,11 @@ export default function Botao() {
           Projeto Aprovado
         </div>
       ) : confirmar ? (
-        <BotaoAprovarProj setAprovado={setAprovado} />
+        <BotaoAprovarProj 
+          projectId={projectId} 
+          projectName={projectName} 
+          onApprovalSuccess={handleApprovalSuccess} 
+        />
       ) : duplaConfirmacao ? (
         <>
           <button
