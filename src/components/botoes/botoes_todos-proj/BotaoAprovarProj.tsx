@@ -34,6 +34,7 @@ const ConfirmationModal = ({ message, onConfirm, onCancel, isUpdating }: { messa
   </div>
 );
 
+
 export default function BotaoAprovarProj({ projectId, projectName, onApprovalSuccess }: BotaoAprovarProjProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -46,6 +47,7 @@ export default function BotaoAprovarProj({ projectId, projectName, onApprovalSuc
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [isFetchingDoc, setIsFetchingDoc] = useState(false);
+
 
   // --- Efeito para buscar a URL do documento quando o dropdown abre ---
   useEffect(() => {
