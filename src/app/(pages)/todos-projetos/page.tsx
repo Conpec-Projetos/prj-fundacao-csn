@@ -7,8 +7,7 @@ import {
   FaCaretDown,
   FaCheckCircle,
   FaFilter,
-  FaSearch,
-  FaTimesCircle, // Este ícone não será mais usado, mas podemos manter o import
+  FaSearch
 } from "react-icons/fa";
 
 import { FaClockRotateLeft } from "react-icons/fa6";
@@ -20,7 +19,7 @@ import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import logo from "@/assets/fcsn-logo.svg";
 import Image from "next/image";
 import { useTheme } from "@/context/themeContext";
-import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj"; 
@@ -148,7 +147,7 @@ export default function TodosProjetos() {
         
         const processedODS: ODS[] = [];
         if (rawData.ods && Array.isArray(rawData.ods)) {
-            for (let ODS of rawData.ods) {
+            for (const ODS of rawData.ods) {
                 processedODS.push({
                     numberODS: ODS,
                     src: `/ods/ods${ODS + 1}.png`,
