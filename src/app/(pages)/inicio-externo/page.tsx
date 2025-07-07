@@ -97,7 +97,7 @@ export default function ExternalUserHomePage() {
   const [userName, setUserName] = useState('');
   const [currentTime, setCurrentTime] = useState('');
   const [greeting, setGreeting] = useState('');
-  const { darkMode, toggleDarkMode } = useTheme();
+  const { darkMode } = useTheme();
   const [userProjects, setUserProjects] = useState<ProjetoExt[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
