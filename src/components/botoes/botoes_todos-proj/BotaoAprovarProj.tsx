@@ -8,9 +8,6 @@ export default function BotaoAprovarProj({ setAprovado }: BotaoAprovarProjProps)
     // Usei esse estado para controlar o dropdown 
     const [isOpen, setIsOpen] = useState(false);
 
-    //
-    const [interno, setInterno] = useState(false);
-
     // caixaRef é a referencia de um elemento html, no caso nosso dropdown
     const caixaRef = useRef<HTMLDivElement>(null);
 

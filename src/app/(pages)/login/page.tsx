@@ -14,6 +14,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import RecoverPassword from "./recoverPassword";
+import { FirebaseError } from "firebase/app";
 
 // zod é uma biblioteca para validar parâmetros, no caso o schema
 const schema = z.object({
@@ -90,15 +91,38 @@ export default function Login() {
                     }
                     
                 } else {
-                    console.log("E-mail não verificado, bloqueando acesso.");
+                    toast.error('Para conseguir acessar, por favor, verifique o e-mail que enviamos.');
                 }
             }
             // auth está em firebase-config.ts
         } 
         catch (error) {
-            toast.error('Email ou senha incorreto.');
-        }
-    };
+            if (error instanceof FirebaseError) {
+                console.error("Erro ao tentar fazer login:", error.code);
+
+                switch (error.code) {
+                    case 'auth/wrong-password':
+                        toast.error('Email ou senha incorretos.');
+                        break;
+                    case 'auth/user-not-found':
+                        toast.error('Usuário não encontrado.');
+                        break;
+                    case 'auth/too-many-requests':
+                        toast.error('Muitas tentativas. Tente novamente mais tarde.');
+                        break;
+                    case 'auth/invalid-credential':
+                        toast.error('Email ou senha incorretos.');
+                        break;
+                    default:
+                        toast.error('Erro ao tentar fazer o login. Tente novamente.');
+                        console.error(error);
+                }
+            } else {
+            toast.error('Erro ao tentar fazer o login. Tente novamente.');
+            console.error(error);
+            }
+        };
+    }
 
     if (isLoading){
         return (

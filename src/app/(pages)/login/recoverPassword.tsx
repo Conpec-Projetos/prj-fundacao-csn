@@ -1,13 +1,14 @@
 import { useTheme } from "@/context/themeContext";
 import { auth } from "@/firebase/firebase-config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { fetchSignInMethodsForEmail, sendPasswordResetEmail } from "firebase/auth";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast, Toaster } from "sonner";
 import { z } from "zod"
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import logo from "@/assets/fcsn-logo.svg"
 import Image from "next/image";
+import { FirebaseError } from "firebase/app";
 
 const schema = z.object({
     email: z.string().email({message: "Email inválido!"}).min(1),
@@ -35,8 +36,6 @@ export default function RecoverPassword({ onBack }: { onBack: () => void }) {
 
     const sendEmailRecover: SubmitHandler<FormFields> = async ({ email }) => {
         try {
-
-
             await sendPasswordResetEmail(auth, email);
                 toast.success("Se este email estiver cadastrado, você receberá um link para redefinir sua senha ");
                 // Nunca é apresentado erro, pois o firebase não revela se um email está cadastrado ou não por motivos de segurança 
@@ -46,9 +45,25 @@ export default function RecoverPassword({ onBack }: { onBack: () => void }) {
             }, 4000); // 2 segundos
 
             return "";
-        } catch (erro: any) {
-            toast.error('Email incorreto');
-        }
+        } catch (erro) {
+            if (erro instanceof FirebaseError) {
+                console.error("Erro ao tentar recuperar a senha:", erro.code);
+                switch (erro.code) {
+                    case 'auth/invalid-email':
+                        toast.error('Formato de email inválido.');
+                        break;
+                    case 'auth/too-many-requests':
+                        toast.error('Muitas tentativas. Tente novamente mais tarde.');
+                        break;
+                    default:
+                        toast.error('Erro ao tentar recuperar a senha.');
+                        console.error(erro);
+                }
+            } else {
+            toast.error('Erro ao tentar recuperar a senha.');
+            console.error(erro);
+            }
+        };
     };
 
 

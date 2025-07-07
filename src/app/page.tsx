@@ -2,15 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+
 import { FaClipboardList, FaChartPie, FaMapMarkedAlt, FaFileAlt } from 'react-icons/fa';
 import Footer from '@/components/footer/footer';
 import { useTheme } from '@/context/themeContext';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/firebase/firebase-config';
+import { auth, db } from '@/firebase/firebase-config';
 import { useRouter } from 'next/navigation';
 import logo from "@/assets/fcsn-logo.svg"
 import Image from "next/image";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 // Componente de card para métricas
 interface MetricCardProps {
@@ -102,29 +104,37 @@ export default function AdminHomePage() {
     return () => clearInterval(timer);
   }, []);
 
+    // Vamos verificar se é ADM
+    async function IsADM(email: string): Promise<boolean>{
+      const usuarioInt = collection(db, "usuarioInt");
+      const qADM = query(usuarioInt, where("email", "==", email), where("administrador", "==", true));
+      const snapshotADM = await getDocs(qADM );
+      return !snapshotADM.empty; // Se não estiver vazio, é um adm
+    }
+
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user && user.email) {
-            if (!user.emailVerified) { // Checa se o usuário tem email verificado primeiro
-                router.push("./login");
-                return
-            }
-            const emailDomain = user.email.split('@')[1];
-            if ((emailDomain === "conpec.com.br")) {
-              setIsLoading(false);
-            } else { // Verified but not admin domain
-              router.push("./inicio-externo");
-            }
-        } else {
-            // Se não está logado, permite que a página de login seja renderizada
-            router.push("./login");
-        }});
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (!user || !user.email || !user.emailVerified) { // Checa se o usuário tem email verificado tambem
+            router.push("/login"); // Como não está logado, permite que a página de login seja renderizada
+            return;
+          }
+          const emailDomain = user.email.split('@')[1];
+          const isAdm = await IsADM(user.email);
 
-      return () => unsubscribe();
+          // Verificamos se possui o dominio da csn (usamos afim de teste o dominio da conpec)
+          // se o usuario verificou o email recebido e se é ADM
+          if ((emailDomain === "conpec.com.br") && isAdm ){ // Verificamos se possui o dominio da csn e se é ADM
+            setIsLoading(false);
+          } else if (emailDomain === "conpec.com.br"){ // Se não for verificamos se possui o dominio da csn apenas
+            router.push("/dashboard"); 
+          } else { // Se chegar aqui significa que é um usuario externo
+            router.push("/inicio-externo");
+          }
+        });
+
+    return () => unsubscribe();
     }, [router]);
-
-
 
     if (isLoading) {
         return (
@@ -146,7 +156,7 @@ export default function AdminHomePage() {
   return (
     <div className={`flex flex-col grow min-h-[90vh] ${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
       
-      <main className="flex flex-col gap-8 p-8 flex-1 sm:mx-12 md:mx-20"> 
+      <main className="flex flex-col gap-8 px-8 pb-8 flex-1 sm:mx-12 md:mx-20 pt-12"> 
         {/* Seção de boas-vindas */}
           <div className="flex justify-between items-center">
             <div>
