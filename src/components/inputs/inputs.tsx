@@ -4,7 +4,8 @@ import { Dispatch, SetStateAction, useEffect, useState, useMemo, useRef } from '
 import { State, City } from "country-state-city";
 import { Upload } from "lucide-react";
 import { AiOutlineClose } from "react-icons/ai";
-import { Control, Controller, FieldError, FieldValues, UseFormRegisterReturn, Path, PathValue } from "react-hook-form";
+import { Control, Controller, FieldError, UseFormRegisterReturn } from "react-hook-form";
+import { FormsCadastroFormFields } from "@/lib/schemas";
 
 
 // Props são como parâmetros, atributos. Como uma classe
@@ -845,45 +846,43 @@ export const VerticalSelects: React.FC<ControlledCheckboxGroupProps> = ({ text, 
     );
 }
 
-interface PublicoInputProps<TFieldValues extends FieldValues> {
+interface PublicoInputProps {
     text: string;
     isNotMandatory: boolean;
     list: string[];
-    control: Control<TFieldValues>;
-    checkboxesName: Path<TFieldValues>; // Garante que o nome do campo existe no formulário
-    outroFieldName: Path<TFieldValues>;   // Garante que o nome do campo existe no formulário
-    errors: { [key: string]: FieldError | undefined };
+    control: Control<FormsCadastroFormFields>;
+    checkboxesName: "publico";
+    outroFieldName: "outroPublico";
+    checkboxesError?: FieldError;
+    outroFieldError?: FieldError;
 }
 
-export const PublicoBeneficiadoInput = <TFieldValues extends FieldValues>({
+export const PublicoBeneficiadoInput = ({
     text,
     isNotMandatory,
     list,
     control,
     checkboxesName,
     outroFieldName,
-    errors,
-}: PublicoInputProps<TFieldValues>) => {
-    // Busca os erros específicos para cada campo
-    const checkboxesError = errors[checkboxesName];
-    const outroFieldError = errors[outroFieldName];
+    checkboxesError,
+    outroFieldError,
+}: PublicoInputProps) => {
 
     return (
         <div className="flex flex-col justify-between items-start py-3 gap-y-2">
             <h2 className="w-full text-xl text-blue-fcsn dark:text-white-off font-bold">
                 {text} {isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </h2>
-            
+
             <Controller
                 name={checkboxesName}
                 control={control}
                 render={({ field }) => {
                     const handleCheckboxChange = (index: number) => {
-                        // O valor do campo é garantido como um array de booleans
                         const currentValue = (field.value as boolean[] | undefined) || [];
                         const newValue = [...currentValue];
                         newValue[index] = !newValue[index];
-                        field.onChange(newValue as PathValue<TFieldValues, Path<TFieldValues>>);
+                        field.onChange(newValue);
                     };
 
                     const isOutroOption = (label: string) => label.toLowerCase().startsWith('outro');
@@ -900,7 +899,7 @@ export const PublicoBeneficiadoInput = <TFieldValues extends FieldValues>({
                                         onChange={() => handleCheckboxChange(index)}
                                         className="w-5 h-5 accent-blue-fcsn dark:accent-gray-100 cursor-pointer"
                                     />
-                                    
+
                                     <label htmlFor={`publico-${index}`} className="text-lg text-blue-fcsn dark:text-white-off mr-2 cursor-pointer">
                                         {itemLabel}
                                     </label>
