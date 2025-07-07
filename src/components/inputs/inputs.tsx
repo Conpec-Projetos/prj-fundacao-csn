@@ -402,32 +402,26 @@ export const EstadoInputDashboard: React.FC<LocationDashboardProps> = (props) =>
 
     return(
         <div className="flex flex-col justify-center items-center gap-2 py-3 mx-2">
-            <div className="flex flex-row justify-center items-center w-full h-fit gap-2">
-                <button onClick={() => {props.setEstado(""); props.setCidades([])}}
-                    className="text-blue-fcsn dark:text-white-off cursor-pointer"
-                    ><AiOutlineClose /></button>
-                <div className="flex flex-col justify-center w-full h-fit border-1 border-blue-fcsn rounded-[7px]">
-
-                    <select
-                        value={props.estado}
-                        onChange={(event) => {
-                            props.setEstado(event.target.value);
-                        }} 
-                        className="h-full w-full text-blue-fcsn dark:text-white-off cursor-pointer bg-white dark:bg-blue-fcsn3 pl-5 rounded-[7px]">
+            <div className="flex flex-col justify-center w-full h-fit border-1 border-blue-fcsn rounded-[7px]">
+                <select
+                    value={props.estado}
+                    onChange={(event) => {
+                        props.setEstado(event.target.value);
+                    }} 
+                    className="h-full w-full text-blue-fcsn dark:text-white-off cursor-pointer bg-white dark:bg-blue-fcsn3 pl-5 rounded-[7px]">
                         
-                        <option 
-                            disabled 
-                            value={""}
-                        >Escolha uma opção</option>
+                    <option 
+                        disabled 
+                        value={""}
+                    >Escolha uma opção</option>
                         
-                        {State.getStatesOfCountry("BR").map((state, index) => (
-                            <option
-                                key={index}
-                                value={estadosFirebase[state.name]}
-                            >{state.name}</option>
-                        ))}
-                    </select>
-                </div>
+                    {State.getStatesOfCountry("BR").map((state, index) => (
+                        <option
+                            key={index}
+                            value={estadosFirebase[state.name]}
+                        >{state.name}</option>
+                    ))}
+                </select>
             </div>
         </div>
     );

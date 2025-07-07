@@ -19,6 +19,40 @@
   @apply bg-blue-fcsn text-white-off;
 }
 
+.pdf-parent-float-container::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.pdf-float-left {
+  float: left;
+  box-sizing: border-box;
+}
+
+.pdf-w-50 {
+  width: 50%;
+}
+
+.pdf-w-33 {
+  width: 33.33%;
+}
+
+.pdf-w-25 {
+  width: 25%;
+}
+
+
+.pdf-px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.pdf-px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
 .nacional{
   background-color: #B15265;
   border-radius: 5px;
