@@ -4,7 +4,8 @@ import { Dispatch, SetStateAction, useEffect, useState, useMemo, useRef } from '
 import { State, City } from "country-state-city";
 import { Upload } from "lucide-react";
 import { AiOutlineClose } from "react-icons/ai";
-import { Control, Controller, FieldError, FieldValues, UseFormRegisterReturn, Path, PathValue } from "react-hook-form";
+import { Control, Controller, FieldError, UseFormRegisterReturn, Path } from "react-hook-form";
+import { FormsCadastroFormFields } from "@/lib/schemas";
 
 
 // Props são como parâmetros, atributos. Como uma classe
@@ -845,28 +846,27 @@ export const VerticalSelects: React.FC<ControlledCheckboxGroupProps> = ({ text, 
     );
 }
 
-interface PublicoInputProps<TFieldValues extends FieldValues> {
+interface PublicoInputProps {
     text: string;
     isNotMandatory: boolean;
     list: string[];
-    control: Control<TFieldValues>;
-    checkboxesName: Path<TFieldValues>; // Garante que o nome do campo existe no formulário
-    outroFieldName: Path<TFieldValues>;   // Garante que o nome do campo existe no formulário
-    errors: { [key: string]: FieldError | undefined };
+    control: Control<FormsCadastroFormFields>;
+    checkboxesName: Path<FormsCadastroFormFields>;
+    outroFieldName: Path<FormsCadastroFormFields>;
+    checkboxesError?: FieldError;
+    outroFieldError?: FieldError;
 }
 
-export const PublicoBeneficiadoInput = <TFieldValues extends FieldValues>({
+export const PublicoBeneficiadoInput = ({
     text,
     isNotMandatory,
     list,
     control,
     checkboxesName,
     outroFieldName,
-    errors,
-}: PublicoInputProps<TFieldValues>) => {
-    // Busca os erros específicos para cada campo
-    const checkboxesError = errors[checkboxesName];
-    const outroFieldError = errors[outroFieldName];
+    checkboxesError,
+    outroFieldError,
+}: PublicoInputProps) => {
 
     return (
         <div className="flex flex-col justify-between items-start py-3 gap-y-2">
@@ -883,7 +883,7 @@ export const PublicoBeneficiadoInput = <TFieldValues extends FieldValues>({
                         const currentValue = (field.value as boolean[] | undefined) || [];
                         const newValue = [...currentValue];
                         newValue[index] = !newValue[index];
-                        field.onChange(newValue as PathValue<TFieldValues, Path<TFieldValues>>);
+                        field.onChange(newValue);
                     };
 
                     const isOutroOption = (label: string) => label.toLowerCase().startsWith('outro');
