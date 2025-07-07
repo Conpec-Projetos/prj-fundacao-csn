@@ -20,7 +20,7 @@ export interface Projetos {
   municipios: string[];
   status: "pendente" | "aprovado" | "reprovado";
   ativo: boolean;
-  compliance: "pendente" | "aprovado" | "reprovado";
+  compliance: boolean;
   empresas: string[];
   indicacao?: string;
   ultimoFormulario?: string;
@@ -118,6 +118,7 @@ export interface dadosEstados {
   nomeEstado: string;
   qtdProjetos: number;
   qtdMunicipios: number;
+  municipios: string[]
   valorTotal: number;
   maiorAporte: {nome: string, valorAportado: number};
   beneficiariosDireto: number;
