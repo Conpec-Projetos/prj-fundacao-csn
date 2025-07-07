@@ -80,6 +80,7 @@ export default function Signin(){
      });
 
     async function projetoValido(email: string): Promise<{ valido: boolean, projetosIDs: string[] }> {
+        'use server'
         const emailDomain = email.split('@')[1];
 
         if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") {
@@ -136,7 +137,6 @@ export default function Signin(){
 
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
             const user = userCredential.user;
-
             // Manda o e-mail de verificação
             await sendEmailVerification(user);
             toast.success("E-mail de verificação enviado. Verifique sua caixa de entrada para terminar o cadastro!");
