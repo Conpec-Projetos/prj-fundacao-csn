@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 // (é para fazer com que determinadas páginas nn tenham header)
 export default function HeaderWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const noHeaderRoutes = ["/login", "/signin", "/inicio-externo"];
+    const noHeaderRoutes = ["/login", "/signin", "/inicio-externo", "/dashboard", "/forms-cadastro", "/forms-acompanhamento"];
     const hasHeader = !noHeaderRoutes.includes(pathname); // Check if the header should be rendered
 
     return (

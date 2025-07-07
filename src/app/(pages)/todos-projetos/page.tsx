@@ -2,16 +2,17 @@
 
 import Footer from "@/components/footer/footer";
 import { useEffect, useRef, useState } from "react";
-import { FaCaretDown, FaCheckCircle, FaFilter, FaMoneyBillAlt, FaSearch, FaTimesCircle } from "react-icons/fa";
+import { FaCaretDown, FaCheckCircle, FaFilter, FaSearch, FaTimesCircle } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
 import Botao from "../../../components/botoes/botoes_todos-proj/Botao";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/firebase/firebase-config";
+import { auth, db } from "@/firebase/firebase-config";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import logo from "@/assets/fcsn-logo.svg"
 import Image from "next/image";
 import { useTheme } from "@/context/themeContext";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 // Interface (base) para cada projeto
 interface ProjectProps {
@@ -273,26 +274,37 @@ export default function TodosProjetos(){
     const [isLoading, setIsLoading] = useState(true);
     const { darkMode } = useTheme();
 
+    // Vamos verificar se é ADM
+    async function IsADM(email: string): Promise<boolean>{
+      const usuarioInt = collection(db, "usuarioInt");
+      const qADM = query(usuarioInt, where("email", "==", email), where("administrador", "==", true));
+      const snapshotADM = await getDocs(qADM );
+      return !snapshotADM.empty; // Se não estiver vazio, é um adm
+    }
 
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user && user.email) {
-            const emailDomain = user.email.split('@')[1];
-            if ((emailDomain === "conpec.com.br") && user.emailVerified) {
-              setIsLoading(false);
-            } else {
-              router.push("./inicio-externo");
-            }
-        } else {
-            // Se não está logado, permite que a página de login seja renderizada
-            router.push("./login");
-        }});
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (!user || !user.email || !user.emailVerified) { // Checa se o usuário tem email verificado tambem
+            router.push("/login"); // Como não está logado, permite que a página de login seja renderizada
+            return;
+          }
+          const emailDomain = user.email.split('@')[1];
+          const isAdm = await IsADM(user.email);
 
-      return () => unsubscribe();
+          // Verificamos se possui o dominio da csn (usamos afim de teste o dominio da conpec)
+          // se o usuario verificou o email recebido e se é ADM
+          if ((emailDomain === "conpec.com.br") && isAdm ){ // Verificamos se possui o dominio da csn e se é ADM
+            setIsLoading(false);
+          } else if (emailDomain === "conpec.com.br"){ // Se não for verificamos se possui o dominio da csn apenas 
+            router.push("/dashboard");
+          } else { // Se chegar aqui significa que é um usuario externo
+            router.push("/inicio-externo");
+          }
+        });
+
+    return () => unsubscribe();
     }, [router]);
-
-
 
     if (isLoading) {
         return (
@@ -313,11 +325,11 @@ export default function TodosProjetos(){
 
 
     return(
-    <div className="flex flex-col min-h-[180vh]">
-      <main className="flex flex-1 flex-col px-4 sm:px-8 md:px-20 lg:px-32 py-4 gap-y-10 ">
+    <div className="flex flex-col min-h-[180vh] ">
+      <main className="flex flex-1 flex-col px-4 sm:px-8 md:px-20 lg:px-32 pb-4 pt-12 gap-y-10 ">
         {/* Cabeçalho */}
         <section>
-          <h1 className="text-xl md:text-3xl font-bold text-blue-fcsn dark:text-white mt-3">Projetos</h1>
+          <h1 className="text-xl md:text-3xl font-bold text-blue-fcsn dark:text-white ">Projetos</h1>
 
           {/* Barra de pesquisa*/}
           <div  className="flex flex-row gap-x-4 mt-3">

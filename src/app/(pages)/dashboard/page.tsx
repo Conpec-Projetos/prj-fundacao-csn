@@ -1,4 +1,5 @@
 import Footer from "@/components/footer/footer";
+
 import {
   collection,
   doc,
@@ -66,6 +67,7 @@ export default async function DashboardPage({
     cidades?: string | string[];
   };
 }) {
+
   async function buscarDadosEstado(
     estado: string
   ): Promise<dadosEstados | null> {
@@ -394,6 +396,7 @@ export default async function DashboardPage({
     ],
   };
 
+
   const segmentoNomes: string[] =
     dados?.segmento.map((item) => item.nome) ?? [];
   const segmentoValores: number[] =
@@ -402,6 +405,7 @@ export default async function DashboardPage({
   const leiSiglas: string[] =
     dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
   const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
+
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
@@ -421,7 +425,9 @@ export default async function DashboardPage({
         estadosSiglas={estadosSiglas}
         />
       </DashboardClientArea>
+
       <Footer />
     </div>
+  </>
   );
 }

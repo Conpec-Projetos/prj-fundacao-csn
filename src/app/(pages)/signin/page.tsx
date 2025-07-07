@@ -16,6 +16,7 @@ import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerificati
 import { collection, query, where, getDocs, addDoc, updateDoc, arrayUnion, doc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import { Associacao, Projetos, usuarioInt, usuarioExt } from "@/firebase/schema/entities";
+import { FirebaseError } from "firebase/app";
 
 const schema = z.object({
     name: z.string().min(1, {message: "Nome inválido!"}),
@@ -184,18 +185,20 @@ export default function Signin(){
                 router.push("./login");
             }, 6000);
 
-        } catch (error: any) {
-            console.error("Erro no cadastro:", error);
-            if (error.code === 'auth/email-already-in-use') {
+        } catch (error) {
+            const firebaseError = error as FirebaseError;
+            console.error("Erro no cadastro:", firebaseError);
+
+            if (firebaseError.code === 'auth/email-already-in-use') {
                 toast.error('Este e-mail já está em uso.');
-            } else if (error.code === 'auth/invalid-email') {
+            } else if (firebaseError.code === 'auth/invalid-email') {
                 toast.error('Formato de e-mail inválido.');
-            } else if (error.code === 'auth/weak-password') {
+            } else if (firebaseError.code === 'auth/weak-password') {
                 toast.error('A senha é muito fraca. Por favor, insira uma senha mais forte.');
             } else {
                 toast.error('Erro ao criar conta. Tente novamente. Se o problema persistir, entre em contato.');
             }
-
+            
         } finally {
             setLoadingAuth(false);
         }

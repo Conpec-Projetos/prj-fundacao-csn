@@ -11,10 +11,9 @@ import { useRouter } from 'next/navigation';
 import logo from "@/assets/fcsn-logo.svg"
 import Image from "next/image";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
-import Botao_Logout from '@/components/botoes/Botao_Logout';
-import { Moon, Sun } from 'lucide-react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'; 
 import { Projetos, formsAcompanhamentoDados, formsCadastroDados, Associacao } from '@/firebase/schema/entities';
+import HeaderSecundario from '@/components/header/headerSecundario';
 
 interface ProjetoExt {
   id: string;
@@ -46,6 +45,7 @@ const ProjectCard = ({ project }: { project: ProjetoExt }) => {
   };
 
   return (
+    
     <div className="bg-white dark:bg-blue-fcsn3 rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start">
         <div>
@@ -292,23 +292,9 @@ export default function ExternalUserHomePage() {
   }
   
   return (
-    <div className={`min-h-screen ${darkMode ? "dark" : ""}`} >      
+    <div className={`min-h-screen ${darkMode ? "dark" : ""}`} >    
+          <HeaderSecundario />  
       <main className="flex flex-col px-4 p-10 md:mx-20">
-        <div className='flex flex-row justify-between mb-5'>           
-          <Image
-            src={darkMode ? darkLogo : logo}
-            alt="csn-logo"
-            width={250}
-            className=""
-            priority
-          />
-          <div className="w-[15%] flex justify-end items-center gap-10">
-            <button className="cursor-pointer transition-all duration-300 " 
-              onClick={toggleDarkMode}>{darkMode ? <Moon size={20} className="text-white" /> : <Sun size={20}  className="text-black" />}
-            </button>
-            <Botao_Logout />
-          </div>
-        </div>
 
         {/* Seção de boas-vindas */}
         <div className="flex justify-between items-center mb-8">

@@ -2,8 +2,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google"; //importa as fontes do google
 import "./globals.css";     //arquivo de estilos globais
+
 import { ThemeProvider } from '@/context/themeContext';
 import { PDFProvider } from '@/context/pdfContext';
+
 import HeaderWrapper from "@/components/header/headerWrapper";
 
 const geistSans = Geist({

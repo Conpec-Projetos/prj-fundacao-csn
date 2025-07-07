@@ -10,7 +10,9 @@ import {
   Title,
   Tooltip,
   Legend,
+
   ChartOptions
+
 } from 'chart.js';
 import { useTheme } from '@/context/themeContext';
 import { usePDF } from '@/context/pdfContext';
