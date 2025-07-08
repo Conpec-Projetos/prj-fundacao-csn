@@ -13,7 +13,6 @@ import Image from "next/image";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'; 
 import { Projetos, formsAcompanhamentoDados, formsCadastroDados, Associacao } from '@/firebase/schema/entities';
-import HeaderSecundario from '@/components/header/headerSecundario';
 
 interface ProjetoExt {
   id: string;
@@ -292,9 +291,8 @@ export default function ExternalUserHomePage() {
   }
   
   return (
-    <div className={`min-h-screen ${darkMode ? "dark" : ""}`} >    
-          <HeaderSecundario />  
-      <main className="flex flex-col px-4 p-10 md:mx-20">
+    <div className={`flex flex-col min-h-[90vh] ${darkMode ? "dark" : ""}`} >
+      <main className="flex flex-col flex-grow px-4 p-10 md:mx-20">
 
         {/* Seção de boas-vindas */}
         <div className="flex justify-between items-center mb-8">
@@ -338,7 +336,6 @@ export default function ExternalUserHomePage() {
           </div>
         </div>
       </main>
-  
       <Footer />
     </div>
   );
