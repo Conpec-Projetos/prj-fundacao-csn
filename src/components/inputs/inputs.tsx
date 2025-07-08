@@ -4,8 +4,7 @@ import { Dispatch, SetStateAction, useEffect, useState, useMemo, useRef } from '
 import { State, City } from "country-state-city";
 import { Upload } from "lucide-react";
 import { AiOutlineClose } from "react-icons/ai";
-import { Control, Controller, FieldError, UseFormRegisterReturn } from "react-hook-form";
-import { FormsCadastroFormFields } from "@/lib/schemas";
+import { FieldError, UseFormRegisterReturn } from "react-hook-form";
 
 
 // Props são como parâmetros, atributos. Como uma classe
@@ -848,25 +847,21 @@ export const VerticalSelects: React.FC<ControlledCheckboxGroupProps> = ({ text, 
 
 interface PublicoInputProps {
     text: string;
-    isNotMandatory: boolean;
+    subtext?: string;
     list: string[];
-    control: Control<FormsCadastroFormFields>;
-    checkboxesName: "publico";
-    outroFieldName: "outroPublico";
-    checkboxesError?: FieldError;
-    outroFieldError?: FieldError;
+    isNotMandatory: boolean;
+    value: boolean[];
+    onChange: (value: boolean[]) => void;
+    error?: FieldError;
 }
 
-export const PublicoBeneficiadoInput = ({
-    text,
-    isNotMandatory,
-    list,
-    control,
-    checkboxesName,
-    outroFieldName,
-    checkboxesError,
-    outroFieldError,
-}: PublicoInputProps) => {
+// Novo Componente genérico
+export const PublicoInput: React.FC<PublicoInputProps> = ({ text, subtext, list, value, onChange, error, isNotMandatory }) => {
+    const handleCheckboxChange = (index: number) => {
+        const newValue = [...(value || [])];
+        newValue[index] = !newValue[index];
+        onChange(newValue);
+    };
 
     return (
         <div className="flex flex-col justify-between items-start py-3 gap-y-2">
@@ -874,58 +869,28 @@ export const PublicoBeneficiadoInput = ({
                 {text} {isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
             </h2>
 
-            <Controller
-                name={checkboxesName}
-                control={control}
-                render={({ field }) => {
-                    const handleCheckboxChange = (index: number) => {
-                        const currentValue = (field.value as boolean[] | undefined) || [];
-                        const newValue = [...currentValue];
-                        newValue[index] = !newValue[index];
-                        field.onChange(newValue);
-                    };
+            {subtext && <p className="text-md text-blue-fcsn dark:text-white-off">{subtext}</p>}
 
-                    const isOutroOption = (label: string) => label.toLowerCase().startsWith('outro');
-                    const outroIndex = list.findIndex(isOutroOption);
-
-                    return (
-                        <div className="flex flex-col w-full gap-y-2">
-                            {list.map((itemLabel, index) => (
-                                <div key={index} className="flex flex-row items-center gap-x-2">
-                                    <input 
-                                        type="checkbox"
-                                        id={`publico-${index}`}
-                                        checked={(field.value as boolean[] | undefined)?.[index] || false}
-                                        onChange={() => handleCheckboxChange(index)}
-                                        className="w-5 h-5 accent-blue-fcsn dark:accent-gray-100 cursor-pointer"
-                                    />
-
-                                    <label htmlFor={`publico-${index}`} className="text-lg text-blue-fcsn dark:text-white-off mr-2 cursor-pointer">
-                                        {itemLabel}
-                                    </label>
-
-                                    {isOutroOption(itemLabel) && (
-                                        <div>
-                                            <input
-                                                type="text"
-                                                {...control.register(outroFieldName)}
-                                                disabled={!(field.value as boolean[] | undefined)?.[outroIndex]}
-                                                className={`h-[35px] w-full bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 disabled:bg-gray-200 dark:disabled:bg-blue-fcsn disable: ${outroFieldError ? bordaErro : bordaBase}`}
-                                                placeholder="Especifique..."
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                            {checkboxesError && <p className="text-red-500 mt-1 text-sm">{checkboxesError.message}</p>}
-                            {outroFieldError && <p className="text-red-500 mt-1 text-sm">{outroFieldError.message}</p>}
-                        </div>
-                    );
-                }}
-            />
+            <div className="flex flex-col gap-y-2" role="group">
+                {list.map((itemLabel, index) => (
+                    <div key={index} className="flex flex-row items-center gap-x-2">
+                        <input 
+                            type="checkbox" 
+                            id={`checkbox-${text.replace(/\s/g, '')}-${index}`}
+                            checked={value?.[index] || false}
+                            onChange={() => handleCheckboxChange(index)}
+                            className="w-5 h-5 accent-blue-fcsn dark:accent-gray-100 cursor-pointer"
+                        />
+                        <label htmlFor={`checkbox-${text.replace(/\s/g, '')}-${index}`} className="text-lg text-blue-fcsn dark:text-white-off cursor-pointer">
+                            {itemLabel}
+                        </label>
+                    </div>
+                ))}
+            </div>
+            {error && <p className="text-red-500 mt-2 text-sm">{error.message}</p>}
         </div>
     );
-}
+};
 
 interface ControlledFileInputProps {
     text: string;
