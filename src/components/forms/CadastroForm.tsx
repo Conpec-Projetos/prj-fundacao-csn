@@ -122,10 +122,6 @@ export default function CadastroForm() {
         <form 
             className="flex flex-col justify-center items-center max-w-[1500px] w-[90vw] sm:w-[80vw] xl:w-[70vw] mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-lg"
             onSubmit={handleSubmit(async (data) => {
-                if (!usuarioAtualID) {
-                    toast.error("Sessão inválida. Por favor, faça login novamente.");
-                    return;
-                }
         
                 const loadingToastId = toast.loading("Enviando formulário...");
         
@@ -146,7 +142,9 @@ export default function CadastroForm() {
                 data.compliance.forEach((file: File) => formData.append('compliance', file));
                 data.documentos.forEach((file: File) => formData.append('documentos', file));
                 
-                formData.append('usuarioAtualID', usuarioAtualID);
+                if (usuarioAtualID) {
+                    formData.append('usuarioAtualID', usuarioAtualID);
+                }
         
                 try {
                     const result = await submitCadastroForm(formData);
@@ -537,13 +535,12 @@ export default function CadastroForm() {
                                 )}
                             />
 
-                            <div className={`transition-all duration-300 ease-in-out w-full ${isOutroPublicoSelected ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                            <div className={`transition-all duration-300 ease-in-out w-full ${isOutroPublicoSelected ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
                                 <NormalInput
                                     text="Especifique o público:"
                                     isNotMandatory={false}
                                     registration={register("outroPublico")}
                                     error={errors.outroPublico}
-                                    placeholder="Descreva o outro público aqui..."
                                 />
                             </div>
                             
