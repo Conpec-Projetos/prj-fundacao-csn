@@ -130,7 +130,7 @@ export async function submitCadastroForm(formData: FormData) {
     const apresentacaoFiles = formData.getAll('apresentacao') as File[];
     const complianceFiles = formData.getAll('compliance') as File[];
     const documentosFiles = formData.getAll('documentos') as File[];
-    const usuarioAtualID = formData.get('usuarioAtualID') as string;
+    const usuarioAtualID = formData.get('usuarioAtualID') as string | null;
 
     const dataToValidate = {
         ...rawFormData,
