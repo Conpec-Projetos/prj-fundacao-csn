@@ -14,8 +14,8 @@ import {
     FileInput,
     CidadeInput,
     GrowInput,
-    PublicoBeneficiadoInput,
-    SingleEstadoInput
+    SingleEstadoInput,
+    PublicoInput
 } from "@/components/inputs/inputs";
 import { State, City } from "country-state-city";
 import { toast } from "sonner";
@@ -89,6 +89,9 @@ export default function CadastroForm() {
 
     const watchedCep = watch('cep');
     const watchedEstados = watch('estados');
+    const watchedPublico = watch('publico');
+    const outroPublicoIndex = publicoList.findIndex(p => p.nome.toLowerCase().startsWith('outro'));
+    const isOutroPublicoSelected = watchedPublico && watchedPublico[outroPublicoIndex];
 
     useEffect(() => {
         const fetchAddress = async (cep: string) => {
@@ -519,16 +522,30 @@ export default function CadastroForm() {
                                 )}
                             />
 
-                            <PublicoBeneficiadoInput
-                                text="Público beneficiado:"
-                                isNotMandatory={false}
-                                list={publicoList.map(p => p.nome)}
+                            <Controller
+                                name="publico"
                                 control={control}
-                                checkboxesName="publico"
-                                outroFieldName="outroPublico"
-                                checkboxesError={errors.publico as FieldError}
-                                outroFieldError={errors.outroPublico as FieldError}
+                                render={({ field, fieldState: { error } }) => (
+                                    <PublicoInput
+                                        text="Público beneficiado:"
+                                        list={publicoList.map(p => p.nome)}
+                                        isNotMandatory={false}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        error={error as FieldError}
+                                    />
+                                )}
                             />
+
+                            <div className={`transition-all duration-300 ease-in-out w-full ${isOutroPublicoSelected ? 'max-h-40 opacity-100 mt-2' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                                <NormalInput
+                                    text="Especifique o público:"
+                                    isNotMandatory={false}
+                                    registration={register("outroPublico")}
+                                    error={errors.outroPublico}
+                                    placeholder="Descreva o outro público aqui..."
+                                />
+                            </div>
                             
                             <Controller
                                 name="ods"
