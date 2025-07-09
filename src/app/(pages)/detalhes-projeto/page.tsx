@@ -9,7 +9,6 @@ import presentation from "@/assets/Presentation-svg.svg";
 import positivo from "@/assets/positivo-svg.svg";
 import negativo from "@/assets/negativo-svg.svg";
 import atencao from "@/assets/atencao-svg.svg";
-import setinha from "@/assets/seta-svg.svg";
 import carrossel from "@/assets/carrossel.jpeg";
 import {
   Carousel,
@@ -264,7 +263,7 @@ export default function ProjectDetailsPage() {
               <div className="w-1/3 h-3/4 border-2 border-[var(--cultura)] rounded-2xl p-2 self-end">
                 <h4 className="font-bold"></h4>
                 <div className="flex flex-row justify-between mt-14">
-                  <p>PCD's</p>
+                  <p>PCD&#39;s</p>
                   <p className="font-bold">200</p>
                 </div>
                 <div className="flex flex-row justify-between">
