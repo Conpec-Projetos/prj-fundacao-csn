@@ -30,8 +30,7 @@ import { formsCadastroSchema, FormsCadastroFormFields } from "@/lib/schemas";
 
 
 
-export default function CadastroForm() {
-    const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
+export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: string | null }) {
     const [currentPage, setCurrentPage] = useState<number>(1);
     
     const {
@@ -111,12 +110,6 @@ export default function CadastroForm() {
         };
         fetchAddress(watchedCep);
     }, [watchedCep, setValue]);
-
-    useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
-            setUsuarioAtualID(user ? user.uid : null);
-        });
-    }, []);
     
     return (
         <form 
@@ -287,7 +280,7 @@ export default function CadastroForm() {
                             <div className="flex flex-row min-h-[60px] h-fit w-full justify-center items-start gap-x-5">
                                 <NumeroEndInput
                                     text="Número:"
-                                    isNotMandatory={false}
+                                    isNotMandatory={true}
                                     registration={register("numeroEndereco")}
                                     error={errors.numeroEndereco}
                                 />
@@ -332,7 +325,7 @@ export default function CadastroForm() {
 
                             <NormalInput
                                 text="Link para website:"
-                                isNotMandatory={false}
+                                isNotMandatory={true}
                                 registration={register("website")}
                                 error={errors.website}
                             />

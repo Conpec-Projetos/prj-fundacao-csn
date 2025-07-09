@@ -73,15 +73,19 @@ export default function Login() {
 
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password); // tenta fazer o login
-            const user = {...userCredential.user, timeout: Date.now() + (1000 * 60 * 60 * 12)}; // Desloga automaticamente depois de 12 horas
+            const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+            const user = userCredential.user;
             const userVerification = userCredential.user;
 
-            if(userVerification){
-                localStorage.setItem('user', JSON.stringify(user));
-                // Guarda o id do usuário no cache para facilitar o acesso na hora de enviar formulários
                 if (userVerification.email && userVerification.emailVerified) {
+                    const idToken = await user.getIdToken();
                     const emailDomain = userVerification.email.split('@')[1];
+
+                await fetch('/api/auth/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idToken }),
+                });
 
                     // Se colocar o dominio da csn nao conseguirei testar, logo coloquei o da conpec
                     if (emailDomain === "conpec.com.br") {
@@ -91,11 +95,10 @@ export default function Login() {
                     }
                     
                 } else {
-                    toast.error('Para conseguir acessar, por favor, verifique o e-mail que enviamos.');
+                    toast.error('Por favor, verifique seu e-mail antes de fazer login.');
                 }
             }
-            // auth está em firebase-config.ts
-        } 
+
         catch (error) {
             if (error instanceof FirebaseError) {
                 console.error("Erro ao tentar fazer login:", error.code);
