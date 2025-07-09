@@ -5,6 +5,8 @@ import { db } from "@/firebase/firebase-config";
 import AcompanhamentoForm from "@/components/forms/AcompanhamentoForm";
 import { formsAcompanhamentoDados, formsCadastroDados, odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields } from "@/lib/schemas";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth.";
 
 
 async function getInitialFormData(projetoID: string): Promise<Partial<FormsAcompanhamentoFormFields>> {
@@ -111,6 +113,12 @@ async function getInitialFormData(projetoID: string): Promise<Partial<FormsAcomp
 export default async function FormsAcompanhamento({ params }: { params: Promise<{ id: string }> }) {
     const { id: projetoID } = await params;
 
+    // Autenticação no Servidor
+    const user = await getCurrentUser();
+    if (!user || !user.email_verified) {
+        redirect('/login');
+    }
+
     // Busca de dados no Servidor
     const initialData = await getInitialFormData(projetoID);
 
@@ -124,6 +132,7 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
             
             <AcompanhamentoForm 
                 projetoID={projetoID}
+                usuarioAtualID={user.uid}
                 initialData={initialData}
             />
 
