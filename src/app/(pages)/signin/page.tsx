@@ -48,7 +48,7 @@ export default function Signin(){
             if (user.email && user.emailVerified) {
                 const emailDomain = user.email.split('@')[1];
 
-                if (emailDomain === "conpec.com.br") {
+                if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") {
                     router.push("/")
                 } else {
                     router.push("inicio-externo")
