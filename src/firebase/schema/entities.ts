@@ -16,10 +16,11 @@ export interface usuarioInt {
 
 export interface Projetos {
   nome: string;
+  // estados: string[]; // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
   municipios: string[];
   status: "pendente" | "aprovado" | "reprovado";
   ativo: boolean;
-  compliance: "pendente" | "aprovado" | "reprovado";
+  compliance: boolean;
   empresas: string[];
   indicacao?: string;
   ultimoFormulario?: string;
@@ -27,6 +28,7 @@ export interface Projetos {
 }
 
 export interface formsCadastroDados {
+  projetoID: string;
   dataPreenchido: string;
   instituicao: string;
   cnpj: string;
@@ -63,10 +65,6 @@ export interface formsCadastroDados {
   contrapartidasProjeto: string;
   observacoes: string;
   termosPrivacidade: boolean;
-}
-
-export interface formsCadastroDocumentos {
-  projetoID: string;
   diario: string[];
   apresentacao: string[];
   compliance: string[];
@@ -120,6 +118,7 @@ export interface dadosEstados {
   nomeEstado: string;
   qtdProjetos: number;
   qtdMunicipios: number;
+  municipios: string[]
   valorTotal: number;
   maiorAporte: {nome: string, valorAportado: number};
   beneficiariosDireto: number;
@@ -196,7 +195,7 @@ export const publicoList: Publico[] = [
   { id: 2, nome: "Jovens" },
   { id: 3, nome: "Adultos" },
   { id: 4, nome: "Idosos" },
-  { id: 5, nome: "" },
+  { id: 5, nome: "Outro:" },
 ];
 
 export interface Ods {

@@ -5,7 +5,7 @@ export default function Footer(){
     const router = useRouter();
 
     return(
-        <footer className="flex flex-row justify-between items-center w-full h-[20vh] lg:h-[24vh] bg-blue-fcsn text-white-off text-xs sm:text-lg md:text-sm lg:text:xs">
+        <footer className="flex flex-row justify-between items-center w-full h-[20vh] lg:h-[24vh] bg-blue-fcsn2 text-white-off text-xs sm:text-lg md:text-sm lg:text:xs">
                 
             <div className="flex flex-col justify-center items-center w-1/2">
 
