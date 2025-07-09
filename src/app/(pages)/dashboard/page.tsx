@@ -41,7 +41,7 @@ const estadosSiglas: {[key:string]: string} = {
   "Tocantins" : "TO",
 };
 
-export const leisSiglas: { [key: string]: string } = {
+const leisSiglas: { [key: string]: string } = {
   "Lei de Incentivo à Cultura": "LIC",
   "PROAC - Programa de Ação Cultural": "PROAC",
   "FIA - Lei Fundo para a Infância e Adolescência": "FIA",
