@@ -11,10 +11,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
-import { auth } from "@/firebase/firebase-config";
+import { auth, db } from "@/firebase/firebase-config";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signOut } from "firebase/auth";
 import { collection, query, where, getDocs, addDoc, updateDoc, arrayUnion, doc, setDoc } from "firebase/firestore";
-import { db } from "@/firebase/firebase-config";
 import { Associacao, Projetos, usuarioInt, usuarioExt } from "@/firebase/schema/entities";
 import { FirebaseError } from "firebase/app";
 

@@ -612,7 +612,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
 
                             <NormalInput
                                 text="Número de aprovação do projeto por lei:"
-                                isNotMandatory={false}
+                                isNotMandatory={true}
                                 registration={register("numeroLei")}
                                 error={errors.numeroLei}
                             />

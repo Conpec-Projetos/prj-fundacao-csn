@@ -133,11 +133,6 @@ export default function ExternalUserDashboard({ userName, userProjects }: Dashbo
             <p>Você ainda não está associado a nenhum projeto.</p>
           )}
         </div>
-        <div className="mt-6 text-center">
-          <Link href="/todos-projetos" className="text-pink-fcsn dark:text-pink-light hover:underline">
-            Ver todos os projetos
-          </Link>
-        </div>
       </div>
     </main>
   );

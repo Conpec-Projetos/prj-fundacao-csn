@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { db } from '@/firebase/firebase-config';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, addDoc } from 'firebase/firestore';
 import { Projetos, formsAcompanhamentoDados, formsCadastroDados, Associacao, usuarioExt } from '@/firebase/schema/entities';
 import Footer from '@/components/footer/footer';
 import ExternalUserDashboard from '@/components/inicio-ext/inicioExtContent';
@@ -16,6 +16,60 @@ interface ProjetoExt {
   formularioPendente: boolean;
 }
 
+
+async function syncUserProjects(uid: string, email: string) {
+    try {
+        // Busca todos os formulários de cadastro associados ao email do usuário
+        const formsRef = collection(db, "forms-cadastro");
+        const qForms = query(formsRef, where("emailResponsavel", "==", email));
+        const formsSnapshot = await getDocs(qForms);
+
+        if (formsSnapshot.empty) {
+            // Se não houver projetos com este e-mail, não há nada a fazer.
+            return;
+        }
+
+        // Coleta todos os IDs de projeto encontrados
+        const allProjectIdsFromForms = formsSnapshot.docs.map(doc => doc.data().projetoID).filter(id => id);
+
+        if (allProjectIdsFromForms.length === 0) {
+            return;
+        }
+
+        // Encontra o documento de associação do usuário
+        const associacaoRef = collection(db, 'associacao');
+        const qAssociacao = query(associacaoRef, where('usuarioID', '==', uid));
+        const associacaoSnapshot = await getDocs(qAssociacao);
+
+        if (!associacaoSnapshot.empty) {
+            // Atualiza o documento de associação se ele já existe
+            const assocDoc = associacaoSnapshot.docs[0];
+            const existingProjectIds = assocDoc.data().projetosIDs || [];
+            
+            // Filtra para encontrar apenas os projetos que ainda não estão associados
+            const newProjectIds = allProjectIdsFromForms.filter(id => !existingProjectIds.includes(id));
+
+            if (newProjectIds.length > 0) {
+                // Adiciona apenas os novos IDs ao array existente
+                await updateDoc(assocDoc.ref, {
+                    projetosIDs: arrayUnion(...newProjectIds)
+                });
+                console.log(`Projetos sincronizados para o usuário ${uid}. Adicionados: ${newProjectIds.length}`);
+            }
+        } else {
+            // Se o documento de associação não existe, cria um novo
+            const newAssociacaoDoc: Associacao = {
+                usuarioID: uid,
+                projetosIDs: allProjectIdsFromForms
+            };
+            await addDoc(collection(db, "associacao"), newAssociacaoDoc);
+            console.log(`Novo documento de associação criado para o usuário ${uid} com ${allProjectIdsFromForms.length} projetos.`);
+        }
+
+    } catch (error) {
+        console.error("Erro ao sincronizar projetos do usuário:", error);
+    }
+}
 
 async function getUserData(uid: string) {
     const userExtRef = doc(db, 'usuarioExt', uid);
@@ -94,9 +148,11 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
 export default async function ExternalUserHomePage() {
     const user = await getCurrentUser();
 
-    if (!user) {
+    if (!user || !user.email) {
         redirect('/login');
     }
+
+    await syncUserProjects(user.uid, user.email);
 
     const [userData, userProjects] = await Promise.all([
         getUserData(user.uid),
