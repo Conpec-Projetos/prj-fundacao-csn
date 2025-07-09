@@ -41,7 +41,7 @@ export default function Login() {
                 const emailDomain = user.email.split('@')[1];
 
                 // Se colocar o dominio da csn nao conseguirei testar, logo coloquei o da conpec
-                if (emailDomain === "conpec.com.br") {
+                if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") {
                     router.push("/")
                 } else {
                     router.push("inicio-externo")
@@ -88,7 +88,7 @@ export default function Login() {
                 });
 
                     // Se colocar o dominio da csn nao conseguirei testar, logo coloquei o da conpec
-                    if (emailDomain === "conpec.com.br") {
+                    if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") {
                         router.push("/")
                     } else {
                         router.push("inicio-externo")

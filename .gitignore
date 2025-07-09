@@ -146,5 +146,13 @@ functions/package.json
 functions/tsconfig.dev.json
 functions/tsconfig.json
 functions/src/index.ts
-
 serviceAccountKey**
+
+# Playwright
+/tests
+/test-results/
+/tests-examples/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+playwright.config.ts

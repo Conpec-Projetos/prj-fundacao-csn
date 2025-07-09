@@ -17,7 +17,7 @@ interface ProjetoExt {
 }
 
 
-async function syncUserProjects(uid: string, email: string) {
+async function syncProjetosUsuario(uid: string, email: string) {
     try {
         // Busca todos os formulários de cadastro associados ao email do usuário
         const formsRef = collection(db, "forms-cadastro");
@@ -101,32 +101,65 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
         if (!projetoDocSnap.exists()) return null;
 
         const projetoData = projetoDocSnap.data() as Projetos;
-        let instituicao = '', lei = '', formularioPendente = false, dataUltimoForm;
+        let formularioPendente = false
 
-        if (projetoData.status === "aprovado") {
-            formularioPendente = true;
-            if (projetoData.ultimoFormulario) {
-                const formAcompanhamentoSnap = await getDoc(doc(db, "forms-acompanhamento", projetoData.ultimoFormulario));
-                if (formAcompanhamentoSnap.exists()) {
-                    const data = formAcompanhamentoSnap.data() as formsAcompanhamentoDados;
-                    dataUltimoForm = data.dataResposta;
-                    instituicao = data.instituicao;
-                    lei = data.lei;
-                } else {
-                    const formCadastroSnap = await getDoc(doc(db, "forms-cadastro", projetoData.ultimoFormulario));
-                    if (formCadastroSnap.exists()) {
-                        const data = formCadastroSnap.data() as formsCadastroDados;
-                        dataUltimoForm = data.dataPreenchido;
-                        instituicao = data.instituicao;
-                        lei = data.lei;
-                    }
-                }
+        if (projetoData.status === "aprovado" && projetoData.dataAprovado) {
+            // 1. Obter a contagem de formulários de acompanhamento existentes para o projeto
+            const acompanhamentoQuery = query(
+                collection(db, "forms-acompanhamento"),
+                where("projetoID", "==", projetoId)
+            );
+            const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
+            const numAcompanhamentos = acompanhamentoSnapshot.size;
+
+            // 2. Definir a lógica com base na contagem de formulários
+            const dataAprovado = new Date(projetoData.dataAprovado);
+            const hoje = new Date();
+            let mesesAtras = -1; // Valor padrão que não acionará o formulário pendente
+
+            switch (numAcompanhamentos) {
+                case 0:
+                    mesesAtras = 3; // 3 meses para o primeiro formulário
+                    break;
+                case 1:
+                    mesesAtras = 7; // 7 meses para o segundo
+                    break;
+                case 2:
+                    mesesAtras = 10; // 10 meses para o terceiro
+                    break;
+                default: // 3 ou mais formulários
+                    formularioPendente = false;
+                    break;
             }
-            if (dataUltimoForm && new Date(dataUltimoForm) >= tresMesesAtras) {
-                formularioPendente = false;
+
+            if (mesesAtras > 0) {
+                const dataLimite = new Date(hoje);
+                dataLimite.setMonth(hoje.getMonth() - mesesAtras);
+                if (dataAprovado <= dataLimite) {
+                    formularioPendente = true;
+                }
             }
         }
         
+        // Lógica para buscar instituição e lei
+        let data, instituicao = '', lei = ''
+
+        if (projetoData.ultimoFormulario) {
+            const formAcompanhamentoSnap = await getDoc(doc(db, "forms-acompanhamento", projetoData.ultimoFormulario));
+            if (formAcompanhamentoSnap.exists()) {
+                data = formAcompanhamentoSnap.data() as formsAcompanhamentoDados;
+                instituicao = data.instituicao;
+                lei = data.lei;
+            } else {
+                const formCadastroSnap = await getDoc(doc(db, "forms-cadastro", projetoData.ultimoFormulario));
+                if (formCadastroSnap.exists()) {
+                    data = formCadastroSnap.data() as formsCadastroDados;
+                    instituicao = data.instituicao;
+                    lei = data.lei;
+                }
+            }
+        }
+
         const valorTotal = (projetoData.valorAportadoReal || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
         return {
@@ -152,7 +185,7 @@ export default async function ExternalUserHomePage() {
         redirect('/login');
     }
 
-    await syncUserProjects(user.uid, user.email);
+    await syncProjetosUsuario(user.uid, user.email);
 
     const [userData, userProjects] = await Promise.all([
         getUserData(user.uid),

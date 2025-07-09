@@ -1,20 +1,14 @@
 import Footer from "@/components/footer/footer";
 import CadastroForm from "@/components/forms/cadastroForm";
 import { getCurrentUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { Toaster } from "sonner";
 
 export default async function FormsCadastroPage() {
     // Verificação de autenticação no lado do servidor
     const user = await getCurrentUser();
 
-    // Se não houver usuário ou o email não for verificado, redireciona
-    if (!user || !user.email_verified) {
-        redirect('/login');
-    }
-    
     // O ID do usuário agora vem do token decodificado
-    const usuarioAtualID = user.uid;
+    const usuarioAtualID = (user && user.email_verified)? user.uid : null;
 
     return (
         <main className="flex flex-col justify-between items-center w-screen min-h-screen">

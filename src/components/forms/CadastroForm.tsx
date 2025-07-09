@@ -47,6 +47,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             representanteLegal: "",
             telefone: "",
             emailRepLegal: "",
+            responsavel: "",
             emailResponsavel: "",
             cep: "",
             endereco: "",
@@ -235,7 +236,13 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 registration={register("emailRepLegal")}
                                 error={errors.emailRepLegal}
                             />
-                            
+
+                            <NormalInput
+                                text="Responsável pelo projeto"
+                                isNotMandatory={false}
+                                registration={register("responsavel")}
+                                error={errors.responsavel}
+                            />
                             <NormalInput
                                 text="E-mail do responsável:"
                                 isNotMandatory={false}
