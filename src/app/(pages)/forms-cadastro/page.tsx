@@ -1,6 +1,6 @@
 import Footer from "@/components/footer/footer";
 import CadastroForm from "@/components/forms/CadastroForm";
-import { getCurrentUser } from "@/lib/auth.";
+import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Toaster } from "sonner";
 

@@ -24,8 +24,6 @@ import { formatCNPJ, formatCEP, formatTelefone, formatMoeda, filtraDigitos } fro
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller, FieldError } from "react-hook-form";
 import { submitCadastroForm } from '@/app/actions/formsCadastroActions';
-import { auth } from "@/firebase/firebase-config";
-import { onAuthStateChanged } from "firebase/auth";
 import { formsCadastroSchema, FormsCadastroFormFields } from "@/lib/schemas";
 
 

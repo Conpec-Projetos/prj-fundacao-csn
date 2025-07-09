@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { authAdmin } from '@/firebase/firebase-admin-config'; // Criaremos este arquivo a seguir
+import { authAdmin } from '@/firebase/firebase-admin-config';
 
 export async function POST(request: Request) {
   const { idToken } = await request.json();
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   try {
     const sessionCookie = await authAdmin.createSessionCookie(idToken, { expiresIn });
 
-    cookies().set('session', sessionCookie, {
+    (await cookies()).set('session', sessionCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: expiresIn,
@@ -32,6 +32,6 @@ export async function POST(request: Request) {
 
 // Rota para fazer logout (invalidar o cookie)
 export async function DELETE() {
-    cookies().delete('session');
+    (await cookies()).delete('session');
     return NextResponse.json({ status: 'success' });
 }

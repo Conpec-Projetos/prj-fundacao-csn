@@ -3,7 +3,7 @@ import { authAdmin } from '@/firebase/firebase-admin-config';
 import { DecodedIdToken } from 'firebase-admin/auth';
 
 export async function getCurrentUser(): Promise<DecodedIdToken | null> {
-  const cookieStore = cookies(); 
+  const cookieStore = await cookies(); 
   
   const session = cookieStore.get('session')?.value;
 
