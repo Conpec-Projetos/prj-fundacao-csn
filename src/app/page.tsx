@@ -124,9 +124,9 @@ export default function AdminHomePage() {
 
           // Verificamos se possui o dominio da csn (usamos afim de teste o dominio da conpec)
           // se o usuario verificou o email recebido e se é ADM
-          if ((emailDomain === "conpec.com.br") && isAdm ){ // Verificamos se possui o dominio da csn e se é ADM
+          if ((emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") && isAdm ){ // Verificamos se possui o dominio da csn e se é ADM
             setIsLoading(false);
-          } else if (emailDomain === "conpec.com.br"){ // Se não for verificamos se possui o dominio da csn apenas
+          } else if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br"){ // Se não for verificamos se possui o dominio da csn apenas
             router.push("/dashboard"); 
           } else { // Se chegar aqui significa que é um usuario externo
             router.push("/inicio-externo");
