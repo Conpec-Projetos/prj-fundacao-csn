@@ -6,7 +6,7 @@ import AcompanhamentoForm from "@/components/forms/AcompanhamentoForm";
 import { formsAcompanhamentoDados, formsCadastroDados, odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth.";
+import { getCurrentUser } from "@/lib/auth";
 
 
 async function getInitialFormData(projetoID: string): Promise<Partial<FormsAcompanhamentoFormFields>> {

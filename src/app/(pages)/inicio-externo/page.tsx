@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth.';
+import { getCurrentUser } from '@/lib/auth';
 import { db } from '@/firebase/firebase-config';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Projetos, formsAcompanhamentoDados, formsCadastroDados, Associacao, usuarioExt } from '@/firebase/schema/entities';
