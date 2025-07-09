@@ -14,24 +14,21 @@ import {
     CidadeInput
     } from "@/components/inputs/inputs";
 import { toast } from "sonner";
-import { auth } from "@/firebase/firebase-config";
-import { onAuthStateChanged } from "firebase/auth";
 import { odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
 import { State, City } from "country-state-city";
 import { formsAcompanhamentoSchema, FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { submitAcompanhamentoForm } from "@/app/actions/formsAcompanhamentoActions";
-import { useState, useEffect } from "react";
 
 
 interface AcompanhamentoFormProps {
   projetoID: string;
+  usuarioAtualID: string;
   initialData: Partial<FormsAcompanhamentoFormFields>;
 }
 
-export default function AcompanhamentoForm({ projetoID, initialData }: AcompanhamentoFormProps) {
-    const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
+export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialData }: AcompanhamentoFormProps) {
 
     const {
         register,
@@ -48,12 +45,6 @@ export default function AcompanhamentoForm({ projetoID, initialData }: Acompanha
     });
 
     const watchedEstados = watch('estados');
-
-    useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
-            setUsuarioAtualID(user ? user.uid : null);
-        });
-    }, []);
 
     const onSubmit: SubmitHandler<FormsAcompanhamentoFormFields> = async (data) => {
         if (!usuarioAtualID) {
