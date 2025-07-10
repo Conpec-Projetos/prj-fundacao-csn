@@ -137,15 +137,9 @@ dist
 .vercel
 
 # firebase
-.firebaserc
-firebase.json
-functions/.eslintrc.js
-functions/.gitignore
-functions/package-lock.json
-functions/package.json
-functions/tsconfig.dev.json
-functions/tsconfig.json
-functions/src/index.ts
+# .firebaserc
+# firebase.json
+# functions/**
 serviceAccountKey**
 
 # Playwright
