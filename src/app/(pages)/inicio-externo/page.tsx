@@ -185,6 +185,13 @@ export default async function ExternalUserHomePage() {
         redirect('/login');
     }
 
+    const emailDomain = user.email.split('@')[1];
+    const isInternal = ["conpec.com.br", "csn.com.br", "fundacaocsn.org.br"].includes(emailDomain);
+
+    if (isInternal) {
+        redirect('/');
+    }
+
     await syncProjetosUsuario(user.uid, user.email);
 
     const [userData, userProjects] = await Promise.all([
@@ -193,8 +200,17 @@ export default async function ExternalUserHomePage() {
     ]);
     
     if (!userData) {
-        // Se não encontrar na coleção externa, pode ser um usuário interno
-        redirect('/');
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[90vh] text-center px-4">
+                <h1 className="text-2xl font-bold text-blue-fcsn dark:text-white-off">
+                    Quase lá!
+                </h1>
+                <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    Estamos preparando sua área. Por favor, recarregue a página em alguns instantes.
+                </p>
+                <Footer />
+            </div>
+        )
     }
 
     const userName = userData.nome.split(" ")[0];

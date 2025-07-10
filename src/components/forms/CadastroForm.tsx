@@ -25,11 +25,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller, FieldError } from "react-hook-form";
 import { submitCadastroForm } from '@/app/actions/formsCadastroActions';
 import { formsCadastroSchema, FormsCadastroFormFields } from "@/lib/schemas";
+import { useRouter } from "next/navigation";
 
 
 
 export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: string | null }) {
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const router = useRouter()
     
     const {
         register,
@@ -37,6 +39,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
         control,
         setValue,
         watch,
+        reset,
         formState: { errors, isSubmitting },
     } = useForm<FormsCadastroFormFields>({
         resolver: zodResolver(formsCadastroSchema),
@@ -145,7 +148,13 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
         
                     if (result.success) {
                         toast.success("Formulário enviado com sucesso!");
-                        // TODO: Lógica de resetar o formulário ou redirecionar o usuário
+                        if (usuarioAtualID) {
+                            router.push('/inicio-externo');
+                        } else {
+                            reset()
+                            setCurrentPage(1)
+                            window.scrollTo(0, 0)
+                        }
                     } else {
                         toast.error(`Erro: ${result.error}`);
                     }
