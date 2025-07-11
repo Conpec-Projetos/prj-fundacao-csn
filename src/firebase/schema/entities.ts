@@ -16,15 +16,18 @@ export interface usuarioInt {
 
 export interface Projetos {
   nome: string;
-  // estados: string[]; // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
+  estados: string[];
   municipios: string[];
   status: "pendente" | "aprovado" | "reprovado";
   ativo: boolean;
   compliance: boolean;
+  empresaVinculada: string;
   empresas: string[];
   indicacao?: string;
   ultimoFormulario?: string;
+  valorAportado: number;
   valorAportadoReal: number;
+  lei: string;
 }
 
 export interface formsCadastroDados {
