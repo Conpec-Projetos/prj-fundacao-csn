@@ -19,6 +19,8 @@
     "country-state-city": "^3.2.1",
     "dom-to-image-more": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "firebase": "^11.6.0",
     "firebase-admin": "^13.4.0",
     "html2canvas": "^1.4.1",
@@ -40,6 +42,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/file-saver": "^2.0.7",
     "@types/html2canvas": "^0.5.35",
     "@types/node": "^20",
     "@types/react": "19.1.8",
