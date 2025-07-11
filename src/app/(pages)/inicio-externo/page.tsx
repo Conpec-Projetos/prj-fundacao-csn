@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { db } from '@/firebase/firebase-config';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, addDoc } from 'firebase/firestore';
-import { Projetos, formsAcompanhamentoDados, formsCadastroDados, Associacao, usuarioExt } from '@/firebase/schema/entities';
+import { Projetos, Associacao, usuarioExt } from '@/firebase/schema/entities';
 import Footer from '@/components/footer/footer';
 import ExternalUserDashboard from '@/components/inicio-ext/inicioExtContent';
 
@@ -101,6 +101,11 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
         if (!projetoDocSnap.exists()) return null;
 
         const projetoData = projetoDocSnap.data() as Projetos;
+
+        // Como os campos "instituição" e "lei" agora existem dentro dos documentos de projetos, não precisamos da lógica de busca dos formulários.
+        const instituicao = projetoData.instituicao || "Instituição não especificada";
+        const lei = projetoData.lei || "Lei não especificada";
+
         let formularioPendente = false
 
         if (projetoData.status === "aprovado" && projetoData.dataAprovado && typeof projetoData.dataAprovado.toDate === 'function') {
@@ -137,25 +142,6 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
                 dataLimite.setMonth(hoje.getMonth() - mesesAtras);
                 if (dataAprovado <= dataLimite) {
                     formularioPendente = true;
-                }
-            }
-        }
-        
-        // Lógica para buscar instituição e lei
-        let data, instituicao = '', lei = ''
-
-        if (projetoData.ultimoFormulario) {
-            const formAcompanhamentoSnap = await getDoc(doc(db, "forms-acompanhamento", projetoData.ultimoFormulario));
-            if (formAcompanhamentoSnap.exists()) {
-                data = formAcompanhamentoSnap.data() as formsAcompanhamentoDados;
-                instituicao = data.instituicao;
-                lei = data.lei;
-            } else {
-                const formCadastroSnap = await getDoc(doc(db, "forms-cadastro", projetoData.ultimoFormulario));
-                if (formCadastroSnap.exists()) {
-                    data = formCadastroSnap.data() as formsCadastroDados;
-                    instituicao = data.instituicao;
-                    lei = data.lei;
                 }
             }
         }
