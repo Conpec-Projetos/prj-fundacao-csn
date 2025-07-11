@@ -418,7 +418,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
             {/* Links para as website: */}
                 <NormalInput
                     text="Link para website:"
-                    isNotMandatory={false}
+                    isNotMandatory={true}
                     registration={register("website")}
                     error={errors.website}
                 />
@@ -426,7 +426,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
             {/* Links para as redes sociais */}
                 <LongInput 
                     text="Links para as redes sociais:" 
-                    isNotMandatory={false}
+                    isNotMandatory={true}
                     registration={register("links")}
                     error={errors.links}
                 />
