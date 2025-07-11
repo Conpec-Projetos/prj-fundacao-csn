@@ -18,6 +18,7 @@ export interface usuarioInt {
 
 export interface Projetos {
   nome: string;
+  instituicao: string;
   estados: string[]; // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
   municipios: string[];
   lei: string;
