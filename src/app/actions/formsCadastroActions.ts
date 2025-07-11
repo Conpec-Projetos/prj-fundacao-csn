@@ -152,6 +152,7 @@ export async function submitCadastroForm(formData: FormData) {
     try {
         const projetoData: Projetos = {
             nome: data.nomeProjeto,
+            instituicao: data.instituicao,
             estados: data.estados,
             municipios: data.municipios,
             lei: getItemNome(data.lei, leiList),
