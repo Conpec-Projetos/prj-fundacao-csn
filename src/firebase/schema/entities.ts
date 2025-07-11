@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface Associacao {
   usuarioID: string;
   projetosIDs: string[];
@@ -16,9 +18,11 @@ export interface usuarioInt {
 
 export interface Projetos {
   nome: string;
-  // estados: string[]; // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
+  estados: string[]; // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
   municipios: string[];
+  lei: string;
   status: "pendente" | "aprovado" | "reprovado";
+  dataAprovado: Timestamp | "";
   ativo: boolean;
   compliance: boolean;
   empresas: string[];
@@ -35,15 +39,16 @@ export interface formsCadastroDados {
   representante: string;
   telefone: string;
   emailLegal: string;
+  responsavel: string;
   emailResponsavel: string;
   cep: string;
   endereco: string;
-  numeroEndereco: number;
+  numeroEndereco?: number;
   complemento?: string;
   cidade: string;
   estado: string;
   nomeProjeto: string;
-  website: string; 
+  website?: string; 
   valorAprovado: number;
   valorApto: number;
   dataInicial: string;
@@ -61,7 +66,7 @@ export interface formsCadastroDados {
   qtdMunicipios: number;
   municipios: string[];
   lei: string;
-  numeroLei: string;
+  numeroLei?: string;
   contrapartidasProjeto: string;
   observacoes: string;
   termosPrivacidade: boolean;
@@ -109,8 +114,8 @@ export interface formsAcompanhamentoDados {
   ods: number[];
   relato?: string;
   fotos: string[];
-  website: string;
-  links: string;
+  website?: string;
+  links?: string;
   contrapartidasExecutadas?: string;
 }
 

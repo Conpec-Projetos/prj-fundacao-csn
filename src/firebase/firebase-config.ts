@@ -4,7 +4,6 @@ import { initializeApp } from "firebase/app";
 import { getStorage } from 'firebase/storage';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from "firebase/auth";
-
 // TODO: Add SDKs for Firebase products that you want to use
 
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -14,17 +13,17 @@ import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
 
-  apiKey: "AIzaSyAmQqcKIprPHhfE_OiexJ-LIGXQMLhQpXE",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
 
-  authDomain: "csn-fbs.firebaseapp.com",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
 
-  projectId: "csn-fbs",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
 
-  storageBucket: "csn-fbs.firebasestorage.app",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
 
-  messagingSenderId: "586643662858",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
 
-  appId: "1:586643662858:web:20dcf1f5d9be6f60a757f3"
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 
 };
 
