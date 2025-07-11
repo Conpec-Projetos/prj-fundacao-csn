@@ -50,7 +50,7 @@ export default function AcompanhamentoEmail(email: AcompanhamentoEmailProps) {
               textAlign: 'left',
               padding: '0 40px',
               color: '#525f7f',
-            }}>Olá, {email.destinatario}!
+            }}>Olá{email.destinatario ? `, ${email.destinatario}!` : "!"}
           </Text>
           <Text
             style={{

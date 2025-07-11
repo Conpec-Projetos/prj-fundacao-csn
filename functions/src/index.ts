@@ -29,9 +29,9 @@ export const onProjectApproved = onDocumentUpdated("projetos/{projetoId}", async
     const dataAprovacao = new Date(); // Usa a data atual como referência
 
     // Calcula os timestamps para 3, 7 e 10 meses no futuro
-    const dataNotificacao3Meses = new Date(dataAprovacao.setMonth(dataAprovacao.getMonth() + 3));
-    const dataNotificacao7Meses = new Date(dataAprovacao.setMonth(dataAprovacao.getMonth() + 4)); // +4 porque já se passaram 3
-    const dataNotificacao10Meses = new Date(dataAprovacao.setMonth(dataAprovacao.getMonth() + 3)); // +3 porque já se passaram 7
+    const dataNotificacao3Meses = new Date(new Date().setMonth(dataAprovacao.getMonth() + 3));
+    const dataNotificacao7Meses = new Date(new Date().setMonth(dataAprovacao.getMonth() + 7));
+    const dataNotificacao10Meses = new Date(new Date().setMonth(dataAprovacao.getMonth() + 10));
 
     // Prepara a atualização para o documento do projeto
     const updatePayload = {
@@ -119,7 +119,7 @@ export const verificarEmailsPendentes = onSchedule("every day 08:00", async () =
       if (!formSnapshot.empty) {
         const formDoc = formSnapshot.docs[0];
         const emailResponsavel = formDoc.data()?.emailResponsavel;
-        const responsavel = formDoc.data()?.responsavel;
+        const responsavel = formDoc.data()?.responsavel.split(" ")[0];
         
         logger.log(`Enviando e-mail de ${periodo.meses} meses para ${emailResponsavel} do projeto ${projeto.nome}`);
 

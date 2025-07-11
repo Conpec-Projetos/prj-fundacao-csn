@@ -46,7 +46,7 @@ export const formsAcompanhamentoSchema = z.object({
     relato: z.string().trim().max(500, "Máximo de 500 caracteres permitidos").optional(),
     fotos: fileArraySchema(['image/jpeg', 'image/png'], 'Imagens (JPG ou PNG)', 5),
     website: z.string().trim().optional(),
-    links: z.string().trim().min(1, "Insira pelo menos um link.").max(300, "Máximo de 300 caracteres permitidos"),
+    links: z.string().trim().max(300, "Máximo de 300 caracteres permitidos").optional(),
     contrapartidasExecutadas: z.string().max(500, "Máximo de 500 caracteres permitidos").optional(),
     }).refine(data => new Date(data.dataFim) > new Date(data.dataComeco), {
         message: "A data final deve ser posterior à data inicial.",

@@ -103,8 +103,8 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
         const projetoData = projetoDocSnap.data() as Projetos;
         let formularioPendente = false
 
-        if (projetoData.status === "aprovado" && projetoData.dataAprovado) {
-            // 1. Obter a contagem de formulários de acompanhamento existentes para o projeto
+        if (projetoData.status === "aprovado" && projetoData.dataAprovado && typeof projetoData.dataAprovado.toDate === 'function') {
+            // Obter a contagem de formulários de acompanhamento existentes para o projeto
             const acompanhamentoQuery = query(
                 collection(db, "forms-acompanhamento"),
                 where("projetoID", "==", projetoId)
@@ -112,8 +112,8 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
             const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
             const numAcompanhamentos = acompanhamentoSnapshot.size;
 
-            // 2. Definir a lógica com base na contagem de formulários
-            const dataAprovado = new Date(projetoData.dataAprovado);
+            // Definir a lógica com base na contagem de formulários
+            const dataAprovado = projetoData.dataAprovado.toDate();
             const hoje = new Date();
             let mesesAtras = -1; // Valor padrão que não acionará o formulário pendente
 

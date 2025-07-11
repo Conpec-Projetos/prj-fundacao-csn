@@ -3,15 +3,44 @@ import { Toaster } from "sonner";
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import AcompanhamentoForm from "@/components/forms/acompanhamentoForm";
-import { formsAcompanhamentoDados, formsCadastroDados, odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
+import { formsAcompanhamentoDados, formsCadastroDados, odsList, leiList, segmentoList, ambitoList, Associacao } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import ProjetoInfoBloco from "@/components/forms/projetoInfoBloco";
 
 
-async function getInitialFormData(projetoID: string): Promise<Partial<FormsAcompanhamentoFormFields>> {
+interface ProjetoInfo {
+    nomeProjeto?: string;
+    responsavel?: string;
+    emailResponsavel?: string;
+    representante?: string;
+    emailLegal?: string;
+}
+
+async function getProjetoData(projetoID: string): Promise<{ initialData: Partial<FormsAcompanhamentoFormFields>; projetoInfo: ProjetoInfo }> {
+    let initialData: Partial<FormsAcompanhamentoFormFields> = {};
+    let projetoInfo: ProjetoInfo = {};
+
+    // 1. Busca sempre o formulário de cadastro original para as informações estáticas
+    const cadastroQuery = query(collection(db, "forms-cadastro"), where("projetoID", "==", projetoID), limit(1));
+    const cadastroSnapshot = await getDocs(cadastroQuery);
+
+    if (cadastroSnapshot.empty) {
+        console.warn(`Nenhum dado de cadastro encontrado para o projeto com ID: ${projetoID}`);
+        return { initialData, projetoInfo };
+    }
     
-    // Tenta buscar o formulário de acompanhamento mais recente
+    const cadastroData = cadastroSnapshot.docs[0].data() as formsCadastroDados;
+    projetoInfo = {
+        nomeProjeto: cadastroData.nomeProjeto,
+        responsavel: cadastroData.responsavel,
+        emailResponsavel: cadastroData.emailResponsavel,
+        representante: cadastroData.representante,
+        emailLegal: cadastroData.emailLegal,
+    };
+
+    // 2. Busca o último formulário de acompanhamento para pré-preenchimento
     const acompanhamentoQuery = query(
         collection(db, "forms-acompanhamento"),
         where("projetoID", "==", projetoID),
@@ -21,18 +50,14 @@ async function getInitialFormData(projetoID: string): Promise<Partial<FormsAcomp
     const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
 
     if (!acompanhamentoSnapshot.empty) {
-        console.log("Dados de acompanhamento encontrados. Pré-preenchendo...");
+        // Se já existe um acompanhamento, usa seus dados
         const data = acompanhamentoSnapshot.docs[0].data() as formsAcompanhamentoDados;
-
-        // Mapeia os dados do Firestore para o formato esperado pelo formulário
         const odsBooleans = new Array(odsList.length).fill(false);
         data.ods.forEach(id => {
-            if (id >= 0 && id < odsList.length) {
-                odsBooleans[id] = true;
-            }
+            if (id >= 0 && id < odsList.length) odsBooleans[id] = true;
         });
 
-        return {
+        initialData = {
             instituicao: data.instituicao,
             descricao: data.descricao,
             segmento: segmentoList.findIndex(s => s.nome === data.segmento),
@@ -69,45 +94,32 @@ async function getInitialFormData(projetoID: string): Promise<Partial<FormsAcomp
             contrapartidasExecutadas: data.contrapartidasExecutadas,
             fotos: [],
         };
-    }
-
-    // Se não houver acompanhamento, busca o formulário de cadastro original
-    console.log("Nenhum acompanhamento encontrado. Usando dados do cadastro inicial.");
-    const cadastroQuery = query(collection(db, "forms-cadastro"), where("projetoID", "==", projetoID));
-    const cadastroSnapshot = await getDocs(cadastroQuery);
-    
-    if (!cadastroSnapshot.empty) {
-        const data = cadastroSnapshot.docs[0].data() as formsCadastroDados;
-
+    } else {
+        // Se não, usa os dados do cadastro original para pré-preenchimento
         const odsBooleans = new Array(odsList.length).fill(false);
-        data.ods.forEach(id => {
-             if (id >= 0 && id < odsList.length) {
-                odsBooleans[id] = true;
-            }
+        cadastroData.ods.forEach(id => {
+            if (id >= 0 && id < odsList.length) odsBooleans[id] = true;
         });
-
-        // Mapeia os dados do cadastro
-        return {
-            instituicao: data.instituicao,
-            descricao: data.descricao,
-            segmento: segmentoList.findIndex(s => s.nome === data.segmento),
-            lei: leiList.findIndex(l => l.nome === data.lei),
-            estados: data.estados,
-            municipios: data.municipios,
-            dataComeco: data.dataInicial,
-            dataFim: data.dataFinal,
-            contrapartidasProjeto: data.contrapartidasProjeto,
-            beneficiariosDiretos: data.beneficiariosDiretos,
+        
+        initialData = {
+            instituicao: cadastroData.instituicao,
+            descricao: cadastroData.descricao,
+            segmento: segmentoList.findIndex(s => s.nome === cadastroData.segmento),
+            lei: leiList.findIndex(l => l.nome === cadastroData.lei),
+            estados: cadastroData.estados,
+            municipios: cadastroData.municipios,
+            dataComeco: cadastroData.dataInicial,
+            dataFim: cadastroData.dataFinal,
+            contrapartidasProjeto: cadastroData.contrapartidasProjeto,
+            beneficiariosDiretos: cadastroData.beneficiariosDiretos,
             ods: odsBooleans,
-            website: data.website,
+            website: cadastroData.website,
             diversidade: "",
             fotos: [],
         };
     }
 
-    // Se nenhum dado for encontrado, retorna um objeto vazio
-    console.warn(`Nenhum dado encontrado para o projeto com ID: ${projetoID}`);
-    return {};
+    return { initialData, projetoInfo };
 }
 
 export default async function FormsAcompanhamento({ params }: { params: Promise<{ id: string }> }) {
@@ -119,8 +131,26 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
         redirect('/login');
     }
 
+    // Busca o documento de associação do usuário
+    const associacaoRef = collection(db, 'associacao');
+    const qAssociacao = query(associacaoRef, where('usuarioID', '==', user.uid));
+    const associacaoSnapshot = await getDocs(qAssociacao);
+
+    // Se o usuário não tem um documento de associação, ele não possui projetos
+    if (associacaoSnapshot.empty) {
+        redirect('/inicio-externo');
+    }
+
+    const associacaoDoc = associacaoSnapshot.docs[0].data() as Associacao;
+    const projetosDoUsuario = associacaoDoc.projetosIDs || [];
+
+    // Se o ID do projeto na URL não está na lista de projetos do usuário, redireciona
+    if (!projetosDoUsuario.includes(projetoID)) {
+        redirect('/inicio-externo');
+    }
+
     // Busca de dados no Servidor
-    const initialData = await getInitialFormData(projetoID);
+    const { initialData, projetoInfo } = await getProjetoData(projetoID);
 
     return (
         <main className="flex flex-col justify-between items-center w-screen min-h-screen overflow-hidden no-scrollbar">
@@ -129,6 +159,14 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
                     Acompanhamento de projeto
                 </h1>
             </div>
+
+            <ProjetoInfoBloco
+                projectName={projetoInfo.nomeProjeto}
+                responsibleName={projetoInfo.responsavel}
+                responsibleEmail={projetoInfo.emailResponsavel}
+                legalRepresentativeName={projetoInfo.representante}
+                legalRepresentativeEmail={projetoInfo.emailLegal}
+            />
             
             <AcompanhamentoForm 
                 projetoID={projetoID}
