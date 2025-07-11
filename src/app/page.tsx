@@ -92,7 +92,6 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
 
 async function buscarDadosGerais(): Promise<{
   dados: dadosEstados;
-  dadosMapa: Record<string, number>;
   estadosAtendidos: number;
 }> {
   const consulta = query(
@@ -102,14 +101,10 @@ async function buscarDadosGerais(): Promise<{
 
   const consultaSnapshot = await getDocs(consulta);
   const todosDados: dadosEstados[] = [];
-  const dadosMapaTemp: Record<string, number> = {};
 
   consultaSnapshot.forEach((doc) => {
     const data = doc.data() as dadosEstados;
     todosDados.push(data);
-    if (data.nomeEstado) {
-      dadosMapaTemp[data.nomeEstado] = data.qtdProjetos;
-    }
   });
 
   const dadosSomados = somarDadosEstados(todosDados);
@@ -117,7 +112,6 @@ async function buscarDadosGerais(): Promise<{
 
   return {
     dados: dadosSomados,
-    dadosMapa: dadosMapaTemp,
     estadosAtendidos: totalEstadosAtendidos,
   };
 }
@@ -161,37 +155,60 @@ export default function AdminHomePage() {
 
   // Para verificar se esta logado
   const [isLoading, setIsLoading] = useState(true);
+  const [dadosGerais, setDadosGerais] = useState<{dados: dadosEstados, estadosAtendidos: number}>({} as {dados: dadosEstados, estadosAtendidos: number})
 
-  
+  // Vamos verificar se é ADM
+  async function IsADM(email: string): Promise<boolean> {
+    const usuarioInt = collection(db, "usuarioInt");
+    const qADM = query(
+      usuarioInt,
+      where("email", "==", email),
+      where("administrador", "==", true)
+    );
+    const snapshotADM = await getDocs(qADM);
+    return !snapshotADM.empty; // Se não estiver vazio, é um adm
+  }
 
-    // Vamos verificar se é ADM
-    async function IsADM(email: string): Promise<boolean>{
-      const usuarioInt = collection(db, "usuarioInt");
-      const qADM = query(usuarioInt, where("email", "==", email), where("administrador", "==", true));
-      const snapshotADM = await getDocs(qADM );
-      return !snapshotADM.empty; // Se não estiver vazio, é um adm
-    }
+  useEffect(() => {
+    const fetchDadosGerais = async () => {
+      const dados = await buscarDadosGerais();
+      setDadosGerais(dados)
+    };
+    fetchDadosGerais()
+  }, []);
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-          if (!user || !user.email || !user.emailVerified) { // Checa se o usuário tem email verificado tambem
-            router.push("/login"); // Como não está logado, permite que a página de login seja renderizada
-            return;
-          }
-          const emailDomain = user.email.split('@')[1];
-          const isAdm = await IsADM(user.email);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user || !user.email || !user.emailVerified) {
+        // Checa se o usuário tem email verificado tambem
+        router.push("/login"); // Como não está logado, permite que a página de login seja renderizada
+        return;
+      }
+      const emailDomain = user.email.split("@")[1];
+      const isAdm = await IsADM(user.email);
 
-          // Verificamos se possui o dominio da csn (usamos afim de teste o dominio da conpec)
-          // se o usuario verificou o email recebido e se é ADM
-          if ((emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") && isAdm ){ // Verificamos se possui o dominio da csn e se é ADM
-            setIsLoading(false);
-          } else if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br"){ // Se não for verificamos se possui o dominio da csn apenas
-            router.push("/dashboard"); 
-          } else { // Se chegar aqui significa que é um usuario externo
-            router.push("/inicio-externo");
-          }
-        });
-
+      // Verificamos se possui o dominio da csn (usamos afim de teste o dominio da conpec)
+      // se o usuario verificou o email recebido e se é ADM
+      if (
+        (emailDomain === "conpec.com.br" ||
+          emailDomain === "csn.com.br" ||
+          emailDomain === "fundacaocsn.org.br") &&
+        isAdm
+      ) {
+        // Verificamos se possui o dominio da csn e se é ADM
+        setIsLoading(false);
+      } else if (
+        emailDomain === "conpec.com.br" ||
+        emailDomain === "csn.com.br" ||
+        emailDomain === "fundacaocsn.org.br"
+      ) {
+        // Se não for verificamos se possui o dominio da csn apenas
+        router.push("/dashboard");
+      } else {
+        // Se chegar aqui significa que é um usuario externo
+        router.push("/inicio-externo");
+      }
+    });
 
     return () => unsubscribe();
   }, [router]);
@@ -217,7 +234,7 @@ export default function AdminHomePage() {
     <div className="flex flex-col grow min-h-[90vh]">
       <main className="flex flex-col gap-8 px-8 pb-8 flex-1 sm:mx-8 pt-12">
         {/* Seção de boas-vindas */}
-        <Greetings userName={userName}/>
+        <Greetings userName={userName} />
 
         {/* Planilha e Grid de Métricas */}
         <div className="flex flex-col gap-4">
@@ -225,25 +242,25 @@ export default function AdminHomePage() {
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
             <MetricCard
               title="Total de Projetos"
-              value="800"
+              value={`${dadosGerais.dados.qtdProjetos}`}
               icon={<FaClipboardList />}
               color="blue"
             />
             <MetricCard
               title="Valor Total Investido"
-              value="R$987.654.321,00"
+              value={`R$${dadosGerais.dados.valorTotal},00`}
               icon={<FaChartPie />}
               color="green"
             />
             <MetricCard
               title="Estados Atendidos"
-              value="13"
+              value={`${dadosGerais.estadosAtendidos}`}
               icon={<FaMapMarkedAlt />}
               color="purple"
             />
             <MetricCard
               title="Organizações"
-              value="750"
+              value={`${dadosGerais.dados.qtdOrganizacoes}`}
               icon={<FaFileAlt />}
               color="yellow"
             />
