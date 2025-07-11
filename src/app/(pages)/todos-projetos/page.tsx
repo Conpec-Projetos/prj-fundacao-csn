@@ -245,22 +245,37 @@ export default function TodosProjetos() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const { darkMode } = useTheme();
+    // Vamos verificar se é ADM
+    async function IsADM(email: string): Promise<boolean>{
+      const usuarioInt = collection(db, "usuarioInt");
+      const qADM = query(usuarioInt, where("email", "==", email), where("administrador", "==", true));
+      const snapshotADM = await getDocs(qADM );
+      return !snapshotADM.empty; // Se não estiver vazio, é um adm
+    }
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && user.email) {
-        const emailDomain = user.email.split("@")[1];
-        if (emailDomain === "conpec.com.br" && user.emailVerified) {
-          setIsLoading(false);
-        } else {
-          router.push("./inicio-externo");
-        }
-      } else {
-        router.push("./login");
-      }
-    });
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (!user || !user.email || !user.emailVerified) { // Checa se o usuário tem email verificado tambem
+            router.push("/login"); // Como não está logado, permite que a página de login seja renderizada
+            return;
+          }
+          const emailDomain = user.email.split('@')[1];
+          const isAdm = await IsADM(user.email);
+
+          // Verificamos se possui o dominio da csn (usamos afim de teste o dominio da conpec)
+          // se o usuario verificou o email recebido e se é ADM
+          if ((emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") && isAdm ){ // Verificamos se possui o dominio da csn e se é ADM
+            setIsLoading(false);
+          } else if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br"){ // Se não for verificamos se possui o dominio da csn apenas
+            router.push("/dashboard"); 
+          } else { // Se chegar aqui significa que é um usuario externo
+            router.push("/inicio-externo");
+          }
+        });
+
     return () => unsubscribe();
-  }, [router]);
+    }, [router]);
 
   if (isLoading) {
     return (

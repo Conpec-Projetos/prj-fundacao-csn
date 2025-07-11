@@ -2,12 +2,10 @@ import Image from "next/image";
 import Botao_Logout from "../botoes/Botao_Logout";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
-import { usePathname } from "next/navigation";
 import { Moon, Sun } from "lucide-react";
 
 export default function HeaderSecundario() {
   const { darkMode, toggleDarkMode } = useTheme();
-  const pathname = usePathname(); // Aqui pegamos o caminho atual para sabermos se esconderemos o batão sair (Se for o forms-cadastro) ou não
 
   return (
     <header className="fixed top-0 z-50 w-full bg-blue-fcsn2 dark:bg-blue-fcsn2 px-4 py-6 md:px-20 flex justify-between items-center shadow-lg">
@@ -29,9 +27,7 @@ export default function HeaderSecundario() {
             <Sun size={20} className="text-white" />
           )}
         </button>
-        {pathname !== "/forms-cadastro" && (
           <div><Botao_Logout /></div>
-        )}
       </div>
     </header>
   );

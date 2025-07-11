@@ -14,24 +14,23 @@ import {
     CidadeInput
     } from "@/components/inputs/inputs";
 import { toast } from "sonner";
-import { auth } from "@/firebase/firebase-config";
-import { onAuthStateChanged } from "firebase/auth";
 import { odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
 import { State, City } from "country-state-city";
 import { formsAcompanhamentoSchema, FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { submitAcompanhamentoForm } from "@/app/actions/formsAcompanhamentoActions";
-import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 
 interface AcompanhamentoFormProps {
   projetoID: string;
+  usuarioAtualID: string;
   initialData: Partial<FormsAcompanhamentoFormFields>;
 }
 
-export default function AcompanhamentoForm({ projetoID, initialData }: AcompanhamentoFormProps) {
-    const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
+export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialData }: AcompanhamentoFormProps) {
+    const router = useRouter();
 
     const {
         register,
@@ -42,18 +41,11 @@ export default function AcompanhamentoForm({ projetoID, initialData }: Acompanha
         formState: { errors, isSubmitting },
     } = useForm<FormsAcompanhamentoFormFields>({
         resolver: zodResolver(formsAcompanhamentoSchema),
-        // Os valores padrão agora vêm das props carregadas no servidor!
         defaultValues: initialData,
         mode: "onBlur",
     });
 
     const watchedEstados = watch('estados');
-
-    useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
-            setUsuarioAtualID(user ? user.uid : null);
-        });
-    }, []);
 
     const onSubmit: SubmitHandler<FormsAcompanhamentoFormFields> = async (data) => {
         if (!usuarioAtualID) {
@@ -87,6 +79,11 @@ export default function AcompanhamentoForm({ projetoID, initialData }: Acompanha
             toast.dismiss(loadingToastId);
             if (result.success) {
                 toast.success("Formulário de acompanhamento enviado com sucesso!");
+
+                setTimeout(() => {
+                    router.push('/inicio-externo');
+                }, 3000);
+
             } else {
                 toast.error(`Erro: ${result.error}`);
             }
@@ -421,7 +418,7 @@ export default function AcompanhamentoForm({ projetoID, initialData }: Acompanha
             {/* Links para as website: */}
                 <NormalInput
                     text="Link para website:"
-                    isNotMandatory={false}
+                    isNotMandatory={true}
                     registration={register("website")}
                     error={errors.website}
                 />
@@ -429,7 +426,7 @@ export default function AcompanhamentoForm({ projetoID, initialData }: Acompanha
             {/* Links para as redes sociais */}
                 <LongInput 
                     text="Links para as redes sociais:" 
-                    isNotMandatory={false}
+                    isNotMandatory={true}
                     registration={register("links")}
                     error={errors.links}
                 />

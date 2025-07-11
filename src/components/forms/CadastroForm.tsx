@@ -24,15 +24,14 @@ import { formatCNPJ, formatCEP, formatTelefone, formatMoeda, filtraDigitos } fro
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller, FieldError } from "react-hook-form";
 import { submitCadastroForm } from '@/app/actions/formsCadastroActions';
-import { auth } from "@/firebase/firebase-config";
-import { onAuthStateChanged } from "firebase/auth";
 import { formsCadastroSchema, FormsCadastroFormFields } from "@/lib/schemas";
+import { useRouter } from "next/navigation";
 
 
 
-export default function CadastroForm() {
-    const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
+export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: string | null }) {
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const router = useRouter()
     
     const {
         register,
@@ -40,6 +39,7 @@ export default function CadastroForm() {
         control,
         setValue,
         watch,
+        reset,
         formState: { errors, isSubmitting },
     } = useForm<FormsCadastroFormFields>({
         resolver: zodResolver(formsCadastroSchema),
@@ -50,6 +50,7 @@ export default function CadastroForm() {
             representanteLegal: "",
             telefone: "",
             emailRepLegal: "",
+            responsavel: "",
             emailResponsavel: "",
             cep: "",
             endereco: "",
@@ -111,12 +112,6 @@ export default function CadastroForm() {
         };
         fetchAddress(watchedCep);
     }, [watchedCep, setValue]);
-
-    useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
-            setUsuarioAtualID(user ? user.uid : null);
-        });
-    }, []);
     
     return (
         <form 
@@ -153,7 +148,13 @@ export default function CadastroForm() {
         
                     if (result.success) {
                         toast.success("Formulário enviado com sucesso!");
-                        // TODO: Lógica de resetar o formulário ou redirecionar o usuário
+                        if (usuarioAtualID) {
+                            router.push('/inicio-externo');
+                        } else {
+                            reset()
+                            setCurrentPage(1)
+                            window.scrollTo(0, 0)
+                        }
                     } else {
                         toast.error(`Erro: ${result.error}`);
                     }
@@ -244,7 +245,13 @@ export default function CadastroForm() {
                                 registration={register("emailRepLegal")}
                                 error={errors.emailRepLegal}
                             />
-                            
+
+                            <NormalInput
+                                text="Responsável pelo projeto"
+                                isNotMandatory={false}
+                                registration={register("responsavel")}
+                                error={errors.responsavel}
+                            />
                             <NormalInput
                                 text="E-mail do responsável:"
                                 isNotMandatory={false}
@@ -287,7 +294,7 @@ export default function CadastroForm() {
                             <div className="flex flex-row min-h-[60px] h-fit w-full justify-center items-start gap-x-5">
                                 <NumeroEndInput
                                     text="Número:"
-                                    isNotMandatory={false}
+                                    isNotMandatory={true}
                                     registration={register("numeroEndereco")}
                                     error={errors.numeroEndereco}
                                 />
@@ -332,7 +339,7 @@ export default function CadastroForm() {
 
                             <NormalInput
                                 text="Link para website:"
-                                isNotMandatory={false}
+                                isNotMandatory={true}
                                 registration={register("website")}
                                 error={errors.website}
                             />
@@ -621,7 +628,7 @@ export default function CadastroForm() {
 
                             <NormalInput
                                 text="Número de aprovação do projeto por lei:"
-                                isNotMandatory={false}
+                                isNotMandatory={true}
                                 registration={register("numeroLei")}
                                 error={errors.numeroLei}
                             />

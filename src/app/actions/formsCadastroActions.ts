@@ -1,4 +1,4 @@
-'use server';
+'use server'
 
 import { z } from 'zod';
 import { db } from '@/firebase/firebase-config';
@@ -152,8 +152,11 @@ export async function submitCadastroForm(formData: FormData) {
     try {
         const projetoData: Projetos = {
             nome: data.nomeProjeto,
+            estados: data.estados,
             municipios: data.municipios,
+            lei: getItemNome(data.lei, leiList),
             status: "pendente",
+            dataAprovado: "",
             ativo: false,
             compliance: false,
             empresas: [],
@@ -179,6 +182,7 @@ export async function submitCadastroForm(formData: FormData) {
             representante: data.representanteLegal,
             telefone: data.telefone,
             emailLegal: data.emailRepLegal,
+            responsavel: data.responsavel,
             emailResponsavel: data.emailResponsavel,
             cep: data.cep,
             endereco: data.endereco,
