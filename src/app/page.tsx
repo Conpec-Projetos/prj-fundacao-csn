@@ -13,6 +13,7 @@ import logo from "@/assets/fcsn-logo.svg"
 import Image from "next/image";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import Planilha from '@/components/planilha/planilha';
 
 // Componente de card para métricas
 interface MetricCardProps {
@@ -167,9 +168,9 @@ export default function AdminHomePage() {
         
         {/*Projetos Pendentes e Seção de métricas*/}
           {/* Grid de métricas */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <section className="grid grid-rows-2 gap-y-4 sm:flex sm:flex-col sm:w-[35%] order-1 sm:order-2">
-              <div className="grid grid-cols-2 sm:flex row-start-1 gap-4 sm:flex-col">
+          <div className="flex flex-col gap-4">
+            <section className="grid grid-rows-2 gap-y-4 sm:flex sm:flex-row order-1">
+              <div className="grid grid-cols-2 row-start-1 gap-4">
                 <div className="col-start-1">
                   <MetricCard
                   title="Total de Projetos" 
@@ -187,7 +188,7 @@ export default function AdminHomePage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:flex row-start-2 sm:flex-col gap-4">
+              <div className="grid grid-cols-2 row-start-2 gap-4">
                 <div className="col-start-1">
                   <MetricCard 
                     title="Estados Atendidos" 
@@ -207,21 +208,9 @@ export default function AdminHomePage() {
               </div>
             </section>
 
-            {/* Seção de projetos pendentes */}
-            <section className="w-full sm:w-[65%] gap-4 order-2 sm:order-1">
-              <div className="bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 h-full">
-                <div className="flex justify-between items-center mb-1">
-                  <h2 className="text-xl font-bold text-blue-fcsn dark:text-white-off">Projetos Pendentes</h2>
-                  <Link href="/projetos/pendentes" className="text-sm text-pink-fcsn dark:text-pink-light hover:underline">
-                    Ver todos
-                  </Link>
-                </div>
-                <div className="space-y-4">
-                  {pendingProjects.map((project) => (
-                    <PendingProjectCard key={project.id} project={project} />
-                  ))}
-                </div>
-              </div>
+            {/* Planilha */}
+            <section className="w-full gap-4 order-2 sm:order-1">
+              <Planilha/>
             </section>
           </div>
       </main>
