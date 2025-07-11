@@ -2,16 +2,43 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
   flexRender,
   CellContext,
+  ColumnFiltersState,
+  SortingState,
+  FilterFn,
 } from "@tanstack/react-table";
 import { db } from "@/firebase/firebase-config";
 import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { Projetos } from "@/firebase/schema/entities";
+import { Filter } from "./filter";
+import { FaCaretDown, FaCaretUp } from "react-icons/fa";
 
 interface ProjetoComId extends Projetos {
   id: string;
 }
+
+const arrayIncludesFilterFn: FilterFn<ProjetoComId> = (row, columnId, filterValue) => {
+  const array = row.getValue(columnId) as string[]; // Pegamos o valor da linha, que é um array
+
+  // Se não for um array ou estiver vazio, não há correspondência
+  if (!Array.isArray(array)) {
+    return false;
+  }
+
+  // Usamos .some() para verificar se PELO MENOS UM item no array inclui o texto do filtro
+  // toLowerCase() torna o filtro case-insensitive
+  return array.some((item) =>
+    item.toLowerCase().includes(String(filterValue).toLowerCase())
+  );
+};
+
+const numberFilterFn: FilterFn<ProjetoComId> = (row, columnId, filterValue) => {
+  const rowValue = row.getValue(columnId) as number;
+  return String(rowValue).includes(String(filterValue));
+};
 
 const toDisplayValue = (value: unknown): string => {
   if (value === null || value === undefined) {
@@ -59,6 +86,8 @@ const EditableCell = ({
 
 const Planilha = () => {
   const [data, setData] = useState<ProjetoComId[]>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   useEffect(() => {
     const colecaoRef = collection(db, "projetos");
@@ -71,7 +100,6 @@ const Planilha = () => {
     });
     return () => unsubscribe();
   }, []);
-
 
   const handleUpdateData = useCallback(
     async (docId: string, columnId: string, value: string) => {
@@ -127,6 +155,7 @@ const Planilha = () => {
         cell: (props: CellContext<ProjetoComId, unknown>) => (
           <EditableCell {...props} updateData={handleUpdateData} />
         ),
+        filterFn: numberFilterFn,
       },
       {
         accessorKey: "empresaVinculada",
@@ -141,6 +170,7 @@ const Planilha = () => {
         cell: (props: CellContext<ProjetoComId, unknown>) => (
           <EditableCell {...props} updateData={handleUpdateData} />
         ),
+        filterFn: arrayIncludesFilterFn,
       },
       {
         accessorKey: "indicacao",
@@ -155,6 +185,7 @@ const Planilha = () => {
         cell: (props: CellContext<ProjetoComId, unknown>) => (
           <EditableCell {...props} updateData={handleUpdateData} />
         ),
+        filterFn: arrayIncludesFilterFn,
       },
       {
         accessorKey: "estados",
@@ -162,20 +193,27 @@ const Planilha = () => {
         cell: (props: CellContext<ProjetoComId, unknown>) => (
           <EditableCell {...props} updateData={handleUpdateData} />
         ),
+        filterFn: arrayIncludesFilterFn,
       },
     ],
-    [handleUpdateData] // Adicionamos a função como dependência do useMemo
+    [handleUpdateData]
   );
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    // PASSO 4: A propriedade 'meta' foi completamente removida!
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+      columnFilters,
+      sorting,
+    },
+    onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
   });
 
   return (
-    // ... O resto do seu JSX permanece o mesmo
     <div className="overflow-auto rounded-lg shadow-md border border-gray-200 dark:border-blue-fcsn2">
       <table className="min-w-full bg-white dark:bg-blue-fcsn3">
         <thead className="bg-white-off dark:bg-blue-fcsn2">
@@ -184,12 +222,29 @@ const Planilha = () => {
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="p-3 text-left text-sm font-bold text-blue-fcsn dark:text-white-off uppercase tracking-wider"
+                  className="p-3 text-left text-sm font-bold text-blue-fcsn dark:text-white-off uppercase tracking-wider align-top"
                 >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
+                  <div
+                    {...{
+                      className: header.column.getCanSort()
+                        ? "flex items-center gap-1 cursor-pointer select-none"
+                        : "",
+                      onClick: header.column.getToggleSortingHandler(),
+                    }}
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                    {{
+                      asc: <FaCaretUp/>,
+                      desc: <FaCaretDown/>,
+                    }[header.column.getIsSorted() as string] ?? null}
+                  </div>
+
+                  {header.column.getCanFilter() ? (
+                    <Filter column={header.column} />
+                  ) : null}
                 </th>
               ))}
             </tr>
