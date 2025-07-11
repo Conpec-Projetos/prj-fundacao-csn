@@ -1,39 +1,50 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
-} from '@tanstack/react-table';
+  CellContext,
+} from "@tanstack/react-table";
 import { db } from "@/firebase/firebase-config";
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { Projetos } from "@/firebase/schema/entities";
 
-/**
- * Documentação do Componente Célula Editável (EditableCell)
- * Este componente é renderizado dentro de cada célula (<td>) da tabela.
- * Ele gere o seu próprio estado para permitir a edição do valor.
- * Quando o utilizador clica fora do campo de input (onBlur), ele chama a função
- * para atualizar os dados diretamente no Firestore.
- *
- * @param {object} props - Propriedades passadas pelo TanStack Table.
- * @param {any} props.getValue - Função para obter o valor inicial da célula.
- * @param {object} props.row - Objeto com informações da linha atual.
- * @param {object} props.column - Objeto com informações da coluna atual.
- * @param {object} props.table - A instância da tabela, que contém a nossa função de atualização.
- * @returns {JSX.Element} Um elemento <input> para edição.
- */
-const EditableCell = ({ getValue, row, column, table }) => {
+interface ProjetoComId extends Projetos {
+  id: string;
+}
+
+const toDisplayValue = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  if (Array.isArray(value)) {
+    return value.join(", ");
+  }
+  if (typeof value === "object") {
+    return "";
+  }
+  return String(value);
+};
+
+interface EditableCellProps extends CellContext<ProjetoComId, unknown> {
+  updateData: (docId: string, columnId: string, value: string) => void;
+}
+
+const EditableCell = ({
+  getValue,
+  row,
+  column,
+  updateData,
+}: EditableCellProps) => {
   const initialValue = getValue();
-  const [value, setValue] = useState(initialValue);
+  const [value, setValue] = useState(toDisplayValue(initialValue));
 
-  // Função chamada quando o campo de input perde o foco.
   const onBlur = () => {
-    // A função updateData está definida no meta da nossa tabela.
-    table.options.meta?.updateData(row.original.id, column.id, value);
+    updateData(row.original.id, column.id, value);
   };
 
-  // Atualiza o estado local se o valor inicial (do Firebase) mudar.
   useEffect(() => {
-    setValue(initialValue);
+    setValue(toDisplayValue(initialValue));
   }, [initialValue]);
 
   return (
@@ -41,136 +52,164 @@ const EditableCell = ({ getValue, row, column, table }) => {
       value={value}
       onChange={(e) => setValue(e.target.value)}
       onBlur={onBlur}
-      className="w-full h-full p-2 bg-transparent focus:outline-none focus:bg-blue-100 rounded"
+      className="w-full h-full p-2 bg-transparent focus:outline-none focus:bg-blue-100 dark:focus:bg-blue-fcsn rounded"
     />
   );
 };
 
-/**
- * Documentação do Componente Planilha
- * Este é o componente principal que busca os dados do Firestore em tempo real,
- * configura e renderiza a tabela usando TanStack Table e Tailwind CSS.
- */
 const Planilha = () => {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<ProjetoComId[]>([]);
 
-  // Etapa de Leitura de Dados (Real-time)
-  // O useEffect com onSnapshot ouve as alterações na coleção 'planilha_dados'
-  // e atualiza o nosso estado 'data' sempre que algo muda no Firestore.
   useEffect(() => {
-    const colecaoRef = collection(db, 'projetos');
+    const colecaoRef = collection(db, "projetos");
     const unsubscribe = onSnapshot(colecaoRef, (snapshot) => {
-      const dadosDoFirebase = snapshot.docs.map((doc) => ({
-        id: doc.id, // Guardamos o ID do documento para saber qual atualizar
-        ...doc.data(),
+      const dadosDoFirebase: ProjetoComId[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Projetos),
       }));
       setData(dadosDoFirebase);
-      console.log('Dados recebidos:', dadosDoFirebase);
     });
-
-    // Função de limpeza: para de ouvir quando o componente é desmontado.
     return () => unsubscribe();
   }, []);
 
-  /**
-   * Definição das colunas para o TanStack Table.
-   * - accessorKey: Corresponde ao nome do campo no seu documento do Firestore.
-   * - header: O texto que aparecerá no cabeçalho da coluna.
-   * - cell: Define como cada célula da coluna será renderizada. Usamos o nosso EditableCell.
-   */
-  const columns = useMemo(
-    () => [
-        {
-        accessorKey: 'lei',
-        header: 'Lei',
-        cell: EditableCell,
-      },
-      {
-        accessorKey: 'nome',
-        header: 'Nome',
-        cell: EditableCell,
-      },
-      {
-        accessorKey: 'valorAportadoReal',
-        header: 'Aportado',
-        cell: EditableCell,
-      },
-      {
-        accessorKey: 'empresaVinculada',
-        header: 'Proponente',
-        cell: EditableCell,
-      },
-      {
-        accessorKey: 'indicacao',
-        header: 'Indicação',
-        cell: EditableCell,
-      },
-      {
-        accessorKey: 'municipios',
-        header: 'Municípios',
-        cell: EditableCell,
-      },
-      {
-        accessorKey: 'estado',
-        header: 'Estado',
-        cell: EditableCell,
-      },
-    ],
+
+  const handleUpdateData = useCallback(
+    async (docId: string, columnId: string, value: string) => {
+      let processedValue: string | number | string[] = value;
+
+      switch (columnId) {
+        case "municipios":
+        case "estados":
+        case "empresas":
+          processedValue = value.split(",").map((item) => item.trim());
+          break;
+        case "valorAportadoReal":
+          processedValue = parseFloat(value) || 0;
+          break;
+        default:
+          processedValue = value;
+          break;
+      }
+
+      const docRef = doc(db, "projetos", docId);
+      const dataToUpdate = { [columnId]: processedValue };
+
+      try {
+        await updateDoc(docRef, dataToUpdate);
+        console.log(`Campo ${columnId} atualizado com sucesso!`);
+      } catch (error) {
+        console.error("Erro ao atualizar documento:", error);
+      }
+    },
     []
   );
 
-  // Hook principal do TanStack Table
+  const columns = useMemo(
+    () => [
+      // PASSO 2: Modificar a definição das colunas para passar a função via props
+      {
+        accessorKey: "lei",
+        header: "Lei",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell {...props} updateData={handleUpdateData} />
+        ),
+      },
+      {
+        accessorKey: "nome",
+        header: "Nome",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell {...props} updateData={handleUpdateData} />
+        ),
+      },
+      {
+        accessorKey: "valorAportadoReal",
+        header: "Aportado",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell {...props} updateData={handleUpdateData} />
+        ),
+      },
+      {
+        accessorKey: "empresaVinculada",
+        header: "Proponente",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell {...props} updateData={handleUpdateData} />
+        ),
+      },
+      {
+        accessorKey: "empresas",
+        header: "Empresas Grupo CSN",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell {...props} updateData={handleUpdateData} />
+        ),
+      },
+      {
+        accessorKey: "indicacao",
+        header: "Indicação",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell {...props} updateData={handleUpdateData} />
+        ),
+      },
+      {
+        accessorKey: "municipios",
+        header: "Municípios",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell {...props} updateData={handleUpdateData} />
+        ),
+      },
+      {
+        accessorKey: "estados",
+        header: "Estados",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell {...props} updateData={handleUpdateData} />
+        ),
+      },
+    ],
+    [handleUpdateData] // Adicionamos a função como dependência do useMemo
+  );
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    // 'meta' é um objeto onde podemos passar funções e dados personalizados
-    // para qualquer parte da tabela, como o nosso EditableCell.
-    meta: {
-      updateData: (docId, columnId, value) => {
-        // Função para Escrever/Atualizar Dados
-        const docRef = doc(db, 'projetos', docId);
-        updateDoc(docRef, { [columnId]: value })
-          .then(() => console.log('Documento atualizado com sucesso!'))
-          .catch((error) => console.error('Erro ao atualizar documento:', error));
-      },
-    },
+    // PASSO 4: A propriedade 'meta' foi completamente removida!
   });
 
   return (
-    <div className="p-4">
-      <div className="overflow-auto rounded-lg shadow-md border border-gray-200">
-        <table className="min-w-full bg-white">
-          <thead className="bg-gray-100 border-b border-gray-300">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="p-3 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider"
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b border-gray-200 hover:bg-gray-50">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="p-0"> {/* Padding zero para o input preencher */}
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    // ... O resto do seu JSX permanece o mesmo
+    <div className="overflow-auto rounded-lg shadow-md border border-gray-200 dark:border-blue-fcsn2">
+      <table className="min-w-full bg-white dark:bg-blue-fcsn3">
+        <thead className="bg-white-off dark:bg-blue-fcsn2">
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  className="p-3 text-left text-sm font-bold text-blue-fcsn dark:text-white-off uppercase tracking-wider"
+                >
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row) => (
+            <tr
+              key={row.id}
+              className="border-b border-blue-fcsn2 bg-white dark:bg-blue-fcsn3 text-blue-fcsn dark:text-white-off hover:bg-gray-50 dark:hover:bg-blue-fcsn2"
+            >
+              {row.getVisibleCells().map((cell) => (
+                <td key={cell.id} className="p-0">
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
