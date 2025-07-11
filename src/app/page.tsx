@@ -17,6 +17,110 @@ import Image from "next/image";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import Planilha from "@/components/planilha/planilha";
+import { dadosEstados } from "@/firebase/schema/entities";
+import Greetings from "@/components/greetings/greetings";
+
+function somarDadosEstados(array: dadosEstados[]): dadosEstados {
+  const maiorAporteGlobal = array
+    .map((d) => d.maiorAporte)
+    .reduce((max, curr) => {
+      if (!max || (curr && curr.valorAportado > max.valorAportado)) {
+        return curr;
+      }
+      return max;
+    }, null as { nome: string; valorAportado: number } | null) ?? {
+    nome: "",
+    valorAportado: 0,
+  };
+
+  return array.reduce((acc, curr) => {
+    // Soma dos valores escalares
+    const novoAcc = {
+      nomeEstado: "Todos",
+      valorTotal: (acc.valorTotal ?? 0) + (curr.valorTotal ?? 0),
+      maiorAporte: maiorAporteGlobal,
+      qtdProjetos: (acc.qtdProjetos ?? 0) + (curr.qtdProjetos ?? 0),
+      beneficiariosDireto:
+        (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
+      beneficiariosIndireto:
+        (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
+      qtdOrganizacoes: (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
+      qtdMunicipios: (acc.qtdMunicipios ?? 0) + (curr.qtdMunicipios ?? 0),
+      projetosODS: acc.projetosODS
+        ? acc.projetosODS.map((v, i) => v + (curr.projetosODS?.[i] ?? 0))
+        : curr.projetosODS ?? [],
+      lei: [] as { nome: string; qtdProjetos: number }[],
+      segmento: [] as { nome: string; qtdProjetos: number }[],
+      municipios: [...(acc.municipios ?? []), ...(curr.municipios ?? [])],
+    };
+
+    // Agora agrupa e soma os segmentos
+
+    const segmentosCombinados = [
+      ...(acc.segmento || []),
+      ...(curr.segmento || []),
+    ];
+    const leiCombinada = [...(acc.lei || []), ...(curr.lei || [])];
+
+    const segmentoAgrupado = segmentosCombinados.reduce((segAcc, segCurr) => {
+      const index = segAcc.findIndex((item) => item.nome === segCurr.nome);
+      if (index >= 0) {
+        segAcc[index].qtdProjetos += segCurr.qtdProjetos || 0;
+      } else {
+        segAcc.push({ ...segCurr });
+      }
+      return segAcc;
+    }, [] as { nome: string; qtdProjetos: number }[]);
+
+    novoAcc.segmento = segmentoAgrupado;
+
+    const leiAgrupada = leiCombinada.reduce((leiAcc, leiCurr) => {
+      const index = leiAcc.findIndex((item) => item.nome === leiCurr.nome);
+      if (index >= 0) {
+        leiAcc[index].qtdProjetos += leiCurr.qtdProjetos || 0;
+      } else {
+        leiAcc.push({ ...leiCurr });
+      }
+      return leiAcc;
+    }, [] as { nome: string; qtdProjetos: number }[]);
+
+    novoAcc.lei = leiAgrupada;
+
+    return novoAcc;
+  });
+}
+
+async function buscarDadosGerais(): Promise<{
+  dados: dadosEstados;
+  dadosMapa: Record<string, number>;
+  estadosAtendidos: number;
+}> {
+  const consulta = query(
+    collection(db, "dadosEstados"),
+    where("qtdProjetos", "!=", 0)
+  );
+
+  const consultaSnapshot = await getDocs(consulta);
+  const todosDados: dadosEstados[] = [];
+  const dadosMapaTemp: Record<string, number> = {};
+
+  consultaSnapshot.forEach((doc) => {
+    const data = doc.data() as dadosEstados;
+    todosDados.push(data);
+    if (data.nomeEstado) {
+      dadosMapaTemp[data.nomeEstado] = data.qtdProjetos;
+    }
+  });
+
+  const dadosSomados = somarDadosEstados(todosDados);
+  const totalEstadosAtendidos = todosDados.length;
+
+  return {
+    dados: dadosSomados,
+    dadosMapa: dadosMapaTemp,
+    estadosAtendidos: totalEstadosAtendidos,
+  };
+}
 
 // Componente de card para métricas
 interface MetricCardProps {
@@ -53,39 +157,12 @@ const MetricCard: React.FC<MetricCardProps> = ({
 export default function AdminHomePage() {
   const router = useRouter();
   const userName = "Administrador";
-  const [currentTime, setCurrentTime] = useState("");
-  const [greeting, setGreeting] = useState("");
   const { darkMode } = useTheme();
 
   // Para verificar se esta logado
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Atualizar data e hora
-    const updateDateTime = () => {
-      const now = new Date();
-      const options = {
-        weekday: "long" as const,
-        year: "numeric" as const,
-        month: "long" as const,
-        day: "numeric" as const,
-        hour: "2-digit" as const,
-        minute: "2-digit" as const,
-      };
-      setCurrentTime(now.toLocaleDateString("pt-BR", options));
-
-      // Definir saudação com base na hora do dia
-      const hour = now.getHours();
-      if (hour < 12) setGreeting("Bom dia");
-      else if (hour < 18) setGreeting("Boa tarde");
-      else setGreeting("Boa noite");
-    };
-
-    updateDateTime();
-    const timer = setInterval(updateDateTime, 60000);
-
-    return () => clearInterval(timer);
-  }, []);
+  
 
     // Vamos verificar se é ADM
     async function IsADM(email: string): Promise<boolean>{
@@ -94,7 +171,6 @@ export default function AdminHomePage() {
       const snapshotADM = await getDocs(qADM );
       return !snapshotADM.empty; // Se não estiver vazio, é um adm
     }
-
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -141,14 +217,7 @@ export default function AdminHomePage() {
     <div className="flex flex-col grow min-h-[90vh]">
       <main className="flex flex-col gap-8 px-8 pb-8 flex-1 sm:mx-8 pt-12">
         {/* Seção de boas-vindas */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold">
-              {greeting}, {userName}!
-            </h1>
-            <p className="text-gray-500 dark:text-gray-300">{currentTime}</p>
-          </div>
-        </div>
+        <Greetings userName={userName}/>
 
         {/* Planilha e Grid de Métricas */}
         <div className="flex flex-col gap-4">
