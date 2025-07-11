@@ -8,7 +8,9 @@ import { onSchedule } from "firebase-functions/v2/scheduler"
 admin.initializeApp();
 const db = admin.firestore();
 
-const resend = new Resend(RESEND_KEY);
+const resend = new Resend(process.env.RESEND_KEY); // Ele não funciona se deixar a api key como variável de ambiente, então é necessário passar ela hardcoded aqui
+// Eu sinceramente não sei o porque ele não consegue ler a variável de ambiente aqui mas em outros momentos consegue
+// Só coloco assim para enviar pro github sem expor a chave, mas se for fazer deploy, lembra de mudar.
 
 export const onProjectApproved = onDocumentUpdated("projetos/{projetoId}", async (event) => {
   const snapshot = event.data;
@@ -110,8 +112,12 @@ export const verificarEmailsPendentes = onSchedule("every day 08:00", async () =
       const projetoId = doc.id;
 
       // Busca o e-mail do responsável no formulário de cadastro
-      const formDoc = await db.collection("forms-cadastro").doc(projeto.ultimoFormulario).get();
-      if (formDoc.exists && formDoc.data()?.emailResponsavel) {
+      const formsCadastroRef = db.collection("forms-cadastro");
+      const qForms = formsCadastroRef.where("projetoID", "==", projetoId).limit(1);
+      const formSnapshot = await qForms.get();
+      
+      if (!formSnapshot.empty) {
+        const formDoc = formSnapshot.docs[0];
         const emailResponsavel = formDoc.data()?.emailResponsavel;
         const responsavel = formDoc.data()?.responsavel;
         
