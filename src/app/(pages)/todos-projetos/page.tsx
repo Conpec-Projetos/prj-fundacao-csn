@@ -230,6 +230,7 @@ export default function TodosProjetos() {
     }
 
   }
+  const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
 
   function clearFilters() {
     setFilters((prevFilters) => ({
@@ -242,9 +243,6 @@ export default function TodosProjetos() {
     setCtrl(false);
   }
 
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const { darkMode } = useTheme();
     // Vamos verificar se é ADM
     async function IsADM(email: string): Promise<boolean>{
       const usuarioInt = collection(db, "usuarioInt");
@@ -253,45 +251,45 @@ export default function TodosProjetos() {
       return !snapshotADM.empty; // Se não estiver vazio, é um adm
     }
 
+    const router = useRouter();
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-          if (!user || !user.email || !user.emailVerified) { // Checa se o usuário tem email verificado tambem
-            router.push("/login"); // Como não está logado, permite que a página de login seja renderizada
-            return;
-          }
-          const emailDomain = user.email.split('@')[1];
-          const isAdm = await IsADM(user.email);
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch('/api/auth/session', { method: 'GET' });
+        const data = await res.json();
 
-          // Verificamos se possui o dominio da csn (usamos afim de teste o dominio da conpec)
-          // se o usuario verificou o email recebido e se é ADM
-          if ((emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") && isAdm ){ // Verificamos se possui o dominio da csn e se é ADM
-            setIsLoading(false);
-          } else if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br"){ // Se não for verificamos se possui o dominio da csn apenas
-            router.push("/dashboard"); 
-          } else { // Se chegar aqui significa que é um usuario externo
-            router.push("/inicio-externo");
-          }
-        });
+        const user = data.user;
 
-    return () => unsubscribe();
-    }, [router]);
+        if (!user || !user.email_verified || !user.email) {
+          router.push('/login');
+          return;
+        }
 
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
-        <Image src={darkMode ? darkLogo : logo} alt="csn-logo" width={600} priority />
-        <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
-          Verificando sessão...
-        </div>
-      </div>
-    );
-  }
+        const emailDomain = user.email.split("@")[1];
+        const allowedDomains = ["conpec.com.br", "csn.com.br", "fundacaocsn.org.br"];
+        const isInternalUser = allowedDomains.includes(emailDomain);
+        const isAdmin = await IsADM(user.email);
 
+        if (!isInternalUser) {
+          router.push('/inicio-externo');
+          return;
+        }
 
-  const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
+        if (!isAdmin) {
+          router.push('/dashboard');
+          return;
+        }
 
+      } catch (err) {
+        console.error("Erro ao buscar sessão:", err);
+        router.push('/login');
+      }
+    }
 
+    fetchUser();
+  }, [router]);
+  
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex flex-1 flex-col px-4 sm:px-8 md:px-20 lg:px-32 py-4 gap-y-10 ">

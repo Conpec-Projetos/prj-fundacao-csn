@@ -2,11 +2,11 @@ import Footer from "@/components/footer/footer";
 import { Toaster } from "sonner";
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
-import AcompanhamentoForm from "@/components/forms/acompanhamentoForm";
 import { formsAcompanhamentoDados, formsCadastroDados, odsList, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import AcompanhamentoForm from "@/components/forms/AcompanhamentoForm";
 
 
 async function getInitialFormData(projetoID: string): Promise<Partial<FormsAcompanhamentoFormFields>> {
