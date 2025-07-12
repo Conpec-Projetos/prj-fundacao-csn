@@ -12,6 +12,8 @@ import { db } from "@/firebase/firebase-config";
 import { dadosEstados, dadosProjeto } from "@/firebase/schema/entities";
 import DashboardClientArea from "@/components/dashboard/dashboardAreaClient";
 import DashboardContent from "@/components/dashboard/dashboardContent";
+import { getCurrentUser } from "@/lib/auth";
+import { redirect } from 'next/navigation';
 
 //interface para o searchParams
 interface DashboardPageProps {
@@ -410,6 +412,23 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const leiSiglas: string[] =
     dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
   const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
+
+  // Verificando a sessao do usuario, pagamos o cookie que geramos no login
+  const user = await getCurrentUser();
+  // Verificação se o usuario esta logado, se nao estiver redirecionamos para a pagina de login
+  if (!user || !user.email_verified || !user.email) {
+      return redirect('/login');
+  }
+
+  const email = user.email;
+  const domain = email.split("@")[1];
+  const internalDomains = ["conpec.com.br", "csn.com.br", "fundacaocsn.org.br"];
+  const isInternalUser = internalDomains.includes(domain);
+
+  // Fluxo de redirecionamento
+  if (!isInternalUser) {
+      return redirect('/inicio-externo'); // Usuários externos
+  }
 
   //começo do código em si
   return (

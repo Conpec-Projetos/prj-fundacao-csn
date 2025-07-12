@@ -148,20 +148,29 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
 export default async function ExternalUserHomePage() {
     const user = await getCurrentUser();
 
-    if (!user || !user.email) {
-        redirect('/login');
+    // Verificação se o usuario esta logado, se nao estiver redirecionamos para a pagina de login
+    if (!user?.email_verified || !user.email) {
+        return redirect('/login');
+    }
+    
+    const email = user.email;
+    const domain = email.split("@")[1];
+    const internalDomains = ["conpec.com.br", "csn.com.br", "fundacaocsn.org.br"];
+    const isInternalUser = internalDomains.includes(domain);
+
+    // Se for um usuario interno ele nao pode acessar essa pagina e redirecionamos para a home
+    if (isInternalUser) {
+        return redirect('/');
     }
 
     await syncUserProjects(user.uid, user.email);
-
     const [userData, userProjects] = await Promise.all([
         getUserData(user.uid),
         getUserProjects(user.uid)
     ]);
     
     if (!userData) {
-        // Se não encontrar na coleção externa, pode ser um usuário interno
-        redirect('/');
+        return redirect('/');
     }
 
     const userName = userData.nome.split(" ")[0];
