@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
 import { db } from '@/firebase/firebase-config';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, addDoc } from 'firebase/firestore';
 import { Projetos, formsAcompanhamentoDados, formsCadastroDados, Associacao, usuarioExt } from '@/firebase/schema/entities';
 import Footer from '@/components/footer/footer';
 import ExternalUserDashboard from '@/components/inicio-ext/inicioExtContent';
+import { getCurrentUser } from '@/lib/auth';
 
 interface ProjetoExt {
   id: string;
@@ -146,31 +146,22 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
 
 
 export default async function ExternalUserHomePage() {
-    const user = await getCurrentUser();
+  const user = await getCurrentUser();
+    // Assumimos que o usuário já passou pelo middleware e é válido e externo
+    await syncUserProjects(user!.uid, user!.email!);
 
-    // Verificação se o usuario esta logado, se nao estiver redirecionamos para a pagina de login
-    if (!user?.email_verified || !user.email) {
-        return redirect('/login');
-    }
-    
-    const email = user.email;
-    const domain = email.split("@")[1];
-    const internalDomains = ["conpec.com.br", "csn.com.br", "fundacaocsn.org.br"];
-    const isInternalUser = internalDomains.includes(domain);
-
-    // Se for um usuario interno ele nao pode acessar essa pagina e redirecionamos para a home
-    if (isInternalUser) {
-        return redirect('/');
-    }
-
-    await syncUserProjects(user.uid, user.email);
     const [userData, userProjects] = await Promise.all([
-        getUserData(user.uid),
-        getUserProjects(user.uid)
+        getUserData(user!.uid),
+        getUserProjects(user!.uid)
     ]);
-    
+
+    // Fallback: se algo deu errado na coleta de dados (muito raro)
     if (!userData) {
-        return redirect('/');
+        return (
+            <div className="flex items-center justify-center h-screen text-center text-xl">
+                Erro ao carregar dados do usuário. Tente novamente mais tarde.
+            </div>
+        );
     }
 
     const userName = userData.nome.split(" ")[0];

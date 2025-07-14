@@ -1,12 +1,12 @@
-'use server';
+
 
 import { auth, db } from "@/firebase/firebase-config";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, User } from "firebase/auth";
 import { collection, getDocs, query, where } from "firebase/firestore";
 
 // Tipo de retorno
 type LoginResult = 
-  | { success: true; idToken: string, redirectTo: string }
+  | { success: true; idToken: string, user: User; redirectTo: string }
   | { success: false; error: string; firebaseErrorCode?: string };
 
 // Funcao usada para o redirecionamento correto
@@ -48,6 +48,7 @@ export async function login(email: string, password: string): Promise<LoginResul
     return {
       success: true,
       idToken,
+      user,
       redirectTo
     };
 

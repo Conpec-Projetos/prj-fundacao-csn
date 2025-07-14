@@ -11,17 +11,8 @@ import {
 } from "react-icons/fa";
 
 import { FaClockRotateLeft } from "react-icons/fa6";
-import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "@/firebase/firebase-config";
-
-import darkLogo from "@/assets/fcsn-logo-dark.svg";
-import logo from "@/assets/fcsn-logo.svg";
-import Image from "next/image";
-import { useTheme } from "@/context/themeContext";
+import { db } from "@/firebase/firebase-config";
 import { collection, getDocs, query, where } from "firebase/firestore";
-
-
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj"; 
 
 // --- MUDANÇA 1: Simplificar a interface. 'reprovado' não existe mais ---
@@ -243,52 +234,6 @@ export default function TodosProjetos() {
     setCtrl(false);
   }
 
-    // Vamos verificar se é ADM
-    async function IsADM(email: string): Promise<boolean>{
-      const usuarioInt = collection(db, "usuarioInt");
-      const qADM = query(usuarioInt, where("email", "==", email), where("administrador", "==", true));
-      const snapshotADM = await getDocs(qADM );
-      return !snapshotADM.empty; // Se não estiver vazio, é um adm
-    }
-
-    const router = useRouter();
-
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch('/api/auth/session', { method: 'GET' });
-        const data = await res.json();
-
-        const user = data.user;
-
-        if (!user || !user.email_verified || !user.email) {
-          router.push('/login');
-          return;
-        }
-
-        const emailDomain = user.email.split("@")[1];
-        const allowedDomains = ["conpec.com.br", "csn.com.br", "fundacaocsn.org.br"];
-        const isInternalUser = allowedDomains.includes(emailDomain);
-        const isAdmin = await IsADM(user.email);
-
-        if (!isInternalUser) {
-          router.push('/inicio-externo');
-          return;
-        }
-
-        if (!isAdmin) {
-          router.push('/dashboard');
-          return;
-        }
-
-      } catch (err) {
-        console.error("Erro ao buscar sessão:", err);
-        router.push('/login');
-      }
-    }
-
-    fetchUser();
-  }, [router]);
   
   return (
     <div className="flex flex-col min-h-screen">

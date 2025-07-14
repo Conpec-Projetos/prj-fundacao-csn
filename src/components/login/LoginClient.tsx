@@ -13,6 +13,7 @@ import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import RecoverPassword from "./recoverPassword";
 import { login } from "@/app/actions/login";
+import { getAuth } from "firebase/auth";
 
 // zod é uma biblioteca para validar parâmetros, no caso o schema
 const schema = z.object({
@@ -41,45 +42,71 @@ export default function LoginClient() {
 
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
         try {
-            // Chama a server action login, passando os dados do formulário.
             const result = await login(data.email, data.password);
-
-            // Se o login falhar:
+            toast.success("login")
             if (!result.success) {
                 if (result.firebaseErrorCode === "email-nao-verificado") {
                     toast.error("Por favor, verifique seu e-mail antes de fazer login.");
-            } else {
-                toast.error(result.error);
+                } else {
+                    toast.error(result.error);
+                }
+                return;
             }
+            
+            if (!result.idToken || !result.user) {
+            toast.error("Erro ao autenticar usuário.");
             return;
             }
 
-            // Verificando se o token gerado pelo firebase esta presente
-            if (!result.idToken) {
-                toast.error("Token de autenticação ausente.");
-                return;
-            }
-
-            // Se o login for bem-sucedido enviamos uma requisicao para a rota que criará um cookie de sessão (persiste o login do usuário no backend)
-            const res = await fetch("/api/auth/session", {
+            // Envia o idToken para a rota que tenta criar o cookie (pode ou não precisar renovar o token)
+            const res1 = await fetch("/api/auth/session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ idToken: result.idToken }),
             });
 
-            if (!res.ok) {
-                toast.error("Erro ao criar sessão de autenticação.");
-                return;
+            const sessionResponse = await res1.json();
+
+            // Se precisar renovar o token com os claims atualizados
+            if (sessionResponse.mustRefreshToken) {
+                if (!result.user) {
+                    toast.error("Usuário não encontrado para renovar token.");
+                    return;
+                }
+                
+                  // Aguarda um pouco para o Firebase aplicar as claims
+                await new Promise((res) => setTimeout(res, 1000));
+                const newToken = await result.user.getIdToken(true); // ← já usa o próprio user
+
+                // Segunda tentativa de criar o cookie, agora com o token atualizado
+                const res2 = await fetch("/api/auth/session", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ idToken: newToken }),
+                });
+
+                if (!res2.ok) {
+                    toast.error("Erro ao criar sessão após atualização.");
+                    return;
+                }
+            } else {
+                // Se não precisar renovar o token, mas a resposta original falhou
+                if (!res1.ok) {
+                    toast.error("Erro ao criar sessão de autenticação.");
+                    return;
+                }
             }
 
+            await new Promise((res) => setTimeout(res, 500)); // pequena pausa
+            console.log("Redirecionando para:", result.redirectTo);
             router.push(result.redirectTo);
 
-        } catch (error) {
-            console.error("Erro inesperado:", error);
-            toast.error("Erro inesperado. Tente novamente.");
+        } catch (error: any) {
+            console.error("Erro inesperado:", error.message, error.stack, error);
+            toast.error("Erro inesperado: " + (error?.message || "Erro desconhecido"));
         }
-    };
 
+    }
     // Renderiza o componente de recuperar senha
     if (recoverPassword) {
         return <RecoverPassword onBack={() => setRecoverPassword(false)}/>
