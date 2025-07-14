@@ -2,167 +2,137 @@
 
 import Footer from "@/components/footer/footer";
 import { useEffect, useRef, useState } from "react";
-
-import {
-  FaCaretDown,
-  FaCheckCircle,
-  FaFilter,
-  FaSearch
-} from "react-icons/fa";
-
+import { FaCaretDown, FaCheckCircle, FaFilter, FaSearch } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@/firebase/firebase-config";
-
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import logo from "@/assets/fcsn-logo.svg";
 import Image from "next/image";
 import { useTheme } from "@/context/themeContext";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
 
-
+// Caminho para o seu componente de botão, que gerencia todo o fluxo
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj"; 
 
-// --- MUDANÇA 1: Simplificar a interface. 'reprovado' não existe mais ---
+// Interface com todos os campos necessários para definir o estado de um projeto
 interface ProjectComponentProps {
-  id: string;
+  id: string; // ID da forms-cadastro
   name: string;
-  status: "aprovado" | "pendente"; // 'reprovado' removido
+  finalStatus: "aprovado" | "pendente"; // Status final (da coleção projetos)
+  projetosComplianceStatus: boolean; // Status da compliance (da coleção projetos)
   value: number;
   incentiveLaw: string;
   description: string;
   ODS: ODS[];
-  onApprovalSuccess: (projectId: string) => void;
+  complianceDocUrl: string | null;
+  additionalDocsUrl: string | null;
+  onApprovalSuccess: () => void; // Callback para recarregar os dados
 }
 
-interface ODS {
-  numberODS: number;
-  src: string;
-}
+interface ODS { numberODS: number; src: string; }
 
-// --- COMPONENTE DE APRESENTAÇÃO 'PROJECT' ---
-const Project: React.FC<ProjectComponentProps> = ({
-  id,
-  name,
-  status,
-  value,
-  incentiveLaw,
-  description,
-  ODS,
-  onApprovalSuccess,
-}) => (
+// Componente Project: Apenas exibe os dados e o botão de ação
+const Project: React.FC<ProjectComponentProps> = (props) => (
   <div className="bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0">
     <section className="flex flex-col col-span-2 mr-2">
       <div className="flex flex-wrap items-center gap-3 mb-2">
-        <div className="text-2xl font-bold">{name}</div>
+        <div className="text-2xl font-bold">{props.name}</div>
         <div className="mt-1">
-          {status === "aprovado" && (
-            <FaCheckCircle
-              className="text-green-600 dark:text-green-500"
-              size={22}
-            />
-          )}
-          {status === "pendente" && (
+          {props.finalStatus === "aprovado" ? (
+            <FaCheckCircle className="text-green-600 dark:text-green-500" size={22} />
+          ) : (
             <FaClockRotateLeft color="darkOrange" size={22} />
           )}
-          {/* --- MUDANÇA 2: Lógica para o ícone 'reprovado' removida --- */}
         </div>
         
-        {status === 'pendente' && (
+        {/* O botão de ação só aparece se o projeto não estiver totalmente aprovado */}
+        {props.finalStatus !== 'aprovado' && (
            <BotaoAprovarProj
-             projectId={id}
-             projectName={name}
-             onApprovalSuccess={onApprovalSuccess}
+             projectId={props.id}
+             projectName={props.name}
+             projetosComplianceStatus={props.projetosComplianceStatus}
+             complianceDocUrl={props.complianceDocUrl}
+             additionalDocsUrl={props.additionalDocsUrl}
+             onApprovalSuccess={props.onApprovalSuccess}
            />
         )}
       </div>
-      <p className="mb-2 text-lg">
-        {value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-      </p>
-      <div className="bg-pink-fcsn dark:bg-pink-light2 rounded-2xl px-4 py-2 size-fit text-base text-center mb-2 text-white">
-        {incentiveLaw}
-      </div>
-      <p className="mr-2 mt-3 text-base text-justify">{description}</p>
+      <p className="mb-2 text-lg">{props.value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
+      <div className="bg-pink-fcsn dark:bg-pink-light2 rounded-2xl px-4 py-2 size-fit text-base text-center mb-2 text-white">{props.incentiveLaw}</div>
+      <p className="mr-2 mt-3 text-base text-justify">{props.description}</p>
     </section>
-
     <section className="flex flex-wrap justify-center items-center gap-x-2 gap-y-1 col-span-1">
-      {ODS.map((img) => (
-        <img
-          key={img.numberODS}
-          src={img.src}
-          alt={`ODS ${img.numberODS}`}
-          className="w-28 h-28"
-        />
-      ))}
+      {props.ODS.map((img) => <img key={img.numberODS} src={img.src} alt={`ODS ${img.numberODS}`} className="w-28 h-28" />)}
     </section>
   </div>
 );
 
-// --- INTERFACE PARA OS FILTROS ---
 interface Filters {
-  status: { situation: "aprovado" | "pendente"; state: boolean }[]; // 'reprovado' removido
-  value: {
-    initialValue: number;
-    finalValue: number | undefined;
-    state: boolean;
-  }[];
+  status: { situation: "aprovado" | "pendente"; state: boolean }[];
+  value: { initialValue: number; finalValue: number | undefined; state: boolean }[];
   incentiveLaw: { law: string; state: boolean }[];
   ODS: { numberODS: number; state: boolean }[];
 }
 
-// --- COMPONENTE PRINCIPAL DA PÁGINA ---
 export default function TodosProjetos() {
   const [allProjects, setAllProjects] = useState<ProjectComponentProps[]>([]);
-  const [search, setSearch] = useState("");
-  const [filteredProjects, setFilteredProjects] = useState<ProjectComponentProps[]>([]);
-  const [ctrl, setCtrl] = useState(false);
-  const resSearch = allProjects.filter((project) =>
-    project.name.toLowerCase().startsWith(search.toLowerCase())
-  );
+  const [refreshData, setRefreshData] = useState(false);
+  
+  const handleApprovalSuccess = () => {
+    // Força uma nova busca de dados para garantir que a UI reflita o estado mais recente
+    setRefreshData(prev => !prev);
+  };
 
+  // Lógica de busca de dados, lendo os dois campos de status da coleção 'projetos'
   useEffect(() => {
     async function fetchAllProjects() {
-      const querySnapshot = await getDocs(collection(db, "forms-cadastro"));
-      const projectsPromises = querySnapshot.docs.map(async (formDoc) => {
+      const formsSnapshot = await getDocs(collection(db, "forms-cadastro"));
+      const projectsPromises = formsSnapshot.docs.map(async (formDoc) => {
         const rawData = formDoc.data();
         const formId = formDoc.id;
         const projectName = rawData.nomeProjeto;
 
-        // --- MUDANÇA 3: Lógica de interpretação do status foi atualizada ---
-        let complianceStatus: "aprovado" | "pendente" = "pendente"; // Padrão é pendente
-        
+        // **IMPORTANTE**: Verifique se os nomes destes campos estão corretos no seu Firebase
+        const complianceUrl = rawData.compliance || null;
+        const additionalUrl = rawData.documentos || null;
+
+        // Padrões
+        let projectFinalStatus: "aprovado" | "pendente" = "pendente";
+        let projetosCompliance = false; // booleano
+
         if (projectName) {
           const projetosQuery = query(collection(db, "projetos"), where("nome", "==", projectName));
-          const complianceQuerySnapshot = await getDocs(projetosQuery);
-          
-          if (!complianceQuerySnapshot.empty) {
-            const complianceData = complianceQuerySnapshot.docs[0].data();
-            // `true` é Aprovado. `false` (ou qualquer outro valor/ausência) é Pendente.
-            if (complianceData.compliance === true) {
-              complianceStatus = "aprovado";
+          const projetosSnapshot = await getDocs(projetosQuery);
+          if (!projetosSnapshot.empty) {
+            const projectData = projetosSnapshot.docs[0].data();
+            // Lê ambos os campos da coleção 'projetos'
+            projetosCompliance = projectData.compliance === true;
+            if (projectData.status === "aprovado") {
+              projectFinalStatus = "aprovado";
             }
           }
         }
         
         const processedODS: ODS[] = [];
         if (rawData.ods && Array.isArray(rawData.ods)) {
-            for (const ODS of rawData.ods) {
-                processedODS.push({
-                    numberODS: ODS,
-                    src: `/ods/ods${ODS + 1}.png`,
-                });
-            }
+          rawData.ods.forEach((odsItem: any) => {
+            processedODS.push({ numberODS: odsItem, src: `/ods/ods${odsItem + 1}.png` });
+          });
         }
 
         return {
           id: formId,
           name: projectName || "Nome Indisponível",
-          status: complianceStatus,
+          finalStatus: projectFinalStatus,
+          projetosComplianceStatus: projetosCompliance,
           value: rawData.valorApto || 0,
           incentiveLaw: rawData.lei ? rawData.lei.split('-')[0].trim() : "Não informada",
           description: rawData.descricao || "Sem descrição.",
           ODS: processedODS,
+          complianceDocUrl: complianceUrl,
+          additionalDocsUrl: additionalUrl,
         };
       });
 
@@ -170,18 +140,18 @@ export default function TodosProjetos() {
       setAllProjects(resolvedProjects as ProjectComponentProps[]);
     }
     fetchAllProjects();
-  }, []);
+  }, [refreshData]); // Roda novamente sempre que uma aprovação ocorrer
   
-  const handleApprovalSuccessOnParent = (approvedProjectId: string) => {
-    setAllProjects(currentProjects => 
-      currentProjects.map(p => 
-        p.id === approvedProjectId ? { ...p, status: 'aprovado' } : p
-      )
-    );
-  };
-
+  // Estados e Funções para Filtros e Busca
+  const [search, setSearch] = useState("");
+  const [filteredProjects, setFilteredProjects] = useState<ProjectComponentProps[]>([]);
+  const [ctrl, setCtrl] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const caixaRef = useRef<HTMLDivElement>(null);
+  
+  const resSearch = allProjects.filter((project) =>
+    project.name.toLowerCase().startsWith(search.toLowerCase())
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -195,9 +165,8 @@ export default function TodosProjetos() {
       document.removeEventListener("mousedown", handleCliqueFora);
     };
   }, [isOpen]);
-
+  
   const [filters, setFilters] = useState<Filters>({
-    // --- MUDANÇA 4: Estado inicial dos filtros atualizado sem 'reprovado' ---
     status: [{ situation: "aprovado", state: false }, { situation: "pendente", state: false }],
     value: [{ initialValue: 0, finalValue: 1000, state: false }, { initialValue: 1000.01, finalValue: 100000, state: false }, { initialValue: 100000.01, finalValue: 1000000, state: false }, { initialValue: 1000000.01, finalValue: undefined, state: false }],
     incentiveLaw: [{ law: "CULTURA", state: false }, { law: "PROAC", state: false }, { law: "FIA", state: false }, { law: "LIE", state: false }, { law: "IDOSO", state: false }, { law: "PRONAS", state: false }, { law: "PRONON", state: false }, { law: "PROMAC", state: false }, { law: "ICMS-MG", state: false }, { law: "ICMS-RJ", state: false }, { law: "PIE", state: false }],
@@ -216,7 +185,7 @@ export default function TodosProjetos() {
     const activeODS = filters.ODS.filter((f) => f.state).map((f) => f.numberODS);
     
     const filtered = allProjects.filter((project) => {
-      const matchStatus = activeStatus.length === 0 || activeStatus.includes(project.status);
+      const matchStatus = activeStatus.length === 0 || activeStatus.includes(project.finalStatus);
       const matchValue = activeValues.length === 0 || activeValues.some((range) => project.value >= range.initialValue && (range.finalValue === undefined || project.value <= range.finalValue));
       const matchLaw = activeLaws.length === 0 || activeLaws.includes(project.incentiveLaw);
       const matchODS = activeODS.length === 0 || project.ODS.some((ods) => activeODS.includes(ods.numberODS));
@@ -228,7 +197,6 @@ export default function TodosProjetos() {
     if (filtered.length > 0) {
       setSearch("");
     }
-
   }
 
   function clearFilters() {
@@ -273,9 +241,7 @@ export default function TodosProjetos() {
     );
   }
 
-
   const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
-
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -285,7 +251,6 @@ export default function TodosProjetos() {
             Projetos
           </h1>
           <div className="flex flex-row gap-x-4 mt-3">
-
             <div className="bg-white-off dark:bg-blue-fcsn2 p-2 rounded-lg shadow-md">
               <FaSearch size={24} />
             </div>
@@ -316,7 +281,6 @@ export default function TodosProjetos() {
                 >
                   <div>
                     <p className="py-2 text-xl font-semibold">Situação</p>
-                    {/* --- MUDANÇA 5: Filtro de 'reprovado' removido do JSX --- */}
                     {filters.status.map(filter => (
                       <label key={filter.situation} className="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" checked={filter.state} onChange={() => situationFilters(filter.situation)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300"/>
@@ -380,7 +344,7 @@ export default function TodosProjetos() {
               <Project 
                 key={project.id} 
                 {...project} 
-                onApprovalSuccess={handleApprovalSuccessOnParent} 
+                onApprovalSuccess={handleApprovalSuccess} 
               />
             ))
           ) : (
