@@ -2,7 +2,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore;
 
 # Initialize Firebase
-cred = credentials.Certificate("src/firebase/scripts/serviceAccountKey.json")
+cred = credentials.Certificate('path/to/your/serviceAccountKey.json')
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
@@ -12,36 +12,36 @@ nomesEstadosBrasil = ["Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará"
 for i in range(len(nomesEstadosFirebase)):
     # Document data based on the images
     doc_data = {
-        "beneficiariosDireto": 1*i,
-        "beneficiariosIndireto": 2*i,
+        "beneficiariosDireto": 0,
+        "beneficiariosIndireto": 0,
         "lei": [
-            {"nome": "Lei de Incentivo à Cultura", "qtdProjetos": 1*i},
-            {"nome": "PROAC - Programa de Ação Cultural", "qtdProjetos": 2*i},
-            {"nome": "FIA - Lei Fundo para a Infância e Adolescência", "qtdProjetos": 3*i},
-            {"nome": "LIE - Lei de Incentivo ao Esporte", "qtdProjetos": 4*i},
-            {"nome": "Lei da Pessoa Idosa", "qtdProjetos": 5*i},
-            {"nome": "Pronas - Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência", "qtdProjetos": 6*i},
-            {"nome": "Pronon - Programa Nacional de Apoio à Atenção Oncológica", "qtdProjetos": 7*i},
-            {"nome": "Promac - Programa de Incentivo à Cultura do Município de São Paulo", "qtdProjetos": 8*i},
-            {"nome": "ICMS - MG Imposto sobre Circulação de Mercadoria e Serviços", "qtdProjetos": 9*i},
-            {"nome": "ICMS - RJ Imposto sobre Circulação de Mercadoria e Serviços", "qtdProjetos": 10*i},
-            {"nome": "PIE - Lei Paulista de Incentivo ao Esporte", "qtdProjetos": 10*i,},
+            {"nome": "Lei de Incentivo à Cultura", "qtdProjetos": 0},
+            {"nome": "PROAC - Programa de Ação Cultural", "qtdProjetos": 0},
+            {"nome": "FIA - Lei Fundo para a Infância e Adolescência", "qtdProjetos": 0},
+            {"nome": "LIE - Lei de Incentivo ao Esporte", "qtdProjetos": 0},
+            {"nome": "Lei da Pessoa Idosa", "qtdProjetos": 0},
+            {"nome": "Pronas - Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência", "qtdProjetos": 0},
+            {"nome": "Pronon - Programa Nacional de Apoio à Atenção Oncológica", "qtdProjetos": 0},
+            {"nome": "Promac - Programa de Incentivo à Cultura do Município de São Paulo", "qtdProjetos": 0},
+            {"nome": "ICMS - MG Imposto sobre Circulação de Mercadoria e Serviços", "qtdProjetos": 0},
+            {"nome": "ICMS - RJ Imposto sobre Circulação de Mercadoria e Serviços", "qtdProjetos": 0},
+            {"nome": "PIE - Lei Paulista de Incentivo ao Esporte", "qtdProjetos": 0,},
         ],
-        "maiorAporte": {"nome" : f"Projeto em {nomesEstadosBrasil[i]}", 'valorAportado': 10*i},
+        "maiorAporte": {"nome" : f"Projeto em {nomesEstadosBrasil[i]}", 'valorAportado': 0},
         "municipios": [""],
         "nomeEstado": nomesEstadosBrasil[i],
-        "projetosODS": [i*j for j in range(17)],
-        "qtdMunicipios": 5*i,
-        "qtdOrganizacoes": 6*i,
-        "qtdProjetos": 7*i+1,
+        "projetosODS": [0 for j in range(17)],
+        "qtdMunicipios": 0,
+        "qtdOrganizacoes": 0,
+        "qtdProjetos": 0,
         "segmento": [
-            {"nome": "Cultura", "qtdProjetos": i},
-            {"nome": "Esporte", "qtdProjetos": 2*i},
-            {"nome": "Pessoa Idosa", "qtdProjetos": 3*i},
-            {"nome": "Criança e Adolescente", "qtdProjetos": 4*i},
-            {"nome": "Saúde", "qtdProjetos": 5*i},
+            {"nome": "Cultura", "qtdProjetos": 0},
+            {"nome": "Esporte", "qtdProjetos": 0},
+            {"nome": "Pessoa Idosa", "qtdProjetos": 0},
+            {"nome": "Criança e Adolescente", "qtdProjetos": 0},
+            {"nome": "Saúde", "qtdProjetos": 0},
         ],
-        "valorTotal": 8*i
+        "valorTotal": 0
         }
 
     doc_ref = db.collection("dadosEstados").document(nomesEstadosFirebase[i])

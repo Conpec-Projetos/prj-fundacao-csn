@@ -23,13 +23,13 @@ export interface Projetos {
   municipios: string[];
   lei: string;
   status: "pendente" | "aprovado" | "reprovado";
-  dataAprovado: Timestamp | "";
+  dataAprovado?: Timestamp;
   ativo: boolean;
   compliance: boolean;
-  empresas: string[];
+  empresas: { nome: string; valorAportado: number }[];
   indicacao?: string;
   ultimoFormulario?: string;
-  valorAportadoReal: number;
+  valorAprovado?: number;
 }
 
 export interface formsCadastroDados {

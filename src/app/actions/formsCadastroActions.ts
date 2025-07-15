@@ -157,13 +157,12 @@ export async function submitCadastroForm(formData: FormData) {
             municipios: data.municipios,
             lei: getItemNome(data.lei, leiList),
             status: "pendente",
-            dataAprovado: "",
             ativo: false,
             compliance: false,
             empresas: [],
             indicacao: "",
             ultimoFormulario: "",
-            valorAportadoReal: 0
+            valorAprovado: 0
         };
         
         const docProjetoRef = await addDoc(collection(db, "projetos"), projetoData);
