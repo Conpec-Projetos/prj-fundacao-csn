@@ -108,7 +108,7 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
 
         let formularioPendente = false
 
-        if (projetoData.status === "aprovado" && projetoData.dataAprovado && typeof projetoData.dataAprovado.toDate === 'function') {
+        if (projetoData.status === "aprovado" && projetoData.dataAprovado) {
             // Obter a contagem de formulários de acompanhamento existentes para o projeto
             const acompanhamentoQuery = query(
                 collection(db, "forms-acompanhamento"),
@@ -146,7 +146,7 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
             }
         }
 
-        const valorTotal = (projetoData.valorAportadoReal || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        const valorTotal = (projetoData.valorAprovado || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
         return {
             id: projetoId,
