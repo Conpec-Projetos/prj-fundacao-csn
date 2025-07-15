@@ -27,7 +27,10 @@ console.log("Iniciando POST /api/auth/session");
 
     // Aqui vamos fazer uma claim (“atributo” incluído dentro do token), precisamos usar isso para nao precisarmos no middleware fazer uma requisicao ao firestore
     // Verifica se já tem o claim
-    const alreadyHasClaim = decoded.admin === true;
+    const alreadyHasClaim =
+  decoded.userIntAdmin !== undefined || decoded.userExt !== undefined;
+
+  console.log(alreadyHasClaim)
 
     // Consulta Firestore apenas se ainda não tem o claim
     if (!alreadyHasClaim) {
@@ -71,7 +74,7 @@ console.log("Iniciando POST /api/auth/session");
     cookieStore.set('session', sessionCookie, {
       httpOnly: true, // Nao acessivel via javascript
       secure: process.env.NODE_ENV === 'production',
-      maxAge: expiresIn,
+      maxAge: expiresIn / 1000,
       path: '/', // cookie disponivel em todo o site
       sameSite: 'lax',
     });
