@@ -43,7 +43,6 @@ export default function LoginClient() {
     const onSubmit: SubmitHandler<FormFields> = async (data) => {
         try {
             const result = await login(data.email, data.password);
-            toast.success("login")
             if (!result.success) {
                 if (result.firebaseErrorCode === "email-nao-verificado") {
                     toast.error("Por favor, verifique seu e-mail antes de fazer login.");
@@ -62,6 +61,7 @@ export default function LoginClient() {
             const res1 = await fetch("/api/auth/session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include", 
                 body: JSON.stringify({ idToken: result.idToken }),
             });
 

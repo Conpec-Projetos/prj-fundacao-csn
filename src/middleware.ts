@@ -1,4 +1,3 @@
-import { authAdmin } from "@/firebase/firebase-admin-config";
 import { NextRequest, NextResponse } from "next/server";
 
 const publicRoutes = ["/signin", "/login"];
@@ -6,11 +5,11 @@ const internoRoutes = ["/dashboard"];
 const admRoutes = ["/", "/todos-projetos"]; // mesmo '/dashboard' sendo uma rota do adm tbm só podemos colocar em um dos arrays
 const externoRoutes = ["/inicio-externo"];
 
-
 export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get("session")?.value;
-  console.log("Cookie recebido:", sessionCookie);
+
   const url = request.nextUrl.clone();
+
   const path = request.nextUrl.pathname;
 
   const isPublicRoute = publicRoutes.includes(path);
@@ -18,23 +17,20 @@ export async function middleware(request: NextRequest) {
   const isAdmRoute = admRoutes.includes(path);
   const isExternoRoute = externoRoutes.includes(path);
 
-  if (!sessionCookie) {
+  if (!sessionCookie) { // Se o cookie nao existe apenas pode acessar rotas publicas
     if (isPublicRoute) return NextResponse.next();
-
-    if (url.pathname !== "/login") {
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
-    }
-
     return NextResponse.next(); // já está no login, não faz nada
   }
 
   try {
-    const decoded = await authAdmin.verifySessionCookie(sessionCookie);
-    console.log("Usuário autenticado:", decoded);
-    const isAdmin = decoded.userIntAdmin === true;
-    const isUserExt = decoded.userExt === true;
-    const emailVerified = decoded.email_verified;
+    const payload = JSON.parse(atob(sessionCookie.split(".")[1])); // Aqui pegamos dados uteis do token como o email e se o email foi verificado
+    console.log("MIDDLEWARE1 DEBUG - Full JWT Payload:", payload);
+    console.log("MIDDLEWARE1 DEBUG - Available keys:", Object.keys(payload));
+    
+    const userEmail = payload.email;
+    const emailVerified = payload.email_verified;
+    const isAdmin = payload.userIntAdmin === true;
+    const isUserExt = payload.userExt === true;
 
     if (!emailVerified) {
       url.pathname = "/login";
@@ -75,9 +71,8 @@ export async function middleware(request: NextRequest) {
   }
 }
 
+
 export const config = {
-  matcher: [
-    "/((?!api/_|_next/static|_next/image|favicon.ico).*)", // Ignora rotas específicas
-    "/", "/login", "/signin", "/dashboard", "/inicio-externo", "/todos-projetos"
-  ],
+  // Apenas essas rotas são verificadas pelo middleware
+  matcher: ["/", "/login", "/signin", "/dashboard", "/inicio-externo", "/todos-projetos"]
 };
