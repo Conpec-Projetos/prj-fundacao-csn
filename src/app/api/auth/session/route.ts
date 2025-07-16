@@ -64,8 +64,9 @@ export async function POST(request: Request) {
           return NextResponse.json({ mustRefreshToken: true});
       }
     }
-    // Define o tempo de expiração da sessão em milissegundos, *tempo minimo 2 minutos, *tempo maximo 2 semanas (deixei 2 dias, apos dois dias o cookie sera deletado pelo navegador e ao carregar a pagina (se a pessoa estiver usando o sistema ela sera redirecionada para o login), se nao tiver acessado e expirar ao acessar ja ira para o login direto)
-    const expiresIn = 60 * 60 * 24 * 2 * 1000;
+    // Define o tempo de expiração da sessão em milissegundos, *tempo minimo 2 minutos, *tempo maximo 2 semanas (deixei 5 dias, apos dois dias o cookie sera deletado pelo navegador e ao carregar a pagina (se a pessoa estiver usando o sistema ela sera redirecionada para o login), se nao tiver acessado e expirar ao acessar ja ira para o login direto)
+    const expiresIn = 60 * 60 * 24 * 5 * 1000;
+
     // O idToken (do Firebase Auth) é trocado por um session cookie, que pode ser verificado no servidor depois (authAdmin.createSessionCookie é uma função do Firebase Admin)
     const sessionCookie = await authAdmin.createSessionCookie(idToken, { expiresIn });
 

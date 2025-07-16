@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const publicRoutes = ["/signin", "/login"];
 const internoRoutes = ["/dashboard"];
-const admRoutes = ["/", "/todos-projetos"]; // mesmo '/dashboard' sendo uma rota do adm tbm só podemos colocar em um dos arrays
-const externoRoutes = ["/inicio-externo"];
+const admRoutes = ["/", "/todos-projetos", "/detalhes-projeto"]; // mesmo '/dashboard' sendo uma rota do adm tbm só podemos colocar em um dos arrays
+const externoRoutes = ["/inicio-externo", "/forms-cadastro"];
 
 export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get("session")?.value;
@@ -76,5 +76,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // Apenas essas rotas são verificadas pelo middleware
-  matcher: ["/", "/login", "/signin", "/dashboard", "/inicio-externo", "/todos-projetos"]
+  matcher: ["/", "/login", "/signin", "/dashboard", "/inicio-externo", "/todos-projetos", "/detalhes-projeto", "/forms-cadastro"]
 };
