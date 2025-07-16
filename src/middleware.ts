@@ -18,8 +18,11 @@ export async function middleware(request: NextRequest) {
   const isExternoRoute = externoRoutes.includes(path);
 
   if (!sessionCookie) { // Se o cookie nao existe apenas pode acessar rotas publicas
-    if (isPublicRoute) return NextResponse.next();
-    return NextResponse.next(); // já está no login, não faz nada
+    if (isPublicRoute) 
+      return NextResponse.next();
+    // Se nao for uma rota publica e o cookie nao estiver definido redirecionamos para o login. Acho q sera util quando expirar
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
   }
 
   try {
@@ -27,7 +30,6 @@ export async function middleware(request: NextRequest) {
     console.log("MIDDLEWARE1 DEBUG - Full JWT Payload:", payload);
     console.log("MIDDLEWARE1 DEBUG - Available keys:", Object.keys(payload));
     
-    const userEmail = payload.email;
     const emailVerified = payload.email_verified;
     const isAdmin = payload.userIntAdmin === true;
     const isUserExt = payload.userExt === true;

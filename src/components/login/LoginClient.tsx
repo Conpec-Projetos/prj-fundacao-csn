@@ -13,7 +13,6 @@ import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import RecoverPassword from "./recoverPassword";
 import { login } from "@/app/actions/login";
-import { getAuth } from "firebase/auth";
 
 // zod é uma biblioteca para validar parâmetros, no caso o schema
 const schema = z.object({
@@ -53,8 +52,8 @@ export default function LoginClient() {
             }
             
             if (!result.idToken || !result.user) {
-            toast.error("Erro ao autenticar usuário.");
-            return;
+                toast.error("Erro ao autenticar usuário.");
+                return;
             }
 
             // Envia o idToken para a rota que tenta criar o cookie (pode ou não precisar renovar o token)
@@ -67,18 +66,18 @@ export default function LoginClient() {
 
             const sessionResponse = await res1.json();
 
-            // Se precisar renovar o token com os claims atualizados
+            // Se precisar renovar o token com os claims atualizados (usamos claim para saber se o user é ADM e/ou interno ou externo)
             if (sessionResponse.mustRefreshToken) {
                 if (!result.user) {
                     toast.error("Usuário não encontrado para renovar token.");
                     return;
                 }
-                
-                  // Aguarda um pouco para o Firebase aplicar as claims
+        
+                // Aguarda um pouco para o Firebase aplicar as claims
                 await new Promise((res) => setTimeout(res, 1000));
                 const newToken = await result.user.getIdToken(true); // ← já usa o próprio user
 
-                // Segunda tentativa de criar o cookie, agora com o token atualizado
+                // Segunda tentativa de criar o cookie, agora com o token atualizado com a claim
                 const res2 = await fetch("/api/auth/session", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -90,7 +89,7 @@ export default function LoginClient() {
                     return;
                 }
             } else {
-                // Se não precisar renovar o token, mas a resposta original falhou
+                // Se não precisar renovar o token (pois a alteracao da claim é apenas necessaria no primeiro login), mas a resposta original falhou
                 if (!res1.ok) {
                     toast.error("Erro ao criar sessão de autenticação.");
                     return;
