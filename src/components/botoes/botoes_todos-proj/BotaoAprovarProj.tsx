@@ -4,28 +4,30 @@ import { useEffect, useRef, useState } from "react";
 import { db } from "@/firebase/firebase-config";
 import { collection, doc, getDocs, query, updateDoc, where, arrayUnion } from "firebase/firestore";
 
-// --- MUDANÇA 1: Props atualizadas ---
+// As props que o componente recebe do pai
 type BotaoAprovarProjProps = {
   projectId: string;
   projectName: string;
-  projetosComplianceStatus: boolean; // A fonte da verdade para o estado do botão
+  projetosComplianceStatus: boolean;
   complianceDocUrl: string | null;
   additionalDocsUrl: string | null;
   onApprovalSuccess: () => void;
 };
 
-// Componente de Modal (sem alterações)
+// Componente de Modal para a dupla confirmação final
 const ConfirmationModal = ({ message, onConfirm, onCancel, isUpdating }: { message: string, onConfirm: () => void, onCancel: () => void, isUpdating: boolean }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
         <div className="bg-white p-6 rounded-lg shadow-xl text-center">
-      <p className="text-black mb-4">{message}</p>
-      <div className="flex justify-center gap-4">
-        <button onClick={onCancel} className="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">Cancelar</button>
-        <button onClick={onConfirm} disabled={isUpdating} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50">
-          {isUpdating ? 'Confirmando...' : 'Confirmar Definitivamente'}
-        </button>
-      </div>
-    </div>
+            <p className="text-black mb-4">{message}</p>
+            <div className="flex justify-center gap-4">
+                <button onClick={onCancel} className="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">
+                    Cancelar
+                </button>
+                <button onClick={onConfirm} disabled={isUpdating} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50">
+                    {isUpdating ? 'Confirmando...' : 'Confirmar Definitivamente'}
+                </button>
+            </div>
+        </div>
     </div>
 );
 
@@ -34,35 +36,44 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const caixaRef = useRef<HTMLDivElement>(null);
   
+  // Estados para o formulário de aprovação final
   const [valorAprovado, setValorAprovado] = useState("");
-  const [empresas, setEmpresas] = useState("");
+  const [empresaInput, setEmpresaInput] = useState(""); // Guarda o valor do input atual
+  const [empresasList, setEmpresasList] = useState<string[]>([]); // Guarda a lista de empresas adicionadas
+  
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  useEffect(() => { setIsOpen(false); }, [props.projetosComplianceStatus]);
+  // Fecha o dropdown se o estado de compliance mudar (após a primeira aprovação)
+  useEffect(() => {
+    setIsOpen(false);
+  }, [props.projetosComplianceStatus]);
   
+  // Lógica para fechar o dropdown ao clicar fora
   useEffect(() => {
     if (!isOpen) return;
     function handleCliqueFora(event: MouseEvent) {
-      if (caixaRef.current && !caixaRef.current.contains(event.target as Node)) setIsOpen(false);
+      if (caixaRef.current && !caixaRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
     }
     document.addEventListener('mousedown', handleCliqueFora);
-    return () => document.removeEventListener('mousedown', handleCliqueFora);
+    return () => {
+      document.removeEventListener('mousedown', handleCliqueFora);
+    };
   }, [isOpen]);
 
-  // --- MUDANÇA 2: APROVAR COMPLIANCE AGORA ATUALIZA A COLEÇÃO 'projetos' ---
+  // Função para a primeira etapa: Aprovar Compliance
   const handleComplianceApproval = async () => {
     setIsUpdating(true);
     try {
-      // Encontra o documento em 'projetos' pelo nome
       const q = query(collection(db, "projetos"), where("nome", "==", props.projectName));
       const querySnapshot = await getDocs(q);
       if (querySnapshot.empty) throw new Error("Registro do projeto não encontrado na coleção 'projetos'.");
       
       const projectDocRef = querySnapshot.docs[0].ref;
-      // Atualiza o campo 'compliance' para true NESTA coleção
       await updateDoc(projectDocRef, { compliance: true });
       
-      props.onApprovalSuccess(); // Avisa o pai para recarregar tudo
+      props.onApprovalSuccess();
     } catch (error) {
       console.error("Erro ao aprovar compliance:", error);
       alert(error instanceof Error ? error.message : "Falha ao aprovar a etapa de compliance.");
@@ -71,12 +82,29 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     }
   };
 
-  // Lógica da segunda etapa (sem alterações, já estava correta)
+  // Nova função para adicionar uma empresa à lista
+  const handleAddEmpresa = () => {
+    if (empresaInput.trim() === "") return;
+    setEmpresasList(prevList => [...prevList, empresaInput.trim()]);
+    setEmpresaInput("");
+  };
+
+  // Função para remover uma empresa da lista
+  const handleRemoveEmpresa = (indexToRemove: number) => {
+    setEmpresasList(prevList => prevList.filter((_, index) => index !== indexToRemove));
+  };
+
+  // Função para a segunda etapa: Aprovar Projeto (abre o modal de confirmação)
   const handleProjectApprovalSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    if (empresasList.length === 0) {
+      alert("Por favor, adicione pelo menos uma empresa vinculada.");
+      return;
+    }
     setShowConfirmation(true);
   };
 
+  // Função final que executa a aprovação no Firebase
   async function executeFinalApproval() {
     if (isUpdating) return;
     setIsUpdating(true);
@@ -86,12 +114,11 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
       if (querySnapshot.empty) throw new Error("Registro do projeto não encontrado.");
       
       const projectDocRef = querySnapshot.docs[0].ref;
-      const empresasParaAdicionar = empresas.split(',').map(e => e.trim()).filter(e => e);
 
       await updateDoc(projectDocRef, {
         status: "aprovado",
         valorAprovado: valorAprovado,
-        empresas: arrayUnion(...empresasParaAdicionar)
+        empresas: arrayUnion(...empresasList)
       });
       
       setShowConfirmation(false);
@@ -104,9 +131,9 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     }
   }
 
-  // --- MUDANÇA 3: RENDERIZAÇÃO CONDICIONAL AGORA USA A PROP CORRETA ---
+  // Define o conteúdo do dropdown com base no status da compliance
   const renderContent = () => {
-    // Se 'projetos.compliance' for 'false', mostra a primeira etapa.
+    // ESTADO 1: Compliance Pendente
     if (!props.projetosComplianceStatus) {
       return (
         <div ref={caixaRef} className="absolute top-full left-0 w-[300px] p-4 rounded shadow-md bg-white z-10">
@@ -127,19 +154,59 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
       );
     }
     
-    // Se 'projetos.compliance' for 'true', mostra a segunda etapa.
+    // ESTADO 2: Compliance Aprovado, Projeto Pendente
     return (
-      <div ref={caixaRef} className="absolute top-full left-0 w-[300px] p-4 rounded shadow-md bg-white z-10">
+      <div ref={caixaRef} className="absolute top-full left-0 w-[400px] p-4 rounded shadow-md bg-white z-10">
         <form onSubmit={handleProjectApprovalSubmit}>
           <div className="mb-3">
             <label className="text-black block mb-1">Valor aprovado:</label>
             <input type="text" value={valorAprovado} onChange={(e) => setValorAprovado(e.target.value)} className="border-gray-400 w-full p-2 border rounded text-black" required />
           </div>
+          
           <div className="mb-3">
-            <label className="text-black block mb-1">Empresas vinculadas (separadas por vírgula):</label>
-            <input type="text" value={empresas} onChange={(e) => setEmpresas(e.target.value)} className="border-gray-400 w-full p-2 border rounded text-black" required />
+            <label className="text-black block mb-1">Empresas vinculadas:</label>
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                value={empresaInput} 
+                onChange={(e) => setEmpresaInput(e.target.value)} 
+                className="border-gray-400 flex-grow p-2 border rounded text-black" 
+              />
+              <button 
+                type="button" 
+                onClick={handleAddEmpresa} 
+                className="bg-blue-fcsn text-white px-3 rounded hover:bg-blue-800"
+              >
+                Adicionar
+              </button>
+            </div>
           </div>
-          <button type="submit" className="bg-pink-fcsn text-white px-4 py-2 rounded w-full">
+
+          {empresasList.length > 0 && (
+            <div className="mb-4 p-2 border border-gray-200 rounded">
+              <p className="text-sm font-semibold text-black mb-1">Empresas a serem adicionadas:</p>
+              <div className="flex flex-wrap gap-2">
+                {empresasList.map((empresa, index) => (
+                  <div key={index} className="flex items-center bg-gray-200 text-black rounded-full px-3 py-1 text-sm">
+                    <span>{empresa}</span>
+                    <button 
+                      type="button" 
+                      onClick={() => handleRemoveEmpresa(index)} 
+                      className="ml-2 text-red-500 hover:text-red-700 font-bold"
+                    >
+                      x
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            className="bg-pink-fcsn text-white px-4 py-2 rounded w-full disabled:bg-gray-400"
+            disabled={empresasList.length === 0 || isUpdating}
+          >
             Aprovar Projeto
           </button>
         </form>
@@ -155,7 +222,9 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
       >
         {props.projetosComplianceStatus ? 'Aprovar Projeto' : 'Aprovar Compliance'}
       </button>
+
       {isOpen && renderContent()}
+
       {showConfirmation && (
         <ConfirmationModal
           message={`Tem certeza que deseja aprovar o projeto "${props.projectName}"?`}
