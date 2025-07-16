@@ -1,5 +1,3 @@
-
-
 import { auth, db } from "@/firebase/firebase-config";
 import { signInWithEmailAndPassword, User } from "firebase/auth";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -34,9 +32,7 @@ export async function login(email: string, password: string): Promise<LoginResul
 
     // Pedimos ao Firebase o token de autenticação JWT, que será usado pelo backend para criar uma sessão (via cookie no login)
     const idToken = await user.getIdToken();
-   // Adicione um delay para garantir que o cookie seja setado
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
+  
     const emailDomain = user.email?.split("@")[1] || "";
 
     // Aqui ja fazemos o redirecionamento conforme o dominio do email
