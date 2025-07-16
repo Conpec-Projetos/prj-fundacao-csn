@@ -74,7 +74,7 @@ export default function LoginClient() {
                 }
         
                 // Aguarda um pouco para o Firebase aplicar as claims
-                await new Promise((res) => setTimeout(res, 1000));
+                await new Promise((res) => setTimeout(res, 500));
                 const newToken = await result.user.getIdToken(true); // ← já usa o próprio user
 
                 // Segunda tentativa de criar o cookie, agora com o token atualizado com a claim
@@ -95,8 +95,6 @@ export default function LoginClient() {
                     return;
                 }
             }
-
-            await new Promise((res) => setTimeout(res, 500)); // pequena pausa
             console.log("Redirecionando para:", result.redirectTo);
             router.push(result.redirectTo);
 

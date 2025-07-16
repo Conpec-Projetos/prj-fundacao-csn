@@ -115,10 +115,6 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
 
     // Autenticação no Servidor
     const user = await getCurrentUser();
-    if (!user || !user.email_verified) {
-        redirect('/login');
-    }
-
     // Busca de dados no Servidor
     const initialData = await getInitialFormData(projetoID);
 
@@ -132,7 +128,7 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
             
             <AcompanhamentoForm 
                 projetoID={projetoID}
-                usuarioAtualID={user.uid}
+                usuarioAtualID={user!.uid} // Sabemos com crtz que o user existe pois o middleware esta verificando isso, por isso coloquei "!" no user!
                 initialData={initialData}
             />
 
