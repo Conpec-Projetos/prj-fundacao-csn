@@ -157,7 +157,7 @@ export async function submitCadastroForm(formData: FormData) {
             municipios: data.municipios,
             lei: getItemNome(data.lei, leiList),
             status: "pendente",
-            ativo: false,
+            ativo: true,
             compliance: false,
             empresas: [],
             indicacao: "",
