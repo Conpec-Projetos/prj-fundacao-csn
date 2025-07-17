@@ -150,3 +150,6 @@ serviceAccountKey**
 /blob-report/
 /playwright/.cache/
 playwright.config.ts
+
+# Local database files
+dados_municipios_estados_ibge**
