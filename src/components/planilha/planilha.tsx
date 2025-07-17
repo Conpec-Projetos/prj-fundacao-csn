@@ -22,9 +22,12 @@ import { Filter } from "./filter";
 import {
   FaCaretDown,
   FaCaretUp,
+  FaCheckCircle,
+  FaList,
   FaLock,
   FaPencilAlt,
   FaTable,
+  FaTimesCircle,
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -46,6 +49,8 @@ const arrayIncludesFilterFn: FilterFn<ProjetoComId> = (
     item.toLowerCase().includes(String(filterValue).toLowerCase())
   );
 };
+
+type ComplianceFilter = 'all' | 'true' | 'false';
 
 // Função de filtro personalizada para colunas de números
 const numberFilterFn: FilterFn<ProjetoComId> = (row, columnId, filterValue) => {
@@ -102,6 +107,15 @@ const Planilha = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [isEditable, setIsEditable] = useState<boolean>(false);
+  const [complianceFilter, setComplianceFilter] = useState<ComplianceFilter>('all');
+
+  const filteredData = useMemo(() => {
+    if (complianceFilter == 'all') {
+      return data
+    }
+    const filterValue = complianceFilter === 'true'
+    return data.filter(projeto => projeto.compliance === filterValue)
+  }, [data, complianceFilter])
 
   // Efeito para buscar e ouvir as atualizações dos dados do Firestore
   useEffect(() => {
@@ -183,7 +197,7 @@ const Planilha = () => {
         filterFn: numberFilterFn,
       },
       {
-        accessorKey: "empresaVinculada",
+        accessorKey: "instituicao",
         header: "Proponente",
         cell: (props: CellContext<ProjetoComId, unknown>) => (
           <EditableCell
@@ -246,7 +260,7 @@ const Planilha = () => {
 
   // Instância da tabela com todas as configurações
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -258,6 +272,20 @@ const Planilha = () => {
     onColumnFiltersChange: setColumnFilters,
     onSortingChange: setSorting,
   });
+
+  const handleComplianceFilterChange = () => {
+    setComplianceFilter(current => {
+      if (current === 'all') return 'false'
+      if (current === 'false') return 'true'
+      return 'all'
+    })
+  }
+
+  const complianceButtonConfig = {
+    all: { text: 'Todos', icon: <FaList />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    true: { text: 'Aprovados', icon: <FaCheckCircle />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    false: { text: 'Pendentes', icon: <FaTimesCircle />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' }
+  };
 
   // Função para exportar os dados visíveis para um ficheiro Excel (.xlsx)
   const handleExport = async () => {
@@ -274,7 +302,7 @@ const Planilha = () => {
         width: 20,
         style: { numFmt: '"R$"#,##0.00' },
       },
-      { header: "Proponente", key: "empresaVinculada", width: 30 },
+      { header: "Proponente", key: "instituicao", width: 30 },
       { header: "Empresas Grupo CSN", key: "empresas", width: 35 },
       { header: "Indicação", key: "indicacao", width: 25 },
       { header: "Municípios", key: "municipios", width: 40 },
@@ -340,7 +368,16 @@ const Planilha = () => {
   return (
     <div>
       <div className="mb-4 flex justify-end items-center gap-4">
-        {/* Botão de Edição Melhorado */}
+        {/* Botão de alterar o filtro de compliance */}
+        <button
+          onClick={handleComplianceFilterChange}
+          className={`font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-white ${complianceButtonConfig[complianceFilter].className}`}
+        >
+          {complianceButtonConfig[complianceFilter].icon}
+          <span>Compliance: <strong>{complianceButtonConfig[complianceFilter].text}</strong></span>
+        </button>
+
+        {/* Botão de Edição */}
         <button
           onClick={() => setIsEditable((prev) => !prev)}
           className="font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 bg-blue-fcsn dark:bg-blue-fcsn2 text-white-off hover:bg-blue-fcsn2 dark:hover:bg-blue-fcsn3 cursor-pointer"
