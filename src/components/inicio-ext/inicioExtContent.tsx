@@ -114,7 +114,7 @@ export default function ExternalUserDashboard({ userName, userProjects }: Dashbo
           <p className="text-gray-500 dark:text-gray-300">{currentTime}</p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-gray-500 dark:text-gray-300">Meus projetos</p>
+          <p className="text-sm text-gray-500 dark:text-gray-300">Total de projetos</p>
           <p className="text-2xl font-bold text-pink-fcsn dark:text-pink-light">{userProjects.length}</p>
         </div>
       </div>
@@ -122,7 +122,7 @@ export default function ExternalUserDashboard({ userName, userProjects }: Dashbo
       <div className="bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-blue-fcsn dark:text-white-off">Meus Projetos</h2>
-          <Link href="/forms-cadastro" className="px-4 py-2 bg-pink-fcsn dark:bg-pink-light2 text-white-off rounded-lg hover:bg-[#a06a86] transition-colors duration-200">
+          <Link href="/forms-cadastro" className="px-4 py-2 bg-pink-fcsn dark:bg-pink-light2 text-white-off rounded-lg hover:bg-pink-light2 dark:hover:bg-pink-fcsn transition-colors duration-200">
             Novo Projeto
           </Link>
         </div>

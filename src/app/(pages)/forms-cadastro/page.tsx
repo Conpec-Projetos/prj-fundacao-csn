@@ -1,7 +1,6 @@
 import Footer from "@/components/footer/footer";
 import CadastroForm from "@/components/forms/CadastroForm";
 import { getCurrentUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { Toaster } from "sonner";
 
 export default async function FormsCadastroPage() {
@@ -9,6 +8,7 @@ export default async function FormsCadastroPage() {
     const user = await getCurrentUser();
     // Se não houver usuário ou o email não for verificado, redireciona
     // O ID do usuário agora vem do token decodificado
+    
     // Sabemos com crtz que o user existe pois o middleware esta verificando isso, por isso coloquei "!" no user!
     const usuarioAtualID = user!.uid;
 

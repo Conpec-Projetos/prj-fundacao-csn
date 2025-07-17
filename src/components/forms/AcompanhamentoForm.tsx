@@ -20,6 +20,7 @@ import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form"
 import { State, City } from "country-state-city";
 import { formsAcompanhamentoSchema, FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { submitAcompanhamentoForm } from "@/app/actions/formsAcompanhamentoActions";
+import { useRouter } from "next/navigation";
 
 
 interface AcompanhamentoFormProps {
@@ -29,6 +30,7 @@ interface AcompanhamentoFormProps {
 }
 
 export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialData }: AcompanhamentoFormProps) {
+    const router = useRouter();
 
     const {
         register,
@@ -39,7 +41,6 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
         formState: { errors, isSubmitting },
     } = useForm<FormsAcompanhamentoFormFields>({
         resolver: zodResolver(formsAcompanhamentoSchema),
-        // Os valores padrão agora vêm das props carregadas no servidor!
         defaultValues: initialData,
         mode: "onBlur",
     });
@@ -78,6 +79,11 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
             toast.dismiss(loadingToastId);
             if (result.success) {
                 toast.success("Formulário de acompanhamento enviado com sucesso!");
+
+                setTimeout(() => {
+                    router.push('/inicio-externo');
+                }, 3000);
+
             } else {
                 toast.error(`Erro: ${result.error}`);
             }
@@ -412,7 +418,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
             {/* Links para as website: */}
                 <NormalInput
                     text="Link para website:"
-                    isNotMandatory={false}
+                    isNotMandatory={true}
                     registration={register("website")}
                     error={errors.website}
                 />
@@ -420,7 +426,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
             {/* Links para as redes sociais */}
                 <LongInput 
                     text="Links para as redes sociais:" 
-                    isNotMandatory={false}
+                    isNotMandatory={true}
                     registration={register("links")}
                     error={errors.links}
                 />
