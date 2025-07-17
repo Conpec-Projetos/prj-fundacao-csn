@@ -10,13 +10,13 @@ from thefuzz import process
 
 
 # Configuração do Firebase
-cred = credentials.Certificate("serviceAccountKey.json")
+cred = credentials.Certificate(r"../../../serviceAccountKey.json")
 if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 # Caminho para sua planilha
-caminho_planilha = r"C:/Users/leona/Downloads/2024 LISTA FINAL DEZEMBRO PROJETOS APROVADOS 03012025.xlsx"
+caminho_planilha = r"../../../2024 LISTA FINAL DEZEMBRO PROJETOS APROVADOS 03012025.xlsx"
 
 # Nome do arquivo para cache dos dados do IBGE
 ARQUIVO_CACHE_IBGE = 'dados_municipios_estados_ibge.json'
