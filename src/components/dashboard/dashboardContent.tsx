@@ -67,9 +67,6 @@ export default function DashboardContent({
             <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
               R$ {dados?.valorTotal},00
             </h1>
-            <h1 className="text-base text-blue-fcsn dark:text-white-off font-light">
-              Investido em Projeto {dados?.maiorAporte.nome}
-            </h1>
           </div>
         </div>
         <div

@@ -1,9 +1,15 @@
-import { onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { onDocumentUpdated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 import { Resend } from "resend";
 import AcompanhamentoEmail from "./emails/acompanhamentoEmail";
 import { onSchedule } from "firebase-functions/v2/scheduler"
+import {
+  Projetos,
+  dadosEstados,
+  formsAcompanhamentoDados,
+  formsCadastroDados,
+} from "./tipos/entities";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -143,3 +149,181 @@ export const verificarEmailsPendentes = onSchedule("every day 08:00", async () =
     }
   }
 });
+
+/**
+ * Função auxiliar para buscar os dados de um formulário.
+ * Procura primeiro na coleção 'formsAcompanhamento' e depois em 'formsCadastro'.
+ * @param {string} formId O ID do documento do formulário.
+ * @returns {Promise<formsAcompanhamentoDados | formsCadastroDados | null>} Os dados do formulário ou nulo se não encontrado.
+ */
+const getFormData = async (
+  formId: string
+): Promise<formsAcompanhamentoDados | formsCadastroDados | null> => {
+  if (!formId) {
+    console.log("ID do formulário não fornecido.");
+    return null;
+  }
+
+  // 1. Tenta buscar na coleção 'formsAcompanhamento'
+  const acompanhamentoRef = db.collection("formsAcompanhamento").doc(formId);
+  const acompanhamentoDoc = await acompanhamentoRef.get();
+  if (acompanhamentoDoc.exists) {
+    console.log(`Formulário ${formId} encontrado em 'formsAcompanhamento'.`);
+    return acompanhamentoDoc.data() as formsAcompanhamentoDados;
+  }
+
+  // 2. Se não encontrou, tenta buscar na coleção 'formsCadastro'
+  const cadastroRef = db.collection("formsCadastro").doc(formId);
+  const cadastroDoc = await cadastroRef.get();
+  if (cadastroDoc.exists) {
+    console.log(`Formulário ${formId} encontrado em 'formsCadastro'.`);
+    return cadastroDoc.data() as formsCadastroDados;
+  }
+
+  // 3. Se não encontrou em nenhuma, retorna nulo e avisa no log
+  console.warn(
+    `Alerta: Documento do formulário com ID ${formId} não foi encontrado em nenhuma das coleções.`
+  );
+  return null;
+};
+
+/**
+ * Recalcula todos os indicadores para um determinado estado e atualiza a coleção 'dadosEstados'.
+ * @param {string} stateName O nome do estado a ser recalculado.
+ */
+const recalculateStateIndicators = async (stateName: string) => {
+  console.log(`Iniciando recálculo para o estado: ${stateName}`);
+
+  // 1. Busca todos os projetos que são 'ativos', 'aprovados' e pertencem ao estado especificado.
+  const projectsSnapshot = await db
+    .collection("projetos")
+    .where("ativo", "==", true)
+    .where("status", "==", "aprovado")
+    .where("estados", "array-contains", stateName)
+    .get();
+
+  // 2. Se não houver projetos para este estado, zera os dados dele em 'dadosEstados'
+  if (projectsSnapshot.empty) {
+    console.log(`Nenhum projeto ativo/aprovado encontrado para ${stateName}. Limpando indicadores.`);
+    await db.collection("dadosEstados").doc(stateName).set({
+      nomeEstado: stateName,
+      qtdProjetos: 0,
+      qtdMunicipios: 0,
+      municipios: [],
+      valorTotal: 0,
+      maiorAporte: { nome: '', valorAportado: 0 },
+      beneficiariosDireto: 0,
+      beneficiariosIndireto: 0,
+      qtdOrganizacoes: 0,
+      projetosODS: Array(17).fill(0),
+      segmento: [],
+      lei: {}
+    });
+    return;
+  }
+
+  // 3. Inicializa os agregadores de dados
+  let totalValorAportado = 0;
+  let totalBeneficiariosDiretos = 0;
+  let totalBeneficiariosIndiretos = 0;
+  const uniqueInstituicoes = new Set<string>();
+  const allMunicipios = new Set<string>();
+  const allODS = new Set<number>();
+  const segmentCounts: { [key: string]: number } = {};
+  const leiCounts: { [key: string]: number } = {};
+  let maiorAporte = { nome: "", valorAportado: 0 };
+
+  // 4. Itera sobre cada projeto encontrado para somar os dados
+  for (const projectDoc of projectsSnapshot.docs) {
+    const projeto = projectDoc.data() as Projetos;
+    const formData = await getFormData(projeto.ultimoFormulario || "");
+
+    // Agregação principal
+    totalValorAportado += projeto.valorAportadoReal;
+    uniqueInstituicoes.add(projeto.instituicao);
+    projeto.municipios.forEach((mun) => allMunicipios.add(mun));
+
+    // Atualiza o maior aporte
+    if (projeto.valorAportadoReal > maiorAporte.valorAportado) {
+      maiorAporte = {
+        nome: projeto.nome,
+        valorAportado: projeto.valorAportadoReal,
+      };
+    }
+
+    // Contagem por lei
+    leiCounts[projeto.lei] = (leiCounts[projeto.lei] || 0) + 1;
+
+    // Agregação baseada nos dados do formulário
+    if (formData) {
+      totalBeneficiariosDiretos += formData.beneficiariosDiretos || 0;
+      // O campo 'beneficiariosIndiretos' só existe em 'formsAcompanhamentoDados'
+      if ("beneficiariosIndiretos" in formData) {
+        totalBeneficiariosIndiretos += formData.beneficiariosIndiretos || 0;
+      }
+      formData.ods?.forEach((ods) => allODS.add(ods));
+      segmentCounts[formData.segmento] = (segmentCounts[formData.segmento] || 0) + 1;
+    }
+  }
+
+  // 5. Formata os dados para o formato final de 'dadosEstados'
+  const finalStateData: dadosEstados = {
+    nomeEstado: stateName,
+    qtdProjetos: projectsSnapshot.size,
+    qtdMunicipios: allMunicipios.size,
+    municipios: Array.from(allMunicipios).sort(),
+    valorTotal: totalValorAportado,
+    maiorAporte: maiorAporte,
+    beneficiariosDireto: totalBeneficiariosDiretos,
+    beneficiariosIndireto: totalBeneficiariosIndiretos,
+    qtdOrganizacoes: uniqueInstituicoes.size,
+    projetosODS: Array.from(allODS).sort((a, b) => a - b),
+    segmento: Object.entries(segmentCounts).map(([nome, qtd]) => ({ nome: nome, qtdProjetos: qtd })),
+    lei: Object.entries(leiCounts).map(([nome, qtd]) => ({ nome: nome, qtdProjetos: qtd })),
+  };
+
+  // 6. Salva os dados calculados no Firestore
+  await db.collection("dadosEstados").doc(stateName).set(finalStateData);
+  console.log(`Indicadores para ${stateName} atualizados com sucesso.`);
+};
+
+
+/**
+ * Função principal (Trigger) que observa a coleção 'projetos'.
+ * É acionada na criação, atualização ou exclusão de um projeto.
+ */
+export const onProjetoWrite = onDocumentWritten("projetos/{projetoId}", async (event) => {
+    // Na v2, o objeto de evento contém os dados. O 'change' está dentro de 'event.data'.
+    const change = event.data;
+    if (!change) {
+      console.log("Nenhum dado de alteração associado ao evento.");
+      return;
+    }
+
+    // O resto da lógica é idêntico, pois já opera sobre 'before' e 'after'.
+    const beforeData = change.before.exists ? (change.before.data() as Projetos) : null;
+    const afterData = change.after.exists ? (change.after.data() as Projetos) : null;
+
+    const affectedStates = new Set<string>();
+
+    if (beforeData?.estados) {
+      beforeData.estados.forEach((state) => affectedStates.add(state));
+    }
+    if (afterData?.estados) {
+      afterData.estados.forEach((state) => affectedStates.add(state));
+    }
+
+    if (affectedStates.size === 0) {
+      console.log("Nenhum estado afetado pela alteração. Encerrando.");
+      return;
+    }
+
+    const recalculationPromises = Array.from(affectedStates).map((stateName) =>
+      recalculateStateIndicators(stateName)
+    );
+
+    await Promise.all(recalculationPromises);
+
+    console.log("Todos os estados afetados foram recalculados.");
+  }
+);
