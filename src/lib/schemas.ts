@@ -46,7 +46,7 @@ export const formsAcompanhamentoSchema = z.object({
     relato: z.string().trim().max(500, "Máximo de 500 caracteres permitidos").optional(),
     fotos: fileArraySchema(['image/jpeg', 'image/png'], 'Imagens (JPG ou PNG)', 5),
     website: z.string().trim().optional(),
-    links: z.string().trim().min(1, "Insira pelo menos um link.").max(300, "Máximo de 300 caracteres permitidos"),
+    links: z.string().trim().max(300, "Máximo de 300 caracteres permitidos").optional(),
     contrapartidasExecutadas: z.string().max(500, "Máximo de 500 caracteres permitidos").optional(),
     }).refine(data => new Date(data.dataFim) > new Date(data.dataComeco), {
         message: "A data final deve ser posterior à data inicial.",
@@ -69,6 +69,7 @@ export const formsCadastroSchema = z.object({
     representanteLegal: z.string().trim().min(1, "O nome do representante é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
     telefone: z.string().trim().min(14, "Forneça um número de telefone válido.").max(15, "O telefone deve ter no máximo 11 dígitos."),
     emailRepLegal: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do representante é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
+    responsavel: z.string().trim().min(1, "O nome do responsável do projeto é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
     emailResponsavel: z.string().trim().email("Formato de e-mail inválido.").min(1, "O e-mail do responsável é obrigatório.").max(100, "Máximo de 100 caracteres permitidos"),
     cep: z.string().trim().regex(/^\d{5}-\d{3}$/, { message: "Formato de CEP inválido (ex: 12345-678)."}),
     endereco: z.string({ required_error: "" }).trim().min(1, "O endereço é obrigatório.").max(200, "Máximo de 200 caracteres permitidos"),

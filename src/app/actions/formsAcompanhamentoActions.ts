@@ -328,8 +328,9 @@ export async function submitAcompanhamentoForm(formData: FormData) {
 
         const projetoDocRef = doc(db, "projetos", projetoID);
         await updateDoc(projetoDocRef, {
-            // estados: data.estados, // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
+            estados: data.estados, // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
             municipios: data.municipios,
+            lei: getItemNome(data.lei, leiList),
             ultimoFormulario: formsAcompanhamentoRef.id
         });
 
