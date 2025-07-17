@@ -34,8 +34,7 @@ async function sendApprovedProjectEmail(payload: { email: string; destinatario: 
   });
 }
 
-
-export const onProjectApproved = onDocumentUpdated("projetos/{projetoId}", async (event) => {
+export const verificarProjetoAprovado = onDocumentUpdated("projetos/{projetoId}", async (event) => {
   const snapshot = event.data;
   if (!snapshot) {
     logger.error("Nenhum dado no evento.");
@@ -107,7 +106,7 @@ export const onProjectApproved = onDocumentUpdated("projetos/{projetoId}", async
           destinatario: responsavel,
           nomeProjeto: projeto.nome,
           valor: valorTotal.toFixed(2),
-          linkSite: `${process.env.PROJECT_URL}/signin/`,
+          linkSite: `${process.env.PROJECT_URL}/signin`,
         });
       } catch (error) {
         logger.error(
@@ -125,7 +124,7 @@ export const onProjectApproved = onDocumentUpdated("projetos/{projetoId}", async
   return null;
 });
 
-async function sendFollowUpEmail(payload: { email: string; destinatario: string; nomeProjeto: string; linkAcompanhamento: string; }) {
+async function enviaEmailAcompanhamento(payload: { email: string; destinatario: string; nomeProjeto: string; linkAcompanhamento: string; }) {
   const { email, destinatario, nomeProjeto, linkAcompanhamento } = payload;
   const subject = `Acompanhamento do Projeto: ${nomeProjeto}`;
 
@@ -190,7 +189,7 @@ export const verificarEmailsPendentes = onSchedule("every day 08:00", async () =
         logger.log(`Enviando e-mail de ${periodo.meses} meses para ${emailResponsavel} do projeto ${projeto.nome}`);
 
         try {
-          await sendFollowUpEmail({
+          await enviaEmailAcompanhamento({
             email: emailResponsavel,
             destinatario: responsavel,
             nomeProjeto: projeto.nome,
@@ -209,3 +208,65 @@ export const verificarEmailsPendentes = onSchedule("every day 08:00", async () =
     }
   }
 });
+
+export const desativarProjetosExpirados = onSchedule("every day 06:00", async () => {
+  logger.log("Iniciando verificação de projetos com data final expirada");
+
+    try {
+      // O locale 'en-CA' convenientemente formata a data como YYYY-MM-DD.
+      const hojeString = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo'
+      }).format(new Date());
+
+      logger.info(`Data de hoje para comparação: ${hojeString}`);
+
+      // Consulta a coleção 'forms-cadastro' por documentos com dataFinal <= hoje.
+      const formsQuery = db
+        .collection("forms-cadastro")
+        .where("dataFinal", "<=", hojeString);
+      
+      const querySnapshot = await formsQuery.get();
+
+      if (querySnapshot.empty) {
+        logger.info("Nenhum formulário de cadastro com data final expirada foi encontrado.");
+        return; // Finaliza a execução se não houver nada a fazer.
+      }
+
+      logger.info(`Encontrados ${querySnapshot.size} formulários com data expirada.`);
+
+      // Usa um WriteBatch para atualizar todos os documentos de uma vez.
+      const batch = db.batch();
+      let projetosParaDesativar = 0;
+
+      querySnapshot.forEach((doc) => {
+        const formData = doc.data();
+        const projetoId = formData.projetoID;
+
+        // Verifica se o campo projetoID existe no documento.
+        if (projetoId && typeof projetoId === 'string') {
+          // Cria uma referência para o documento correspondente na coleção 'projetos'.
+          const projetoRef = db.collection("projetos").doc(projetoId);
+          
+          // Adiciona a operação de atualização ao lote.
+          batch.update(projetoRef, { ativo: false });
+          
+          projetosParaDesativar++;
+          logger.log(`Agendando desativação para o projeto ID: ${projetoId}`);
+        } else {
+          logger.warn(`Documento ${doc.id} em 'forms-cadastro' não possui um projetoID válido.`);
+        }
+      });
+
+      // Executa todas as operações de atualização no lote.
+      if (projetosParaDesativar > 0) {
+        await batch.commit();
+        logger.info(`${projetosParaDesativar} projetos foram desativados com sucesso.`);
+      } else {
+        logger.info("Nenhum projeto precisou ser desativado.");
+      }
+
+    } catch (error) {
+      logger.error("Erro ao tentar desativar projetos expirados:", error);
+    }
+  }
+);
