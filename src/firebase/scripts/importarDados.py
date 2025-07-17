@@ -226,7 +226,12 @@ try:
         print(f"\nProcessando projeto: {row['projeto']} (Índice {row['unnamed: 0']})")
         
         # CORRIGIR ESTADOS
-        estados_originais = re.split(r'\s*[/,-]\s*', str(row['estado']))
+        if pd.notna(row['estado']):
+            estados_originais = re.split(r'\s*[/,-]\s*', str(row['estado']))
+        else:
+            estados_originais = ""
+            print('Não foi possível encontrar um estado!')
+        
         estados_corrigidos = set() # Usar 'set' para evitar duplicados
         
         for estado_str in estados_originais:
@@ -236,7 +241,12 @@ try:
                 estados_corrigidos.add(estado_corrigido)
 
         # CORRIGIR MUNICÍPIOS (USANDO O CONTEXTO DOS ESTADOS CORRIGIDOS)
-        municipios_originais = re.split(r'\s*[/,-]\s*', str(row['município']))
+        if pd.notna(row['município']):
+            municipios_originais = re.split(r'\s*[/,-]\s*', str(row['município']))
+        else:
+            municipios_originais = ""
+            print('Não foi possível encontrar um município!')
+
         municipios_corrigidos = set()
         
         # Cria uma lista de todos os municípios possíveis baseada nos estados corrigidos
@@ -257,7 +267,11 @@ try:
                 municipios_corrigidos.add(municipio_limpo) # Mantém original se não há contexto
 
         # MONTAGEM DO OBJETO PARA O FIREBASE
-        indicacao = str(row['indicação']) if pd.notna(row['indicação']) else ""
+        if pd.notna(row['indicação']):
+            indicacao = str(row['indicação'])
+        else:
+            indicacao = ""
+            print('Não foi possível encontrar uma indicação!')
 
         valor_aprovado = converter_valor_para_float(row['aportado 2024'])
 
