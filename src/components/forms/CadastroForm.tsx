@@ -99,13 +99,13 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             const cepFormatado = cep.replace(/\D/g, '');
             if (cepFormatado.length !== 8) return;
             try {
-                const response = await fetch(`https://viacep.com.br/ws/${cepFormatado}/json/`);
+                const response = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepFormatado}`);
                 if (!response.ok) throw new Error('CEP não encontrado');
                 const data = await response.json();
-                const fullAddress = data.bairro ? `${data.logradouro} - ${data.bairro}` : data.logradouro;
+                const fullAddress = data.neighborhood ? `${data.street} - ${data.neighborhood}` : data.street;
                 setValue("endereco", fullAddress, { shouldValidate: true });
-                setValue("cidade", data.localidade, { shouldValidate: true });
-                setValue("estado", data.uf, { shouldValidate: true });
+                setValue("cidade", data.city, { shouldValidate: true });
+                setValue("estado", data.state, { shouldValidate: true });
             } catch (error) {
                 console.error("Erro ao buscar CEP:", error);
             }
