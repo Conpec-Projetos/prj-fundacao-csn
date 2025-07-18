@@ -143,7 +143,7 @@ export interface dadosEstados {
  export interface dadosProjeto {
    qtdProjetos: number;
    instituicao: string;
-   valorAportadoReal: {nome: string, valorAportado: number};
+   valorAprovado: {nome: string, valorAportado: number};
    beneficiariosDireto: number;
    beneficiariosIndireto: number;
    ods: number[];
