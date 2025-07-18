@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { ref, getDownloadURL } from "firebase/storage";
+import { storage } from "@/firebase/firebase-config";
 import {
     NormalInput,
     LongInput,
@@ -31,6 +33,7 @@ import { useRouter } from "next/navigation";
 
 export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: string | null }) {
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const [compliancePdfUrl, setCompliancePdfUrl] = useState<string | null>(null);
     const router = useRouter()
     
     const {
@@ -93,6 +96,21 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
     const watchedPublico = watch('publico');
     const outroPublicoIndex = publicoList.findIndex(p => p.nome.toLowerCase().startsWith('outro'));
     const isOutroPublicoSelected = watchedPublico && watchedPublico[outroPublicoIndex];
+
+    useEffect(() => {
+        const fetchPdfUrl = async () => {
+            try {
+                const storageRef = ref(storage, 'Formulário de Doações e Patrocínios - 2025.pdf');
+                const url = await getDownloadURL(storageRef);
+                setCompliancePdfUrl(url);
+            } catch (error) {
+                console.error("Error fetching compliance PDF URL:", error);
+                toast.error("Erro ao carregar o link do formulário de compliance.");
+            }
+        };
+
+        fetchPdfUrl();
+    }, []);
 
     useEffect(() => {
         const fetchAddress = async (cep: string) => {
@@ -659,6 +677,24 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                     <div className="w-full">
                     <div className="flex flex-col w-full items-center gap-8 mt-10">
                         <div className="w-11/12">
+                            {/* Botão de download para o formulário de compliance */}
+                            {compliancePdfUrl && (
+                                <div className="flex flex-col items-start mb-4 gap-y-2">
+                                    <p className="text-xl text-blue-fcsn dark:text-white-off font-bold">
+                                        Faça o download do formulário de compliance, preencha-o e anexe no campo abaixo.
+                                    </p>
+                                    <a
+                                        href={compliancePdfUrl}
+                                        download="Formulario_Compliance.pdf"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-fit px-4 h-[50px] bg-blue-fcsn dark:bg-blue-fcsn3 dark:hover:bg-blue-fcsn hover:bg-blue-fcsn2 rounded-[7px] text-md font-bold text-white cursor-pointer shadow-md flex items-center justify-center"
+                                    >
+                                        Baixar Formulário de Compliance
+                                    </a>
+                                </div>
+                            )}
+
                             <Controller
                                 name="compliance"
                                 control={control}
