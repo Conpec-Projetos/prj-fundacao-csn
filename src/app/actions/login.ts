@@ -32,7 +32,7 @@ export async function login(email: string, password: string): Promise<LoginResul
     }
 
     // Pedimos ao Firebase o token de autenticação JWT, que será usado pelo backend para criar uma sessão (via cookie no login)
-    const idToken = await user.getIdToken();
+    const idToken = await user.getIdToken(true);
   
     const emailDomain = user.email?.split("@")[1] || "";
 

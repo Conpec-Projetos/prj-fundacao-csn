@@ -27,8 +27,6 @@ export async function middleware(request: NextRequest) {
 
   try {
     const payload = JSON.parse(atob(sessionCookie.split(".")[1])); // Aqui pegamos dados uteis do token como o email e se o email foi verificado
-    console.log("MIDDLEWARE1 DEBUG - Full JWT Payload:", payload);
-    console.log("MIDDLEWARE1 DEBUG - Available keys:", Object.keys(payload));
     
     const emailVerified = payload.email_verified;
     const isAdmin = payload.userIntAdmin === true;

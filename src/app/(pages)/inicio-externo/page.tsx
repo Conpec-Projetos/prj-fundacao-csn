@@ -14,6 +14,7 @@ interface ProjetoExt {
   valorTotal: string;
   lei: string;
   formularioPendente: boolean;
+  ativo: boolean;
 }
 
 
@@ -156,6 +157,7 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
             valorTotal,
             lei,
             formularioPendente,
+            ativo: projetoData.ativo
         };
     });
 
