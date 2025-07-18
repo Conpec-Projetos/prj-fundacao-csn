@@ -13,29 +13,29 @@ import Image from "next/image";
 import { useTheme } from "@/context/themeContext";
 import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
 
-// Caminho para o seu componente de botão, que gerencia todo o fluxo
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj"; 
 
-// Interface com todos os campos necessários para definir o estado de um projeto
+// Interface com o nome da propriedade da URL alterado
 interface ProjectComponentProps {
-  id: string; // ID da forms-cadastro
+  id: string;
   name: string;
-  finalStatus: "aprovado" | "pendente"; // Status final (da coleção projetos)
-  projetosComplianceStatus: boolean; // Status da compliance (da coleção projetos)
+  finalStatus: "aprovado" | "pendente";
+  projetosComplianceStatus: boolean;
   value: number;
   incentiveLaw: string;
   description: string;
   ODS: ODS[];
-  complianceDocUrl: string | null;
-  additionalDocsUrl: string | null;
-  onApprovalSuccess: () => void; // Callback para recarregar os dados
+  complianceUrl: string | null; // <-- ALTERADO
+  additionalDocsUrls: string[];
+  isActive: boolean;
+  onApprovalSuccess: () => void;
 }
 
 interface ODS { numberODS: number; src: string; }
 
-// Componente Project: Apenas exibe os dados e o botão de ação
+// Componente Project com a prop da URL alterada
 const Project: React.FC<ProjectComponentProps> = (props) => (
-  <div className="bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0">
+  <div className={`bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 transition-all ${!props.isActive ? 'grayscale opacity-60' : ''}`}>
     <section className="flex flex-col col-span-2 mr-2">
       <div className="flex flex-wrap items-center gap-3 mb-2">
         <div className="text-2xl font-bold">{props.name}</div>
@@ -47,14 +47,13 @@ const Project: React.FC<ProjectComponentProps> = (props) => (
           )}
         </div>
         
-        {/* O botão de ação só aparece se o projeto não estiver totalmente aprovado */}
-        {props.finalStatus !== 'aprovado' && (
+        {props.finalStatus !== 'aprovado' && props.isActive && (
            <BotaoAprovarProj
              projectId={props.id}
              projectName={props.name}
              projetosComplianceStatus={props.projetosComplianceStatus}
-             complianceDocUrl={props.complianceDocUrl}
-             additionalDocsUrl={props.additionalDocsUrl}
+             complianceDocUrl={props.complianceUrl} // <-- ALTERADO
+             additionalDocsUrls={props.additionalDocsUrls}
              onApprovalSuccess={props.onApprovalSuccess}
            />
         )}
@@ -81,11 +80,9 @@ export default function TodosProjetos() {
   const [refreshData, setRefreshData] = useState(false);
   
   const handleApprovalSuccess = () => {
-    // Força uma nova busca de dados para garantir que a UI reflita o estado mais recente
     setRefreshData(prev => !prev);
   };
 
-  // Lógica de busca de dados, lendo os dois campos de status da coleção 'projetos'
   useEffect(() => {
     async function fetchAllProjects() {
       const formsSnapshot = await getDocs(collection(db, "forms-cadastro"));
@@ -94,23 +91,26 @@ export default function TodosProjetos() {
         const formId = formDoc.id;
         const projectName = rawData.nomeProjeto;
 
-        // **IMPORTANTE**: Verifique se os nomes destes campos estão corretos no seu Firebase
-        const complianceUrl = rawData.compliance || null;
-        const additionalUrl = rawData.documentos || null;
+        // --- ALTERAÇÃO PRINCIPAL AQUI ---
+        // Agora busca a URL do campo 'compliance'
+        const complianceUrlValue = rawData.compliance || null;
+        const additionalUrls = Array.isArray(rawData.documentos) ? rawData.documentos : [];
 
-        // Padrões
         let projectFinalStatus: "aprovado" | "pendente" = "pendente";
-        let projetosCompliance = false; // booleano
+        let projetosCompliance = false;
+        let isActive = true;
 
         if (projectName) {
           const projetosQuery = query(collection(db, "projetos"), where("nome", "==", projectName));
           const projetosSnapshot = await getDocs(projetosQuery);
           if (!projetosSnapshot.empty) {
             const projectData = projetosSnapshot.docs[0].data();
-            // Lê ambos os campos da coleção 'projetos'
             projetosCompliance = projectData.compliance === true;
             if (projectData.status === "aprovado") {
               projectFinalStatus = "aprovado";
+            }
+            if (projectData.ativo === false) {
+              isActive = false;
             }
           }
         }
@@ -131,18 +131,20 @@ export default function TodosProjetos() {
           incentiveLaw: rawData.lei ? rawData.lei.split('-')[0].trim() : "Não informada",
           description: rawData.descricao || "Sem descrição.",
           ODS: processedODS,
-          complianceDocUrl: complianceUrl,
-          additionalDocsUrl: additionalUrl,
+          complianceUrl: complianceUrlValue, // <-- ALTERADO
+          additionalDocsUrls: additionalUrls,
+          isActive: isActive,
         };
       });
 
       const resolvedProjects = await Promise.all(projectsPromises);
-      setAllProjects(resolvedProjects as ProjectComponentProps[]);
+      const sortedProjects = resolvedProjects.sort((a, b) => Number(b.isActive) - Number(a.isActive));
+      setAllProjects(sortedProjects as ProjectComponentProps[]);
     }
     fetchAllProjects();
-  }, [refreshData]); // Roda novamente sempre que uma aprovação ocorrer
+  }, [refreshData]);
   
-  // Estados e Funções para Filtros e Busca
+  // O resto do componente (estados de filtros, funções de filtros, auth e JSX) continua...
   const [search, setSearch] = useState("");
   const [filteredProjects, setFilteredProjects] = useState<ProjectComponentProps[]>([]);
   const [ctrl, setCtrl] = useState(false);
