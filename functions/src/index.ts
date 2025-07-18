@@ -14,6 +14,7 @@ import {
 admin.initializeApp();
 const db = admin.firestore();
 
+// process.env.RESEND_KEY (colocar quando for dar commit)
 const resend = new Resend(process.env.RESEND_KEY); // Ele não funciona se deixar a api key como variável de ambiente, então é necessário passar ela hardcoded aqui
 // Eu sinceramente não sei o porque ele não consegue ler a variável de ambiente aqui mas em outros momentos consegue
 // Só coloco assim para enviar pro github sem expor a chave, mas se for fazer deploy, lembra de mudar.
@@ -75,13 +76,13 @@ async function enviaEmailAcompanhamento(payload: { email: string; destinatario: 
     projeto: nomeProjeto,
     linkGerado: linkAcompanhamento,
   });
-    
+
 
   return resend.emails.send({
-      from: process.env.EMAIL_FROM!,
-      to: email,
-      subject: subject,
-      react: AcompanhamentoEmail({destinatario: destinatario, nomeProjeto: nomeProjeto, linkAcompanhamento: linkAcompanhamento})
+    from: process.env.EMAIL_FROM!,
+    to: email,
+    subject: subject,
+    react: AcompanhamentoEmail({ destinatario: destinatario, nomeProjeto: nomeProjeto, linkAcompanhamento: linkAcompanhamento })
   });
 }
 
@@ -104,7 +105,7 @@ export const verificarEmailsPendentes = onSchedule("every day 08:00", async () =
     const query = projetosRef
       .where(periodo.campoTimestamp, "<=", agora)
       .where(periodo.campoFlag, "==", false);
-      
+
     const snapshot = await query.get();
 
     if (snapshot.empty) {
@@ -121,12 +122,12 @@ export const verificarEmailsPendentes = onSchedule("every day 08:00", async () =
       const formsCadastroRef = db.collection("forms-cadastro");
       const qForms = formsCadastroRef.where("projetoID", "==", projetoId).limit(1);
       const formSnapshot = await qForms.get();
-      
+
       if (!formSnapshot.empty) {
         const formDoc = formSnapshot.docs[0];
         const emailResponsavel = formDoc.data()?.emailResponsavel;
         const responsavel = formDoc.data()?.responsavel.split(" ")[0];
-        
+
         logger.log(`Enviando e-mail de ${periodo.meses} meses para ${emailResponsavel} do projeto ${projeto.nome}`);
 
         try {
@@ -153,66 +154,95 @@ export const verificarEmailsPendentes = onSchedule("every day 08:00", async () =
 export const desativarProjetosExpirados = onSchedule("every day 06:00", async () => {
   logger.log("Iniciando verificação de projetos com data final expirada");
 
-    try {
-      // O locale 'en-CA' convenientemente formata a data como YYYY-MM-DD.
-      const hojeString = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Sao_Paulo'
-      }).format(new Date());
+  try {
+    // O locale 'en-CA' convenientemente formata a data como YYYY-MM-DD.
+    const hojeString = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo'
+    }).format(new Date());
 
-      logger.info(`Data de hoje para comparação: ${hojeString}`);
+    logger.info(`Data de hoje para comparação: ${hojeString}`);
 
-      // Consulta a coleção 'forms-cadastro' por documentos com dataFinal <= hoje.
-      const formsQuery = db
-        .collection("forms-cadastro")
-        .where("dataFinal", "<=", hojeString);
-      
-      const querySnapshot = await formsQuery.get();
+    // Consulta a coleção 'forms-cadastro' por documentos com dataFinal <= hoje.
+    const formsQuery = db
+      .collection("forms-cadastro")
+      .where("dataFinal", "<=", hojeString);
 
-      if (querySnapshot.empty) {
-        logger.info("Nenhum formulário de cadastro com data final expirada foi encontrado.");
-        return; // Finaliza a execução se não houver nada a fazer.
-      }
+    const querySnapshot = await formsQuery.get();
 
-      logger.info(`Encontrados ${querySnapshot.size} formulários com data expirada.`);
-
-      // Usa um WriteBatch para atualizar todos os documentos de uma vez.
-      const batch = db.batch();
-      let projetosParaDesativar = 0;
-
-      querySnapshot.forEach((doc) => {
-        const formData = doc.data();
-        const projetoId = formData.projetoID;
-
-        // Verifica se o campo projetoID existe no documento.
-        if (projetoId && typeof projetoId === 'string') {
-          // Cria uma referência para o documento correspondente na coleção 'projetos'.
-          const projetoRef = db.collection("projetos").doc(projetoId);
-          
-          // Adiciona a operação de atualização ao lote.
-          batch.update(projetoRef, { ativo: false });
-          
-          projetosParaDesativar++;
-          logger.log(`Agendando desativação para o projeto ID: ${projetoId}`);
-        } else {
-          logger.warn(`Documento ${doc.id} em 'forms-cadastro' não possui um projetoID válido.`);
-        }
-      });
-
-      // Executa todas as operações de atualização no lote.
-      if (projetosParaDesativar > 0) {
-        await batch.commit();
-        logger.info(`${projetosParaDesativar} projetos foram desativados com sucesso.`);
-      } else {
-        logger.info("Nenhum projeto precisou ser desativado.");
-      }
-
-    } catch (error) {
-      logger.error("Erro ao tentar desativar projetos expirados:", error);
+    if (querySnapshot.empty) {
+      logger.info("Nenhum formulário de cadastro com data final expirada foi encontrado.");
+      return; // Finaliza a execução se não houver nada a fazer.
     }
+
+    logger.info(`Encontrados ${querySnapshot.size} formulários com data expirada.`);
+
+    // Usa um WriteBatch para atualizar todos os documentos de uma vez.
+    const batch = db.batch();
+    let projetosParaDesativar = 0;
+
+    querySnapshot.forEach((doc) => {
+      const formData = doc.data();
+      const projetoId = formData.projetoID;
+
+      // Verifica se o campo projetoID existe no documento.
+      if (projetoId && typeof projetoId === 'string') {
+        // Cria uma referência para o documento correspondente na coleção 'projetos'.
+        const projetoRef = db.collection("projetos").doc(projetoId);
+
+        // Adiciona a operação de atualização ao lote.
+        batch.update(projetoRef, { ativo: false });
+
+        projetosParaDesativar++;
+        logger.log(`Agendando desativação para o projeto ID: ${projetoId}`);
+      } else {
+        logger.warn(`Documento ${doc.id} em 'forms-cadastro' não possui um projetoID válido.`);
+      }
+    });
+
+    // Executa todas as operações de atualização no lote.
+    if (projetosParaDesativar > 0) {
+      await batch.commit();
+      logger.info(`${projetosParaDesativar} projetos foram desativados com sucesso.`);
+    } else {
+      logger.info("Nenhum projeto precisou ser desativado.");
+    }
+
+  } catch (error) {
+    logger.error("Erro ao tentar desativar projetos expirados:", error);
   }
+}
 );
 
 
+const estadosFirebase: { [key: string]: string } = {
+  'Acre': 'acre',
+  'Alagoas': 'alagoas',
+  'Amapá': 'amapa',
+  'Amazonas': 'amazonas',
+  'Bahia': 'bahia',
+  'Ceará': 'ceara',
+  'Distrito Federal': 'distrito_federal',
+  'Espírito Santo': 'espirito_santo',
+  'Goiás': 'goias',
+  'Maranhão': 'maranhao',
+  'MatoGrosso': 'mato_grosso',
+  'Mato Grosso do Sul': 'mato_grosso_do_sul',
+  'Minas Gerais': 'minas_gerais',
+  'Pará': 'para',
+  'Paraíba': 'paraiba',
+  'Paraná': 'parana',
+  'Pernambuco': 'pernambuco',
+  'Piauí': 'piaui',
+  'Rio de Janeiro': 'rio_de_janeiro',
+  'Rio Grande do Norte': 'rio_grande_do_norte',
+  'Rio Grande do Sul': 'rio_grande_do_sul',
+  'Rondônia': 'rondonia',
+  'Roraima': 'roraima',
+  'Santa Catarina': 'santa_catarina',
+  'São Paulo': 'sao_paulo',
+  'Sergipe': 'sergipe',
+  'Tocantins': 'tocantins'
+}
 /**
  * Função auxiliar para buscar os dados de um formulário.
  * Procura primeiro na coleção 'formsAcompanhamento' e depois em 'formsCadastro'.
@@ -228,18 +258,18 @@ const getFormData = async (
   }
 
   // 1. Tenta buscar na coleção 'formsAcompanhamento'
-  const acompanhamentoRef = db.collection("formsAcompanhamento").doc(formId);
+  const acompanhamentoRef = db.collection("forms-acompanhamento").doc(formId);
   const acompanhamentoDoc = await acompanhamentoRef.get();
   if (acompanhamentoDoc.exists) {
-    console.log(`Formulário ${formId} encontrado em 'formsAcompanhamento'.`);
+    console.log(`Formulário ${formId} encontrado em 'forms-acompanhamento'.`);
     return acompanhamentoDoc.data() as formsAcompanhamentoDados;
   }
 
   // 2. Se não encontrou, tenta buscar na coleção 'formsCadastro'
-  const cadastroRef = db.collection("formsCadastro").doc(formId);
+  const cadastroRef = db.collection("forms-cadastro").doc(formId);
   const cadastroDoc = await cadastroRef.get();
   if (cadastroDoc.exists) {
-    console.log(`Formulário ${formId} encontrado em 'formsCadastro'.`);
+    console.log(`Formulário ${formId} encontrado em 'forms-cadastro'.`);
     return cadastroDoc.data() as formsCadastroDados;
   }
 
@@ -291,7 +321,7 @@ const recalculateStateIndicators = async (stateName: string) => {
   let totalBeneficiariosIndiretos = 0;
   const uniqueInstituicoes = new Set<string>();
   const allMunicipios = new Set<string>();
-  const allODS = new Set<number>();
+  const allODS = new Array(17).fill(0);
   const segmentCounts: { [key: string]: number } = {};
   const leiCounts: { [key: string]: number } = {};
   let maiorAporte = { nome: "", valorAportado: 0 };
@@ -302,15 +332,15 @@ const recalculateStateIndicators = async (stateName: string) => {
     const formData = await getFormData(projeto.ultimoFormulario || "");
 
     // Agregação principal
-    totalValorAportado += projeto.valorAportadoReal;
+    totalValorAportado += Number(projeto.valorAprovado) || 0;
     uniqueInstituicoes.add(projeto.instituicao);
     projeto.municipios.forEach((mun) => allMunicipios.add(mun));
 
     // Atualiza o maior aporte
-    if (projeto.valorAportadoReal > maiorAporte.valorAportado) {
+    if (projeto.valorAprovado > maiorAporte.valorAportado) {
       maiorAporte = {
         nome: projeto.nome,
-        valorAportado: projeto.valorAportadoReal,
+        valorAportado: projeto.valorAprovado,
       };
     }
 
@@ -324,7 +354,7 @@ const recalculateStateIndicators = async (stateName: string) => {
       if ("beneficiariosIndiretos" in formData) {
         totalBeneficiariosIndiretos += formData.beneficiariosIndiretos || 0;
       }
-      formData.ods?.forEach((ods) => allODS.add(ods));
+      formData.ods?.forEach((ods) => allODS[ods] += 1);
       segmentCounts[formData.segmento] = (segmentCounts[formData.segmento] || 0) + 1;
     }
   }
@@ -346,7 +376,7 @@ const recalculateStateIndicators = async (stateName: string) => {
   };
 
   // 6. Salva os dados calculados no Firestore
-  await db.collection("dadosEstados").doc(stateName).set(finalStateData);
+  await db.collection("dadosEstados").doc(estadosFirebase[stateName]).set(finalStateData);
   console.log(`Indicadores para ${stateName} atualizados com sucesso.`);
 };
 
@@ -356,37 +386,37 @@ const recalculateStateIndicators = async (stateName: string) => {
  * É acionada na criação, atualização ou exclusão de um projeto.
  */
 export const onProjetoWrite = onDocumentWritten("projetos/{projetoId}", async (event) => {
-    // Na v2, o objeto de evento contém os dados. O 'change' está dentro de 'event.data'.
-    const change = event.data;
-    if (!change) {
-      console.log("Nenhum dado de alteração associado ao evento.");
-      return;
-    }
-
-    // O resto da lógica é idêntico, pois já opera sobre 'before' e 'after'.
-    const beforeData = change.before.exists ? (change.before.data() as Projetos) : null;
-    const afterData = change.after.exists ? (change.after.data() as Projetos) : null;
-
-    const affectedStates = new Set<string>();
-
-    if (beforeData?.estados) {
-      beforeData.estados.forEach((state) => affectedStates.add(state));
-    }
-    if (afterData?.estados) {
-      afterData.estados.forEach((state) => affectedStates.add(state));
-    }
-
-    if (affectedStates.size === 0) {
-      console.log("Nenhum estado afetado pela alteração. Encerrando.");
-      return;
-    }
-
-    const recalculationPromises = Array.from(affectedStates).map((stateName) =>
-      recalculateStateIndicators(stateName)
-    );
-
-    await Promise.all(recalculationPromises);
-
-    console.log("Todos os estados afetados foram recalculados.");
+  // Na v2, o objeto de evento contém os dados. O 'change' está dentro de 'event.data'.
+  const change = event.data;
+  if (!change) {
+    console.log("Nenhum dado de alteração associado ao evento.");
+    return;
   }
+
+  // O resto da lógica é idêntico, pois já opera sobre 'before' e 'after'.
+  const beforeData = change.before.exists ? (change.before.data() as Projetos) : null;
+  const afterData = change.after.exists ? (change.after.data() as Projetos) : null;
+
+  const affectedStates = new Set<string>();
+
+  if (beforeData?.estados) {
+    beforeData.estados.forEach((state) => affectedStates.add(state));
+  }
+  if (afterData?.estados) {
+    afterData.estados.forEach((state) => affectedStates.add(state));
+  }
+
+  if (affectedStates.size === 0) {
+    console.log("Nenhum estado afetado pela alteração. Encerrando.");
+    return;
+  }
+
+  const recalculationPromises = Array.from(affectedStates).map((stateName) =>
+    recalculateStateIndicators(stateName)
+  );
+
+  await Promise.all(recalculationPromises);
+
+  console.log("Todos os estados afetados foram recalculados.");
+}
 );

@@ -23,6 +23,7 @@ import {
   FaCaretDown,
   FaCaretUp,
   FaCheckCircle,
+  FaEdit,
   FaList,
   FaLock,
   FaPencilAlt,
@@ -31,11 +32,30 @@ import {
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import { EmpresasEditModal } from "./empresasEditModal";
+
+interface Empresa {
+  nome: string;
+  valorAportado: number; // Armazenado em centavos para evitar problemas com ponto flutuante
+}
 
 // Define a estrutura de um projeto com o ID do documento
-interface ProjetoComId extends Projetos {
+interface ProjetoComId extends Omit<Projetos, 'empresas'> {
   id: string;
+  empresas: Empresa[];
 }
+
+const formatCurrency = (value: number) => {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
+
+const empresasFilterFn: FilterFn<ProjetoComId> = (row, columnId, filterValue) => {
+  const empresas = row.getValue(columnId) as Empresa[];
+  if (!Array.isArray(empresas)) return false;
+  return empresas.some((empresa) =>
+    empresa.nome.toLowerCase().includes(String(filterValue).toLowerCase())
+  );
+};
 
 // Função de filtro personalizada para colunas que contêm arrays de strings
 const arrayIncludesFilterFn: FilterFn<ProjetoComId> = (
@@ -58,10 +78,18 @@ const numberFilterFn: FilterFn<ProjetoComId> = (row, columnId, filterValue) => {
   return String(rowValue).includes(String(filterValue));
 };
 
-// Converte qualquer valor para uma string segura para ser exibida em um input
-const toDisplayValue = (value: unknown): string => {
+// Converte qualquer valor para uma string de exibição
+const toDisplayValue = (value: unknown, columnId: string): string => {
   if (value === null || value === undefined) return "";
-  if (Array.isArray(value)) return value.join(", ");
+  if (Array.isArray(value)) {
+    // Lógica de exibição para "empresas"
+    if (columnId === 'empresas') {
+      return (value as Empresa[])
+        .map(e => `${e.nome} (${formatCurrency(e.valorAportado)})`)
+        .join("; ");
+    }
+    return value.join(", ");
+  }
   if (typeof value === "object") return "";
   return String(value);
 };
@@ -79,13 +107,13 @@ const EditableCell = ({
   isEditable,
 }: EditableCellProps) => {
   const initialValue = getValue();
-  const [value, setValue] = useState(toDisplayValue(initialValue));
+  const [value, setValue] = useState(toDisplayValue(initialValue, column.id));
 
   const onBlur = () => updateData(row.original.id, column.id, value);
 
   useEffect(() => {
-    setValue(toDisplayValue(initialValue));
-  }, [initialValue]);
+    setValue(toDisplayValue(initialValue, column.id));
+  }, [initialValue, column.id]);
 
   return isEditable ? (
     <input
@@ -96,7 +124,7 @@ const EditableCell = ({
     />
   ) : (
     <div className="w-full h-full p-2 truncate">
-      {toDisplayValue(initialValue)}
+      {toDisplayValue(initialValue, column.id)}
     </div>
   );
 };
@@ -108,6 +136,8 @@ const Planilha = () => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [isEditable, setIsEditable] = useState<boolean>(false);
   const [complianceFilter, setComplianceFilter] = useState<ComplianceFilter>('all');
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [editingProject, setEditingProject] = useState<ProjetoComId | null>(null);
 
   const filteredData = useMemo(() => {
     if (complianceFilter == 'all') {
@@ -138,10 +168,9 @@ const Planilha = () => {
       switch (columnId) {
         case "municipios":
         case "estados":
-        case "empresas":
           processedValue = value.split(",").map((item) => item.trim());
           break;
-        case "valorAportadoReal":
+        case "valorAprovado":
           processedValue = parseFloat(value) || 0;
           break;
         default:
@@ -158,6 +187,23 @@ const Planilha = () => {
     },
     []
   );
+
+  const handleSaveEmpresas = async (updatedEmpresas: Empresa[]) => {
+    if (editingProject) {
+      const novoValorAprovado = updatedEmpresas.reduce((total, empresa) => total + empresa.valorAportado,0);
+      const dataToUpdate = {
+        empresas: updatedEmpresas,
+        valorAprovado: novoValorAprovado,
+      };
+      const docRef = doc(db, "projetos", editingProject.id);
+      try {
+        await updateDoc(docRef, dataToUpdate);
+        console.log("Projeto atualizado com sucesso!");
+      } catch (error) {
+        console.error("Erro ao atualizar o projeto:", error);
+      }
+    }
+  };
 
   // Definição das colunas da tabela
   const columns = useMemo(
@@ -185,15 +231,16 @@ const Planilha = () => {
         ),
       },
       {
-        accessorKey: "valorAportadoReal",
-        header: "Aportado",
-        cell: (props: CellContext<ProjetoComId, unknown>) => (
-          <EditableCell
-            {...props}
-            updateData={handleUpdateData}
-            isEditable={isEditable}
-          />
-        ),
+        accessorKey: "valorAprovado",
+        header: "Aprovado",
+        cell: (props: CellContext<ProjetoComId, unknown>) => {
+          const valor = props.getValue() as number;
+          return (
+            <div className="p-2 truncate text-right">
+              {formatCurrency(valor)}
+            </div>
+          );
+        },
         filterFn: numberFilterFn,
       },
       {
@@ -210,14 +257,30 @@ const Planilha = () => {
       {
         accessorKey: "empresas",
         header: "Empresas Grupo CSN",
-        cell: (props: CellContext<ProjetoComId, unknown>) => (
-          <EditableCell
-            {...props}
-            updateData={handleUpdateData}
-            isEditable={isEditable}
-          />
-        ),
-        filterFn: arrayIncludesFilterFn,
+        cell: (props: CellContext<ProjetoComId, unknown>) => {
+          const empresas = props.getValue() as Empresa[];
+          const displayValue = Array.isArray(empresas)
+            ? empresas.map(e => `${e.nome} (${formatCurrency(e.valorAportado)})`).join("; ")
+            : "";
+
+          return (
+            <div className="p-2 flex items-center justify-between group">
+              <span className="truncate">{displayValue}</span>
+              {isEditable && (
+                <button
+                  onClick={() => {
+                    setEditingProject(props.row.original);
+                    setIsModalOpen(true);
+                  }}
+                  className="p-1 rounded-full text-blue-fcsn dark:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <FaEdit />
+                </button>
+              )}
+            </div>
+          )
+        },
+        filterFn: empresasFilterFn,
       },
       {
         accessorKey: "indicacao",
@@ -298,7 +361,7 @@ const Planilha = () => {
       { header: "Lei de Incentivo", key: "lei", width: 30 },
       {
         header: "Valor Aportado",
-        key: "valorAportadoReal",
+        key: "valorAprovado",
         width: 20,
         style: { numFmt: '"R$"#,##0.00' },
       },
@@ -314,7 +377,7 @@ const Planilha = () => {
       const data = row.original;
       return {
         ...data,
-        empresas: Array.isArray(data.empresas) ? data.empresas.join(", ") : "",
+        empresas: Array.isArray(data.empresas) ? data.empresas.map(e => `${e.nome} (${formatCurrency(e.valorAportado)})`).join("; ") : "",
         municipios: Array.isArray(data.municipios)
           ? data.municipios.join(", ")
           : "",
@@ -367,6 +430,15 @@ const Planilha = () => {
 
   return (
     <div>
+      {editingProject && (
+        <EmpresasEditModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveEmpresas}
+          initialData={editingProject.empresas || []}
+          projectName={editingProject.nome}
+        />
+      )}
       <div className="mb-4 flex justify-end items-center gap-4">
         {/* Botão de alterar o filtro de compliance */}
         <button

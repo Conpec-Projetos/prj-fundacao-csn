@@ -46,6 +46,11 @@ const MetricCard: React.FC<MetricCardProps> = ({
 export default function AdminHomeClient({ dados, estadosAtendidos }: { dados: dadosEstados; estadosAtendidos: number }) {
   const userName = "Administrador";
 
+  const formatador = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
+
 
   return (
     <div className="flex flex-col grow min-h-[90vh]">
@@ -65,7 +70,7 @@ export default function AdminHomeClient({ dados, estadosAtendidos }: { dados: da
             />
             <MetricCard
               title="Valor Total Investido"
-              value={`R$${dados.valorTotal},00`}
+              value={formatador.format(dados?.valorTotal)}
               icon={<FaChartPie />}
               color="green"
             />
