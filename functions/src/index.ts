@@ -1,9 +1,10 @@
 import { onDocumentUpdated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
-import { Resend } from "resend";
+import { Resend } from "resend"; // serviço externo para envio de e-mails.
 import AcompanhamentoEmail from "./emails/acompanhamentoEmail";
 import { onSchedule } from "firebase-functions/v2/scheduler"
+import ProjetoAprovadoEmail from "./emails/projetoAprovadoEmail";
 import {
   Projetos,
   dadosEstados,
@@ -11,6 +12,7 @@ import {
   formsCadastroDados,
 } from "./tipos/entities";
 
+// Arquivo principal onde as functions são registradas
 admin.initializeApp();
 const db = admin.firestore();
 
@@ -19,7 +21,27 @@ const resend = new Resend(process.env.RESEND_KEY); // Ele não funciona se deixa
 // Eu sinceramente não sei o porque ele não consegue ler a variável de ambiente aqui mas em outros momentos consegue
 // Só coloco assim para enviar pro github sem expor a chave, mas se for fazer deploy, lembra de mudar.
 
-export const verificarProjetoAprovado = onDocumentUpdated("projetos/{projetoId}", async (event) => {
+
+async function enviaEmailProjetoAprovado(payload: { email: string; destinatario: string; nomeProjeto: string; valor: string; linkSite: string}) {
+  const { email, destinatario, nomeProjeto, valor, linkSite } = payload;
+  const subject = `O projeto: ${nomeProjeto} foi aprovado`;
+
+  logger.info("Dados recebidos para envio de e-mail:", {
+    emailDestinatario: email,
+    destinatario,
+    projeto: nomeProjeto,
+    valor: valor,
+    linkSite: linkSite
+  });
+    return resend.emails.send({
+      from: process.env.EMAIL_FROM!,
+      to: email,
+      subject: subject,
+      react: ProjetoAprovadoEmail({nomeDestinatario: destinatario, emailDestinatario: email, nomeProjeto: nomeProjeto, valorAprovado: valor, linkSite: linkSite})
+  });
+}
+
+export const emailsProjetoAprovado = onDocumentUpdated("projetos/{projetoId}", async (event) => {
   const snapshot = event.data;
   if (!snapshot) {
     logger.error("Nenhum dado no evento.");
@@ -59,6 +81,43 @@ export const verificarProjetoAprovado = onDocumentUpdated("projetos/{projetoId}"
       },
     };
 
+    // Vamos pegar as informações necessarias para enviarmos o email 
+    const projetoId = event.params.projetoId;
+    const projeto = dataDepois;
+    
+    // Pega o valor aportado total
+    const valorTotal = projeto.valorAprovado
+
+    // Buscar e-mail do responsável no formulário de cadastro
+    const formsCadastroRef = db.collection("forms-cadastro");
+    const qForms = formsCadastroRef.where("projetoID", "==", projetoId).limit(1);
+    const formSnapshot = await qForms.get();
+
+    if (!formSnapshot.empty) {
+      const formDoc = formSnapshot.docs[0];
+      const formData = formDoc.data();
+      const emailResponsavel = formData?.emailResponsavel || "";
+      const responsavel = formData?.responsavel?.split(" ")[0] || "Responsável";
+
+      logger.log("Enviando e-mail de aprovação do projeto.");
+
+      try {
+        await enviaEmailProjetoAprovado({
+          email: emailResponsavel,
+          destinatario: responsavel,
+          nomeProjeto: projeto.nome,
+          valor: valorTotal.toFixed(2),
+          linkSite: `${process.env.PROJECT_URL}/signin`,
+        });
+      } catch (error) {
+        logger.error(
+          `Falha ao enviar e-mail para ${emailResponsavel} do projeto ${projetoId}`,
+          error
+        );
+      }
+    } else {
+      logger.warn(`Não foi possível encontrar o responsável para o projeto ${projetoId}`);
+    }
     // Atualiza o documento no Firestore
     return snapshot.after.ref.update(updatePayload);
   }
@@ -385,7 +444,7 @@ const recalculateStateIndicators = async (stateName: string) => {
  * Função principal (Trigger) que observa a coleção 'projetos'.
  * É acionada na criação, atualização ou exclusão de um projeto.
  */
-export const onProjetoWrite = onDocumentWritten("projetos/{projetoId}", async (event) => {
+export const alterarDadosEstados = onDocumentWritten("projetos/{projetoId}", async (event) => {
   // Na v2, o objeto de evento contém os dados. O 'change' está dentro de 'event.data'.
   const change = event.data;
   if (!change) {

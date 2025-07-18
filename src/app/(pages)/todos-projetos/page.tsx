@@ -11,17 +11,8 @@ import {
 } from "react-icons/fa";
 
 import { FaClockRotateLeft } from "react-icons/fa6";
-import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "@/firebase/firebase-config";
-
-import darkLogo from "@/assets/fcsn-logo-dark.svg";
-import logo from "@/assets/fcsn-logo.svg";
-import Image from "next/image";
-import { useTheme } from "@/context/themeContext";
+import { db } from "@/firebase/firebase-config";
 import { collection, getDocs, query, where } from "firebase/firestore";
-
-
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj"; 
 
 // --- MUDANÇA 1: Simplificar a interface. 'reprovado' não existe mais ---
@@ -230,6 +221,7 @@ export default function TodosProjetos() {
     }
 
   }
+  const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
 
   function clearFilters() {
     setFilters((prevFilters) => ({
@@ -242,56 +234,7 @@ export default function TodosProjetos() {
     setCtrl(false);
   }
 
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const { darkMode } = useTheme();
-    // Vamos verificar se é ADM
-    async function IsADM(email: string): Promise<boolean>{
-      const usuarioInt = collection(db, "usuarioInt");
-      const qADM = query(usuarioInt, where("email", "==", email), where("administrador", "==", true));
-      const snapshotADM = await getDocs(qADM );
-      return !snapshotADM.empty; // Se não estiver vazio, é um adm
-    }
-
-
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-          if (!user || !user.email || !user.emailVerified) { // Checa se o usuário tem email verificado tambem
-            router.push("/login"); // Como não está logado, permite que a página de login seja renderizada
-            return;
-          }
-          const emailDomain = user.email.split('@')[1];
-          const isAdm = await IsADM(user.email);
-
-          // Verificamos se possui o dominio da csn (usamos afim de teste o dominio da conpec)
-          // se o usuario verificou o email recebido e se é ADM
-          if ((emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br") && isAdm ){ // Verificamos se possui o dominio da csn e se é ADM
-            setIsLoading(false);
-          } else if (emailDomain === "conpec.com.br" || emailDomain === "csn.com.br" || emailDomain === "fundacaocsn.org.br"){ // Se não for verificamos se possui o dominio da csn apenas
-            router.push("/dashboard"); 
-          } else { // Se chegar aqui significa que é um usuario externo
-            router.push("/inicio-externo");
-          }
-        });
-
-    return () => unsubscribe();
-    }, [router]);
-
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
-        <Image src={darkMode ? darkLogo : logo} alt="csn-logo" width={600} priority />
-        <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
-          Verificando sessão...
-        </div>
-      </div>
-    );
-  }
-
-
-  const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
-
-
+  
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex flex-1 flex-col px-4 sm:px-8 md:px-20 lg:px-32 py-4 gap-y-10 ">

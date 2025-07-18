@@ -2,11 +2,11 @@ import Footer from "@/components/footer/footer";
 import { Toaster } from "sonner";
 import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
-import AcompanhamentoForm from "@/components/forms/acompanhamentoForm";
 import { formsAcompanhamentoDados, formsCadastroDados, odsList, leiList, segmentoList, ambitoList, Associacao, Projetos } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import AcompanhamentoForm from "@/components/forms/acompanhamentoForm";
 import ProjetoInfoBloco from "@/components/forms/projetoInfoBloco";
 
 
@@ -177,6 +177,8 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
 
     // Autenticação no Servidor
     const user = await getCurrentUser();
+
+    // Essa pagina ainda nao esta sendo protegida com o middleware por isso deixei essa verificacao
     if (!user || !user.email_verified) {
         redirect('/login');
     }
@@ -225,7 +227,7 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
             
             <AcompanhamentoForm 
                 projetoID={projetoID}
-                usuarioAtualID={user.uid}
+                usuarioAtualID={user!.uid} // Sabemos com crtz que o user existe pois o middleware esta verificando isso, por isso coloquei "!" no user!
                 initialData={initialData}
             />
 
