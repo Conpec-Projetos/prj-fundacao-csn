@@ -98,11 +98,15 @@ export default function LoginClient() {
             console.log("Redirecionando para:", result.redirectTo);
             router.push(result.redirectTo);
 
-        } catch (error: any) {
-            console.error("Erro inesperado:", error.message, error.stack, error);
-            toast.error("Erro inesperado: " + (error?.message || "Erro desconhecido"));
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.error("Erro inesperado:", error.message, error.stack, error);
+                toast.error("Erro inesperado: " + error.message);
+            } else {
+                console.error("Erro inesperado:", error);
+                toast.error("Erro inesperado: Erro desconhecido");
+            }
         }
-
     }
     // Renderiza o componente de recuperar senha
     if (recoverPassword) {

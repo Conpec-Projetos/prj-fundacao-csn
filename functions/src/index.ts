@@ -77,15 +77,8 @@ export const verificarProjetoAprovado = onDocumentUpdated("projetos/{projetoId}"
     // Vamos pegar as informações necessarias para enviarmos o email 
     const projetoId = event.params.projetoId;
     const projeto = dataDepois;
-    // Soma os valores do campo `empresas` para obter o valor aprovado total
-    let valorTotal = 0;
-    if (Array.isArray(projeto.empresas)) {
-      projeto.empresas.forEach((empresa: any) => {
-        if (empresa?.valorAportado) {
-          valorTotal += empresa.valorAportado;
-        }
-      });
-    }
+    // Soma os valores do campo 'empresas' para obter o valor aprovado total
+    const valorTotal = projeto.valorAprovado
 
     // Buscar e-mail do responsável no formulário de cadastro
     const formsCadastroRef = db.collection("forms-cadastro");

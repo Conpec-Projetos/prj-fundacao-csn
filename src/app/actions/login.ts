@@ -1,6 +1,7 @@
 import { auth, db } from "@/firebase/firebase-config";
 import { signInWithEmailAndPassword, User } from "firebase/auth";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { FirebaseError } from "firebase/app";
 
 // Tipo de retorno
 type LoginResult = 
@@ -50,21 +51,34 @@ export async function login(email: string, password: string): Promise<LoginResul
       redirectTo
     };
 
-  } catch (error: any) {
-    console.error("Erro no login:", error);
-    let message = "Erro ao tentar fazer o login.";
-    if (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
-      message = "Email ou senha incorretos.";
-    } else if (error.code === "auth/user-not-found") {
-      message = "Usuário não encontrado.";
-    } else if (error.code === "auth/too-many-requests") {
-      message = "Muitas tentativas. Tente novamente mais tarde.";
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      console.error("Erro no login:", error);
+      let message = "Erro ao tentar fazer o login.";
+      switch (error.code) {
+        case "auth/wrong-password":
+          message = "Email ou senha incorretos.";
+          break;
+        case "auth/invalid-credential":
+          message = "Email ou senha incorretos.";
+          break;
+        case "auth/user-not-found":
+          message = "Usuário não encontrado.";
+          break;
+        case "auth/too-many-requests":
+          message = "Muitas tentativas. Tente novamente mais tarde.";
+          break;
+        default:
+          message = "Erro ao tentar fazer o login. Tente novamente.";
+          break;
+      } return {
+        success: false,
+        error: message,
+        firebaseErrorCode: error.code
+      };
     }
-
-    return {
-      success: false,
-      error: message,
-      firebaseErrorCode: error.code
-    };
-  }
+  } return {
+    success: false,
+    error: "Erro desconhecido ao tentar fazer o login."
+  };
 }

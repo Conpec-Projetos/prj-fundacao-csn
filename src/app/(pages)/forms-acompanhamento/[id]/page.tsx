@@ -6,7 +6,7 @@ import { formsAcompanhamentoDados, formsCadastroDados, odsList, leiList, segment
 import { FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import AcompanhamentoForm from "@/components/forms/AcompanhamentoForm";
+import AcompanhamentoForm from "@/components/forms/acompanhamentoForm";
 import ProjetoInfoBloco from "@/components/forms/projetoInfoBloco";
 
 
