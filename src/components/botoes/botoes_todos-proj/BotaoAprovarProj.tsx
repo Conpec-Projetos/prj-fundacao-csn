@@ -4,13 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { db } from "@/firebase/firebase-config";
 import { collection, doc, getDocs, query, updateDoc, where, arrayUnion } from "firebase/firestore";
 
+// Importa a lista de empresas do seu arquivo JSON local
+import listaDeEmpresasPermitidas from "./empresas.json";
+
 // As props que o componente recebe do pai
 type BotaoAprovarProjProps = {
   projectId: string;
   projectName: string;
   projetosComplianceStatus: boolean;
   complianceDocUrl: string | null;
-  additionalDocsUrl: string | null;
+  additionalDocsUrls: string[];
   onApprovalSuccess: () => void;
 };
 
@@ -20,9 +23,7 @@ const ConfirmationModal = ({ message, onConfirm, onCancel, isUpdating }: { messa
         <div className="bg-white p-6 rounded-lg shadow-xl text-center">
             <p className="text-black mb-4">{message}</p>
             <div className="flex justify-center gap-4">
-                <button onClick={onCancel} className="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">
-                    Cancelar
-                </button>
+                <button onClick={onCancel} className="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">Cancelar</button>
                 <button onClick={onConfirm} disabled={isUpdating} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50">
                     {isUpdating ? 'Confirmando...' : 'Confirmar Definitivamente'}
                 </button>
@@ -31,15 +32,21 @@ const ConfirmationModal = ({ message, onConfirm, onCancel, isUpdating }: { messa
     </div>
 );
 
+// Interface para organizar os dados da empresa com seu valor
+interface EmpresaComValor {
+  nome: string;
+  valor: number;
+}
+
 export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const caixaRef = useRef<HTMLDivElement>(null);
   
-  // Estados para o formulário de aprovação final
-  const [valorAprovado, setValorAprovado] = useState("");
-  const [empresaInput, setEmpresaInput] = useState(""); // Guarda o valor do input atual
-  const [empresasList, setEmpresasList] = useState<string[]>([]); // Guarda a lista de empresas adicionadas
+  // Estados para o formulário de aprovação final por empresa
+  const [empresaSelecionada, setEmpresaSelecionada] = useState("");
+  const [valorPorEmpresa, setValorPorEmpresa] = useState(""); 
+  const [empresasList, setEmpresasList] = useState<EmpresaComValor[]>([]);
   
   const [showConfirmation, setShowConfirmation] = useState(false);
 
@@ -82,11 +89,31 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     }
   };
 
-  // Nova função para adicionar uma empresa à lista
+  // Função para adicionar o par (empresa, valor) à lista
   const handleAddEmpresa = () => {
-    if (empresaInput.trim() === "") return;
-    setEmpresasList(prevList => [...prevList, empresaInput.trim()]);
-    setEmpresaInput("");
+    if (!empresaSelecionada) {
+      alert("Por favor, selecione uma empresa.");
+      return;
+    }
+    const valorNumerico = parseFloat(valorPorEmpresa);
+    if (valorPorEmpresa.trim() === "" || isNaN(valorNumerico)) {
+      alert("Por favor, insira um valor numérico válido.");
+      return;
+    }
+    if (empresasList.some(e => e.nome === empresaSelecionada)) {
+      alert("Esta empresa já foi adicionada.");
+      return;
+    }
+    
+    const novaEmpresa: EmpresaComValor = {
+      nome: empresaSelecionada,
+      valor: valorNumerico
+    };
+    
+    setEmpresasList(prevList => [...prevList, novaEmpresa]);
+    // Limpa os campos para a próxima adição
+    setEmpresaSelecionada("");
+    setValorPorEmpresa("");
   };
 
   // Função para remover uma empresa da lista
@@ -98,13 +125,13 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
   const handleProjectApprovalSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (empresasList.length === 0) {
-      alert("Por favor, adicione pelo menos uma empresa vinculada.");
+      alert("Adicione pelo menos uma empresa com seu respectivo valor aprovado.");
       return;
     }
     setShowConfirmation(true);
   };
 
-  // Função final que executa a aprovação no Firebase
+  // Função final que executa a aprovação, construindo o 'map' para o Firestore
   async function executeFinalApproval() {
     if (isUpdating) return;
     setIsUpdating(true);
@@ -115,10 +142,17 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
       
       const projectDocRef = querySnapshot.docs[0].ref;
 
+      // Cria um objeto para atualizar o map 'empresas' no Firestore
+      const empresasMapUpdate: { [key: string]: any } = {};
+      empresasList.forEach(empresa => {
+        // Usa a notação de ponto para atualizar campos dentro de um map
+        empresasMapUpdate[`empresas.${empresa.nome}`] = empresa.valor;
+      });
+
+      // Atualiza o status e espalha as atualizações do mapa de empresas
       await updateDoc(projectDocRef, {
         status: "aprovado",
-        valorAprovado: valorAprovado,
-        empresas: arrayUnion(...empresasList)
+        ...empresasMapUpdate
       });
       
       setShowConfirmation(false);
@@ -142,9 +176,20 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
             <a href={props.complianceDocUrl || '#'} target="_blank" rel="noopener noreferrer" className={`w-full block text-center py-2 rounded ${props.complianceDocUrl ? 'bg-blue-fcsn text-white hover:bg-blue-800' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
               Baixar Doc. Compliance
             </a>
-            <a href={props.additionalDocsUrl || '#'} target="_blank" rel="noopener noreferrer" className={`w-full block text-center py-2 rounded ${props.additionalDocsUrl ? 'bg-blue-fcsn text-white hover:bg-blue-800' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
-              Baixar Docs. Adicionais
-            </a>
+            
+            {/* Lógica para os documentos adicionais */}
+            {props.additionalDocsUrls && props.additionalDocsUrls.length > 0 ? (
+              props.additionalDocsUrls.map((url, index) => (
+                <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="w-full block text-center py-2 rounded bg-blue-fcsn text-white hover:bg-blue-800">
+                  Baixar Doc. Adicional {index + 1}
+                </a>
+              ))
+            ) : (
+              <a className="w-full block text-center py-2 rounded bg-gray-300 text-gray-500 cursor-not-allowed">
+                Nenhum Doc. Adicional
+              </a>
+            )}
+
             <hr className="my-3"/>
             <button onClick={handleComplianceApproval} disabled={isUpdating} className="bg-green-600 text-white w-full py-2 rounded hover:bg-green-700 disabled:opacity-50">
               {isUpdating ? 'Aprovando...' : 'Aprovar Compliance'}
@@ -156,46 +201,58 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     
     // ESTADO 2: Compliance Aprovado, Projeto Pendente
     return (
-      <div ref={caixaRef} className="absolute top-full left-0 w-[400px] p-4 rounded shadow-md bg-white z-10">
+      <div ref={caixaRef} className="absolute top-full left-0 w-[350px] p-4 rounded shadow-md bg-white z-10">
         <form onSubmit={handleProjectApprovalSubmit}>
-          <div className="mb-3">
-            <label className="text-black block mb-1">Valor aprovado:</label>
-            <input type="text" value={valorAprovado} onChange={(e) => setValorAprovado(e.target.value)} className="border-gray-400 w-full p-2 border rounded text-black" required />
-          </div>
-          
-          <div className="mb-3">
-            <label className="text-black block mb-1">Empresas vinculadas:</label>
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                value={empresaInput} 
-                onChange={(e) => setEmpresaInput(e.target.value)} 
-                className="border-gray-400 flex-grow p-2 border rounded text-black" 
-              />
-              <button 
-                type="button" 
-                onClick={handleAddEmpresa} 
-                className="bg-blue-fcsn text-white px-3 rounded hover:bg-blue-800"
+          <div className="mb-3 p-3 border rounded border-gray-200">
+            <p className="text-black font-semibold block mb-2">Adicionar Empresa e Valor</p>
+            <div className="mb-2">
+              <label className="text-black text-sm block mb-1">Empresa:</label>
+              <select 
+                value={empresaSelecionada} 
+                onChange={(e) => setEmpresaSelecionada(e.target.value)}
+                className="border-gray-400 w-full p-2 border rounded text-black bg-white"
               >
-                Adicionar
-              </button>
+                <option value="">-- Selecione --</option>
+                {listaDeEmpresasPermitidas.map(empresa => (
+                  <option key={empresa} value={empresa}>{empresa}</option>
+                ))}
+              </select>
             </div>
+            <div className="mb-2">
+              <label className="text-black text-sm block mb-1">Valor Aprovado:</label>
+              <input 
+                type="number"
+                placeholder="Ex: 50000.00"
+                value={valorPorEmpresa}
+                min="0"
+                onChange={(e) => {
+                if (e.target.value === '' || parseFloat(e.target.value) >= 0) {
+                  setValorPorEmpresa(e.target.value);
+                }
+                }}
+            className="border-gray-400 w-full p-2 border rounded text-black" 
+            />
+            </div>
+            <button 
+              type="button" 
+              onClick={handleAddEmpresa} 
+              className="bg-blue-fcsn text-white w-full mt-1 py-2 rounded hover:bg-blue-800"
+            >
+              Adicionar
+            </button>
           </div>
 
           {empresasList.length > 0 && (
             <div className="mb-4 p-2 border border-gray-200 rounded">
-              <p className="text-sm font-semibold text-black mb-1">Empresas a serem adicionadas:</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-sm font-semibold text-black mb-1">Empresas a serem aprovadas:</p>
+              <div className="flex flex-col gap-2 mt-2">
                 {empresasList.map((empresa, index) => (
-                  <div key={index} className="flex items-center bg-gray-200 text-black rounded-full px-3 py-1 text-sm">
-                    <span>{empresa}</span>
-                    <button 
-                      type="button" 
-                      onClick={() => handleRemoveEmpresa(index)} 
-                      className="ml-2 text-red-500 hover:text-red-700 font-bold"
-                    >
-                      x
-                    </button>
+                  <div key={index} className="flex items-center justify-between bg-gray-200 text-black rounded px-3 py-1 text-sm">
+                    <div>
+                      <span className="font-bold">{empresa.nome}: </span>
+                      <span>{empresa.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                    </div>
+                    <button type="button" onClick={() => handleRemoveEmpresa(index)} className="ml-2 text-red-500 hover:text-red-700 font-bold">x</button>
                   </div>
                 ))}
               </div>
