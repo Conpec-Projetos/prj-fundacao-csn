@@ -97,7 +97,7 @@ export async function GET(req: Request) {
   try {
     const decoded = await authAdmin.verifySessionCookie(sessionCookie);
     return NextResponse.json({ user: decoded });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ user: null });
   }
 }
