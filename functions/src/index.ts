@@ -77,7 +77,8 @@ export const verificarProjetoAprovado = onDocumentUpdated("projetos/{projetoId}"
     // Vamos pegar as informações necessarias para enviarmos o email 
     const projetoId = event.params.projetoId;
     const projeto = dataDepois;
-    // Soma os valores do campo 'empresas' para obter o valor aprovado total
+    
+    // Pega o valor aportado total
     const valorTotal = projeto.valorAprovado
 
     // Buscar e-mail do responsável no formulário de cadastro

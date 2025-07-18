@@ -72,7 +72,7 @@ const ProjectCard = ({ project }: { project: ProjetoExt }) => {
               Ver detalhes
             </Link>
           </div>
-          {project.formularioPendente && (
+          {project.formularioPendente && effectiveStatus !== 'finalizado' && (
             <div className="mt-4 p-3 bg-yellow-50 dark:bg-[#5A5A72] rounded-lg flex items-center">
               <FaExclamationCircle className="text-yellow-500 mr-2" />
               <p className="text-sm text-yellow-700 dark:text-yellow-500">
