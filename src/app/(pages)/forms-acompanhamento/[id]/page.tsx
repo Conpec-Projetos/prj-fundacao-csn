@@ -1,9 +1,9 @@
 import Footer from "@/components/footer/footer";
 import { Toaster } from "sonner";
-import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import AcompanhamentoForm from "@/components/forms/acompanhamentoForm";
-import { formsAcompanhamentoDados, formsCadastroDados, odsList, leiList, segmentoList, ambitoList, Associacao } from "@/firebase/schema/entities";
+import { formsAcompanhamentoDados, formsCadastroDados, odsList, leiList, segmentoList, ambitoList, Associacao, Projetos } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
@@ -122,6 +122,56 @@ async function getProjetoData(projetoID: string): Promise<{ initialData: Partial
     return { initialData, projetoInfo };
 }
 
+async function verificarFormularioPendente(projetoId: string): Promise<boolean> {
+    const projetoDocRef = doc(db, 'projetos', projetoId);
+    const projetoDocSnap = await getDoc(projetoDocRef);
+
+    if (!projetoDocSnap.exists()) {
+        return false; 
+    }
+
+    const projetoData = projetoDocSnap.data() as Projetos;
+
+    if (projetoData.status !== "aprovado" || !projetoData.dataAprovado) {
+        return false;
+    }
+
+    const acompanhamentoQuery = query(
+        collection(db, "forms-acompanhamento"),
+        where("projetoID", "==", projetoId)
+    );
+    const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
+    const numAcompanhamentos = acompanhamentoSnapshot.size;
+
+    const dataAprovado = projetoData.dataAprovado.toDate();
+    const hoje = new Date();
+    
+    let mesesNecessarios = -1;
+
+    switch (numAcompanhamentos) {
+        case 0:
+            mesesNecessarios = 3;
+            break;
+        case 1:
+            mesesNecessarios = 7;
+            break;
+        case 2:
+            mesesNecessarios = 10;
+            break;
+        default:
+            return false; // Bloqueia se já tiver 3 ou mais
+    }
+
+    if (mesesNecessarios > 0) {
+        const dataLimite = new Date(dataAprovado);
+        dataLimite.setMonth(dataAprovado.getMonth() + mesesNecessarios);
+        
+        return hoje >= dataLimite;
+    }
+
+    return false;
+}
+
 export default async function FormsAcompanhamento({ params }: { params: Promise<{ id: string }> }) {
     const { id: projetoID } = await params;
 
@@ -146,6 +196,11 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
 
     // Se o ID do projeto na URL não está na lista de projetos do usuário, redireciona
     if (!projetosDoUsuario.includes(projetoID)) {
+        redirect('/inicio-externo');
+    }
+
+    const isPendente = await verificarFormularioPendente(projetoID);
+    if (!isPendente) {
         redirect('/inicio-externo');
     }
 
