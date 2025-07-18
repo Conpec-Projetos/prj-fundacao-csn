@@ -63,7 +63,10 @@ const Filtros = ({
         <div className="absolute right-4 top-full flex flex-col justify-center items-center mt-2 min-w-[250px] max-w-sm w-fit rounded-lg bg-white dark:bg-blue-fcsn2 shadow-lg">
           <button
             className="cursor-pointer bg-blue-fcsn dark:bg-blue-fcsn3 text-white-off rounded-md m-4 p-3 text-lg font-bold"
-            onClick={() => setFiltrarPorEstado(!filtrarPorEstado)}
+            onClick={() => {
+              setFiltrarPorEstado(!filtrarPorEstado);
+              lidarLimparFiltros();
+            }}
           >
             Filtrar por {filtrarPorEstado ? "estado" : "município"}
           </button>

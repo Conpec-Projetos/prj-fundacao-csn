@@ -44,6 +44,11 @@ export default function DashboardContent({
   const { isPdfMode } = usePDF();
   const ehCelular = useEhCelular();
 
+  const formatador = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
+
   return (
     <>
       <section
@@ -65,10 +70,7 @@ export default function DashboardContent({
               </h1>
             </div>
             <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
-              R$ {dados?.valorTotal},00
-            </h1>
-            <h1 className="text-base text-blue-fcsn dark:text-white-off font-light">
-              Investido em Projeto {dados?.maiorAporte.nome}
+              {formatador.format(dados?.valorTotal || 0)}
             </h1>
           </div>
         </div>
@@ -86,7 +88,7 @@ export default function DashboardContent({
               </h1>
             </div>
             <h1 className="text-2xl text-blue-fcsn dark:text-white-off font-bold">
-              R$ {dados?.maiorAporte.valorAportado},00
+              {formatador.format(dados?.maiorAporte.valorAportado || 0)}
             </h1>
             <h1 className="text-base text-blue-fcsn dark:text-white-off font-light">
               Investido em Projeto {dados?.maiorAporte.nome}

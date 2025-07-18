@@ -19,22 +19,17 @@ export interface usuarioInt {
 export interface Projetos {
   nome: string;
   instituicao: string;
-  estados: string[];
+  estados: string[]; 
   municipios: string[];
   lei: string;
   status: "pendente" | "aprovado" | "reprovado";
-  dataAprovado?: Timestamp;
-  notificacoes?: [
-    {p3: Timestamp, enviado: boolean},
-    {p7: Timestamp, enviado: boolean},
-    {p10: Timestamp, enviado: boolean}
-  ];
+  dataAprovado: Timestamp | "";
   ativo: boolean;
   compliance: boolean;
-  empresas: { nome: string; valorAportado: number }[];
+  empresas: string[];
   indicacao?: string;
   ultimoFormulario?: string;
-  valorAprovado?: number;
+  valorAprovado: number;
 }
 
 export interface formsCadastroDados {

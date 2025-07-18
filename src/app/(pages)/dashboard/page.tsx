@@ -165,7 +165,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   function somarDadosMunicipios(array: dadosProjeto[]): dadosEstados {
     const maiorAporteGlobal = array
-      .map((d) => d.valorAportadoReal)
+      .map((d) => d.valorAprovado)
       .reduce((max, curr) => {
         if (!max || (curr && curr.valorAportado > max.valorAportado)) {
           return curr;
@@ -233,7 +233,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       (acc, curr) => ({
         ...acc,
         valorTotal:
-          (acc.valorTotal ?? 0) + (curr.valorAportadoReal?.valorAportado ?? 0),
+          (acc.valorTotal ?? 0) + (curr.valorAprovado?.valorAportado ?? 0),
         maiorAporte: maiorAporteGlobal,
         qtdProjetos: array.length,
         qtdOrganizacoes: organizacoes.length,
@@ -300,7 +300,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       consultaSnapshot.forEach((doc) => {
         idsUltimosForms.push(doc.data().ultimoFormulario);
         valoresAportados[doc.data().ultimoFormulario] =
-          doc.data().valorAportadoReal;
+          doc.data().valorAprovado;
         nomesProjetos[doc.data().ultimoFormulario] = doc.data().nome;
       });
     }
@@ -317,7 +317,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         const dadoFiltrado: dadosProjeto = {
           instituicao: dado.instituicao,
           qtdProjetos: dado.qtdProjetos,
-          valorAportadoReal: {
+          valorAprovado: {
             valorAportado: valoresAportados[id],
             nome: nomesProjetos[id],
           },
@@ -337,7 +337,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           const dadoFiltrado: dadosProjeto = {
             instituicao: dado.instituicao,
             qtdProjetos: dado.qtdProjetos,
-            valorAportadoReal: {
+            valorAprovado: {
               valorAportado: valoresAportados[id],
               nome: nomesProjetos[id],
             },
