@@ -10,13 +10,13 @@ from thefuzz import process
 
 
 # Configuração do Firebase
-cred = credentials.Certificate(r"../../../serviceAccountKey.json")
+cred = credentials.Certificate(r"D:/Unicamp/CC/Conpec/Fundação CSN/prj-fundacao-csn/serviceAccountKey.json")
 if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 # Caminho para sua planilha
-caminho_planilha = r"../../../2024 LISTA FINAL DEZEMBRO PROJETOS APROVADOS 03012025.xlsx"
+caminho_planilha = r"C:/Users/leona/Downloads/PlanilhaFCSN2024.xlsx"
 
 # Nome do arquivo para cache dos dados do IBGE
 ARQUIVO_CACHE_IBGE = 'dados_municipios_estados_ibge.json'
@@ -108,6 +108,9 @@ def corrigir_nome(nome_incorreto, lista_correta, limiar=85):
     Usa fuzzy matching para encontrar o nome mais provável em uma lista.
     Retorna o nome correto ou o original se a similaridade for baixa.
     """
+    if nome_incorreto == 'Indefinido':
+        return nome_incorreto, False
+
     nome_normalizado = normalizar(nome_incorreto)
     if not nome_normalizado:
         return nome_incorreto, False
@@ -229,7 +232,7 @@ try:
         if pd.notna(row['estado']):
             estados_originais = re.split(r'\s*[/,-]\s*', str(row['estado']))
         else:
-            estados_originais = ""
+            estados_originais = "Indefinido"
             print('Não foi possível encontrar um estado!')
         
         estados_corrigidos = set() # Usar 'set' para evitar duplicados
@@ -244,7 +247,7 @@ try:
         if pd.notna(row['município']):
             municipios_originais = re.split(r'\s*[/,-]\s*', str(row['município']))
         else:
-            municipios_originais = ""
+            municipios_originais = "Indefinido"
             print('Não foi possível encontrar um município!')
 
         municipios_corrigidos = set()
@@ -268,9 +271,9 @@ try:
 
         # MONTAGEM DO OBJETO PARA O FIREBASE
         if pd.notna(row['indicação']):
-            indicacao = str(row['indicação'])
+            indicacao = str(row['indicação']).strip()
         else:
-            indicacao = ""
+            indicacao = "Indefinido"
             print('Não foi possível encontrar uma indicação!')
 
         valor_aprovado = converter_valor_para_float(row['aportado 2024'])
@@ -278,8 +281,8 @@ try:
         lei_padronizada = mapear_lei(str(row['lei']))
 
         projeto_data = {
-            'nome': str(row['projeto']),
-            'instituicao': str(row['proponente']),
+            'nome': str(row['projeto']).strip(),
+            'instituicao': str(row['proponente']).strip(),
             'lei': lei_padronizada,
             'valorAprovado': valor_aprovado,
             'indicacao': indicacao,
@@ -293,7 +296,7 @@ try:
 
         # ENVIO PARA O FIRESTORE
         try:
-            doc_ref = db.collection('projetosTeste').add(projeto_data)
+            doc_ref = db.collection('projetos').add(projeto_data)
             print(f"Projeto '{projeto_data['nome']}' adicionado com o ID: {doc_ref[1].id}")
         except Exception as e:
             print(f"ERRO! Falha ao adicionar o projeto '{projeto_data['nome']}' ao Firestore: {e}")
