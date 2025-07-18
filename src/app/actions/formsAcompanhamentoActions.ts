@@ -210,7 +210,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
         };
     }
 
-    // 4. Se a validação passar, `data` conterá os dados limpos e tipados
+    // Se a validação passar, 'data' conterá os dados limpos e tipados
     const data: FormsAcompanhamentoFormFields = validationResult.data;
 
     try {
@@ -328,6 +328,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
 
         const projetoDocRef = doc(db, "projetos", projetoID);
         await updateDoc(projetoDocRef, {
+            instituicao: data.instituicao,
             estados: data.estados, // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
             municipios: data.municipios,
             lei: getItemNome(data.lei, leiList),
