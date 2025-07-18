@@ -1,10 +1,10 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+
 import { db } from '@/firebase/firebase-config';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, addDoc } from 'firebase/firestore';
 import { Projetos, Associacao, usuarioExt } from '@/firebase/schema/entities';
 import Footer from '@/components/footer/footer';
 import ExternalUserDashboard from '@/components/inicio-ext/inicioExtContent';
+import { getCurrentUser } from '@/lib/auth';
 
 interface ProjetoExt {
   id: string;
@@ -14,6 +14,7 @@ interface ProjetoExt {
   valorTotal: string;
   lei: string;
   formularioPendente: boolean;
+  ativo: boolean;
 }
 
 
@@ -156,6 +157,7 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
             valorTotal,
             lei,
             formularioPendente,
+            ativo: projetoData.ativo
         };
     });
 
@@ -165,26 +167,16 @@ async function getUserProjects(uid: string): Promise<ProjetoExt[]> {
 
 
 export default async function ExternalUserHomePage() {
-    const user = await getCurrentUser();
-
-    if (!user || !user.email) {
-        redirect('/login');
-    }
-
-    const emailDomain = user.email.split('@')[1];
-    const isInternal = ["conpec.com.br", "csn.com.br", "fundacaocsn.org.br"].includes(emailDomain);
-
-    if (isInternal) {
-        redirect('/');
-    }
-
-    await syncProjetosUsuario(user.uid, user.email);
+  const user = await getCurrentUser();
+    // Assumimos que o usuário já passou pelo middleware e é válido e externo
+    await syncProjetosUsuario(user!.uid, user!.email!);
 
     const [userData, userProjects] = await Promise.all([
-        getUserData(user.uid),
-        getUserProjects(user.uid)
+        getUserData(user!.uid),
+        getUserProjects(user!.uid)
     ]);
-    
+
+    // Fallback: se algo deu errado na coleta de dados (muito raro)
     if (!userData) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[90vh] text-center px-4">
