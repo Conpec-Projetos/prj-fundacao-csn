@@ -12,6 +12,7 @@ interface ProjetoExt {
   valorTotal: string;
   lei: string;
   formularioPendente: boolean;
+
   ativo: boolean;
 }
 
@@ -22,12 +23,15 @@ const getEffectiveStatus = (project: ProjetoExt): string => {
   return project.status;
 };
 
+
 const getStatusColor = (status: string) => {
     switch (status) {
       case 'aprovado': return 'bg-green-100 dark:bg-green-500 text-green-800 dark:text-white';
       case 'pendente': return 'bg-yellow-100 dark:bg-yellow-500 text-yellow-800 dark:text-white';
       case 'reprovado': return 'bg-red-100 dark:bg-red-500 text-red-800 dark:text-white';
+
       case 'finalizado': return 'bg-blue-100 dark:bg-blue-fcsn text-blue-800 dark:text-white-off';
+
       default: return 'bg-gray-100 text-gray-800';
     }
 };
@@ -37,10 +41,13 @@ const getStatusText = (status: string) => {
       case 'aprovado': return 'Aprovado';
       case 'pendente': return 'Em análise';
       case 'reprovado': return 'Não aprovado';
+
       case 'finalizado': return 'Finalizado';
+
       default: return 'Desconhecido';
     }
 };
+
 
 const ProjectCard = ({ project }: { project: ProjetoExt }) => {
     const effectiveStatus = getEffectiveStatus(project);

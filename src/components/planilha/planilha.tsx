@@ -11,6 +11,7 @@ import {
   FilterFn,
 } from "@tanstack/react-table";
 import { db } from "@/firebase/firebase-config";
+
 import {
   collection,
   onSnapshot,
@@ -66,18 +67,22 @@ const arrayIncludesFilterFn: FilterFn<ProjetoComId> = (
 ) => {
   const array = row.getValue(columnId) as string[];
   if (!Array.isArray(array)) return false;
+
   return array.some((item) =>
     item.toLowerCase().includes(String(filterValue).toLowerCase())
   );
 };
 
+
 type ComplianceFilter = 'all' | 'true' | 'false';
 
 // Função de filtro personalizada para colunas de números
+
 const numberFilterFn: FilterFn<ProjetoComId> = (row, columnId, filterValue) => {
   const rowValue = row.getValue(columnId) as number;
   return String(rowValue).includes(String(filterValue));
 };
+
 
 // Converte qualquer valor para uma string de exibição
 const toDisplayValue = (value: unknown, columnId: string): string => {
@@ -92,12 +97,14 @@ const toDisplayValue = (value: unknown, columnId: string): string => {
     return value.join(", ");
   }
   if (typeof value === "object") return "";
+
   return String(value);
 };
 
 interface EditableCellProps extends CellContext<ProjetoComId, unknown> {
   updateData: (docId: string, columnId: string, value: string) => void;
   isEditable: boolean;
+
 }
 
 const EditableCell = ({
@@ -105,6 +112,7 @@ const EditableCell = ({
   row,
   column,
   updateData,
+
   isEditable,
 }: EditableCellProps) => {
   const initialValue = getValue();
@@ -123,6 +131,7 @@ const EditableCell = ({
       onBlur={onBlur}
       className="w-full h-full p-2 bg-transparent focus:outline-none focus:bg-blue-100 dark:focus:bg-blue-fcsn rounded"
     />
+
   ) : (
     <div className="w-full h-full p-2 truncate">
       {toDisplayValue(initialValue, column.id)}
@@ -131,10 +140,12 @@ const EditableCell = ({
 };
 
 // Componente principal da Planilha
+
 const Planilha = () => {
   const [data, setData] = useState<ProjetoComId[]>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
+
   const [isEditable, setIsEditable] = useState<boolean>(false);
   const [complianceFilter, setComplianceFilter] = useState<ComplianceFilter>('all');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -182,6 +193,7 @@ const Planilha = () => {
       const dataToUpdate = { [columnId]: processedValue };
       try {
         await updateDoc(docRef, dataToUpdate);
+
       } catch (error) {
         console.error("Erro ao atualizar documento:", error);
       }
@@ -315,6 +327,7 @@ const Planilha = () => {
             updateData={handleUpdateData}
             isEditable={isEditable}
           />
+
         ),
         filterFn: arrayIncludesFilterFn,
       },
@@ -336,6 +349,7 @@ const Planilha = () => {
     onColumnFiltersChange: setColumnFilters,
     onSortingChange: setSorting,
   });
+
 
   const handleComplianceFilterChange = () => {
     setComplianceFilter(current => {
@@ -519,6 +533,7 @@ const Planilha = () => {
           </tbody>
         </table>
       </div>
+
     </div>
   );
 };
