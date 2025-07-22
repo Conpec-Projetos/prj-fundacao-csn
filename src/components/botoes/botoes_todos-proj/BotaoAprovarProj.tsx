@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { db } from "@/firebase/firebase-config";
-import { collection, doc, getDocs, query, updateDoc, where, arrayUnion } from "firebase/firestore";
+import { collection, getDocs, query, updateDoc, where, arrayUnion } from "firebase/firestore";
 
 // Importa a lista de empresas do seu arquivo JSON local
 import listaDeEmpresasPermitidas from "./empresas.json";
@@ -11,9 +11,9 @@ import listaDeEmpresasPermitidas from "./empresas.json";
 type BotaoAprovarProjProps = {
   projectId: string;
   projectName: string;
-  projetosComplianceStatus: boolean;
-  complianceDocUrl: string | null;
-  additionalDocsUrls: string[];
+  projetosComplianceStatus?: boolean;
+  complianceDocUrl?: string | null;
+  additionalDocsUrls?: string[];
   onApprovalSuccess: () => void;
 };
 

@@ -12,7 +12,7 @@ import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import logo from "@/assets/fcsn-logo.svg";
 import Image from "next/image";
 import { useTheme } from "@/context/themeContext";
-import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj"; 
 
@@ -118,7 +118,7 @@ export default function TodosProjetos() {
         
         const processedODS: ODS[] = [];
         if (rawData.ods && Array.isArray(rawData.ods)) {
-          rawData.ods.forEach((odsItem: any) => {
+          rawData.ods.forEach((odsItem: number) => {
             processedODS.push({ numberODS: odsItem, src: `/ods/ods${odsItem + 1}.png` });
           });
         }
@@ -201,7 +201,6 @@ export default function TodosProjetos() {
       setSearch("");
     }
   }
-  const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
 
   function clearFilters() {
     setFilters((prevFilters) => ({

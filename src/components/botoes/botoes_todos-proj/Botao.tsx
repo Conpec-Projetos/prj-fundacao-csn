@@ -19,8 +19,8 @@ export default function Botao({ projectId, projectName }: { projectId: string; p
     const caixaRef = useRef<HTMLDivElement>(null);
 
     // Função para lidar com o sucesso da aprovação
-    const handleApprovalSuccess = (approvedProjectId: string) => {
-        console.log('Projeto aprovado:', approvedProjectId);
+    const handleApprovalSuccess = () => {
+        console.log('Projeto aprovado');
         setAprovado(true);
         setConfirmar(false);
         setIsOpen(false);
