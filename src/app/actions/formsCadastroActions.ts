@@ -1,108 +1,11 @@
-'use server';
+'use server'
 
-import { z } from 'zod';
 import { db } from '@/firebase/firebase-config';
-import { State, City } from "country-state-city";
-import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion, runTransaction } from "firebase/firestore";
-import { getFileUrl, getItemNome, getOdsIds, getPublicoNomes, slugifyEstado } from '@/lib/utils';
-import { Projetos, formsCadastroDados, leiList, segmentoList, dadosEstados } from '@/firebase/schema/entities';
+import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion } from "firebase/firestore";
+import { getFileUrl, getItemNome, getOdsIds, getPublicoNomes } from '@/lib/utils';
+import { Projetos, formsCadastroDados, leiList, segmentoList } from '@/firebase/schema/entities';
 import { formsCadastroSchema } from '@/lib/schemas';
 
-type FormFields = z.infer<typeof formsCadastroSchema>;
-
-async function updateDadosEstado(formData: FormFields, stateName: string) {
-    // Converte o nome do estado (ex: "São Paulo") para o ID do documento (ex: "sao_paulo")
-    const estadoDocID = slugifyEstado(stateName);
-    const docRef = doc(db, "dadosEstados", estadoDocID);
-
-    try {
-        await runTransaction(db, async (transaction) => {
-            const docSnapshot = await transaction.get(docRef);
-
-            if (!docSnapshot.exists()) {
-                console.error(`Documento para o estado ${stateName} (${estadoDocID}) não encontrado!`);
-                return;
-            }
-
-            const dadosAtuais = docSnapshot.data() as dadosEstados;
-            type UpdatesType = Partial<{
-                beneficiariosDireto: number;
-                lei: typeof dadosAtuais.lei;
-                municipios: string[];
-                qtdMunicipios: number;
-                projetosODS: number[];
-                qtdOrganizacoes: number;
-                qtdProjetos: number;
-                segmento: typeof dadosAtuais.segmento;
-            }>;
-            const updates: UpdatesType = {};
-
-            // beneficiariosDireto
-            updates.beneficiariosDireto = (dadosAtuais.beneficiariosDireto || 0) + formData.beneficiariosDiretos;
-
-            // lei
-            const leiSelecionadaNome = getItemNome(formData.lei, leiList);
-            updates.lei = dadosAtuais.lei.map(item =>
-                item.nome === leiSelecionadaNome
-                    ? { ...item, qtdProjetos: (item.qtdProjetos || 0) + 1 }
-                    : item
-            );
-
-            // municipios
-            const municipiosAtuais = new Set(dadosAtuais.municipios || []); 
-
-            const estadoObject = State.getAllStates().find(s => s.name === stateName && s.countryCode === 'BR');
-
-            if (estadoObject) {
-                // Pega a lista de cidades APENAS desse estado
-                const municipiosDoEstado = City.getCitiesOfState('BR', estadoObject.isoCode);
-                const nomeMunicipios = new Set(municipiosDoEstado.map(c => c.name));
-
-                // Filtra os municípios do formulário para garantir que eles pertencem a este estado
-                const formMunicipios = formData.municipios.filter(m => nomeMunicipios.has(m));
-
-                const novoMunicipiosSet = new Set([...municipiosAtuais, ...formMunicipios]);
-                const municipiosAdicionados = novoMunicipiosSet.size - municipiosAtuais.size;
-                
-                updates.municipios = Array.from(novoMunicipiosSet);
-                updates.qtdMunicipios = (dadosAtuais.qtdMunicipios || 0) + municipiosAdicionados;
-            } else {
-                console.warn(`Não foi possível encontrar o objeto do estado para: ${stateName}`);
-            }
-
-            // projetosODS
-            const odsIds = getOdsIds(formData.ods);
-            const novosProjetosODS = [...(dadosAtuais.projetosODS || Array(17).fill(0))];
-            odsIds.forEach(id => {
-                // ODSs são base 1, array é base 0.
-                if (id >= 0 && id < novosProjetosODS.length) {
-                    novosProjetosODS[id] = (novosProjetosODS[id] || 0) + 1;
-                }
-            });
-            updates.projetosODS = novosProjetosODS;
-
-            // qtdOrganizacoes & qtdProjetos
-            updates.qtdOrganizacoes = (dadosAtuais.qtdOrganizacoes || 0) + 1;
-            updates.qtdProjetos = (dadosAtuais.qtdProjetos || 0) + 1;
-
-            // segmento
-            const segmentoSelecionadoNome = getItemNome(formData.segmento, segmentoList);
-            updates.segmento = dadosAtuais.segmento.map(item =>
-                item.nome === segmentoSelecionadoNome
-                    ? { ...item, qtdProjetos: (item.qtdProjetos || 0) + 1 }
-                    : item
-            );
-
-            // Aplica todas as atualizações na transação
-            transaction.update(docRef, updates);
-        });
-        console.log(`Documento do estado ${stateName} atualizado com sucesso.`);
-    } catch (error) {
-        console.error(`Erro ao atualizar dados para o estado ${stateName}:`, error);
-        // Lançar o erro novamente para que o 'onSubmit' principal possa capturá-lo
-        throw error;
-    }
-}
 
 export async function submitCadastroForm(formData: FormData) {
     const rawFormData = Object.fromEntries(formData.entries());
@@ -152,14 +55,17 @@ export async function submitCadastroForm(formData: FormData) {
     try {
         const projetoData: Projetos = {
             nome: data.nomeProjeto,
+            instituicao: data.instituicao,
+            estados: data.estados,
             municipios: data.municipios,
+            lei: getItemNome(data.lei, leiList),
             status: "pendente",
-            ativo: false,
+            ativo: true,
             compliance: false,
             empresas: [],
             indicacao: "",
             ultimoFormulario: "",
-            valorAportadoReal: 0
+            valorAprovado: 0
         };
         
         const docProjetoRef = await addDoc(collection(db, "projetos"), projetoData);
@@ -179,6 +85,7 @@ export async function submitCadastroForm(formData: FormData) {
             representante: data.representanteLegal,
             telefone: data.telefone,
             emailLegal: data.emailRepLegal,
+            responsavel: data.responsavel,
             emailResponsavel: data.emailResponsavel,
             cep: data.cep,
             endereco: data.endereco,
@@ -218,9 +125,6 @@ export async function submitCadastroForm(formData: FormData) {
 
         const docCadastroRef = await addDoc(collection(db, "forms-cadastro"), firestoreData);
         await updateDoc(doc(db, "projetos", projetoID), { ultimoFormulario: docCadastroRef.id });
-
-        const updatePromises = data.estados.map(estado => updateDadosEstado(data, estado));
-        await Promise.all(updatePromises);
         
         if (usuarioAtualID) {
             const q = query(collection(db, "associacao"), where("usuarioID", "==", usuarioAtualID));

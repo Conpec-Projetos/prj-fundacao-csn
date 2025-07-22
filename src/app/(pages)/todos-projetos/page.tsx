@@ -4,6 +4,7 @@ import Footer from "@/components/footer/footer";
 import { useEffect, useRef, useState } from "react";
 import { FaCaretDown, FaCheckCircle, FaFilter, FaSearch } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
+
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@/firebase/firebase-config";
@@ -200,6 +201,7 @@ export default function TodosProjetos() {
       setSearch("");
     }
   }
+  const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
 
   function clearFilters() {
     setFilters((prevFilters) => ({
@@ -211,6 +213,7 @@ export default function TodosProjetos() {
     setFilteredProjects([]);
     setCtrl(false);
   }
+
 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -244,6 +247,7 @@ export default function TodosProjetos() {
   }
 
   const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
+
 
   return (
     <div className="flex flex-col min-h-screen">

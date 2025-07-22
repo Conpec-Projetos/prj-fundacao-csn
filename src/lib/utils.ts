@@ -11,7 +11,7 @@ export function cn(...inputs: ClassValue[]) {
 export async function getFileUrl(files: File[], forms: string, projetoID: string, filename?: string): Promise<string[]> {
   const fileUrl: string[] = [];
   for (const file of files) {
-      const storageRef = ref(storage, `${forms}/${projetoID}/${filename || file.name}`);
+      const storageRef = ref(storage, `${forms}/${projetoID}/${filename ? `${file.name}-${filename}` : file.name}`);
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
       fileUrl.push(downloadURL);
