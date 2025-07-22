@@ -46,7 +46,8 @@ interface ProjetoComId extends Omit<Projetos, 'empresas'> {
 }
 
 const formatCurrency = (value: number) => {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  if (value) return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return 'R$0,00'
 };
 
 const empresasFilterFn: FilterFn<ProjetoComId> = (row, columnId, filterValue) => {
