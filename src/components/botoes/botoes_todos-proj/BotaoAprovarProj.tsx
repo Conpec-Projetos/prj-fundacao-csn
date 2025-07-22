@@ -142,17 +142,14 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
       
       const projectDocRef = querySnapshot.docs[0].ref;
 
-      // Cria um objeto para atualizar o map 'empresas' no Firestore
-      const empresasMapUpdate: { [key: string]: any } = {};
-      empresasList.forEach(empresa => {
-        // Usa a notação de ponto para atualizar campos dentro de um map
-        empresasMapUpdate[`empresas.${empresa.nome}`] = empresa.valor;
-      });
+      // Calcula a soma total dos valores da lista de empresas
+      const valorTotalAprovado = empresasList.reduce((sum, empresa) => sum + empresa.valor, 0);
 
-      // Atualiza o status e espalha as atualizações do mapa de empresas
+      // Prepara os dados para o Firebase
       await updateDoc(projectDocRef, {
         status: "aprovado",
-        ...empresasMapUpdate
+        valorAprovado: valorTotalAprovado, // Salva a soma total no campo 'valorAprovado'
+        empresas: arrayUnion(...empresasList) // Adiciona os objetos {nome, valor} ao array 'empresas'
       });
       
       setShowConfirmation(false);
@@ -177,7 +174,6 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
               Baixar Doc. Compliance
             </a>
             
-            {/* Lógica para os documentos adicionais */}
             {props.additionalDocsUrls && props.additionalDocsUrls.length > 0 ? (
               props.additionalDocsUrls.map((url, index) => (
                 <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="w-full block text-center py-2 rounded bg-blue-fcsn text-white hover:bg-blue-800">
@@ -203,6 +199,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     return (
       <div ref={caixaRef} className="absolute top-full left-0 w-[350px] p-4 rounded shadow-md bg-white z-10">
         <form onSubmit={handleProjectApprovalSubmit}>
+          
           <div className="mb-3 p-3 border rounded border-gray-200">
             <p className="text-black font-semibold block mb-2">Adicionar Empresa e Valor</p>
             <div className="mb-2">
@@ -221,17 +218,17 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
             <div className="mb-2">
               <label className="text-black text-sm block mb-1">Valor Aprovado:</label>
               <input 
-                type="number"
+                type="number" 
                 placeholder="Ex: 50000.00"
-                value={valorPorEmpresa}
-                min="0"
+                value={valorPorEmpresa} 
                 onChange={(e) => {
-                if (e.target.value === '' || parseFloat(e.target.value) >= 0) {
-                  setValorPorEmpresa(e.target.value);
-                }
+                  if (e.target.value === '' || parseFloat(e.target.value) >= 0) {
+                    setValorPorEmpresa(e.target.value);
+                  }
                 }}
-            className="border-gray-400 w-full p-2 border rounded text-black" 
-            />
+                min="0"
+                className="border-gray-400 w-full p-2 border rounded text-black" 
+              />
             </div>
             <button 
               type="button" 
