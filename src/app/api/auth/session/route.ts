@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server'; //usado para retornar uma resposta HTTP na API do Next.js.
 import { cookies } from 'next/headers';
 import { authAdmin } from '@/firebase/firebase-admin-config';
@@ -7,11 +8,13 @@ import { db } from '@/firebase/firebase-config';
 // Essa funcao sera chamada quando o frontend enviar uma requisicao para a rota (api/auth/session)
 export async function POST(request: Request) {
   // Apos o signin o firebase gerará um idToken, ao fazer o login fazemos uma requisicao para essa api passando esse idToken que usaremos para criar o cookie
+
   const { idToken } = await request.json();
 
   if (!idToken) {
     return NextResponse.json({ error: 'ID token not provided.' }, { status: 400 });
   }
+
 
   // Na rota da API
   console.log("Iniciando POST /api/auth/session");
@@ -77,6 +80,7 @@ export async function POST(request: Request) {
       secure: process.env.NODE_ENV === 'production',
       maxAge: expiresIn / 1000,
       path: '/', // cookie disponivel em todo o site
+
       sameSite: 'lax',
     });
 
@@ -86,6 +90,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create session.' }, { status: 401 });
   }
 }
+
 
 
 export async function GET(req: Request) {
@@ -106,5 +111,6 @@ export async function GET(req: Request) {
 export async function DELETE() {
     const cookieStore = await cookies();
     cookieStore.delete('session');
+
     return NextResponse.json({ status: 'success' });
 }
