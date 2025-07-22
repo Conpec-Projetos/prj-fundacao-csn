@@ -7,8 +7,7 @@ import { useTheme } from '@/context/themeContext';
 import { useEffect, useState } from "react";
 import Botao_Logout from "../botoes/Botao_Logout";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { auth, db } from "@/firebase/firebase-config";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "@/firebase/firebase-config";
 import HeaderSecundario from "./headerSecundario";
 
 interface promoteAdminProps {
@@ -32,6 +31,7 @@ const PromoteAdmin = ({name }: promoteAdminProps) => ( //tirei o "id" para conse
     </div>
 );
 
+// Usamos essa funcao IsADM pois nossa funcao que esta dentro da pasta lib utiliza o firebase-admin
 async function IsADM(email: string | null): Promise<boolean> {
     if (!email) return false;
     const usuarioInt = collection(db, "usuarioInt");
@@ -59,15 +59,17 @@ export default function Header() {
 
     // Pega o usuário logado e verifica se é admin
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user?.email) {
-                const isAdmin = await IsADM(user.email);
-                setAdm(isAdmin);
-            } else {
-                setAdm(false); // não logado
-            }
-        });
-        return () => unsubscribe();
+    async function fetchUser() {
+        const res = await fetch('/api/auth/session', { method: 'GET' });
+        const data = await res.json();
+        if (data.user?.email) {
+            const isAdmin = await IsADM(data.user.email);
+            setAdm(isAdmin);
+        } else {
+            setAdm(false);
+        }
+    }
+    fetchUser();
     }, []);
 
     // Enquanto `adm` ainda não foi definido (null), não renderiza nada

@@ -20,9 +20,10 @@ export default function Botao_Logout() {
     async function LogOut(){
         try {
             setLogOut(true);
-            await signOut(auth); // 1. Faz logout no Firebase
-            localStorage.removeItem('user'); // 2. Remove dados do localStorage
-            router.push("./login");
+            await signOut(auth); // Faz logout no cliente
+            // Invalida o cookie de sessão no servidor
+            await fetch('/api/auth/session', { method: 'DELETE' });
+            router.push("/login");
         } catch (error) {
             console.error("Erro ao fazer logout:", error);  
         } 

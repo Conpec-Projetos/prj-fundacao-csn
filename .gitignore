@@ -136,13 +136,20 @@ dist
 .pnp.*
 .vercel
 
-# firebase functions
-.firebaserc
-firebase.json
-functions/.eslintrc.js
-functions/.gitignore
-functions/package-lock.json
-functions/package.json
-functions/tsconfig.dev.json
-functions/tsconfig.json
-functions/src/index.ts
+# firebase
+# .firebaserc
+# firebase.json
+# functions/**
+serviceAccountKey**
+
+# Playwright
+/tests
+/test-results/
+/tests-examples/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+playwright.config.ts
+
+# Local database files
+dados_municipios_estados_ibge**

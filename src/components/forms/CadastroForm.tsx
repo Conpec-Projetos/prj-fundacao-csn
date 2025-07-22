@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { ref, getDownloadURL } from "firebase/storage";
+import { storage } from "@/firebase/firebase-config";
 import {
     NormalInput,
     LongInput,
@@ -24,15 +26,15 @@ import { formatCNPJ, formatCEP, formatTelefone, formatMoeda, filtraDigitos } fro
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller, FieldError } from "react-hook-form";
 import { submitCadastroForm } from '@/app/actions/formsCadastroActions';
-import { auth } from "@/firebase/firebase-config";
-import { onAuthStateChanged } from "firebase/auth";
 import { formsCadastroSchema, FormsCadastroFormFields } from "@/lib/schemas";
+import { useRouter } from "next/navigation";
 
 
 
-export default function CadastroForm() {
-    const [usuarioAtualID, setUsuarioAtualID] = useState<string | null>(null);
+export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: string | null }) {
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const [compliancePdfUrl, setCompliancePdfUrl] = useState<string | null>(null);
+    const router = useRouter()
     
     const {
         register,
@@ -40,6 +42,7 @@ export default function CadastroForm() {
         control,
         setValue,
         watch,
+        reset,
         formState: { errors, isSubmitting },
     } = useForm<FormsCadastroFormFields>({
         resolver: zodResolver(formsCadastroSchema),
@@ -50,6 +53,7 @@ export default function CadastroForm() {
             representanteLegal: "",
             telefone: "",
             emailRepLegal: "",
+            responsavel: "",
             emailResponsavel: "",
             cep: "",
             endereco: "",
@@ -94,29 +98,38 @@ export default function CadastroForm() {
     const isOutroPublicoSelected = watchedPublico && watchedPublico[outroPublicoIndex];
 
     useEffect(() => {
+        const fetchPdfUrl = async () => {
+            try {
+                const storageRef = ref(storage, 'Formulário de Doações e Patrocínios - 2025.pdf');
+                const url = await getDownloadURL(storageRef);
+                setCompliancePdfUrl(url);
+            } catch (error) {
+                console.error("Error fetching compliance PDF URL:", error);
+                toast.error("Erro ao carregar o link do formulário de compliance.");
+            }
+        };
+
+        fetchPdfUrl();
+    }, []);
+
+    useEffect(() => {
         const fetchAddress = async (cep: string) => {
             const cepFormatado = cep.replace(/\D/g, '');
             if (cepFormatado.length !== 8) return;
             try {
-                const response = await fetch(`https://viacep.com.br/ws/${cepFormatado}/json/`);
+                const response = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepFormatado}`);
                 if (!response.ok) throw new Error('CEP não encontrado');
                 const data = await response.json();
-                const fullAddress = data.bairro ? `${data.logradouro} - ${data.bairro}` : data.logradouro;
+                const fullAddress = data.neighborhood ? `${data.street} - ${data.neighborhood}` : data.street;
                 setValue("endereco", fullAddress, { shouldValidate: true });
-                setValue("cidade", data.localidade, { shouldValidate: true });
-                setValue("estado", data.uf, { shouldValidate: true });
+                setValue("cidade", data.city, { shouldValidate: true });
+                setValue("estado", data.state, { shouldValidate: true });
             } catch (error) {
                 console.error("Erro ao buscar CEP:", error);
             }
         };
         fetchAddress(watchedCep);
     }, [watchedCep, setValue]);
-
-    useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
-            setUsuarioAtualID(user ? user.uid : null);
-        });
-    }, []);
     
     return (
         <form 
@@ -153,7 +166,13 @@ export default function CadastroForm() {
         
                     if (result.success) {
                         toast.success("Formulário enviado com sucesso!");
-                        // TODO: Lógica de resetar o formulário ou redirecionar o usuário
+                        if (usuarioAtualID) {
+                            router.push('/inicio-externo');
+                        } else {
+                            reset()
+                            setCurrentPage(1)
+                            window.scrollTo(0, 0)
+                        }
                     } else {
                         toast.error(`Erro: ${result.error}`);
                     }
@@ -244,7 +263,13 @@ export default function CadastroForm() {
                                 registration={register("emailRepLegal")}
                                 error={errors.emailRepLegal}
                             />
-                            
+
+                            <NormalInput
+                                text="Responsável pelo projeto"
+                                isNotMandatory={false}
+                                registration={register("responsavel")}
+                                error={errors.responsavel}
+                            />
                             <NormalInput
                                 text="E-mail do responsável:"
                                 isNotMandatory={false}
@@ -287,7 +312,7 @@ export default function CadastroForm() {
                             <div className="flex flex-row min-h-[60px] h-fit w-full justify-center items-start gap-x-5">
                                 <NumeroEndInput
                                     text="Número:"
-                                    isNotMandatory={false}
+                                    isNotMandatory={true}
                                     registration={register("numeroEndereco")}
                                     error={errors.numeroEndereco}
                                 />
@@ -332,7 +357,7 @@ export default function CadastroForm() {
 
                             <NormalInput
                                 text="Link para website:"
-                                isNotMandatory={false}
+                                isNotMandatory={true}
                                 registration={register("website")}
                                 error={errors.website}
                             />
@@ -621,7 +646,7 @@ export default function CadastroForm() {
 
                             <NormalInput
                                 text="Número de aprovação do projeto por lei:"
-                                isNotMandatory={false}
+                                isNotMandatory={true}
                                 registration={register("numeroLei")}
                                 error={errors.numeroLei}
                             />
@@ -652,6 +677,24 @@ export default function CadastroForm() {
                     <div className="w-full">
                     <div className="flex flex-col w-full items-center gap-8 mt-10">
                         <div className="w-11/12">
+                            {/* Botão de download para o formulário de compliance */}
+                            {compliancePdfUrl && (
+                                <div className="flex flex-col items-start mb-4 gap-y-2">
+                                    <p className="text-xl text-blue-fcsn dark:text-white-off font-bold">
+                                        Faça o download do formulário de compliance, preencha-o e anexe no campo abaixo.
+                                    </p>
+                                    <a
+                                        href={compliancePdfUrl}
+                                        download="Formulario_Compliance.pdf"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-fit px-4 h-[50px] bg-blue-fcsn dark:bg-blue-fcsn3 dark:hover:bg-blue-fcsn hover:bg-blue-fcsn2 rounded-[7px] text-md font-bold text-white cursor-pointer shadow-md flex items-center justify-center"
+                                    >
+                                        Baixar Formulário de Compliance
+                                    </a>
+                                </div>
+                            )}
+
                             <Controller
                                 name="compliance"
                                 control={control}
