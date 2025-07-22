@@ -35,7 +35,7 @@ const ConfirmationModal = ({ message, onConfirm, onCancel, isUpdating }: { messa
 // Interface para organizar os dados da empresa com seu valor
 interface EmpresaComValor {
   nome: string;
-  valor: number;
+  valorAportado: number;
 }
 
 export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
@@ -107,7 +107,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     
     const novaEmpresa: EmpresaComValor = {
       nome: empresaSelecionada,
-      valor: valorNumerico
+      valorAportado: valorNumerico
     };
     
     setEmpresasList(prevList => [...prevList, novaEmpresa]);
@@ -143,7 +143,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
       const projectDocRef = querySnapshot.docs[0].ref;
 
       // Calcula a soma total dos valores da lista de empresas
-      const valorTotalAprovado = empresasList.reduce((sum, empresa) => sum + empresa.valor, 0);
+      const valorTotalAprovado = empresasList.reduce((sum, empresa) => sum + empresa.valorAportado, 0);
 
       // Prepara os dados para o Firebase
       await updateDoc(projectDocRef, {
@@ -247,7 +247,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
                   <div key={index} className="flex items-center justify-between bg-gray-200 text-black rounded px-3 py-1 text-sm">
                     <div>
                       <span className="font-bold">{empresa.nome}: </span>
-                      <span>{empresa.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      <span>{empresa.valorAportado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
                     <button type="button" onClick={() => handleRemoveEmpresa(index)} className="ml-2 text-red-500 hover:text-red-700 font-bold">x</button>
                   </div>
