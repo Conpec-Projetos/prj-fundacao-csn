@@ -53,9 +53,6 @@ export default function Header() {
     async function fetchUser() {
         const res = await fetch('/api/auth/session', { method: 'GET' });
         const data = await res.json();
-        console.log("metodo get");
-        console.log(data);
-        console.log(data.user?.userIntAdmin);
         if (data.user?.userIntAdmin){
             setAdm(true);
         } else {
@@ -68,7 +65,7 @@ export default function Header() {
     // Enquanto `adm` ainda não foi definido (null), não renderiza nada
     if (adm === null) return null;
 
-    // Se NÃO for admin, renderiza o Header padrão
+    // Se for admin, renderiza o Header padrão
     if (adm) {
         return (
             <div className={`${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
@@ -124,6 +121,6 @@ export default function Header() {
         );
     }
 
-    // Se for admin, renderiza outro header
+    // Se nao for admin (é apenas interno ou externo), renderiza outro header
     return <HeaderSecundario />;
 }

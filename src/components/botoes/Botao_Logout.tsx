@@ -31,7 +31,8 @@ export default function Botao_Logout() {
 
     if(isLogOut){
             return (
-                <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-black dark:bg-opacity-80">
+                // Alterei o background do log out para nao dar diferenca de cor do fundo da imagem e do bg
+                <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 ">
                     <Image
                         src={darkMode ? darkLogo : logo}
                         alt="csn-logo"
