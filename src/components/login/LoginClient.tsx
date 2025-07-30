@@ -95,7 +95,6 @@ export default function LoginClient() {
                     return;
                 }
             }
-            console.log("Redirecionando para:", result.redirectTo);
             router.push(result.redirectTo);
 
         } catch (error: unknown) {
