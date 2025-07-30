@@ -160,10 +160,11 @@ export const verificarEmailsPendentes = onSchedule("every day 08:00", async () =
   ];
 
   for (const periodo of periodos) {
-    // Busca projetos cuja data de notificação já passou e cujo e-mail ainda não foi enviado
+    // Busca projetos cuja data de notificação já passou e cujo e-mail ainda não foi enviado e que estão ativos
     const query = projetosRef
       .where(periodo.campoTimestamp, "<=", agora)
-      .where(periodo.campoFlag, "==", false);
+      .where(periodo.campoFlag, "==", false)
+      .where("ativo", "==", true);
 
     const snapshot = await query.get();
 
