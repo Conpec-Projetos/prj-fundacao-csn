@@ -21,19 +21,23 @@ import {
 } from "@/components/inputs/inputs";
 import { State, City } from "country-state-city";
 import { toast } from "sonner";
-import { odsList, leiList, segmentoList, publicoList } from "@/firebase/schema/entities";
+import { odsList, segmentoList, publicoList } from "@/firebase/schema/entities";
 import { formatCNPJ, formatCEP, formatTelefone, formatMoeda, filtraDigitos } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller, FieldError } from "react-hook-form";
 import { submitCadastroForm } from '@/app/actions/formsCadastroActions';
 import { formsCadastroSchema, FormsCadastroFormFields } from "@/lib/schemas";
 import { useRouter } from "next/navigation";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/firebase/firebase-config";
 
 
 
 export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: string | null }) {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [compliancePdfUrl, setCompliancePdfUrl] = useState<string | null>(null);
+    const [leiList, setLeiList] = useState<string[]>([]);
+
     const router = useRouter()
     
     const {
@@ -130,6 +134,23 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
         };
         fetchAddress(watchedCep);
     }, [watchedCep, setValue]);
+
+
+    // fetch leis from firebase
+    useEffect(() => {
+        const fetchLeis = async () => {
+            const snapshot = await getDocs(collection(db, "leis"));
+
+            snapshot.forEach((doc) => {
+                const data = doc.data() as { nome: string; sigla: string }; // mudar para tipo lei
+                if (data.nome) {
+                 setLeiList((prev) => [...prev, data.nome]);
+                }
+            });
+        }
+        fetchLeis()
+    }, []);
+
     
     return (
         <form 
@@ -638,7 +659,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
 
                             <LeiSelect
                                 text="Lei de incentivo do projeto:"
-                                list={leiList.map(l => l.nome)}
+                                list={leiList}
                                 isNotMandatory={false}
                                 registration={register("lei")}
                                 error={errors.lei}
