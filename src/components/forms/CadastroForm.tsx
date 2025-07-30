@@ -100,7 +100,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
     useEffect(() => {
         const fetchPdfUrl = async () => {
             try {
-                const storageRef = ref(storage, 'Formulário de Doações e Patrocínios - 2025.pdf');
+                const storageRef = ref(storage, 'publico/Formulário de Doações e Patrocínios - 2025.pdf');
                 const url = await getDownloadURL(storageRef);
                 setCompliancePdfUrl(url);
             } catch (error) {
