@@ -75,8 +75,8 @@ export default function Header() {
 
     if (adm === null) return null;
 
-     // Se NÃO for admin, renderiza o Header padrão
-    if (!adm) {
+     // Se for admin, renderiza o Header padrão
+    if (adm) {
         return (
             <div className={`${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
                 <header className="fixed top-0 flex justify-between w-full h-[10vh] bg-blue-fcsn2 z-50 shadow-md/20 px-10">
