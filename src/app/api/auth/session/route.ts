@@ -17,7 +17,6 @@ export async function POST(request: Request) {
 
 
   // Na rota da API
-  console.log("Iniciando POST /api/auth/session");
   try {
     // Com o firebase-admin conseguimos decodificar o token e pegar informacoes como email e id
     const decoded = await authAdmin.verifyIdToken(idToken);
@@ -31,8 +30,6 @@ export async function POST(request: Request) {
     // Aqui vamos fazer uma claim (“atributo” incluído dentro do token), precisamos usar isso para nao precisarmos no middleware fazer uma requisicao ao firestore
     // Verifica se o claim ja foi definido anteriormente (pois so alteramos no 1° login)
     const alreadyHasClaim = decoded.userIntAdmin !== undefined || decoded.userExt !== undefined;
-
-    console.log(alreadyHasClaim);
 
     const dominiosInternos = ["conpec.com.br", "csn.com.br", "fundacaocsn.org.br"];
     const domain = email.split("@")[1];

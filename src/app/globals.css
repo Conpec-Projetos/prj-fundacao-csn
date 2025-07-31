@@ -131,3 +131,9 @@
   }
 
 }
+
+/* Define a fonte padrão do site inteiro como a sua fonte (Roobert). Se por acaso a fonte não carregar, o fallback será sans-serif.*/
+html, body {
+  font-family: var(--fonte-texto-fcsn), sans-serif;
+}
+
