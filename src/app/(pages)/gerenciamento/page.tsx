@@ -48,8 +48,8 @@ const LawModal = ({ isOpen, onClose, onSave, law }: { isOpen: boolean; onClose: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white dark:bg-blue-fcsn3 p-6 rounded-lg shadow-xl w-full max-w-md">
+    <div className="fixed inset-0 bg-white-off dark:bg-blue-fcsn flex justify-center items-center z-50">
+      <div className="bg-white dark:bg-blue-fcsn3 backdrop-opacity-100 p-6 rounded-lg shadow-xl w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4 text-blue-fcsn dark:text-white-off">{law ? "Editar Lei" : "Nova Lei"}</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
@@ -63,8 +63,8 @@ const LawModal = ({ isOpen, onClose, onSave, law }: { isOpen: boolean; onClose: 
             {errors.sigla && <p className="text-red-500 text-sm mt-1">{errors.sigla.message}</p>}
           </div>
           <div className="flex justify-end gap-4">
-            <button type="button" onClick={onClose} className="py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300">Cancelar</button>
-            <button type="submit" className="py-2 px-4 rounded-lg bg-blue-fcsn text-white hover:bg-blue-fcsn2">Salvar</button>
+            <button type="button" onClick={onClose} className="py-2 px-4 rounded-lg bg-gray-200 dark:bg-blue-fcsn hover:bg-gray-300 dark:hover:bg-blue-fcsn2 cursor-pointer">Cancelar</button>
+            <button type="submit" className="py-2 px-4 rounded-lg bg-blue-fcsn text-white hover:bg-blue-fcsn2 cursor-pointer">Salvar</button>
           </div>
         </form>
       </div>
@@ -107,7 +107,7 @@ const UserManagement = () => {
   if (loading) return <div className="flex justify-center items-center h-full"><FaSpinner className="animate-spin text-4xl" /></div>;
 
   return (
-    <div>
+    <div className="min-w-[400px]">
       <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold">Colaboradores</h2>
           <div className="relative">
@@ -129,15 +129,15 @@ const UserManagement = () => {
               <p className="text-sm text-gray-500 dark:text-gray-300">{user.email}</p>
             </div>
             <div className="flex items-center gap-4">
-              <span className={`px-3 py-1 rounded-full text-sm ${user.administrador ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
+              <span className={`px-3 py-1 rounded-full text-sm ${user.administrador ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100' : 'bg-gray-200 text-gray-700'}`}>
                 {user.administrador ? 'Admin' : 'Colaborador'}
               </span>
               {user.administrador ? (
-                <button onClick={() => handleStatusChange(user.id, false)} disabled={isPending} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 disabled:opacity-50">
+                <button onClick={() => handleStatusChange(user.id, false)} disabled={isPending} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 disabled:opacity-50 cursor-pointer">
                   <FaUser title="Rebaixar para Colaborador" />
                 </button>
               ) : (
-                <button onClick={() => handleStatusChange(user.id, true)} disabled={isPending} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 disabled:opacity-50">
+                <button onClick={() => handleStatusChange(user.id, true)} disabled={isPending} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 disabled:opacity-50 cursor-pointer">
                   <FaUserShield title="Promover para Admin" />
                 </button>
               )}
@@ -216,7 +216,7 @@ const LawManagement = () => {
                 />
                 <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
-            <button onClick={() => { setEditingLaw(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-blue-fcsn text-white py-2 px-4 rounded-lg hover:bg-blue-fcsn2">
+            <button onClick={() => { setEditingLaw(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-blue-fcsn dark:bg-blue-fcsn3 text-white py-2 px-4 rounded-lg hover:bg-blue-fcsn2 cursor-pointer">
               <FaPlus /> Nova Lei
             </button>
         </div>
@@ -229,10 +229,10 @@ const LawManagement = () => {
               <p className="text-sm text-gray-500 dark:text-gray-300">{law.sigla}</p>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => { setEditingLaw(law); setIsModalOpen(true); }} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2">
+              <button onClick={() => { setEditingLaw(law); setIsModalOpen(true); }} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 cursor-pointer">
                 <FaEdit />
               </button>
-              <button onClick={() => handleDeleteLaw(law.id)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2">
+              <button onClick={() => handleDeleteLaw(law.id)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 cursor-pointer">
                 <FaTrash />
               </button>
             </div>
