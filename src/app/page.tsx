@@ -16,6 +16,21 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
     valorAportado: 0,
   };
 
+  const initialValue: dadosEstados = {
+    nomeEstado: "Todos",
+    valorTotal: 0,
+    maiorAporte: maiorAporteGlobal,
+    qtdProjetos: 0,
+    beneficiariosDireto: 0,
+    beneficiariosIndireto: 0,
+    qtdOrganizacoes: 0,
+    qtdMunicipios: 0,
+    projetosODS: [],
+    lei: [],
+    segmento: [],
+    municipios: [],
+  };
+
   return array.reduce((acc, curr) => {
     // Soma dos valores escalares
     const novoAcc = {
@@ -27,7 +42,8 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
         (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
       beneficiariosIndireto:
         (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
-      qtdOrganizacoes: (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
+      qtdOrganizacoes:
+        (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
       qtdMunicipios: (acc.qtdMunicipios ?? 0) + (curr.qtdMunicipios ?? 0),
       projetosODS: acc.projetosODS
         ? acc.projetosODS.map((v, i) => v + (curr.projetosODS?.[i] ?? 0))
@@ -70,7 +86,7 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
     novoAcc.lei = leiAgrupada;
 
     return novoAcc;
-  });
+  }, initialValue);
 }
 
 async function buscarDadosGerais(): Promise<{
