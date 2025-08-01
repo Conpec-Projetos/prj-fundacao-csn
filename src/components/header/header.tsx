@@ -31,15 +31,6 @@ const PromoteAdmin = ({name }: promoteAdminProps) => ( //tirei o "id" para conse
     </div>
 );
 
-// Usamos essa funcao IsADM pois nossa funcao que esta dentro da pasta lib utiliza o firebase-admin
-async function IsADM(email: string | null): Promise<boolean> {
-    if (!email) return false;
-    const usuarioInt = collection(db, "usuarioInt");
-    const qADM = query(usuarioInt, where("email", "==", email), where("administrador", "==", true));
-    const snapshotADM = await getDocs(qADM);
-    return !snapshotADM.empty;
-}
-
 export default function Header() {
     const router = useRouter();
     const { darkMode, toggleDarkMode } = useTheme();
@@ -63,9 +54,8 @@ export default function Header() {
     async function fetchUser() {
         const res = await fetch('/api/auth/session', { method: 'GET' });
         const data = await res.json();
-        if (data.user?.email) {
-            const isAdmin = await IsADM(data.user.email);
-            setAdm(isAdmin);
+        if (data.user?.userIntAdmin){
+            setAdm(true);
         } else {
             setAdm(false);
         }
@@ -75,12 +65,12 @@ export default function Header() {
 
     if (adm === null) return null;
 
-     // Se for admin, renderiza o Header padrão
+    // Se for admin, renderiza o Header padrão
     if (adm) {
         return (
             <div className={`${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
-                <header className="fixed top-0 flex justify-between w-full h-[10vh] bg-blue-fcsn2 z-50 shadow-md/20 px-10">
-                    <nav className="hidden sm:flex flex-row justify-start items-center w-[85%] text-white dark:text-white-off text-xl gap-4 lg:gap-7 sm:w-3/4 lg:w-1/2 lg:text-2xl font-bold ml-1">
+                <header className="fixed top-0 flex flex-row justify-between w-full h-[10vh] bg-blue-fcsn2 z-50 shadow-md/20 px-10 mb-56 shadow-lg " >
+                    <div className="hidden md:flex flex-row justify-start items-center w-[85%] text-white dark:text-white-off text-xl gap-4 sm:w-3/4 lg:w-1/2 lg:text-2xl font-bold ml-1">
                         <button onClick={() => router.push("/")} className="cursor-pointer">Início</button>
                         <button onClick={() => router.push("/dashboard")} className="cursor-pointer">Dashboard</button>
                         <button onClick={() => router.push("/todos-projetos")} className="cursor-pointer">Projetos</button>
@@ -101,36 +91,18 @@ export default function Header() {
                         </div>
                     </nav>
 
-                    <div className="flex items-center gap-10">
-                        <button className="sm:hidden" onClick={() => setIsOpen(!isOpen)}>
+                  <div className="flex flex-row items-center w-full justify-between md:justify-end">
+                        <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
                             <FaBars size={20} className="text-white" />
                         </button>
-                        <Botao_Logout />
-                        <button onClick={toggleDarkMode} className="cursor-pointer">
-                            {darkMode ? <Moon size={20} className="text-white" /> : <Sun size={20} className="text-white" />}
-                        </button>
-                    </div>
 
-                    {/* Mobile Menu */}
-                    {isOpen && (
-                        <nav className="sm:hidden absolute top-[10vh] left-0 w-full bg-blue-fcsn2 rounded shadow-lg text-white-off text-lg font-bold flex flex-col">
-                            <button onClick={() => router.push("/")} className="px-4 py-3 text-left">Início</button>
-                            <button onClick={() => router.push("/dashboard")} className="px-4 py-3 text-left">Dashboard</button>
-                            <button onClick={() => router.push("/todos-projetos")} className="px-4 py-3 text-left">Projetos</button>
-                            <div className="relative">
-                                <button onClick={() => setIsActionsOpen(!isActionsOpen)} className="w-full text-left px-4 py-3">Ações ▾</button>
-                                {isActionsOpen && (
-                                    <div className="mt-1 bg-white dark:bg-blue-fcsn3 text-black dark:text-white-off">
-                                        <button
-                                            onClick={() => setIsPromotePopUpOpen(!isPromotePopUpOpen)}
-                                            className="cursor-pointer block w-full text-left px-4 py-2"
-                                        >Promover colaborador</button>
-                                        <button
-                                            onClick={() => router.push("/cadastro-leis")}
-                                            className="cursor-pointer block w-full text-left px-4 py-2"
-                                        >Cadastrar leis</button>
-                                    </div>
-                                )}
+                        {/* Mobile Menu */}
+                        {isOpen && (
+                            <div className="md:hidden absolute top-[10.5vh] left-1 w-[50%] h-fit bg-blue-fcsn dark:bg-blue-fcsn2 rounded shadow-md text-white-off text-lg font-bold flex flex-col items-center gap-4 p-4">
+                                <button onClick={() => router.push("/")} className="cursor-pointer">Início</button>
+                                <button onClick={() => router.push("/dashboard")} className="cursor-pointer">Dashboard</button>
+                                <button onClick={() => router.push("/todos-projetos")} className="cursor-pointer">Projetos</button>
+                                <button onClick={() => setIsPopUpOpen(!isPopUpOpen)} className="cursor-pointer">Promover Colaborador</button>
                             </div>
                         </nav>
                     )}
@@ -143,10 +115,24 @@ export default function Header() {
                                 ))}
                             </div>
                         )}
+
+                        <div className="flex flex-row gap-6 ">
+                        <div className="w-[15%] flex justify-end items-center mr-1 sm:mr-3">
+                            <button className="cursor-pointer transition-all duration-300" onClick={toggleDarkMode}>
+                                {darkMode ? <Moon size={20} className="text-white" /> : <Sun size={20} className="text-white" />}
+                            </button>
+                        </div>
+
+                        <div className="pt-2 md:pt-1">
+                            <Botao_Logout />
+                        </div>
+                        </div>
+                    </div>
                 </header>
             </div>
         );
     }
 
+    // Se nao for admin (é apenas interno ou externo), renderiza outro header
     return <HeaderSecundario />;
 }

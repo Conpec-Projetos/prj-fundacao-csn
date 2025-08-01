@@ -4,14 +4,7 @@ import Footer from "@/components/footer/footer";
 import { useEffect, useRef, useState } from "react";
 import { FaCaretDown, FaCheckCircle, FaFilter, FaSearch } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
-
-import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "@/firebase/firebase-config";
-import darkLogo from "@/assets/fcsn-logo-dark.svg";
-import logo from "@/assets/fcsn-logo.svg";
-import Image from "next/image";
-import { useTheme } from "@/context/themeContext";
+import { db } from "@/firebase/firebase-config";
 import { collection, getDocs, query, where } from "firebase/firestore";
 
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj"; 
@@ -213,40 +206,7 @@ export default function TodosProjetos() {
     setCtrl(false);
   }
 
-
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const { darkMode } = useTheme();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && user.email) {
-        const emailDomain = user.email.split("@")[1];
-        if (emailDomain === "conpec.com.br" && user.emailVerified) {
-          setIsLoading(false);
-        } else {
-          router.push("./inicio-externo");
-        }
-      } else {
-        router.push("./login");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center h-screen bg-white dark:bg-blue-fcsn2 dark:bg-opacity-80">
-        <Image src={darkMode ? darkLogo : logo} alt="csn-logo" width={600} priority />
-        <div className="text-blue-fcsn dark:text-white-off font-bold text-2xl sm:text-3xl md:text-4xl mt-6 text-center">
-          Verificando sessão...
-        </div>
-      </div>
-    );
-  }
-
   const projectsToRender = search ? resSearch : (ctrl ? filteredProjects : allProjects);
-
 
   return (
     <div className="flex flex-col min-h-screen">
