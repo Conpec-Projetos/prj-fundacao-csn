@@ -34,7 +34,8 @@ export default function Header() {
     const { darkMode, toggleDarkMode } = useTheme();
     const [isOpen, setIsOpen] = useState(false);
     const [adm, setAdm] = useState<boolean | null>(null);
-    const [isPopUpOpen, setIsPopUpOpen] = useState(false);
+    const [isActionsOpen, setIsActionsOpen] = useState(false);
+    const [isPromotePopUpOpen, setIsPromotePopUpOpen] = useState(false);
 
     const UsersToPromote: promoteAdminProps[] = [
         { id: 1, name: "Teste da Silva" },
@@ -75,7 +76,21 @@ export default function Header() {
                         <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
                         <button onClick={() => router.push("/todos-projetos")} className="cursor-pointer">Projetos</button>
                         <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
-                        <button onClick={() => setIsPopUpOpen(!isPopUpOpen)} className="cursor-pointer whitespace-nowrap">Promover Colaborador</button>
+                        <div className="relative">
+                        <button onClick={() => setIsActionsOpen(!isActionsOpen)} className="cursor-pointer">Ações ▾</button>
+                        {isActionsOpen && (
+                            <div className="absolute text-lg mt-2 w-48 bg-white dark:bg-blue-fcsn3 rounded shadow-lg z-10 text-blue-fcsn dark:text-white-off">
+                                <button
+                                    onClick={() => setIsPromotePopUpOpen(!isPromotePopUpOpen)}
+                                    className="cursor-pointer block w-full text-left px-4 py-2 hover:bg-gray-200 dark:hover:bg-blue-fcsn2"
+                                >Promover colaborador</button>
+                                <button
+                                    onClick={() => {router.push("/cadastro-leis"); setIsActionsOpen(false);}}
+                                    className="cursor-pointer block w-full text-left px-4 py-2 hover:bg-gray-200 dark:hover:bg-blue-fcsn2"
+                                >Cadastrar leis</button>
+                            </div>
+                        )}
+                    </div>
                     </nav>
 
                   <div className="flex flex-row items-center w-full justify-between md:justify-end">
@@ -89,12 +104,26 @@ export default function Header() {
                                 <button onClick={() => router.push("/")} className="cursor-pointer">Início</button>
                                 <button onClick={() => router.push("/dashboard")} className="cursor-pointer">Dashboard</button>
                                 <button onClick={() => router.push("/todos-projetos")} className="cursor-pointer">Projetos</button>
-                                <button onClick={() => setIsPopUpOpen(!isPopUpOpen)} className="cursor-pointer">Promover Colaborador</button>
+                                <div className="relative">
+                                    <button onClick={() => setIsActionsOpen(!isActionsOpen)} className="w-full text-left px-4 py-3">Ações ▾</button>
+                                    {isActionsOpen && (
+                                        <div className="mt-1 bg-white dark:bg-blue-fcsn3 text-black dark:text-white-off">
+                                            <button
+                                                onClick={() => setIsPromotePopUpOpen(!isPromotePopUpOpen)}
+                                                className="cursor-pointer block w-full text-left px-4 py-2"
+                                            >Promover colaborador</button>
+                                            <button
+                                                onClick={() => router.push("/cadastro-leis")}
+                                                className="cursor-pointer block w-full text-left px-4 py-2"
+                                            >Cadastrar leis</button>
+                                        </div>
+                                    )}
+                                </div>
                             </nav>
                         )}
 
                         {/* Pop-up de promoção */}
-                        {isPopUpOpen && (
+                        {isPromotePopUpOpen && (
                             <div className="flex flex-col items-center absolute top-78 left-1 sm:top-[10.5vh] sm:left-135 rounded shadow-md bg-blue-fcsn2 max-w-[90%] w-fit h-fit max-h-[90svh] overflow-y-auto overflow-hidden">
                                 {UsersToPromote.map(user => (
                                     <PromoteAdmin key={user.id} id={user.id} name={user.name} />
