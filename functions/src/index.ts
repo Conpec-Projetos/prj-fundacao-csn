@@ -358,7 +358,7 @@ const recalculateStateIndicators = async (stateName: string) => {
   // 2. Se não houver projetos para este estado, zera os dados dele em 'dadosEstados'
   if (projectsSnapshot.empty) {
     console.log(`Nenhum projeto ativo/aprovado encontrado para ${stateName}. Limpando indicadores.`);
-    await db.collection("dadosEstados").doc(stateName).set({
+    await db.collection("dadosEstados").doc(estadosFirebase[stateName]).set({
       nomeEstado: stateName,
       qtdProjetos: 0,
       qtdMunicipios: 0,
