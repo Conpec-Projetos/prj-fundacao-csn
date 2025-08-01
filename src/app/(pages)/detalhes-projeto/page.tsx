@@ -46,7 +46,7 @@ export default function ProjectDetailsPage() {
               <div className="bg-[var(--nacional)] text-white w-[20%] flex justify-center rounded-2xl border-[var(--nacional)]">
                 Nacional
               </div>
-              <div className="bg-[var(--cultura)] w-[20%] flex justify-center rounded-2xl border-[var(--cultura)] text-white">
+              <div className="bg-[var(--cultura)] w-[20%] flex justify-center rounded-2xl border-[var(--cultura)] text-white dark:border-1 dark:border-white">
                 Cultura
               </div>
             </div>
