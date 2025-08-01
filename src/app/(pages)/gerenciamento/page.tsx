@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useMemo } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast, Toaster } from "sonner";
-import { FaUsers, FaBalanceScale, FaPlus, FaEdit, FaTrash, FaSpinner, FaUserShield, FaUser } from "react-icons/fa";
+import { FaUsers, FaBalanceScale, FaPlus, FaEdit, FaTrash, FaSpinner, FaUserShield, FaUser, FaSearch } from "react-icons/fa";
+
 import { getInternalUsers, updateUserAdminStatus, getLaws, createLaw, updateLaw, deleteLaw } from "@/app/actions/adminActions";
 
 // Tipos
-interface UsuarioInt {
+interface InternalUser {
   id: string;
   nome: string;
   email: string;
@@ -73,8 +74,9 @@ const LawModal = ({ isOpen, onClose, onSave, law }: { isOpen: boolean; onClose: 
 
 // Componente de Gerenciamento de Colaboradores
 const UserManagement = () => {
-  const [users, setUsers] = useState<UsuarioInt[]>([]);
+  const [users, setUsers] = useState<InternalUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -96,13 +98,31 @@ const UserManagement = () => {
     });
   };
 
+  const filteredUsers = useMemo(() =>
+    users.filter(user =>
+      user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    ), [users, searchTerm]);
+
   if (loading) return <div className="flex justify-center items-center h-full"><FaSpinner className="animate-spin text-4xl" /></div>;
 
   return (
     <div>
-      <h2 className="text-3xl font-bold mb-6">Colaboradores</h2>
+      <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold">Colaboradores</h2>
+          <div className="relative">
+              <input
+                  type="text"
+                  placeholder="Buscar por nome ou email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full md:w-64 p-2 pl-10 rounded-lg border bg-white border-gray-300 dark:border-blue-fcsn dark:bg-blue-fcsn3 focus:outline-none focus:ring-2 focus:ring-blue-fcsn"
+              />
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          </div>
+      </div>
       <div className="space-y-4">
-        {users.map(user => (
+        {filteredUsers.map(user => (
           <div key={user.id} className="bg-white dark:bg-blue-fcsn3 p-4 rounded-lg shadow flex justify-between items-center">
             <div>
               <p className="font-bold text-lg">{user.nome}</p>
@@ -135,6 +155,7 @@ const LawManagement = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLaw, setEditingLaw] = useState<Law | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -172,18 +193,36 @@ const LawManagement = () => {
     }
   };
 
+  const filteredLaws = useMemo(() =>
+    laws.filter(law =>
+      law.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      law.sigla.toLowerCase().includes(searchTerm.toLowerCase())
+    ), [laws, searchTerm]);
+
   if (loading) return <div className="flex justify-center items-center h-full"><FaSpinner className="animate-spin text-4xl" /></div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Leis de Incentivo</h2>
-        <button onClick={() => { setEditingLaw(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-blue-fcsn text-white py-2 px-4 rounded-lg hover:bg-blue-fcsn2">
-          <FaPlus /> Nova Lei
-        </button>
+        <div className="flex items-center gap-4">
+            <div className="relative">
+                <input
+                    type="text"
+                    placeholder="Buscar por nome ou sigla..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full md:w-64 p-2 pl-10 rounded-lg border bg-white border-gray-300 dark:border-blue-fcsn dark:bg-blue-fcsn3 focus:outline-none focus:ring-2 focus:ring-blue-fcsn"
+                />
+                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            </div>
+            <button onClick={() => { setEditingLaw(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-blue-fcsn text-white py-2 px-4 rounded-lg hover:bg-blue-fcsn2">
+              <FaPlus /> Nova Lei
+            </button>
+        </div>
       </div>
       <div className="space-y-4">
-        {laws.map(law => (
+        {filteredLaws.map(law => (
           <div key={law.id} className="bg-white dark:bg-blue-fcsn3 p-4 rounded-lg shadow flex justify-between items-center">
             <div>
               <p className="font-bold text-lg">{law.nome}</p>
