@@ -7,6 +7,7 @@ import os
 import re
 import unicodedata
 from thefuzz import process
+from datetime import datetime
 
 
 # Configuração do Firebase
@@ -16,7 +17,7 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 # Caminho para sua planilha
-caminho_planilha = r"PlanilhaFCSN2024.xlsx"
+caminho_planilha = r"planilha2024.xlsx"
 
 # Nome do arquivo para cache dos dados do IBGE
 ARQUIVO_CACHE_IBGE = 'dados_municipios_estados_ibge.json'
@@ -215,7 +216,7 @@ def mapear_lei(lei_da_planilha):
 # PROCESSAMENTO PRINCIPAL DA PLANILHA
 
 try:
-    df = pd.read_excel(caminho_planilha, sheet_name="Geral -2024")
+    df = pd.read_excel(caminho_planilha, sheet_name="Geral")
     print(f"\nPlanilha '{caminho_planilha}' lida com sucesso. {len(df)} registros encontrados.")
 
     # Padroniza os nomes das colunas: converte para minúsculas e remove espaços.
@@ -225,41 +226,75 @@ try:
     # Você pode remover esta linha depois, se quiser.
     print(f"Nomes das colunas padronizados para: {df.columns.tolist()}")
 
+    data_aprovado_timestamp = datetime(2024, 1, 1, 3)
+
     for index, row in df.iterrows():
-        print(f"\nProcessando projeto: {row['projeto']} (Índice {row['unnamed: 0']})")
+        # Usar o nome do projeto ou o índice para identificação no log
+        id_projeto_log = row['projeto'] if pd.notna(row['projeto']) else f"projeto no Índice {row['unnamed: 0']}"
+        print(f"\nProcessando: {id_projeto_log}")
         
-        # CORRIGIR ESTADOS
+        # NOME DO PROJETO
+        if pd.notna(row['projeto']):
+            nome_projeto = str(row['projeto']).strip()
+        else:
+            nome_projeto = "Indefinido"
+            print("AVISO: Nome do projeto não encontrado. Usando 'Indefinido'.")
+
+        # PROPONENTE
+        if pd.notna(row['proponente']):
+            proponente = str(row['proponente']).strip()
+        else:
+            proponente = "Indefinido"
+            print("AVISO: Nome do proponente não encontrado. Usando 'Indefinido'.")
+
+        # INDICAÇÃO
+        if pd.notna(row['indicação']):
+            indicacao = str(row['indicação']).strip()
+        else:
+            indicacao = "Indefinido"
+            print("AVISO: Indicação não encontrada. Usando 'Indefinido'.")
+        
+        # LEI
+        if pd.notna(row['lei']):
+            lei_padronizada = mapear_lei(str(row['lei']))
+        else:
+            lei_padronizada = "Indefinido"
+            print("AVISO: Lei não encontrada. Usando 'Indefinido'.")
+
+        # VALOR (Já possui fallback para 0.0 na função)
+        valor_aprovado = converter_valor_para_float(row['aportado'])
+
+        # ESTADOS
         if pd.notna(row['estado']):
             estados_originais = re.split(r'\s*[/,-]\s*', str(row['estado']))
         else:
-            estados_originais = "Indefinido"
-            print('Não foi possível encontrar um estado!')
+            estados_originais = ["Indefinido"]
+            print('AVISO: Estado não encontrado. Usando "Indefinido".')
         
-        estados_corrigidos = set() # Usar 'set' para evitar duplicados
-        
+        estados_corrigidos = set()
         for estado_str in estados_originais:
             estado_limpo = estado_str.strip()
             if estado_limpo:
                 estado_corrigido, _ = corrigir_nome(estado_limpo, LISTA_ESTADOS_CORRETOS)
                 estados_corrigidos.add(estado_corrigido)
 
-        # CORRIGIR MUNICÍPIOS (USANDO O CONTEXTO DOS ESTADOS CORRIGIDOS)
+        # MUNICÍPIOS
         if pd.notna(row['município']):
             municipios_originais = re.split(r'\s*[/,-]\s*', str(row['município']))
         else:
-            municipios_originais = "Indefinido"
-            print('Não foi possível encontrar um município!')
+            municipios_originais = ["Indefinido"]
+            print('AVISO: Município não encontrado. Usando "Indefinido".')
 
         municipios_corrigidos = set()
-        
-        # Cria uma lista de todos os municípios possíveis baseada nos estados corrigidos
         lista_municipios_contexto = []
-        for estado in estados_corrigidos:
+        estados_validos_para_busca = {e for e in estados_corrigidos if e != "Indefinido"}
+        
+        for estado in estados_validos_para_busca:
             if estado in MAPA_MUNICIPIOS_CORRETOS:
                 lista_municipios_contexto.extend(MAPA_MUNICIPIOS_CORRETOS[estado])
 
-        if not lista_municipios_contexto:
-             print("AVISO: Não há estados válidos para este projeto, não é possível corrigir municípios.")
+        if not lista_municipios_contexto and any(m != "Indefinido" for m in municipios_originais):
+             print("AVISO: Não há estados válidos para este projeto, a correção de municípios pode falhar.")
 
         for municipio_str in municipios_originais:
             municipio_limpo = municipio_str.strip()
@@ -267,25 +302,16 @@ try:
                 municipio_corrigido, _ = corrigir_nome(municipio_limpo, lista_municipios_contexto)
                 municipios_corrigidos.add(municipio_corrigido)
             elif municipio_limpo:
-                municipios_corrigidos.add(municipio_limpo) # Mantém original se não há contexto
+                municipios_corrigidos.add(municipio_limpo)
 
         # MONTAGEM DO OBJETO PARA O FIREBASE
-        if pd.notna(row['indicação']):
-            indicacao = str(row['indicação']).strip()
-        else:
-            indicacao = "Indefinido"
-            print('Não foi possível encontrar uma indicação!')
-
-        valor_aprovado = converter_valor_para_float(row['aportado 2024'])
-
-        lei_padronizada = mapear_lei(str(row['lei']))
-
         projeto_data = {
-            'nome': str(row['projeto']).strip(),
-            'instituicao': str(row['proponente']).strip(),
+            'nome': nome_projeto,
+            'instituicao': proponente,
             'lei': lei_padronizada,
             'valorAprovado': valor_aprovado,
             'indicacao': indicacao,
+            'dataAprovado': data_aprovado_timestamp,
             'estados': sorted(list(estados_corrigidos)),
             'municipios': sorted(list(municipios_corrigidos)),
             'status': "aprovado",
@@ -296,6 +322,11 @@ try:
 
         # ENVIO PARA O FIRESTORE
         try:
+            # Evita enviar projetos completamente indefinidos
+            if projeto_data['nome'] == "Indefinido" and projeto_data['instituicao'] == "Indefinido":
+                print(f"PULANDO: Registro no índice {row['unnamed: 0']} parece estar vazio.")
+                continue
+
             doc_ref = db.collection('projetos').add(projeto_data)
             print(f"Projeto '{projeto_data['nome']}' adicionado com o ID: {doc_ref[1].id}")
         except Exception as e:
