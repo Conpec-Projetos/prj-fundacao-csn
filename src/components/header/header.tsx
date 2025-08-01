@@ -6,8 +6,6 @@ import { FaBars } from 'react-icons/fa';
 import { useTheme } from '@/context/themeContext';
 import { useEffect, useState } from "react";
 import Botao_Logout from "../botoes/Botao_Logout";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/firebase/firebase-config";
 import HeaderSecundario from "./headerSecundario";
 
 interface promoteAdminProps {
@@ -36,8 +34,7 @@ export default function Header() {
     const { darkMode, toggleDarkMode } = useTheme();
     const [isOpen, setIsOpen] = useState(false);
     const [adm, setAdm] = useState<boolean | null>(null);
-    const [isActionsOpen, setIsActionsOpen] = useState(false);
-    const [isPromotePopUpOpen, setIsPromotePopUpOpen] = useState(false);
+    const [isPopUpOpen, setIsPopUpOpen] = useState(false);
 
     const UsersToPromote: promoteAdminProps[] = [
         { id: 1, name: "Teste da Silva" },
@@ -49,7 +46,7 @@ export default function Header() {
         { id: 7, name: "Testezinhozinho da Silva" },
     ];
 
-    // Verifica se o usuário logado é admin
+    // Pega o usuário logado e verifica se é admin
     useEffect(() => {
     async function fetchUser() {
         const res = await fetch('/api/auth/session', { method: 'GET' });
@@ -63,6 +60,7 @@ export default function Header() {
     fetchUser();
     }, []);
 
+    // Enquanto `adm` ainda não foi definido (null), não renderiza nada
     if (adm === null) return null;
 
     // Se for admin, renderiza o Header padrão
@@ -70,25 +68,14 @@ export default function Header() {
         return (
             <div className={`${darkMode ? "dark" : ""}`} suppressHydrationWarning={true}>
                 <header className="fixed top-0 flex flex-row justify-between w-full h-[10vh] bg-blue-fcsn2 z-50 shadow-md/20 px-10 mb-56 shadow-lg " >
-                    <div className="hidden md:flex flex-row justify-start items-center w-[85%] text-white dark:text-white-off text-xl gap-4 sm:w-3/4 lg:w-1/2 lg:text-2xl font-bold ml-1">
+                    <nav className="hidden md:flex flex-row justify-start items-center w-[85%] text-white dark:text-white-off text-xl gap-4 sm:w-3/4 lg:w-1/2 lg:text-2xl font-bold ml-1">
                         <button onClick={() => router.push("/")} className="cursor-pointer">Início</button>
+                        <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
                         <button onClick={() => router.push("/dashboard")} className="cursor-pointer">Dashboard</button>
+                        <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
                         <button onClick={() => router.push("/todos-projetos")} className="cursor-pointer">Projetos</button>
-                        <div className="relative">
-                            <button onClick={() => setIsActionsOpen(!isActionsOpen)} className="cursor-pointer">Ações ▾</button>
-                            {isActionsOpen && (
-                                <div className="absolute text-lg mt-2 w-48 bg-white dark:bg-blue-fcsn3 rounded shadow-lg z-10 text-blue-fcsn dark:text-white-off">
-                                    <button
-                                        onClick={() => setIsPromotePopUpOpen(!isPromotePopUpOpen)}
-                                        className="cursor-pointer block w-full text-left px-4 py-2 hover:bg-gray-200 dark:hover:bg-blue-fcsn2"
-                                    >Promover colaborador</button>
-                                    <button
-                                        onClick={() => {router.push("/cadastro-leis"); setIsActionsOpen(false);}}
-                                        className="cursor-pointer block w-full text-left px-4 py-2 hover:bg-gray-200 dark:hover:bg-blue-fcsn2"
-                                    >Cadastrar leis</button>
-                                </div>
-                            )}
-                        </div>
+                        <div className="hidden sm:block h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
+                        <button onClick={() => setIsPopUpOpen(!isPopUpOpen)} className="cursor-pointer whitespace-nowrap">Promover Colaborador</button>
                     </nav>
 
                   <div className="flex flex-row items-center w-full justify-between md:justify-end">
@@ -98,17 +85,16 @@ export default function Header() {
 
                         {/* Mobile Menu */}
                         {isOpen && (
-                            <div className="md:hidden absolute top-[10.5vh] left-1 w-[50%] h-fit bg-blue-fcsn dark:bg-blue-fcsn2 rounded shadow-md text-white-off text-lg font-bold flex flex-col items-center gap-4 p-4">
+                            <nav className="md:hidden absolute top-[10.5vh] left-1 w-[50%] h-fit bg-blue-fcsn dark:bg-blue-fcsn2 rounded shadow-md text-white-off text-lg font-bold flex flex-col items-center gap-4 p-4">
                                 <button onClick={() => router.push("/")} className="cursor-pointer">Início</button>
                                 <button onClick={() => router.push("/dashboard")} className="cursor-pointer">Dashboard</button>
                                 <button onClick={() => router.push("/todos-projetos")} className="cursor-pointer">Projetos</button>
                                 <button onClick={() => setIsPopUpOpen(!isPopUpOpen)} className="cursor-pointer">Promover Colaborador</button>
-                            </div>
-                        </nav>
-                    )}
+                            </nav>
+                        )}
 
                         {/* Pop-up de promoção */}
-                        {isPromotePopUpOpen && (
+                        {isPopUpOpen && (
                             <div className="flex flex-col items-center absolute top-78 left-1 sm:top-[10.5vh] sm:left-135 rounded shadow-md bg-blue-fcsn2 max-w-[90%] w-fit h-fit max-h-[90svh] overflow-y-auto overflow-hidden">
                                 {UsersToPromote.map(user => (
                                     <PromoteAdmin key={user.id} id={user.id} name={user.name} />
