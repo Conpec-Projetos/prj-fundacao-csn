@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const publicRoutes = ["/signin", "/login"];
 const internoRoutes = ["/dashboard"];
-const admRoutes = ["/", "/todos-projetos", "/detalhes-projeto"]; // mesmo '/dashboard' sendo uma rota do adm tbm só podemos colocar em um dos arrays
+const admRoutes = ["/", "/todos-projetos", "/detalhes-projeto", "/gerenciamento"]; // mesmo '/dashboard' sendo uma rota do adm tbm só podemos colocar em um dos arrays
 const externoRoutes = ["/inicio-externo"];
 
 export async function middleware(request: NextRequest) {
@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     const payload = JSON.parse(atob(sessionCookie.split(".")[1])); // Aqui pegamos dados uteis do token como o email e se o email foi verificado
-    
+    console.log(payload)
     const emailVerified = payload.email_verified;
     const isAdmin = payload.userIntAdmin === true;
     const isUserExt = payload.userExt === true;
@@ -74,5 +74,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // Apenas essas rotas são verificadas pelo middleware
-  matcher: ["/", "/login", "/signin", "/dashboard", "/inicio-externo", "/todos-projetos", "/detalhes-projeto"]
+  matcher: ["/", "/login", "/signin", "/dashboard", "/inicio-externo", "/todos-projetos", "/detalhes-projeto", "/gerenciamento"]
 };
