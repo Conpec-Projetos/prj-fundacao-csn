@@ -1,17 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FaCaretDown, FaFilter, FaSearch } from "react-icons/fa";
+import { FaCaretDown, FaFilter, FaSearch, FaCheckCircle } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj";
 import { ProjectComponentProps } from "@/app/actions/todosProjetosActions";
 import Image from "next/image";
 
 const Project: React.FC<ProjectComponentProps & { onApprovalSuccess: () => void }> = (props) => (
-    <div className={`bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 transition-all ${!props.isActive ? 'grayscale opacity-60' : ''}`}>
+    <div className={`bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 ${!props.isActive ? 'grayscale opacity-70' : ''}`}>
         <section className="flex flex-col col-span-2 mr-2">
             <div className="flex flex-wrap items-center gap-3 mb-2">
                 <div className="text-2xl font-bold">{props.name}</div>
+                
+                {props.finalStatus === 'aprovado' && props.isActive && (
+                    <FaCheckCircle className="text-green-500 text-2xl" title="Aprovado" />
+                )}
+
                 {props.finalStatus !== 'aprovado' && props.isActive && (
                     <BotaoAprovarProj
                         projectId={props.id}
@@ -126,7 +131,9 @@ export default function TodosProjetosClient({ allProjects }: { allProjects: Proj
     ) : (ctrl ? filteredProjects : projectsByTab(activeTab));
 
     function valueFilters(value1: number, value2: number | undefined) { setFilters((prevFilters) => ({ ...prevFilters, value: prevFilters.value.map((item) => item.initialValue === value1 && item.finalValue === value2 ? { ...item, state: !item.state } : item ) })); }
+
     function incentiveLawFilters(law: string) { setFilters((prevFilters) => ({ ...prevFilters, incentiveLaw: prevFilters.incentiveLaw.map((item) => item.law === law ? { ...item, state: !item.state } : item ) })); }
+    
     function ODSFilters(number: number) { setFilters((prevFilters) => ({ ...prevFilters, ODS: prevFilters.ODS.map((item) => item.numberODS === number ? { ...item, state: !item.state } : item ) })); }
 
     function applyFilters() {
@@ -245,7 +252,7 @@ export default function TodosProjetosClient({ allProjects }: { allProjects: Proj
                 </div>
             </div>
 
-            <div className="flex space-x-4 border-b mt-8">
+            <div className="flex space-x-4 border-b my-8">
                 <button className={`py-2 px-4 ${activeTab === "Pendentes" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Pendentes")}>Pendentes</button>
                 <button className={`py-2 px-4 ${activeTab === "Aprovados" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Aprovados")}>Aprovados</button>
                 <button className={`py-2 px-4 ${activeTab === "Finalizados" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Finalizados")}>Finalizados</button>
