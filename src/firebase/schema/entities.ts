@@ -135,7 +135,7 @@ export interface dadosEstados {
   beneficiariosDireto: number;
   beneficiariosIndireto: number;
   qtdOrganizacoes: number;
-  projetosODS: number[];
+  projetosODS?: number[];
   segmento: { nome: string; qtdProjetos: number }[];
   lei: { nome: string; qtdProjetos: number }[];
 }
