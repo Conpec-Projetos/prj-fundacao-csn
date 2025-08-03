@@ -272,7 +272,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     <div className="relative inline-block">
       <button
         onClick={() => setIsOpen(prev => !prev)}
-        className="bg-pink-fcsn text-white-off font-bold px-4 py-2 rounded-lg hover:bg-pink-light2 dark:hover:bg-pink-light2 transition-colors shadow-md text-sm whitespace-nowrap"
+        className="bg-pink-fcsn text-white-off font-bold px-4 py-2 rounded-lg hover:bg-pink-light2 dark:hover:bg-pink-light2 transition-colors shadow-md text-sm whitespace-nowrap cursor-pointer"
       >
         {props.projetosComplianceStatus ? 'Aprovar Projeto' : 'Aprovar Compliance'}
       </button>

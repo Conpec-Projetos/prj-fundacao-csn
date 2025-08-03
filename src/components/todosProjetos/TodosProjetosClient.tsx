@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj";
 import { ProjectComponentProps } from "@/app/actions/todosProjetosActions";
 import Image from "next/image";
+import Link from "next/link";
 
 const Project: React.FC<ProjectComponentProps & { onApprovalSuccess: () => void }> = (props) => (
     <div className={`bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 ${!props.isActive ? 'grayscale opacity-70' : ''}`}>
@@ -31,6 +32,11 @@ const Project: React.FC<ProjectComponentProps & { onApprovalSuccess: () => void 
             <p className="mb-2 text-lg">{props.value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>
             <div className="bg-pink-fcsn dark:bg-pink-light2 rounded-2xl px-4 py-2 size-fit text-base text-center mb-2 text-white">{props.incentiveLaw}</div>
             <p className="mr-2 mt-3 text-base text-justify">{props.description}</p>
+            <div className="mt-4 flex w-fit justify-between items-center">
+            <Link href={`/detalhes-projeto?id=${props.id}`} className="text-pink-fcsn dark:text-pink-light hover:underline text-sm">
+              Ver detalhes
+            </Link>
+          </div>
         </section>
         <section className="flex flex-wrap justify-center items-center gap-x-2 gap-y-1 col-span-1">
             {props.ODS.map((img) => <Image key={img.numberODS} src={img.src} width={100} height={100} alt={`ODS ${img.numberODS}`} className="w-28 h-28" />)}
@@ -253,10 +259,10 @@ export default function TodosProjetosClient({ allProjects }: { allProjects: Proj
             </div>
 
             <div className="flex space-x-4 border-b my-8">
-                <button className={`py-2 px-4 ${activeTab === "Pendentes" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Pendentes")}>Pendentes</button>
-                <button className={`py-2 px-4 ${activeTab === "Aprovados" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Aprovados")}>Aprovados</button>
-                <button className={`py-2 px-4 ${activeTab === "Finalizados" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Finalizados")}>Finalizados</button>
-                <button className={`py-2 px-4 ${activeTab === "Todos" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Todos")}>Todos</button>
+                <button className={`py-2 px-4  cursor-pointer ${activeTab === "Pendentes" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Pendentes")}>Pendentes</button>
+                <button className={`py-2 px-4  cursor-pointer ${activeTab === "Aprovados" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Aprovados")}>Aprovados</button>
+                <button className={`py-2 px-4  cursor-pointer ${activeTab === "Finalizados" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Finalizados")}>Finalizados</button>
+                <button className={`py-2 px-4  cursor-pointer ${activeTab === "Todos" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Todos")}>Todos</button>
             </div>
 
             <section>
