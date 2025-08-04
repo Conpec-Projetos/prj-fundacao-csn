@@ -1,21 +1,27 @@
 // Importing necessary modules and components
+import localFont from 'next/font/local';
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google"; //importa as fontes do google
 import "./globals.css";     //arquivo de estilos globais
-
 import { ThemeProvider } from '@/context/themeContext';
 import { PDFProvider } from '@/context/pdfContext';
-
 import HeaderWrapper from "@/components/header/headerWrapper";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// Configurando as Fontes CSN
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+/* Fontes CSN
+Aqui registramos todas as variações da fonte Roobert (padrao da FCSN). Com a propriedade weight dizemos para o tailwind usar determinada fonte.
+EX: Quando usamos font-bold no projeto estaremos usando automaticamente a fonte da FCSN (Nesse caso a font-bold no tailwind corresponde a weight 700, logo estaremos usando a Roobert-Bold.woff)
+Quando usa font-bold, ele carrega Roobert-Bold.
+*/
+const fonteTextoFCSN = localFont({
+  src: [
+    { path: '../assets/fonts/Roobert-Light.woff2', weight: '300', style: 'normal' },
+    { path: '../assets/fonts/Roobert-Regular.woff2', weight: '400', style: 'normal' },
+    { path: '../assets/fonts/Roobert-Medium.woff2', weight: '500', style: 'normal' },
+    { path: '../assets/fonts/Roobert-SemiBold.woff2', weight: '600', style: 'normal' },
+    { path: '../assets/fonts/Roobert-Bold.woff2', weight: '700', style: 'normal' },
+  ],
+  variable: '--fonte-texto-fcsn',
 });
 
 export const metadata: Metadata = {
@@ -31,7 +37,8 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {/*Abaixo injetaremos a variável CSS que criamos no escopo global (no <body>)*/}
+      <body className={` ${fonteTextoFCSN.variable}  antialiased`}>
         <ThemeProvider>
           <PDFProvider>
             <HeaderWrapper>
