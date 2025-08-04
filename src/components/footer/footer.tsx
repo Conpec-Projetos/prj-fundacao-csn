@@ -32,9 +32,7 @@ export default function Footer(){
                     
                     <h1 className="font-bold">Contato</h1>
                     
-                    <h1 className="">(xx) xxxxx-xxxx</h1>
-                    
-                    <h1 className="">contato@email.com</h1>
+                    <h1 className="">fundacao@csn.com.br</h1>
                 </div>
             </div>
         </footer>

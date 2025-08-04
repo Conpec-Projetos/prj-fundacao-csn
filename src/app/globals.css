@@ -3,6 +3,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@layer base {
+  ol.list-alpha > li::marker {
+    content: counter(list-item, lower-alpha) ") ";
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
