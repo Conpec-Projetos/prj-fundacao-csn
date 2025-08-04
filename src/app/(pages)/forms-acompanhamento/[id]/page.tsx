@@ -2,12 +2,13 @@ import Footer from "@/components/footer/footer";
 import { Toaster } from "sonner";
 import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
-import { formsAcompanhamentoDados, formsCadastroDados, odsList, leiList, segmentoList, ambitoList, Associacao, Projetos } from "@/firebase/schema/entities";
+import { formsAcompanhamentoDados, formsCadastroDados, odsList, segmentoList, ambitoList, Associacao, Projetos } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import AcompanhamentoForm from "@/components/forms/AcompanhamentoForm";
 import ProjetoInfoBloco from "@/components/forms/projetoInfoBloco";
+import { getLeisFromDB } from "@/lib/utils";
 
 
 interface ProjetoInfo {
@@ -21,6 +22,7 @@ interface ProjetoInfo {
 async function getProjetoData(projetoID: string): Promise<{ initialData: Partial<FormsAcompanhamentoFormFields>; projetoInfo: ProjetoInfo }> {
     let initialData: Partial<FormsAcompanhamentoFormFields> = {};
     let projetoInfo: ProjetoInfo = {};
+    const leiList = await getLeisFromDB();
 
     // 1. Busca sempre o formulário de cadastro original para as informações estáticas
     const cadastroQuery = query(collection(db, "forms-cadastro"), where("projetoID", "==", projetoID), limit(1));
