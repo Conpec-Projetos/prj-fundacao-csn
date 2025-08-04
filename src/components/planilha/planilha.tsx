@@ -11,7 +11,6 @@ import {
   FilterFn,
 } from "@tanstack/react-table";
 import { db } from "@/firebase/firebase-config";
-
 import {
   collection,
   onSnapshot,
@@ -19,6 +18,7 @@ import {
   updateDoc,
   where,
   query,
+  Timestamp
 } from "firebase/firestore";
 import { Projetos } from "@/firebase/schema/entities";
 import { Filter } from "./filter";
@@ -29,6 +29,7 @@ import {
   FaEdit,
   FaList,
   FaLock,
+  FaHourglassHalf,
   FaPencilAlt,
   FaTable,
   FaTimesCircle,
@@ -50,6 +51,7 @@ interface PlanilhaProps {
 interface ProjetoComId extends Omit<Projetos, 'empresas'> {
   id: string;
   empresas: Empresa[];
+  dataAprovado?: Timestamp;
 }
 
 const formatCurrency = (value: number) => {
@@ -82,6 +84,7 @@ const arrayIncludesFilterFn: FilterFn<ProjetoComId> = (
 
 type ComplianceFilter = 'all' | 'true' | 'false';
 type ActiveFilter = 'all' | 'true' | 'false';
+type StatusFilter = 'all' | 'aprovado' | 'reprovado' | 'pendente';
 
 // Função de filtro personalizada para colunas de números
 
@@ -102,6 +105,10 @@ const toDisplayValue = (value: unknown, columnId: string): string => {
         .join("; ");
     }
     return value.join(", ");
+  }
+
+  if (value instanceof Timestamp) {
+    return value.toDate().toLocaleDateString('pt-BR');
   }
   if (typeof value === "object") return "";
 
@@ -152,28 +159,52 @@ const Planilha = (props: PlanilhaProps) => {
   const [data, setData] = useState<ProjetoComId[]>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
-
   const [isEditable, setIsEditable] = useState<boolean>(false);
   const [complianceFilter, setComplianceFilter] = useState<ComplianceFilter>('all');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingProject, setEditingProject] = useState<ProjetoComId | null>(null);
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
   const filteredData = useMemo(() => {
-    if (complianceFilter == 'all' && activeFilter == 'all') {
-      return data
-    } else if (complianceFilter == 'all') {
-      const filterValue = activeFilter === 'true'
-      return data.filter(projeto => projeto.ativo === filterValue)
-    } else if (activeFilter == 'all') {
-      const filterValue = complianceFilter === 'true'
-      return data.filter(projeto => projeto.compliance === filterValue)
+    let filtered = data;
+
+    if (complianceFilter !== 'all') {
+      const complianceValue = complianceFilter === 'true';
+      filtered = filtered.filter(p => p.compliance === complianceValue);
+    }
+    if (activeFilter !== 'all') {
+      const activeValue = activeFilter === 'true';
+      filtered = filtered.filter(p => p.ativo === activeValue);
+    }
+    
+    if (statusFilter !== 'all') {
+        filtered = filtered.filter(p => p.status === statusFilter);
     }
 
-    const complianceValue = complianceFilter === 'true'
-    const activeValue = activeFilter === 'true'
-    return data.filter(projeto => projeto.compliance === complianceValue && projeto.ativo === activeValue)
-  }, [data, complianceFilter, activeFilter])
+    if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        filtered = filtered.filter(p => {
+            if (!p.dataAprovado) return false;
+            return p.dataAprovado.toDate() >= start;
+        });
+    }
+
+    if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filtered = filtered.filter(p => {
+            if (!p.dataAprovado) return false;
+            return p.dataAprovado.toDate() <= end;
+        });
+    }
+    
+    return filtered;
+
+  }, [data, complianceFilter, activeFilter, startDate, endDate, statusFilter]);
 
   // Efeito para buscar e ouvir as atualizações dos dados do Firestore
   useEffect(() => {
@@ -197,7 +228,7 @@ const Planilha = (props: PlanilhaProps) => {
       );
     });
     return () => unsubscribe();
-  }, []);
+  }, [props.tipoPlanilha]);
 
   // Função para atualizar um campo no Firestore quando uma célula é editada
   const handleUpdateData = useCallback(
@@ -393,16 +424,32 @@ const Planilha = (props: PlanilhaProps) => {
     })
   }
 
+  const handleStatusFilterChange = () => {
+    setStatusFilter(current => {
+        if (current === 'all') return 'aprovado';
+        if (current === 'aprovado') return 'reprovado';
+        if (current === 'reprovado') return 'pendente';
+        return 'all';
+    });
+  };
+
   const complianceButtonConfig = {
-    all: { text: 'Todos', icon: <FaList />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' },
-    true: { text: 'Aprovados', icon: <FaCheckCircle />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' },
-    false: { text: 'Pendentes', icon: <FaTimesCircle />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' }
+    all: { text: 'Todos', icon: <FaList />, className: 'bg-blue-fcsn dark:bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    true: { text: 'Aprovados', icon: <FaCheckCircle />, className: 'bg-blue-fcsn dark:bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    false: { text: 'Pendentes', icon: <FaTimesCircle />, className: 'bg-blue-fcsn dark:bg-blue-fcsn2 hover:bg-blue-fcsn3' }
   };
 
   const activeButtonConfig = {
-    all: { text: 'Todos', icon: <FaList />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' },
-    true: { text: 'Sim', icon: <FaCheckCircle />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' },
-    false: { text: 'Não', icon: <FaTimesCircle />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' }
+    all: { text: 'Todos', icon: <FaList />, className: 'bg-blue-fcsn dark:bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    true: { text: 'Sim', icon: <FaCheckCircle />, className: 'bg-blue-fcsn dark:bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    false: { text: 'Não', icon: <FaTimesCircle />, className: 'bg-blue-fcsn dark:bg-blue-fcsn2 hover:bg-blue-fcsn3' }
+  };
+
+   const statusButtonConfig = {
+    all: { text: 'Todos', icon: <FaList />, className: 'bg-blue-fcsn dark:bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    aprovado: { text: 'Aprovados', icon: <FaCheckCircle />, className: 'bg-blue-fcsn dark:bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    reprovado: { text: 'Reprovados', icon: <FaTimesCircle />, className: 'bg-blue-fcsn dark:bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    pendente: { text: 'Pendentes', icon: <FaHourglassHalf />, className: 'bg-blue-fcsn dark:bg-blue-fcsn2 hover:bg-blue-fcsn3' }
   };
 
   // Função para exportar os dados visíveis para um ficheiro Excel (.xlsx)
@@ -494,7 +541,7 @@ const Planilha = (props: PlanilhaProps) => {
           projectName={editingProject.nome}
         />
       )}
-      <div className="mb-4 flex justify-end items-center gap-4">
+      <div className="mb-4 flex flex-wrap justify-end items-center gap-4">
         {props.tipoPlanilha === "aprovacao" && (
           <h1 className="text-3xl font-bold mr-auto">Projetos para aprovação</h1>
         )}
@@ -503,7 +550,32 @@ const Planilha = (props: PlanilhaProps) => {
         )}
         {props.tipoPlanilha === "historico" && (
           <>
-            <h1 className="text-3xl font-bold mr-auto">Todos Projetos</h1>
+            <h1 className="text-3xl font-bold mr-auto">Histórico dos projetos</h1>
+            <div className="flex items-center gap-2">
+                <label htmlFor="start-date" className="font-bold text-blue-fcsn dark:text-white-off">De:</label>
+                <input 
+                    type="date" 
+                    id="start-date"
+                    onChange={e => setStartDate(e.target.value ? new Date(e.target.value) : null)}
+                    className="[color-scheme:dark] p-2 border rounded-lg bg-blue-fcsn dark:bg-blue-fcsn2 border-blue-fcsn2 dark:border-blue-fcsn text-white-off font-bold"
+                />
+            </div>
+            <div className="flex items-center gap-2">
+                <label htmlFor="end-date" className="font-bold text-blue-fcsn dark:text-white-off">Até:</label>
+                <input 
+                    type="date" 
+                    id="end-date"
+                    onChange={e => setEndDate(e.target.value ? new Date(e.target.value) : null)}
+                    className="[color-scheme:dark] p-2 border rounded-lg bg-blue-fcsn dark:bg-blue-fcsn2 border-blue-fcsn2 dark:border-blue-fcsn text-white-off font-bold"
+                />
+            </div>
+            <button
+              onClick={handleStatusFilterChange}
+              className={`font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-white cursor-pointer ${statusButtonConfig[statusFilter].className}`}
+            >
+                {statusButtonConfig[statusFilter].icon}
+                <span>Status: <strong>{statusButtonConfig[statusFilter].text}</strong></span>
+            </button>
             <button
               onClick={handleActiveFilterChange}
               className={`font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-white cursor-pointer ${activeButtonConfig[activeFilter].className}`}
