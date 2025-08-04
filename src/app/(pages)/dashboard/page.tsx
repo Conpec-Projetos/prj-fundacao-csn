@@ -109,7 +109,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       beneficiariosIndireto: 0,
       qtdOrganizacoes: 0,
       qtdMunicipios: 0,
-      projetosODS: [],
       lei: [],
       segmento: [],
       municipios: [],
