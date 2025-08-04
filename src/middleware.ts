@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     const payload = JSON.parse(atob(sessionCookie.split(".")[1])); // Aqui pegamos dados uteis do token como o email e se o email foi verificado
-    console.log(payload)
+    
     const emailVerified = payload.email_verified;
     const isAdmin = payload.userIntAdmin === true;
     const isUserExt = payload.userExt === true;
