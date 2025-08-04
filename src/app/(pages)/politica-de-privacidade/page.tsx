@@ -17,7 +17,7 @@ export default function PrivacyPolicy() {
             <h5 className="text-lg font-semibold my-4">
               1.1. DIRETRIZES PARA O TRATAMENTO DE DADOS PESSOAIS
             </h5>
-            <p>
+            <p className="mb-2">
               A CSN busca garantir que os seus dados sejam:
             </p>
             <ol className="list-alpha space-y-2 pl-4">
@@ -48,7 +48,7 @@ export default function PrivacyPolicy() {
             <h5 className="text-base font-semibold my-4">
               3.1. CONCEITOS BÁSICOS PARA A COMPREENSÃO DESTA POLÍTICA DE PRIVACIDADE
             </h5>
-            <p>
+            <p className="mb-2">
               Os termos abaixo, usados no singular ou no plural, no masculino ou no feminino, terão os
               significados a eles atribuídos quando iniciados com letra maiúscula nesta Política de
               Privacidade:
@@ -181,7 +181,7 @@ export default function PrivacyPolicy() {
             <p>
               Se tiver alguma dúvida sobre a Política de Privacidade, entre em contato com o nosso Encarregado pela Proteção de Dados Pessoais através do e-mail indicado abaixo.
             </p>
-            <div className="border flex flex-wrap gap-2 justify-center p-3 my-4">
+            <div className="border-2 border-pink-fcsn flex flex-wrap gap-2 justify-center p-3 my-4">
                 <p className="font-semibold">E-MAIL:</p>
                 <p>protecaodedados_encarregado@csn.com.br</p>
             </div>
@@ -190,10 +190,12 @@ export default function PrivacyPolicy() {
           {/* Seção 5 */}
           <section>
             <h4 className="text-2xl font-bold my-4">5. DIRETRIZES GERAIS</h4>
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex flew-row gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.1.
             </h5>
-            <p>
+            <div className="flex flex-col">
+              <span>
               A CSN, para os fins da Lei Geral de Proteção de Dados Pessoais e normas aplicáveis, reconhece a importância da privacidade e da segurança dos Dados Pessoais dos empregados, clientes, fornecedores, prestadores de serviços e demais parceiros, obtidos em decorrência do relacionamento empresarial e socioeconômico, e por meio da presente Política de Privacidade, define as diretrizes para o Tratamento dos seus Dados Pessoais, no que tange aos tipos de dados coletados, utilização,
               compartilhamento
               e
@@ -202,13 +204,19 @@ export default function PrivacyPolicy() {
               de
               garantir
               transparência quanto às operações de Tratamento às quais seus Dados Pessoais são
-              submetidos.
-              A CSN entende como um dos seus valores fundamentais o compromisso de respeitar e garantir
+              submetidos.          
+            </span>
+            <span>A CSN entende como um dos seus valores fundamentais o compromisso de respeitar e garantir
               a privacidade dos seus Dados Pessoais.
+             </span>
+             <span>
               Caso você esteja com dúvidas ou precise de informações adicionais, poderá contatar o nosso
               Encarregado pelo Tratamento dos Dados Pessoais, conforme orientações disponibilizadas ao
-              final dessa Política de Privacidade.           
-            </p>
+              final dessa Política de Privacidade.
+             </span>
+            </div>
+
+            </div>
             <h5 className="text-lg font-semibold my-4">
               5.2. QUAIS DADOS PESSOAIS A CSN COLETA?
             </h5>
@@ -261,7 +269,7 @@ export default function PrivacyPolicy() {
               de serviços terceirizados, como, sem se limitar:
               </li>
             </ol>
-            <ol className="list-alpha  space-y-2 pl-4">
+            <ol className="list-alpha space-y-2 pl-9">
             <li>Folha de Pagamento</li>
             <li>Recibo de Pagamento (Contracheque)</li>
             </ol>
@@ -328,13 +336,13 @@ export default function PrivacyPolicy() {
             <h5 className="text-lg font-semibold my-4">
               5.3. QUAIS SÃO AS BASES LEGAIS UTILIZADAS PARA O TRATAMENTO DOS SEUS DADOS PESSOAIS?
             </h5>
-            <p>A CSN somente realiza o Tratamento de Dados Pessoais e Dados Pessoais Sensíveis de acordo
+            <p className="mb-2">A CSN somente realiza o Tratamento de Dados Pessoais e Dados Pessoais Sensíveis de acordo
             com as hipóteses previstas na legislação brasileira e, quando exigido por lei, utilizamos seus
             Dados Pessoais mediante obtenção prévia de consentimento.
             A depender da atividade realizada, realizamos o Tratamento de Dados Pessoais e/ou de Dados
             Pessoais Sensíveis de acordo com as seguintes hipóteses:
             </p>
-            <ol className="list-alpha  space-y-2 pl-4">
+            <ol className="list-alpha space-y-2 pl-9">
             <li>mediante o fornecimento prévio de consentimento pelo Titular dos Dados Pessoais, nos casos aplicáveis;</li>
             <li>para o cumprimento de obrigação legal ou regulatória que determine o Tratamento dos Dados Pessoais;</li>
             <li>quando necessário para negociação ou execução de um contrato estabelecido entre os Titulares dos Dados Pessoais e a CSN, para cumprir com as obrigações contratuais assumidas, garantindo operabilidade, visibilidade e continuidade dos serviços;</li>
@@ -354,8 +362,8 @@ export default function PrivacyPolicy() {
             <h5 className="text-lg font-semibold my-4">
               5.4. QUANDO PODEMOS COMPARTILHAR OS SEUS DADOS PESSOAIS OU DADOS PESSOAIS SENSÍVEIS?
             </h5>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.4.1.
             </h5>
             <p>Em alguns casos podemos compartilhar Dados Pessoais com parceiros comerciais que
@@ -364,8 +372,8 @@ export default function PrivacyPolicy() {
             dos Titulares dos Dados Pessoais que se relacionam conosco.
             </p>
             </div>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.4.2.
             </h5>
             <p>Os seus Dados Pessoais são compartilhados apenas quando estritamente necessário e
@@ -373,8 +381,8 @@ export default function PrivacyPolicy() {
             Privacidade.
             </p>
             </div>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.4.3.
             </h5>
             <p>A CSN como responsável pelo Tratamento
@@ -388,8 +396,8 @@ export default function PrivacyPolicy() {
             Pessoais e, adicionalmente, desta Política de Privacidade.
             </p>
             </div>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.4.4.
             </h5>
             <p>Em algumas situações, podemos também ser obrigados a compartilhar os seus dados
@@ -400,8 +408,8 @@ export default function PrivacyPolicy() {
             <h5 className="text-lg font-semibold my-4">
               5.5. POR QUANTO TEMPO ARMAZENAMOS OS SEUS DADOS PESSOAIS E DADOS PESSOAIS SENSÍVEIS?
             </h5>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.5.1.
             </h5>
             <p>Os Dados Pessoais são armazenados pelo tempo que for necessário para cumprir com
@@ -410,8 +418,8 @@ export default function PrivacyPolicy() {
             para sua manutenção como, por exemplo, cumprimento de obrigações legais, regulatórias, contratuais, entre outras, desde que fundamentadas com uma Base Legal.
             </p>
             </div>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.5.2.
             </h5>
             <p>Sempre fazemos uma análise técnica para determinar o período de retenção
@@ -419,14 +427,15 @@ export default function PrivacyPolicy() {
             necessidade de coleta e finalidade para a qual ele será tratado.
             </p>
             </div>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.5.3.
             </h5>
+            <div>
             <p>O término do Tratamento dos Dados Pessoais do Titular e sua consequente eliminação
 o           correrá quando:
             </p>
-            <ol className="list-alpha  space-y-2 pl-4">
+            <ol className="list-alpha space-y-2 pl-4">
               <li>For verificado que a finalidade para a qual o consentimento foi obtido foi alcançada
               ou que os Dados Pessoais coletados deixaram de ser necessários ou pertinentes ao
               alcance da finalidade específica almejada;
@@ -449,10 +458,12 @@ o           correrá quando:
               </li>
             </ol>
             </div>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            </div>
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.5.4.
             </h5>
+            <div>
             <p> 
             No entanto, por motivo de lei, regulamentação ou determinação judicial, os Dados
             Pessoais do Titular de Dados poderão ser mantidos por período superior, findo o qual,
@@ -465,11 +476,12 @@ o           correrá quando:
               <li>Destruição em caso de informações físicas.</li>
             </ol>
             </div>
+            </div>
             <h5 className="text-lg font-semibold my-4">
               5.6. COMO GARANTIMOS A SEGURANÇA DOS SEUS DADOS?
             </h5>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.6.1.
             </h5>
             <p>A CSN adota medidas técnicas e organizacionais de segurança de informação
@@ -481,8 +493,8 @@ o           correrá quando:
             Pessoais Sensíveis.
             </p>
             </div>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.6.2.
             </h5>
             <p>A CSN possui processos, políticas e controles de Segurança da Informação
@@ -490,8 +502,8 @@ o           correrá quando:
             disponibilidade de Dados Pessoais e Dados Pessoais Sensíveis.
             </p>
             </div>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.6.3.
             </h5>
             <p>Os Dados Pessoais e os Dados Pessoais Sensíveis serão acessados somente por
@@ -506,8 +518,8 @@ o           correrá quando:
             objetivos, além do compromisso de confidencialidade e preservação da privacidade nos termos desta Política de Privacidade.
             </p>
             </div>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.6.4.
             </h5>
             <p>A CSN se compromete a divulgar aos Titulares de Dados qualquer incidente de
@@ -518,8 +530,8 @@ o           correrá quando:
             <h5 className="text-lg font-semibold my-4">
               5.7. TRANSFERÊNCIA INTERNACIONAL DE DADOS
             </h5>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.7.1.
             </h5>
             <p>Embora as empresas às quais essa Política de Privacidade se aplica possuam suas
@@ -530,8 +542,8 @@ o           correrá quando:
             exterior.
             </p>
             </div>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.7.2.
             </h5>
             <p>De acordo com o previsto na legislação nacional, a transferência internacional de
@@ -546,50 +558,115 @@ o           correrá quando:
             <h5 className="text-lg font-semibold my-4">
               5.8. OS DIREITOS SOBRE OS SEUS DADOS PESSOAIS E DADOS PESSOAIS SENSÍVEIS
             </h5>
-            <div className="flex gap-2">
-            <h5 className="text-lg font-semibold my-4">
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
               5.8.1.
             </h5>
-            <p>A CSN possui os meios necessários para que o Titular dos Dados Pessoais, possa
+            <div>
+            <p className="mb-2">A CSN possui os meios necessários para que o Titular dos Dados Pessoais, possa
             exercer seus direitos mencionados a seguir, de maneira gratuita, clara e de fácil
             acesso, considerando a legislação e os regulamentos aplicáveis e vigentes.
             </p>
-            </div>
-          <ol className="list-alpha space-y-2 pl-4">
+            
+            <ol className="list-alpha space-y-2 pl-4">
             <li>
-              <span className="font-semibold">Direito de acesso:</span> 
+              <span className="font-semibold">Direito de acesso: </span> 
               <span>
-                o Titular de Dados poderá ter acesso aos seus Dados Pessoais e Dados Pessoais Sensíveis
+                O Titular de Dados poderá ter acesso aos seus Dados Pessoais e Dados Pessoais Sensíveis
                 tratados de forma simples e gratuita, por meio de formato físico ou digital, bem como
                 informações sobre a forma, duração do Tratamento e integralidade dos seus Dados Pessoais
                 tratados;
               </span>
             </li>
             <li>
-              <span className="font-semibold">Direito de correção:</span> 
+              <span className="font-semibold">Direito de correção: </span> 
               <span>
-              o Titular de Dados poderá solicitar a retificação, atualização
+              O Titular de Dados poderá solicitar a retificação, atualização
               e/ou complementação dos seus Dados Pessoais e Dados Pessoais Sensíveis
               armazenados pela CSN;
               </span>
             </li>
             <li>
-              <span className="font-semibold">Direito de eliminação:</span> 
+              <span className="font-semibold">Direito de eliminação: </span> 
               <span>
-              o Titular de Dados poderá solicitar a exclusão dos seus
+              O Titular de Dados poderá solicitar a exclusão dos seus
               Dados Pessoais e Dados Pessoais Sensíveis, salvo se aplicável outra hipótese legal
               para a continuidade do Tratamento, ou leis que suportem o Tratamento;
               </span>
             </li>
             <li>
-              <span className="font-semibold">Direito de portabilidade:</span> 
+              <span className="font-semibold">Direito de portabilidade: </span> 
               <span>
-              O titular de Dados Pessoais poderá exercer seus direitos acima citados por meio do e-
-              mail protecaodedados_encarregado@csn.com.br;
+              o Titular de Dados poderá solicitar os seus Dados
+              Pessoais e Dados Pessoais Sensíveis de forma estruturada de modo a que possam
+              ser transmitidos a outro fornecedor de serviço, mediante requisição expressa.
               </span>
             </li>
           </ol>
+          </div>
+          </div>
+          <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
+              5.8.2.
+            </h5>
+            <p>O titular de Dados Pessoais poderá exercer seus direitos acima citados por meio do e-mail:
+            </p>
+            </div>
+            <div className="border-2 border-pink-fcsn flex flex-wrap gap-2 justify-center p-3 my-4">
+                <p className="font-semibold">E-MAIL:</p>
+                <p>protecaodedados_encarregado@csn.com.br</p>
+            </div>
+          <h4 className="text-2xl font-bold my-4">6. REFERÊNCIA:</h4>
+          <ul className="list-disc space-y-2 pl-4">
+          <li>Código de Conduta Grupo CSN;</li>
+          <li>NG1000.05 DETECÇÃO, PREVENÇÃO E COMBATE À FRAUDE E CORRUPÇÃO;</li>
+          <li>LEI nº 13.709/2018 - Lei Geral de Proteção de Dados Pessoais – LGPD;</li>
+          <li>ABNT NBR ISO/IEC 27001:2013 - Tecnologia da Informação - Técnicas de Segurança - Sistemas de Gestão da Segurança da Informação - Requisitos;</li>
+          <li>ABNT NBR ISO/IEC 27002:2013 - Tecnologia da Informação - Técnicas de Segurança - Código de Prática para Controles de Segurança da Informação;</li>
+          <li>ABNT NBR ISO/IEC 27701:2019 - Tecnologia da Informação - Técnicas de Segurança - Extensão a ABNT NBR ISO/IEC 27002 para gestão da privacidade da informação - Requisitos e Diretrizes.</li>
+          <li>Padrão Internacional para Proteção da Privacidade e Informações Pessoais (PIPPIP) – 1º de junho de 2018.</li>
+          </ul>
           </section>
+
+          <section>
+          <h4 className="text-2xl font-bold my-4">7. ANEXOS</h4>
+          <p>Não aplicável</p>
+          <h4 className="text-2xl font-bold my-4">8. NOTAS EXPLICATIVAS</h4>
+          <p>Não aplicável</p>
+          <h4 className="text-2xl font-bold my-4">9. APROVAÇÃO</h4>
+          <p>Este documento foi aprovado pela Diretoria de Auditoria, Riscos e Compliance, Diretoria Jurídica, Diretoria de TI e Diretoria de RH da CSN.</p>
+          </section>
+
+          <section>
+          <h4 className="text-2xl font-bold my-4">10. HISTÓRICO DE REVISÕES</h4>
+            <h5 className="text-lg font-semibold">10.1. ALTERAÇÕES NA POLÍTICA DE PRIVACIDADE </h5>
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
+              10.1.1.
+            </h5>
+            <p>A CSN reserva-se o direito de, quando necessário e sem aviso prévio e com efeitos
+            imediatos, alterar, acrescentar ou revogar, parcial ou totalmente, a presente Política
+            de Privacidade, desde que mantida a conformidade com a legislação vigente.
+            </p>
+            </div>
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
+              10.1.2.
+            </h5>
+            <p>Recomendamos que você a acesse frequentemente, ou sempre que tiver dúvidas, para
+            ver quaisquer atualizações ou mudanças em nossa Política de Privacidade.
+            </p>
+            </div>
+            <div className="flex gap-2 my-4">
+            <h5 className="text-lg font-semibold">
+              10.1.3.
+            </h5>
+            <p>No caso de alterações materiais em nossa Política de Privacidade, divulgaremos
+imediatamente através do site institucional do Grupo CSN.
+            </p>
+            </div>
+          </section>
+
 
 
         </article>
