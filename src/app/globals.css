@@ -3,6 +3,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@layer base {
+  ol.list-alpha > li::marker {
+    content: counter(list-item, lower-alpha) ") ";
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -131,3 +137,9 @@
   }
 
 }
+
+/* Define a fonte padrão do site inteiro como a sua fonte (Roobert). Se por acaso a fonte não carregar, o fallback será sans-serif.*/
+html, body {
+  font-family: var(--fonte-texto-fcsn), sans-serif;
+}
+
