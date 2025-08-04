@@ -20,11 +20,11 @@ type BotaoAprovarProjProps = {
 // Componente de Modal para a dupla confirmação final
 const ConfirmationModal = ({ message, onConfirm, onCancel, isUpdating }: { message: string, onConfirm: () => void, onCancel: () => void, isUpdating: boolean }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
-        <div className="bg-white p-6 rounded-lg shadow-xl text-center">
-            <p className="text-black mb-4">{message}</p>
+        <div className="bg-white dark:bg-blue-fcsn2 p-6 rounded-lg shadow-xl text-center w-full max-w-md">
+            <p className="text-blue-fcsn dark:text-white-off mb-4 text-lg">{message}</p>
             <div className="flex justify-center gap-4">
-                <button onClick={onCancel} className="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">Cancelar</button>
-                <button onClick={onConfirm} disabled={isUpdating} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50">
+                <button onClick={onCancel} className="bg-gray-200 dark:bg-blue-fcsn3 hover:bg-gray-300 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off font-bold py-2 px-4 rounded-lg transition-colors">Cancelar</button>
+                <button onClick={onConfirm} disabled={isUpdating} className="bg-red-fcsn hover:bg-opacity-90 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 transition-colors">
                     {isUpdating ? 'Confirmando...' : 'Confirmar Definitivamente'}
                 </button>
             </div>
@@ -131,7 +131,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     setShowConfirmation(true);
   };
 
-  // Função final que executa a aprovação, construindo o 'map' para o Firestore
+  // Função final que executa a aprovação
   async function executeFinalApproval() {
     if (isUpdating) return;
     setIsUpdating(true);
@@ -148,8 +148,8 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
       // Prepara os dados para o Firebase
       await updateDoc(projectDocRef, {
         status: "aprovado",
-        valorAprovado: valorTotalAprovado, // Salva a soma total no campo 'valorAprovado'
-        empresas: arrayUnion(...empresasList) // Adiciona os objetos {nome, valor} ao array 'empresas'
+        valorAprovado: valorTotalAprovado, 
+        empresas: arrayUnion(...empresasList) 
       });
       
       setShowConfirmation(false);
@@ -167,27 +167,27 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     // ESTADO 1: Compliance Pendente
     if (!props.projetosComplianceStatus) {
       return (
-        <div ref={caixaRef} className="absolute top-full left-0 w-[300px] p-4 rounded shadow-md bg-white z-10">
+        <div ref={caixaRef} className="absolute top-full left-0 w-[300px] p-4 rounded-lg shadow-lg bg-white dark:bg-blue-fcsn2 z-10">
           <div className="space-y-3">
-            <label className="text-black block font-semibold">Documentos para Análise:</label>
-            <a href={props.complianceDocUrl || '#'} target="_blank" rel="noopener noreferrer" className={`w-full block text-center py-2 rounded ${props.complianceDocUrl ? 'bg-blue-fcsn text-white hover:bg-blue-800' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
+            <label className="text-blue-fcsn dark:text-white-off block font-semibold">Documentos para Análise:</label>
+            <a href={props.complianceDocUrl || '#'} target="_blank" rel="noopener noreferrer" className={`w-full block text-center py-2 rounded-lg ${props.complianceDocUrl ? 'bg-blue-fcsn text-white-off hover:bg-blue-fcsn2 transition-colors' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
               Baixar Doc. Compliance
             </a>
             
             {props.additionalDocsUrls && props.additionalDocsUrls.length > 0 ? (
               props.additionalDocsUrls.map((url, index) => (
-                <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="w-full block text-center py-2 rounded bg-blue-fcsn text-white hover:bg-blue-800">
+                <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="w-full block text-center py-2 rounded-lg bg-blue-fcsn text-white-off hover:bg-blue-fcsn2 transition-colors">
                   Baixar Doc. Adicional {index + 1}
                 </a>
               ))
             ) : (
-              <a className="w-full block text-center py-2 rounded bg-gray-300 text-gray-500 cursor-not-allowed">
+              <a className="w-full block text-center py-2 rounded-lg bg-gray-300 text-gray-500 cursor-not-allowed">
                 Nenhum Doc. Adicional
               </a>
             )}
 
-            <hr className="my-3"/>
-            <button onClick={handleComplianceApproval} disabled={isUpdating} className="bg-green-600 text-white w-full py-2 rounded hover:bg-green-700 disabled:opacity-50">
+            <hr className="my-3 border-gray-200 dark:border-blue-fcsn3"/>
+            <button onClick={handleComplianceApproval} disabled={isUpdating} className="bg-pink-fcsn text-white-off w-full py-2 rounded-lg hover:bg-pink-light2 transition-colors disabled:opacity-50">
               {isUpdating ? 'Aprovando...' : 'Aprovar Compliance'}
             </button>
           </div>
@@ -197,17 +197,17 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     
     // ESTADO 2: Compliance Aprovado, Projeto Pendente
     return (
-      <div ref={caixaRef} className="absolute top-full left-0 w-[350px] p-4 rounded shadow-md bg-white z-10">
+      <div ref={caixaRef} className="absolute top-full left-0 w-[350px] p-4 rounded-lg shadow-lg bg-white dark:bg-blue-fcsn2 z-10 text-blue-fcsn dark:text-white-off">
         <form onSubmit={handleProjectApprovalSubmit}>
           
-          <div className="mb-3 p-3 border rounded border-gray-200">
-            <p className="text-black font-semibold block mb-2">Adicionar Empresa e Valor</p>
+          <div className="mb-3 p-3 border rounded-lg border-gray-200 dark:border-blue-fcsn3">
+            <p className="font-semibold block mb-2">Adicionar Empresa e Valor</p>
             <div className="mb-2">
-              <label className="text-black text-sm block mb-1">Empresa:</label>
+              <label className="text-sm block mb-1">Empresa:</label>
               <select 
                 value={empresaSelecionada} 
                 onChange={(e) => setEmpresaSelecionada(e.target.value)}
-                className="border-gray-400 w-full p-2 border rounded text-black bg-white"
+                className="w-full p-2 border rounded-md text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-gray-300 dark:border-blue-fcsn focus:outline-none focus:ring-2 focus:ring-blue-fcsn"
               >
                 <option value="">-- Selecione --</option>
                 {listaDeEmpresasPermitidas.map(empresa => (
@@ -216,7 +216,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
               </select>
             </div>
             <div className="mb-2">
-              <label className="text-black text-sm block mb-1">Valor Aprovado:</label>
+              <label className="text-sm block mb-1">Valor Aprovado:</label>
               <input 
                 type="number" 
                 placeholder="Ex: 50000.00"
@@ -227,29 +227,29 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
                   }
                 }}
                 min="0"
-                className="border-gray-400 w-full p-2 border rounded text-black" 
+                className="w-full p-2 border rounded-md text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-gray-300 dark:border-blue-fcsn focus:outline-none focus:ring-2 focus:ring-blue-fcsn" 
               />
             </div>
             <button 
               type="button" 
               onClick={handleAddEmpresa} 
-              className="bg-blue-fcsn text-white w-full mt-1 py-2 rounded hover:bg-blue-800"
+              className="bg-blue-fcsn text-white-off w-full mt-1 py-2 rounded-lg hover:bg-blue-fcsn2 transition-colors"
             >
               Adicionar
             </button>
           </div>
 
           {empresasList.length > 0 && (
-            <div className="mb-4 p-2 border border-gray-200 rounded">
-              <p className="text-sm font-semibold text-black mb-1">Empresas a serem aprovadas:</p>
-              <div className="flex flex-col gap-2 mt-2">
+            <div className="mb-4 p-2 border border-gray-200 dark:border-blue-fcsn3 rounded-lg">
+              <p className="text-sm font-semibold mb-1">Empresas a serem aprovadas:</p>
+              <div className="flex flex-col gap-2 mt-2 max-h-32 overflow-y-auto">
                 {empresasList.map((empresa, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-200 text-black rounded px-3 py-1 text-sm">
+                  <div key={index} className="flex items-center justify-between bg-gray-100 dark:bg-blue-fcsn3 rounded-md px-3 py-1 text-sm">
                     <div>
                       <span className="font-bold">{empresa.nome}: </span>
                       <span>{empresa.valorAportado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
-                    <button type="button" onClick={() => handleRemoveEmpresa(index)} className="ml-2 text-red-500 hover:text-red-700 font-bold">x</button>
+                    <button type="button" onClick={() => handleRemoveEmpresa(index)} className="ml-2 text-red-fcsn hover:text-red-500 font-bold">x</button>
                   </div>
                 ))}
               </div>
@@ -258,7 +258,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
 
           <button 
             type="submit" 
-            className="bg-pink-fcsn text-white px-4 py-2 rounded w-full disabled:bg-gray-400"
+            className="bg-pink-fcsn text-white-off px-4 py-2 rounded-lg w-full hover:bg-pink-light2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             disabled={empresasList.length === 0 || isUpdating}
           >
             Aprovar Projeto
@@ -272,7 +272,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
     <div className="relative inline-block">
       <button
         onClick={() => setIsOpen(prev => !prev)}
-        className="border-2 border-amber-400 bg-white text-black rounded-2xl px-4 py-2 w-50 h-10"
+        className="bg-pink-fcsn text-white-off font-bold px-4 py-2 rounded-lg hover:bg-pink-light2 dark:hover:bg-pink-light2 transition-colors shadow-md text-sm whitespace-nowrap cursor-pointer"
       >
         {props.projetosComplianceStatus ? 'Aprovar Projeto' : 'Aprovar Compliance'}
       </button>
