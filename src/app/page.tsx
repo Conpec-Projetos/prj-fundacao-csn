@@ -1,7 +1,4 @@
 import AdminHomeClient from "@/components/homeAdmin/homeClient";
-import { getCurrentUser } from "@/lib/auth";
-import { IsADM } from "@/lib/isAdm";
-import { redirect } from "next/navigation";
 import { db } from "@/firebase/firebase-config";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { dadosEstados } from "@/firebase/schema/entities";
@@ -19,6 +16,21 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
     valorAportado: 0,
   };
 
+  const initialValue: dadosEstados = {
+    nomeEstado: "Todos",
+    valorTotal: 0,
+    maiorAporte: maiorAporteGlobal,
+    qtdProjetos: 0,
+    beneficiariosDireto: 0,
+    beneficiariosIndireto: 0,
+    qtdOrganizacoes: 0,
+    qtdMunicipios: 0,
+    projetosODS: [],
+    lei: [],
+    segmento: [],
+    municipios: [],
+  };
+
   return array.reduce((acc, curr) => {
     // Soma dos valores escalares
     const novoAcc = {
@@ -30,7 +42,8 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
         (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
       beneficiariosIndireto:
         (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
-      qtdOrganizacoes: (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
+      qtdOrganizacoes:
+        (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
       qtdMunicipios: (acc.qtdMunicipios ?? 0) + (curr.qtdMunicipios ?? 0),
       projetosODS: acc.projetosODS
         ? acc.projetosODS.map((v, i) => v + (curr.projetosODS?.[i] ?? 0))
@@ -73,7 +86,7 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
     novoAcc.lei = leiAgrupada;
 
     return novoAcc;
-  });
+  }, initialValue);
 }
 
 async function buscarDadosGerais(): Promise<{
@@ -103,27 +116,6 @@ async function buscarDadosGerais(): Promise<{
 } 
 
 export default async function AdminHomePage() {
-  const user = await getCurrentUser();
-
-  // Verificação se o usuario esta logado, se nao estiver redirecionamos para a pagina de login
-  if (!user || !user.email_verified || !user.email) {
-    return redirect('/login');
-  }
-
-  const email = user.email;
-  const domain = email.split("@")[1];
-  const adm = await IsADM(email);
-  const internalDomains = ["conpec.com.br", "csn.com.br", "fundacaocsn.org.br"];
-  const isInternalUser = internalDomains.includes(domain);
-
-  // Fluxo de redirecionamento
-  if (!isInternalUser) {
-    return redirect('/inicio-externo'); // Usuários externos
-  }
-  if (!adm) {
-    return redirect('/dashboard'); // Usuários internos não-admin
-  }
-
   const dadosGerais = await buscarDadosGerais()
 
   return (
