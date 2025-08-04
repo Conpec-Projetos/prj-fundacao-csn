@@ -48,21 +48,19 @@ const estadosSiglas: { [key: string]: string } = {
   "Tocantins": "TO",
 };
 
-const leisSiglas: { [key: string]: string } = {
-  "Lei de Incentivo à Cultura": "LIC",
-  "PROAC - Programa de Ação Cultural": "PROAC",
-  "FIA - Lei Fundo para a Infância e Adolescência": "FIA",
-  "LIE - Lei de Incentivo ao Esporte": "LIE",
-  "Lei da Pessoa Idosa": "LPI",
-  "Pronas - Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência":
-    "Pronas",
-  "Pronon - Programa Nacional de Apoio à Atenção Oncológica": "Pronon",
-  "Promac - Programa de Incentivo à Cultura do Município de São Paulo":
-    "Promac",
-  "ICMS - MG Imposto sobre Circulação de Mercadoria e Serviços": "ICMS - MG",
-  "ICMS - RJ Imposto sobre Circulação de Mercadoria e Serviços": "ICMS - RJ",
-  "PIE - Lei Paulista de Incentivo ao Esporte": "PIE",
-};
+async function getLeisSiglas(): Promise<{ [key: string]: string }> {
+  const snapshot = await getDocs(collection(db, "leis"));
+  const map: { [nome: string]: string } = {};
+
+  snapshot.forEach((doc) => {
+    const data = doc.data() as { nome: string; sigla: string }; // mudar para tipo lei
+    if (data.nome && data.sigla) {
+      map[data.nome] = data.sigla;
+    }
+  });
+
+  return map;
+}
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
 
@@ -101,7 +99,21 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       nome: "",
       valorAportado: 0,
     };
-
+  
+    const initialValue: dadosEstados = {
+      nomeEstado: "Todos",
+      valorTotal: 0,
+      maiorAporte: maiorAporteGlobal,
+      qtdProjetos: 0,
+      beneficiariosDireto: 0,
+      beneficiariosIndireto: 0,
+      qtdOrganizacoes: 0,
+      qtdMunicipios: 0,
+      lei: [],
+      segmento: [],
+      municipios: [],
+    };
+  
     return array.reduce((acc, curr) => {
       // Soma dos valores escalares
       const novoAcc = {
@@ -121,20 +133,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           : curr.projetosODS ?? [],
         lei: [] as { nome: string; qtdProjetos: number }[],
         segmento: [] as { nome: string; qtdProjetos: number }[],
-        municipios: [
-          ...(acc.municipios ?? []),
-          ...(curr.municipios ?? []),
-        ],
+        municipios: [...(acc.municipios ?? []), ...(curr.municipios ?? [])],
       };
-
+  
       // Agora agrupa e soma os segmentos
-
+  
       const segmentosCombinados = [
         ...(acc.segmento || []),
         ...(curr.segmento || []),
       ];
       const leiCombinada = [...(acc.lei || []), ...(curr.lei || [])];
-
+  
       const segmentoAgrupado = segmentosCombinados.reduce((segAcc, segCurr) => {
         const index = segAcc.findIndex((item) => item.nome === segCurr.nome);
         if (index >= 0) {
@@ -144,9 +153,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         }
         return segAcc;
       }, [] as { nome: string; qtdProjetos: number }[]);
-
+  
       novoAcc.segmento = segmentoAgrupado;
-
+  
       const leiAgrupada = leiCombinada.reduce((leiAcc, leiCurr) => {
         const index = leiAcc.findIndex((item) => item.nome === leiCurr.nome);
         if (index >= 0) {
@@ -156,11 +165,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         }
         return leiAcc;
       }, [] as { nome: string; qtdProjetos: number }[]);
-
+  
       novoAcc.lei = leiAgrupada;
-
+  
       return novoAcc;
-    });
+    }, initialValue);
   }
 
   function somarDadosMunicipios(array: dadosProjeto[]): dadosEstados {
@@ -402,6 +411,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   };
 
 
+  const leisSiglas = await getLeisSiglas();
+  console.log("Leis Siglas:", leisSiglas);
   const segmentoNomes: string[] =
     dados?.segmento.map((item) => item.nome) ?? [];
   const segmentoValores: number[] =
