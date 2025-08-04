@@ -135,7 +135,7 @@ export interface dadosEstados {
   beneficiariosDireto: number;
   beneficiariosIndireto: number;
   qtdOrganizacoes: number;
-  projetosODS: number[];
+  projetosODS?: number[];
   segmento: { nome: string; qtdProjetos: number }[];
   lei: { nome: string; qtdProjetos: number }[];
 }
@@ -176,24 +176,9 @@ export const segmentoList: Segmento[] = [
 ];
 
 export interface Lei {
-  id: number;
   nome: string;
+  sigla: string;
 }
-
-export const leiList: Lei[] = [
-  { id: 0, nome: "Lei de Incentivo à Cultura" },
-  { id: 1, nome: "PROAC - Programa de Ação Cultural" },
-  { id: 2, nome: "FIA - Lei Fundo para a Infância e Adolescência" },
-  { id: 3, nome: "LIE - Lei de Incentivo ao Esporte" },
-  { id: 4, nome: "Lei da Pessoa Idosa" },
-  { id: 5, nome: "Pronas - Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência" },
-  { id: 6, nome: "Pronon - Programa Nacional de Apoio à Atenção Oncológica" },
-  { id: 7, nome: "Promac - Programa de Incentivo à Cultura do Município de São Paulo" },
-  { id: 8, nome: "ICMS - MG Imposto sobre Circulação de Mercadoria e Serviços" },
-  { id: 9, nome: "ICMS - RJ Imposto sobre Circulação de Mercadoria e Serviços" },
-  { id: 10, nome: "PIE - Lei Paulista de Incentivo ao Esporte" }
-];
-
 
 export interface Publico {
   id: number;
