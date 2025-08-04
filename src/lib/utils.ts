@@ -1,8 +1,9 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
-import { storage } from "@/firebase/firebase-config";
+import { db, storage } from "@/firebase/firebase-config";
 import { odsList, publicoList } from "@/firebase/schema/entities";
+import { collection, getDocs } from "firebase/firestore";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -156,4 +157,15 @@ export function formatMoeda(value: number): string {
 export function filtraDigitos(value: string): string {
   if (!value) return "";
   return value.replace(/\D/g, ''); // Remove tudo que não for dígito
+}
+
+export async function getLeisFromDB() {
+  const leisCollection = collection(db, 'leis');
+  const leisSnapshot = await getDocs(leisCollection);
+  const leisList = leisSnapshot.docs.map((doc, index) => ({
+      id: index,
+      nome: doc.data().nome,
+      sigla: doc.data().sigla,
+  }));
+  return leisList;
 }

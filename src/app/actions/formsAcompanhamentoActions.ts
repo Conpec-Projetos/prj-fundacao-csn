@@ -1,20 +1,11 @@
 'use server'
 
-import { collection, addDoc, updateDoc, doc, getDocs } from "firebase/firestore";
+import { collection, addDoc, updateDoc, doc} from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import { formsAcompanhamentoDados, segmentoList, ambitoList } from "@/firebase/schema/entities";
 import { getFileUrl, getOdsIds, getItemNome } from "@/lib/utils";
 import { formsAcompanhamentoSchema, FormsAcompanhamentoFormFields } from "@/lib/schemas";
-
-async function getLeisFromDB() {
-    const leisCollection = collection(db, 'leis');
-    const leisSnapshot = await getDocs(leisCollection);
-    const leisList = leisSnapshot.docs.map((doc, index) => ({
-        id: index,
-        nome: doc.data().nome,
-    }));
-    return leisList;
-}
+import { getLeisFromDB } from "@/lib/utils";
 
 export async function submitAcompanhamentoForm(formData: FormData) {
     const rawFormData = Object.fromEntries(formData.entries());

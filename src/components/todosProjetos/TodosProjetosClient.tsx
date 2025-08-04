@@ -7,6 +7,7 @@ import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovar
 import { ProjectComponentProps } from "@/app/actions/todosProjetosActions";
 import Image from "next/image";
 import Link from "next/link";
+import { Lei } from "@/firebase/schema/entities";
 
 const Project: React.FC<ProjectComponentProps & { onApprovalSuccess: () => void }> = (props) => (
     <div className={`bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 ${!props.isActive ? 'grayscale opacity-70' : ''}`}>
@@ -45,12 +46,13 @@ const Project: React.FC<ProjectComponentProps & { onApprovalSuccess: () => void 
 );
 
 interface Filters {
-    value: { initialValue: number; finalValue: number | undefined; state: boolean }[];
+    minValue: string;
+    maxValue: string;
     incentiveLaw: { law: string; state: boolean }[];
     ODS: { numberODS: number; state: boolean }[];
 }
 
-export default function TodosProjetosClient({ allProjects }: { allProjects: ProjectComponentProps[] }) {
+export default function TodosProjetosClient({ allProjects, incentiveLaws }: { allProjects: ProjectComponentProps[], incentiveLaws: Lei[] }) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<"Pendentes" | "Aprovados" | "Finalizados" | "Todos">("Pendentes");
     const [search, setSearch] = useState("");
@@ -77,46 +79,10 @@ export default function TodosProjetosClient({ allProjects }: { allProjects: Proj
     }, [isOpen]);
 
     const [filters, setFilters] = useState<Filters>({
-        value: [
-            { initialValue: 0, finalValue: 1000, state: false },
-            { initialValue: 1000.01, finalValue: 100000, state: false },
-            { initialValue: 100000.01, finalValue: 1000000, state: false },
-            { initialValue: 1000000.01, finalValue: undefined, state: false }
-        ],
-
-        incentiveLaw: [
-            { law: "CULTURA", state: false },
-            { law: "PROAC", state: false },
-            { law: "FIA", state: false },
-            { law: "LIE", state: false },
-            { law: "IDOSO", state: false },
-            { law: "PRONAS", state: false },
-            { law: "PRONON", state: false },
-            { law: "PROMAC", state: false },
-            { law: "ICMS-MG", state: false },
-            { law: "ICMS-RJ", state: false },
-            { law: "PIE", state: false }
-        ],
-
-        ODS: [
-            { numberODS: 1, state: false },
-            { numberODS: 2, state: false },
-            { numberODS: 3, state: false },
-            { numberODS: 4, state: false },
-            { numberODS: 5, state: false },
-            { numberODS: 6, state: false },
-            { numberODS: 7, state: false },
-            { numberODS: 8, state: false },
-            { numberODS: 9, state: false },
-            { numberODS: 10, state: false },
-            { numberODS: 11, state: false },
-            { numberODS: 12, state: false },
-            { numberODS: 13, state: false },
-            { numberODS: 14, state: false },
-            { numberODS: 15, state: false },
-            { numberODS: 16, state: false },
-            { numberODS: 17, state: false }
-        ],
+        minValue: "",
+        maxValue: "",
+        incentiveLaw: incentiveLaws.map(law => ({ law: law.sigla, state: false })),
+        ODS: Array.from({ length: 17 }, (_, i) => ({ numberODS: i + 1, state: false })),
     });
 
     const projectsByTab = (tab: typeof activeTab) => {
@@ -136,19 +102,20 @@ export default function TodosProjetosClient({ allProjects }: { allProjects: Proj
         project.name.toLowerCase().startsWith(search.toLowerCase())
     ) : (ctrl ? filteredProjects : projectsByTab(activeTab));
 
-    function valueFilters(value1: number, value2: number | undefined) { setFilters((prevFilters) => ({ ...prevFilters, value: prevFilters.value.map((item) => item.initialValue === value1 && item.finalValue === value2 ? { ...item, state: !item.state } : item ) })); }
-
     function incentiveLawFilters(law: string) { setFilters((prevFilters) => ({ ...prevFilters, incentiveLaw: prevFilters.incentiveLaw.map((item) => item.law === law ? { ...item, state: !item.state } : item ) })); }
     
     function ODSFilters(number: number) { setFilters((prevFilters) => ({ ...prevFilters, ODS: prevFilters.ODS.map((item) => item.numberODS === number ? { ...item, state: !item.state } : item ) })); }
 
     function applyFilters() {
-        const activeValues = filters.value.filter((f) => f.state);
-        const activeLaws = filters.incentiveLaw.filter((f) => f.state).map((f) => f.law);
-        const activeODS = filters.ODS.filter((f) => f.state).map((f) => f.numberODS);
+        const { minValue, maxValue, incentiveLaw, ODS } = filters;
+        const min = parseFloat(minValue) || 0;
+        const max = parseFloat(maxValue) || Infinity;
+        
+        const activeLaws = incentiveLaw.filter((f) => f.state).map((f) => f.law);
+        const activeODS = ODS.filter((f) => f.state).map((f) => f.numberODS);
 
         const filtered = projectsByTab(activeTab).filter((project) => {
-            const matchValue = activeValues.length === 0 || activeValues.some((range) => project.value >= range.initialValue && (range.finalValue === undefined || project.value <= range.finalValue));
+            const matchValue = project.value >= min && project.value <= max;
             const matchLaw = activeLaws.length === 0 || activeLaws.includes(project.incentiveLaw);
             const matchODS = activeODS.length === 0 || project.ODS.some((ods) => activeODS.includes(ods.numberODS));
             return matchValue && matchLaw && matchODS;
@@ -162,11 +129,12 @@ export default function TodosProjetosClient({ allProjects }: { allProjects: Proj
     }
 
     function clearFilters() {
-        setFilters((prevFilters) => ({
-            value: prevFilters.value.map((item) => ({ ...item, state: false })),
-            incentiveLaw: prevFilters.incentiveLaw.map((item) => ({ ...item, state: false })),
-            ODS: prevFilters.ODS.map((item) => ({ ...item, state: false })),
-        }));
+        setFilters({
+            minValue: "",
+            maxValue: "",
+            incentiveLaw: incentiveLaws.map(law => ({ law: law.sigla, state: false })),
+            ODS: Array.from({ length: 17 }, (_, i) => ({ numberODS: i + 1, state: false })),
+        });
         setFilteredProjects([]);
         setCtrl(false);
     }
@@ -204,59 +172,58 @@ export default function TodosProjetosClient({ allProjects }: { allProjects: Proj
                     </div>
                     {isOpen && (
                         <div
-                            ref={caixaRef}
-                            className="absolute top-full left-0 w-[90vw] md:w-[700px] lg:w-[768px] xl:w-[768px] bg-white dark:bg-blue-fcsn2 p-4 rounded shadow-md z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-                        >
-                            <div>
-                                <p className="py-2 mt-4 text-xl font-semibold">Valor</p>
-                                {filters.value.map(filter => (
-                                    <label key={filter.initialValue} className="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" checked={filter.state} onChange={() => valueFilters(filter.initialValue, filter.finalValue)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300" />
-                                        <span>{`De ${filter.initialValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} ${filter.finalValue ? `a ${filter.finalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : 'acima'}`}</span>
-                                    </label>
-                                ))}
-                            </div>
-
-                            <div>
-                                <p className="py-2 text-xl font-semibold">Lei de Incentivo</p>
-                                {filters.incentiveLaw.map(filter => (
-                                    <label key={filter.law} className="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" checked={filter.state} onChange={() => incentiveLawFilters(filter.law)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300" />
-                                        <span>{filter.law}</span>
-                                    </label>
-                                ))}
-                            </div>
-
-                            <div className="lg:col-span-2">
-                                <p className="py-2 text-xl font-semibold">ODS</p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                                    {filters.ODS.map(filter => (
-                                        <label key={filter.numberODS} className="flex items-center space-x-2 cursor-pointer">
-                                            <input type="checkbox" checked={filter.state} onChange={() => ODSFilters(filter.numberODS)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300" />
-                                            <span>ODS {filter.numberODS}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="col-span-full flex justify-end gap-4 mt-4">
-                                <button
-                                    className="bg-gray-500 hover:bg-gray-600 rounded-lg p-2 px-4 text-white cursor-pointer"
-                                    onClick={clearFilters}
-                                >
-                                    Limpar filtros
-                                </button>
-                                <button
-                                    className="bg-blue-fcsn hover:bg-blue-800 rounded-lg p-2 px-4 text-white cursor-pointer"
-                                    onClick={applyFilters}
-                                >
-                                    Aplicar filtros
-                                </button>
+                        ref={caixaRef}
+                        className="absolute top-full left-0 min-w-[280px] max-w-[700px] w-[280px] sm:w-[350px] md:w-[420px] lg:w-[650px] bg-white dark:bg-blue-fcsn2 p-4 rounded shadow-md z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                    >
+                        <div>
+                            <p className="py-2 mt-4 text-xl font-semibold">Valor</p>
+                            <div className="flex flex-col min-w-[150px] max-w-[200px] items-center space-x-2">
+                              <input type="number" placeholder="Mínimo" value={filters.minValue} onChange={(e) => setFilters(prev => ({...prev, minValue: e.target.value}))} className="w-full p-2 rounded border bg-white border-gray-300 dark:border-blue-fcsn dark:bg-blue-fcsn3 focus:outline-none focus:ring-2 focus:ring-blue-fcsn" />
+                              <span>-</span>
+                              <input type="number" placeholder="Máximo" value={filters.maxValue} onChange={(e) => setFilters(prev => ({...prev, maxValue: e.target.value}))} className="w-full p-2 rounded border bg-white border-gray-300 dark:border-blue-fcsn dark:bg-blue-fcsn3 focus:outline-none focus:ring-2 focus:ring-blue-fcsn" />
                             </div>
                         </div>
-                    )}
-                </div>
+
+                        <div>
+                            <p className="py-2 text-xl font-semibold">Lei de Incentivo</p>
+                            {filters.incentiveLaw.map(filter => (
+                                <label key={filter.law} className="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" checked={filter.state} onChange={() => incentiveLawFilters(filter.law)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300" />
+                                    <span>{filter.law}</span>
+                                </label>
+                            ))}
+                        </div>
+
+                        <div className="lg:col-span-2">
+                            <p className="py-2 text-xl font-semibold">ODS</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                {filters.ODS.map(filter => (
+                                    <label key={filter.numberODS} className="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" checked={filter.state} onChange={() => ODSFilters(filter.numberODS)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300" />
+                                        <span>ODS {filter.numberODS}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="col-span-full flex justify-end gap-4 mt-4">
+                            <button
+                                className="bg-gray-500 hover:bg-gray-600 rounded-lg p-2 px-4 text-white cursor-pointer"
+                                onClick={clearFilters}
+                            >
+                                Limpar filtros
+                            </button>
+                            <button
+                                className="bg-blue-fcsn hover:bg-blue-800 rounded-lg p-2 px-4 text-white cursor-pointer"
+                                onClick={applyFilters}
+                            >
+                                Aplicar filtros
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
+        </div>
 
             <div className="flex space-x-4 border-b my-8">
                 <button className={`py-2 px-4  cursor-pointer ${activeTab === "Pendentes" ? "border-b-2 border-blue-fcsn dark:border-white-off" : ""}`} onClick={() => setActiveTab("Pendentes")}>Pendentes</button>
