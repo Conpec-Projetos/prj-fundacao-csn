@@ -17,6 +17,8 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  where,
+  query,
 } from "firebase/firestore";
 import { Projetos } from "@/firebase/schema/entities";
 import { Filter } from "./filter";
@@ -38,6 +40,10 @@ import { EmpresasEditModal } from "./empresasEditModal";
 interface Empresa {
   nome: string;
   valorAportado: number; // Armazenado em centavos para evitar problemas com ponto flutuante
+}
+
+interface PlanilhaProps {
+  tipoPlanilha: "aprovacao" | "monitoramento" | "historico";
 }
 
 // Define a estrutura de um projeto com o ID do documento
@@ -75,6 +81,7 @@ const arrayIncludesFilterFn: FilterFn<ProjetoComId> = (
 
 
 type ComplianceFilter = 'all' | 'true' | 'false';
+type ActiveFilter = 'all' | 'true' | 'false';
 
 // Função de filtro personalizada para colunas de números
 
@@ -141,7 +148,7 @@ const EditableCell = ({
 
 // Componente principal da Planilha
 
-const Planilha = () => {
+const Planilha = (props: PlanilhaProps) => {
   const [data, setData] = useState<ProjetoComId[]>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -150,19 +157,38 @@ const Planilha = () => {
   const [complianceFilter, setComplianceFilter] = useState<ComplianceFilter>('all');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingProject, setEditingProject] = useState<ProjetoComId | null>(null);
+  const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all');
 
   const filteredData = useMemo(() => {
-    if (complianceFilter == 'all') {
+    if (complianceFilter == 'all' && activeFilter == 'all') {
       return data
+    } else if (complianceFilter == 'all') {
+      const filterValue = activeFilter === 'true'
+      return data.filter(projeto => projeto.ativo === filterValue)
+    } else if (activeFilter == 'all') {
+      const filterValue = complianceFilter === 'true'
+      return data.filter(projeto => projeto.compliance === filterValue)
     }
-    const filterValue = complianceFilter === 'true'
-    return data.filter(projeto => projeto.compliance === filterValue)
-  }, [data, complianceFilter])
+
+    const complianceValue = complianceFilter === 'true'
+    const activeValue = activeFilter === 'true'
+    return data.filter(projeto => projeto.compliance === complianceValue && projeto.ativo === activeValue)
+  }, [data, complianceFilter, activeFilter])
 
   // Efeito para buscar e ouvir as atualizações dos dados do Firestore
   useEffect(() => {
     const colecaoRef = collection(db, "projetos");
-    const unsubscribe = onSnapshot(colecaoRef, (snapshot) => {
+    let consulta;
+
+    if (props.tipoPlanilha === "aprovacao") {
+      consulta = query(colecaoRef, where("status", "==", "pendente"), where("ativo", '==', true));
+    } else if (props.tipoPlanilha === "monitoramento") {
+      consulta = query(colecaoRef, where("status", "==", "aprovado"), where("ativo", '==', true));
+    } else {
+      consulta = colecaoRef;
+    }
+
+    const unsubscribe = onSnapshot(consulta, (snapshot) => {
       setData(
         snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -203,7 +229,7 @@ const Planilha = () => {
 
   const handleSaveEmpresas = async (updatedEmpresas: Empresa[]) => {
     if (editingProject) {
-      const novoValorAprovado = updatedEmpresas.reduce((total, empresa) => total + empresa.valorAportado,0);
+      const novoValorAprovado = updatedEmpresas.reduce((total, empresa) => total + empresa.valorAportado, 0);
       const dataToUpdate = {
         empresas: updatedEmpresas,
         valorAprovado: novoValorAprovado,
@@ -359,10 +385,24 @@ const Planilha = () => {
     })
   }
 
+  const handleActiveFilterChange = () => {
+    setActiveFilter(current => {
+      if (current === 'all') return 'false'
+      if (current === 'false') return 'true'
+      return 'all'
+    })
+  }
+
   const complianceButtonConfig = {
     all: { text: 'Todos', icon: <FaList />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' },
     true: { text: 'Aprovados', icon: <FaCheckCircle />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' },
     false: { text: 'Pendentes', icon: <FaTimesCircle />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' }
+  };
+
+  const activeButtonConfig = {
+    all: { text: 'Todos', icon: <FaList />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    true: { text: 'Sim', icon: <FaCheckCircle />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' },
+    false: { text: 'Não', icon: <FaTimesCircle />, className: 'bg-blue-fcsn2 hover:bg-blue-fcsn3' }
   };
 
   // Função para exportar os dados visíveis para um ficheiro Excel (.xlsx)
@@ -455,10 +495,25 @@ const Planilha = () => {
         />
       )}
       <div className="mb-4 flex justify-end items-center gap-4">
+        {props.tipoPlanilha === "aprovacao" && (
+          <h1 className="text-3xl font-bold mr-auto">Projetos para aprovação</h1>
+        )}
+        {props.tipoPlanilha === "monitoramento" && (
+          <h1 className="text-3xl font-bold mr-auto">Projetos em monitoramento</h1>
+        )}
+        {props.tipoPlanilha === "historico" && (
+          <>
+            <h1 className="text-3xl font-bold mr-auto">Todos Projetos</h1>
+            <button
+              onClick={handleActiveFilterChange}
+              className={`font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-white cursor-pointer ${activeButtonConfig[activeFilter].className}`}
+            >{activeButtonConfig[activeFilter].icon} Ativo: <strong>{activeButtonConfig[activeFilter].text}</strong> </button>
+          </>
+        )}
         {/* Botão de alterar o filtro de compliance */}
         <button
           onClick={handleComplianceFilterChange}
-          className={`font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-white ${complianceButtonConfig[complianceFilter].className}`}
+          className={`font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2 text-white cursor-pointer ${complianceButtonConfig[complianceFilter].className}`}
         >
           {complianceButtonConfig[complianceFilter].icon}
           <span>Compliance: <strong>{complianceButtonConfig[complianceFilter].text}</strong></span>
