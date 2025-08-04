@@ -90,7 +90,7 @@ export default function AdminHomeClient({ dados, estadosAtendidos }: { dados: da
 
           {/* Planilha */}
           <section className="w-full">
-            <Planilha tipoPlanilha="historico" />
+            <Planilha tipoPlanilha="monitoramento" />
           </section>
         </div>
       </main>
