@@ -34,7 +34,7 @@ const Project: React.FC<ProjectComponentProps & { onApprovalSuccess: () => void 
             <div className="bg-pink-fcsn dark:bg-pink-light2 rounded-2xl px-4 py-2 size-fit text-base text-center mb-2 text-white">{props.incentiveLaw}</div>
             <p className="mr-2 mt-3 text-base text-justify">{props.description}</p>
             <div className="mt-4 flex w-fit justify-between items-center">
-            <Link href={`/detalhes-projeto?id=${props.id}`} className="text-pink-fcsn dark:text-pink-light hover:underline text-sm">
+            <Link href={`/detalhes-projeto/${props.id}`} className="text-pink-fcsn dark:text-pink-light hover:underline text-sm">
               Ver detalhes
             </Link>
           </div>
