@@ -243,7 +243,7 @@ export default function PrivacyPolicy() {
             rotinas trabalhistas, previdenciárias e fiscais de seus empregados e colaboradores.
             </li>
             <li>Dados Pessoais como Nome, CPF, Dados Bancários etc., para fins de processamento de
-            gamentos e prevenção à fraude.
+            pagamentos e prevenção à fraude.
             </li>
             <li>
             Dados Pessoais como Formas de Pagamento, CEP, CPF, Data de Nascimento, E-mail,
@@ -262,11 +262,11 @@ export default function PrivacyPolicy() {
               </li>
               <li>
               Dados Pessoais como Informações de nota fiscal, informações sobre sua conta bancária
-              tc., para processar pagamentos.
+              etc., para processar pagamentos.
               </li>
               <li>
               Dados Pessoais e Dados Pessoais Sensíveis relativas a Informação dos colaboradores
-              de serviços terceirizados, como, sem se limitar:
+              prestadores de serviços terceirizados, como, sem se limitar:
               </li>
             </ol>
             <ol className="list-alpha space-y-2 pl-9">
@@ -432,8 +432,7 @@ export default function PrivacyPolicy() {
               5.5.3.
             </h5>
             <div>
-            <p>O término do Tratamento dos Dados Pessoais do Titular e sua consequente eliminação
-o           correrá quando:
+            <p>O término do Tratamento dos Dados Pessoais do Titular e sua consequente eliminação ocorrerá quando:
             </p>
             <ol className="list-alpha space-y-2 pl-4">
               <li>For verificado que a finalidade para a qual o consentimento foi obtido foi alcançada
@@ -597,7 +596,7 @@ o           correrá quando:
             <li>
               <span className="font-semibold">Direito de portabilidade: </span> 
               <span>
-              o Titular de Dados poderá solicitar os seus Dados
+              O Titular de Dados poderá solicitar os seus Dados
               Pessoais e Dados Pessoais Sensíveis de forma estruturada de modo a que possam
               ser transmitidos a outro fornecedor de serviço, mediante requisição expressa.
               </span>
