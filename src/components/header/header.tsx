@@ -87,6 +87,8 @@ export default function Header() {
                         </div>
 
                         <div className="h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
+                        <button onClick={() => handleNavigate("/todos-projetos")} className="cursor-pointer">Projetos</button>
+                        <div className="h-[2vh] w-px bg-white dark:bg-white-off my-5"></div>
                         <button onClick={() => handleNavigate("/gerenciamento")} className="cursor-pointer">Gerenciamento</button>
                     </nav>
 
@@ -113,7 +115,7 @@ export default function Header() {
                                         </div>
                                     )}
                                 </div>
-
+                                <button onClick={() => handleNavigate("/todos-projetos")} className="cursor-pointer">Projetos</button>
                                 <button onClick={() => handleNavigate("/gerenciamento")} className="cursor-pointer">Gerenciamento</button>
                             </nav>
                         )}
