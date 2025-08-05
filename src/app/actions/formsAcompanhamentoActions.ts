@@ -1,11 +1,11 @@
 'use server'
 
-import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
+import { collection, addDoc, updateDoc, doc} from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
-import { formsAcompanhamentoDados, leiList, segmentoList, ambitoList } from "@/firebase/schema/entities";
+import { formsAcompanhamentoDados, segmentoList, ambitoList } from "@/firebase/schema/entities";
 import { getFileUrl, getOdsIds, getItemNome } from "@/lib/utils";
 import { formsAcompanhamentoSchema, FormsAcompanhamentoFormFields } from "@/lib/schemas";
-
+import { getLeisFromDB } from "@/lib/utils";
 
 export async function submitAcompanhamentoForm(formData: FormData) {
     const rawFormData = Object.fromEntries(formData.entries());
@@ -41,6 +41,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
 
     try {
         const fotoURLs = await getFileUrl(data.fotos, 'forms-acompanhamento', projetoID);
+        const leiList = await getLeisFromDB();
         
         const uploadFirestore: formsAcompanhamentoDados = {
             projetoID: projetoID,

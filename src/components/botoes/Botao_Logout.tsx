@@ -50,7 +50,7 @@ export default function Botao_Logout() {
     return (
         <button
             onClick={LogOut}
-            className="bg-gray-100 border border-gray-300 text-black px-3 py-2 rounded flex items-center gap-1"
+            className="bg-gray-100 border border-gray-300 text-black px-3 py-2 rounded flex items-center cursor-pointer gap-1"
         >
             <CiLogout className="text-lg" />
             <span className="text-sm sm:text-base font-semibold">Sair</span>
