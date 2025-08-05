@@ -4,10 +4,10 @@ import Footer from "@/components/footer/footer";
 export default function PrivacyPolicy() {
   return (
     <div className="flex flex-col min-h-screen">
-      <main className="flex-1 flex flex-col justify-start items-center bg-white-off py-16 px-6">
-        <article className="prose prose-blue max-w-4xl text-lg">
+      <main className="flex-1 flex flex-col justify-start items-center bg-white-off py-16 px-6 dark:bg-blue-fcsn">
+        <article className="prose prose-blue max-w-4xl text-lg dark:text-white">
           {/* Título Principal */}
-          <h1 className="text-blue-fcsn text-4xl font-bold text-center mb-10">
+          <h1 className="text-blue-fcsn text-4xl font-bold text-center mb-10 dark:text-white">
             POLÍTICA DE PRIVACIDADE DE DADOS EXTERNA
           </h1>
 
