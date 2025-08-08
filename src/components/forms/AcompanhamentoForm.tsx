@@ -51,16 +51,18 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
 
     const watchedEstados = watch('estados');
 
+    // fetch leis from firebase
     useEffect(() => {
         const fetchLeis = async () => {
             const snapshot = await getDocs(collection(db, "leis"));
-
+            const leisFromDB: string[] = [];
             snapshot.forEach((doc) => {
-                const data = doc.data() as { nome: string; sigla: string }; // mudar para tipo lei
+                const data = doc.data() as { nome: string; sigla: string };
                 if (data.nome) {
-                 setLeiList((prev) => [...prev, data.nome]);
+                 leisFromDB.push(data.nome);
                 }
             });
+            setLeiList(leisFromDB);
         }
         fetchLeis()
     }, []);

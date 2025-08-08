@@ -4,17 +4,8 @@ import { db } from '@/firebase/firebase-config';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion } from "firebase/firestore";
 import { getFileUrl, getItemNome, getOdsIds, getPublicoNomes } from '@/lib/utils';
 import { Projetos, formsCadastroDados, segmentoList } from '@/firebase/schema/entities';
-import { formsCadastroSchema } from '@/lib/schemas';
-
-async function getLeisFromDB() {
-    const leisCollection = collection(db, 'leis');
-    const leisSnapshot = await getDocs(leisCollection);
-    const leisList = leisSnapshot.docs.map((doc, index) => ({
-        id: index,
-        nome: doc.data().nome,
-    }));
-    return leisList;
-}
+import { formsCadastroSchema } from '@/lib/schemas'
+import { getLeisFromDB } from "@/lib/utils";;
 
 export async function submitCadastroForm(formData: FormData) {
     const rawFormData = Object.fromEntries(formData.entries());
