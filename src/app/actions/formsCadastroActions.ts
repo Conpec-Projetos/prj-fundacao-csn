@@ -4,8 +4,8 @@ import { db } from '@/firebase/firebase-config';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion } from "firebase/firestore";
 import { getFileUrl, getItemNome, getOdsIds, getPublicoNomes } from '@/lib/utils';
 import { Projetos, formsCadastroDados, segmentoList } from '@/firebase/schema/entities';
-import { formsCadastroSchema } from '@/lib/schemas'
-import { getLeisFromDB } from "@/lib/utils";;
+import { formsCadastroSchema } from '@/lib/schemas';
+import { getLeisFromDB } from "@/lib/utils";
 
 export async function submitCadastroForm(formData: FormData) {
     const rawFormData = Object.fromEntries(formData.entries());
