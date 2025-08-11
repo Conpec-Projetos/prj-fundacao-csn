@@ -3,9 +3,10 @@
 import { collection, addDoc, updateDoc, doc} from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import { formsAcompanhamentoDados, segmentoList, ambitoList } from "@/firebase/schema/entities";
-import { getFileUrl, getOdsIds, getItemNome } from "@/lib/utils";
+import { getOdsIds, getItemNome } from "@/lib/utils";
 import { formsAcompanhamentoSchema, FormsAcompanhamentoFormFields } from "@/lib/schemas";
 import { getLeisFromDB } from "@/lib/utils";
+import { uploadFileAndGetUrlAdmin } from './adminActions';
 
 export async function submitAcompanhamentoForm(formData: FormData) {
     const rawFormData = Object.fromEntries(formData.entries());
@@ -40,7 +41,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
     const data: FormsAcompanhamentoFormFields = validationResult.data;
 
     try {
-        const fotoURLs = await getFileUrl(data.fotos, 'forms-acompanhamento', projetoID);
+        const fotoURLs = await Promise.all(data.fotos.map(file => uploadFileAndGetUrlAdmin(file, 'forms-acompanhamento', projetoID)));
         const leiList = await getLeisFromDB();
         
         const uploadFirestore: formsAcompanhamentoDados = {
@@ -80,7 +81,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
             qtdLGBT: data.qtdLGBT,
             ods: getOdsIds(data.ods),
             relato: data.relato,
-            fotos: fotoURLs,
+            fotos: fotoURLs.flat(),
             website: data.website,
             links: data.links,
             contrapartidasExecutadas: data.contrapartidasExecutadas,

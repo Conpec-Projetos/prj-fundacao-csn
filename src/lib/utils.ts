@@ -1,23 +1,11 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
-import { db, storage } from "@/firebase/firebase-config";
+import { db} from "@/firebase/firebase-config";
 import { odsList, publicoList } from "@/firebase/schema/entities";
 import { collection, getDocs } from "firebase/firestore";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-export async function getFileUrl(files: File[], forms: string, projetoID: string, filename?: string): Promise<string[]> {
-  const fileUrl: string[] = [];
-  for (const file of files) {
-      const storageRef = ref(storage, `${forms}/${projetoID}/${filename ? `${file.name}-${filename}` : file.name}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-      fileUrl.push(downloadURL);
-  }
-  return fileUrl;
 }
 
 export function getOdsIds(selectedOds: boolean[]): number[] {
