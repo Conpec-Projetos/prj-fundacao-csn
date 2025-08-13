@@ -13,16 +13,9 @@ import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg"
 import RecoverPassword from "./recoverPassword";
 import { login } from "@/app/actions/login";
+import { loginSchema } from "@/lib/schemas";
 
-// zod é uma biblioteca para validar parâmetros, no caso o schema
-const schema = z.object({
-    email: z.string().email({message: "Email inválido!"}).min(1),
-    // Verifica se possui estrutura de email
-    password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/, {message: "A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas e minúsculas e números."}),
-    // verifica se possui a estrutura de senha definida com regex
-    });
-
-type FormFields = z.infer<typeof schema>;
+type FormFields = z.infer<typeof loginSchema>;
 // define que o forms tem o tipo schema, declarado anteriormente
 
 export default function LoginClient() {
@@ -31,7 +24,7 @@ export default function LoginClient() {
     const [visible, setVisible] = useState<boolean>(false);
     const [recoverPassword, setRecoverPassword] = useState(false);
 
-    const {register,handleSubmit,formState: {  isSubmitting, errors },} = useForm<FormFields>({ resolver: zodResolver(schema),
+    const {register,handleSubmit,formState: {  isSubmitting, errors },} = useForm<FormFields>({ resolver: zodResolver(loginSchema),
             defaultValues: {
             email: "",
             password: ""
