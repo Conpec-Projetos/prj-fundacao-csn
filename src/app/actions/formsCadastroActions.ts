@@ -2,16 +2,15 @@
 
 import { db } from '@/firebase/firebase-config';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs, arrayUnion } from "firebase/firestore";
-import { getFileUrl, getItemNome, getOdsIds, getPublicoNomes } from '@/lib/utils';
+import { getItemNome, getOdsIds, getPublicoNomes } from '@/lib/utils';
 import { Projetos, formsCadastroDados, segmentoList } from '@/firebase/schema/entities';
 import { formsCadastroSchema } from '@/lib/schemas';
 import { getLeisFromDB } from "@/lib/utils";
+import { uploadFileAndGetUrlAdmin } from './adminActions';
 
 export async function submitCadastroForm(formData: FormData) {
     const rawFormData = Object.fromEntries(formData.entries());
 
-    console.log('Server Action?')
-    // Converte os campos que são objetos/arrays de volta
     try {
         if (typeof rawFormData.publico === 'string') {
             rawFormData.publico = JSON.parse(rawFormData.publico);
@@ -74,12 +73,12 @@ export async function submitCadastroForm(formData: FormData) {
         const projetoID = docProjetoRef.id;
 
         const [diarioUrl, apresentacaoUrl, complianceUrl, documentosUrl] = await Promise.all([
-            getFileUrl(data.diario, 'forms-cadastro', projetoID, "diario"),
-            getFileUrl(data.apresentacao, 'forms-cadastro', projetoID, "apresentacao"),
-            getFileUrl(data.compliance, 'forms-cadastro', projetoID, "compliance"),
-            getFileUrl(data.documentos, 'forms-cadastro', projetoID)
+            Promise.all(data.diario.map(file => uploadFileAndGetUrlAdmin(file, 'forms-cadastro', projetoID, "diario"))),
+            Promise.all(data.apresentacao.map(file => uploadFileAndGetUrlAdmin(file, 'forms-cadastro', projetoID, "apresentacao"))),
+            Promise.all(data.compliance.map(file => uploadFileAndGetUrlAdmin(file, 'forms-cadastro', projetoID, "compliance"))),
+            Promise.all(data.documentos.map(file => uploadFileAndGetUrlAdmin(file, 'forms-cadastro', projetoID)))
         ]);
-
+        
         const firestoreData: formsCadastroDados = {
             dataPreenchido: new Date().toISOString().split('T')[0],
             instituicao: data.instituicao,
@@ -119,10 +118,10 @@ export async function submitCadastroForm(formData: FormData) {
             observacoes: data.observacoes,
             termosPrivacidade: data.termosPrivacidade,
             projetoID: projetoID,
-            diario: diarioUrl,
-            apresentacao: apresentacaoUrl,
-            compliance: complianceUrl,
-            documentos: documentosUrl,
+            diario: diarioUrl.flat(),
+            apresentacao: apresentacaoUrl.flat(),
+            compliance: complianceUrl.flat(),
+            documentos: documentosUrl.flat(),
         };
 
         const docCadastroRef = await addDoc(collection(db, "forms-cadastro"), firestoreData);
