@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 const publicRoutes = ["/signin", "/login"];
 const internoRoutes = ["/dashboard"];
-const admRoutes = ["/", "/todos-projetos", "/detalhes-projeto", "/gerenciamento", "/planilha-aprovacao", "/planilha-historico", "/planilha-monitoramento"]; // mesmo '/dashboard' sendo uma rota do adm tbm só podemos colocar em um dos arrays
+const admRoutes = ["/", "/todos-projetos", "/gerenciamento", "/planilha-aprovacao", "/planilha-historico", "/planilha-monitoramento"]; // mesmo '/dashboard' sendo uma rota do adm tbm só podemos colocar em um dos arrays
 const externoRoutes = ["/inicio-externo"];
+const detalhesProj = ["/detalhes-projeto"]
 
 export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get("session")?.value;
@@ -16,6 +17,7 @@ export async function middleware(request: NextRequest) {
   const isInternoRoute = internoRoutes.includes(path);
   const isAdmRoute = admRoutes.includes(path);
   const isExternoRoute = externoRoutes.includes(path);
+  const isDetalhesProj = detalhesProj.includes(path);
 
   if (!sessionCookie) { // Se o cookie nao existe apenas pode acessar rotas publicas
     if (isPublicRoute) 
@@ -27,6 +29,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     const payload = JSON.parse(atob(sessionCookie.split(".")[1])); // Aqui pegamos dados uteis do token como o email e se o email foi verificado
+    console.log(payload)
     const emailVerified = payload.email_verified;
     const isAdmin = payload.userIntAdmin === true;
     const isUserExt = payload.userExt === true;
@@ -45,6 +48,16 @@ export async function middleware(request: NextRequest) {
       else 
         url.pathname = "/dashboard";
       return NextResponse.redirect(url);
+    }
+
+    if(isDetalhesProj){
+      if(isAdmin || isUserExt){
+        return NextResponse.next();
+      }
+      else {
+        url.pathname = "/dashboard";
+        return NextResponse.redirect(url);
+      }
     }
 
     if (isExternoRoute && !isUserExt) {
