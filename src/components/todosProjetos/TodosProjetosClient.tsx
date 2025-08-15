@@ -1,15 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FaCaretDown, FaFilter, FaSearch, FaCheckCircle } from "react-icons/fa";
-import { useRouter } from "next/navigation";
+import { FaCaretDown, FaFilter, FaSearch, FaCheckCircle, FaSpinner } from "react-icons/fa";
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj";
 import { ProjectComponentProps } from "@/app/actions/todosProjetosActions";
 import Image from "next/image";
 import Link from "next/link";
-import { Lei } from "@/firebase/schema/entities";
+import { Lei, Projetos } from "@/firebase/schema/entities";
+import { db } from "@/firebase/firebase-config";
+import { collection, onSnapshot, query, getDocs, where } from "firebase/firestore";
 
-const Project: React.FC<ProjectComponentProps & { onApprovalSuccess: () => void }> = (props) => (
+interface ODS {
+  numberODS: number;
+  src: string;
+}
+
+const Project: React.FC<ProjectComponentProps> = (props) => (
     <div className={`bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-md p-6 my-8 grid grid-cols-3 gap-2 mt-0 ${!props.isActive ? 'grayscale opacity-70' : ''}`}>
         <section className="flex flex-col col-span-2 mr-2">
             <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -26,7 +32,6 @@ const Project: React.FC<ProjectComponentProps & { onApprovalSuccess: () => void 
                         projetosComplianceStatus={props.projetosComplianceStatus}
                         complianceDocUrl={props.complianceUrl}
                         additionalDocsUrls={props.additionalDocsUrls}
-                        onApprovalSuccess={props.onApprovalSuccess}
                     />
                 )}
             </div>
@@ -45,6 +50,7 @@ const Project: React.FC<ProjectComponentProps & { onApprovalSuccess: () => void 
     </div>
 );
 
+
 interface Filters {
     minValue: string;
     maxValue: string;
@@ -52,8 +58,10 @@ interface Filters {
     ODS: { numberODS: number; state: boolean }[];
 }
 
-export default function TodosProjetosClient({ allProjects, incentiveLaws }: { allProjects: ProjectComponentProps[], incentiveLaws: Lei[] }) {
-    const router = useRouter();
+export default function TodosProjetosClient() {
+    const [allProjects, setAllProjects] = useState<ProjectComponentProps[]>([]);
+    const [incentiveLaws, setIncentiveLaws] = useState<Lei[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"Pendentes" | "Aprovados" | "Finalizados" | "Todos">("Pendentes");
     const [search, setSearch] = useState("");
     const [filteredProjects, setFilteredProjects] = useState<ProjectComponentProps[]>([]);
@@ -61,9 +69,85 @@ export default function TodosProjetosClient({ allProjects, incentiveLaws }: { al
     const [isOpen, setIsOpen] = useState(false);
     const caixaRef = useRef<HTMLDivElement>(null);
 
-    const handleApprovalSuccess = () => {
-        router.refresh();
-    };
+    // Effect para buscar projetos em tempo real
+    useEffect(() => {
+        const q = query(collection(db, "projetos"));
+        const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+            const projectsPromises = querySnapshot.docs.map(async (projectDoc) => {
+                const projectData = projectDoc.data() as Projetos;
+                const projectId = projectDoc.id;
+
+                let description = "Sem descrição.";
+                let ods: number[] = [];
+                let complianceUrl: string | null = null;
+                let additionalDocsUrls: string[] = [];
+
+                if (projectData.ultimoFormulario) {
+                    const formsSnapshot = await getDocs(query(collection(db, "forms-cadastro"), where("projetoID", "==", projectId)));
+                    if (!formsSnapshot.empty) {
+                        const formData = formsSnapshot.docs[0].data();
+                        description = formData.descricao || "Sem descrição.";
+                        ods = formData.ods || [];
+                        complianceUrl = formData.compliance?.[0] || null;
+                        additionalDocsUrls = formData.documentos || [];
+                    }
+                }
+
+                const processedODS: ODS[] = (ods || []).map((odsItem: number) => ({
+                    numberODS: odsItem,
+                    src: `/ods/ods${odsItem + 1}.png`,
+                }));
+
+                return {
+                    id: projectId,
+                    name: projectData.nome || "Nome Indisponível",
+                    finalStatus: projectData.status,
+                    projetosComplianceStatus: projectData.compliance === true,
+                    value: projectData.valorAprovado || 0,
+                    incentiveLaw: projectData.lei ? projectData.lei.split('-')[0].trim() : "Não informada",
+                    description: description,
+                    ODS: processedODS,
+                    complianceUrl: complianceUrl,
+                    additionalDocsUrls: additionalDocsUrls,
+                    isActive: projectData.ativo,
+                };
+            });
+
+            const resolvedProjects = await Promise.all(projectsPromises);
+            setAllProjects(resolvedProjects.sort((a, b) => Number(b.isActive) - Number(a.isActive)));
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    // Effect para buscar leis em tempo real
+    useEffect(() => {
+        const q = query(collection(db, "leis"));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const laws = querySnapshot.docs.map(doc => doc.data() as Lei);
+            setIncentiveLaws(laws);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    const [filters, setFilters] = useState<Filters>({
+        minValue: "",
+        maxValue: "",
+        incentiveLaw: [],
+        ODS: Array.from({ length: 17 }, (_, i) => ({ numberODS: i + 1, state: false })),
+    });
+
+    // Effect para atualizar os filtros quando as leis são carregadas
+    useEffect(() => {
+        if (incentiveLaws.length > 0) {
+            setFilters(prevFilters => ({
+                ...prevFilters,
+                incentiveLaw: incentiveLaws.map(law => ({ law: law.nome, state: false }))
+            }));
+        }
+    }, [incentiveLaws]);
     
     useEffect(() => {
         if (!isOpen) return;
@@ -77,13 +161,6 @@ export default function TodosProjetosClient({ allProjects, incentiveLaws }: { al
             document.removeEventListener("mousedown", handleCliqueFora);
         };
     }, [isOpen]);
-
-    const [filters, setFilters] = useState<Filters>({
-        minValue: "",
-        maxValue: "",
-        incentiveLaw: incentiveLaws.map(law => ({ law: law.sigla, state: false })),
-        ODS: Array.from({ length: 17 }, (_, i) => ({ numberODS: i + 1, state: false })),
-    });
 
     const projectsByTab = (tab: typeof activeTab) => {
         switch (tab) {
@@ -137,6 +214,10 @@ export default function TodosProjetosClient({ allProjects, incentiveLaws }: { al
         });
         setFilteredProjects([]);
         setCtrl(false);
+    }
+
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-full"><FaSpinner className="animate-spin text-4xl" /></div>;
     }
 
     return (
@@ -238,7 +319,6 @@ export default function TodosProjetosClient({ allProjects, incentiveLaws }: { al
                         <Project
                             key={project.id}
                             {...project}
-                            onApprovalSuccess={handleApprovalSuccess}
                         />
                     ))
                 ) : (
