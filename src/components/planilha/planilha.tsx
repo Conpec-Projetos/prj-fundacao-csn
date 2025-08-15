@@ -608,7 +608,7 @@ const Planilha = (props: PlanilhaProps) => {
         </button>
       </div>
 
-      <div className="overflow-auto rounded-lg shadow-md border border-gray-200 dark:border-blue-fcsn2">
+      <div className="overflow-auto rounded-lg shadow-md border border-gray-300 dark:border-blue-fcsn">
         <table className="min-w-full bg-white dark:bg-blue-fcsn3">
           <thead className="bg-white-off dark:bg-blue-fcsn2">
             {table.getHeaderGroups().map((headerGroup) => (
