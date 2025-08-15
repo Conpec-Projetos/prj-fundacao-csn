@@ -32,11 +32,14 @@ const MetricCard: React.FC<MetricCardProps> = ({
   icon,
   color,
 }) => (
-  <div className="bg-white dark:bg-blue-fcsn text-gray-800 dark:text-white-off rounded-lg shadow-md p-6 flex flex-col justify-between">
-    <div className={`${colorMap[color]} text-2xl mb-2`}>{icon}</div>
-    <h3 className="text-lg font-semibold text-blue-fcsn dark:text-gray-300">
+  <div className="bg-white-off dark:bg-blue-fcsn text-gray-800 dark:text-white-off rounded-lg shadow-md p-6 flex flex-col justify-between">
+    <div className={`flex flex-row items-center ${colorMap[color]} text-2xl mb-2`}>
+      {icon}
+      <h3 className="text-lg font-semibold text-blue-fcsn dark:text-gray-300 px-2">
       {title}
-    </h3>
+      </h3>
+    </div>
+
     <p className="text-4xl font-bold text-pink-fcsn mt-2">
       {value}
     </p>
@@ -53,7 +56,7 @@ export default function AdminHomeClient({ dados, estadosAtendidos }: { dados: da
 
 
   return (
-    <div className="flex flex-col grow min-h-[90vh] bg-white-off dark:bg-blue-fcsn2">
+    <div className="flex flex-col grow min-h-[90vh] bg-white dark:bg-blue-fcsn2">
       <main className="flex flex-col gap-8 px-8 pb-8 flex-1 sm:mx-8 pt-12">
         {/* Seção de boas-vindas */}
         <Greetings userName={userName} />
@@ -89,7 +92,7 @@ export default function AdminHomeClient({ dados, estadosAtendidos }: { dados: da
           </section>
 
           {/* Planilha */}
-          <section className="w-full bg-white dark:bg-blue-fcsn p-2 sm:p-4 rounded-lg shadow-lg">
+          <section className="w-full">
             <Planilha tipoPlanilha="monitoramento" />
           </section>
         </div>
