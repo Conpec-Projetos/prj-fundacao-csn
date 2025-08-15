@@ -3,6 +3,8 @@ import TodosProjetosClient from "@/components/todosProjetos/TodosProjetosClient"
 import { getProjects } from "@/app/actions/todosProjetosActions";
 import { getLeisFromDB } from "@/lib/utils";
 
+export const dynamic = "force-dynamic"
+
 export default async function TodosProjetosPage() {
   const projects = await getProjects();
   const leis = await getLeisFromDB();
