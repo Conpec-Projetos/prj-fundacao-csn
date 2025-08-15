@@ -6,9 +6,9 @@ import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovar
 import { ProjectComponentProps } from "@/app/actions/todosProjetosActions";
 import Image from "next/image";
 import Link from "next/link";
-import { Lei, Projetos } from "@/firebase/schema/entities";
+import { formsAcompanhamentoDados, formsCadastroDados, Lei, Projetos } from "@/firebase/schema/entities";
 import { db } from "@/firebase/firebase-config";
-import { collection, onSnapshot, query, getDocs, where } from "firebase/firestore";
+import { collection, onSnapshot, query, getDocs, where, doc, getDoc } from "firebase/firestore";
 
 interface ODS {
   numberODS: number;
@@ -82,15 +82,38 @@ export default function TodosProjetosClient() {
                 let complianceUrl: string | null = null;
                 let additionalDocsUrls: string[] = [];
 
-                if (projectData.ultimoFormulario) {
-                    const formsSnapshot = await getDocs(query(collection(db, "forms-cadastro"), where("projetoID", "==", projectId)));
-                    if (!formsSnapshot.empty) {
-                        const formData = formsSnapshot.docs[0].data();
-                        description = formData.descricao || "Sem descrição.";
-                        ods = formData.ods || [];
-                        complianceUrl = formData.compliance?.[0] || null;
-                        additionalDocsUrls = formData.documentos || [];
+                const cadastroQuery = query(collection(db, "forms-cadastro"), where("projetoID", "==", projectId));
+                const cadastroSnapshot = await getDocs(cadastroQuery);
+                const cadastroDoc = cadastroSnapshot.docs.length > 0 ? cadastroSnapshot.docs[0] : null;
+
+                if (cadastroDoc) {
+                    const cadastroData = cadastroDoc.data() as formsCadastroDados;
+                    complianceUrl = cadastroData.compliance?.[0] || null;
+                    additionalDocsUrls = cadastroData.documentos || [];
+                }
+
+                const latestFormId = projectData.ultimoFormulario;
+                let latestFormData: formsAcompanhamentoDados | formsCadastroDados | null = null;
+
+                if (latestFormId) {
+                    if (cadastroDoc && cadastroDoc.id === latestFormId) {
+                        latestFormData = cadastroDoc.data() as formsCadastroDados;
+                    } else {
+                        const acompanhamentoDocRef = doc(db, "forms-acompanhamento", latestFormId);
+                        const acompanhamentoDocSnap = await getDoc(acompanhamentoDocRef);
+                        if (acompanhamentoDocSnap.exists()) {
+                            latestFormData = acompanhamentoDocSnap.data() as formsAcompanhamentoDados;
+                        }
                     }
+                }
+                
+                if (!latestFormData && cadastroDoc) {
+                    latestFormData = cadastroDoc.data() as formsCadastroDados;
+                }
+
+                if (latestFormData) {
+                    description = latestFormData.descricao || "Sem descrição.";
+                    ods = latestFormData.ods || [];
                 }
 
                 const processedODS: ODS[] = (ods || []).map((odsItem: number) => ({
@@ -144,7 +167,7 @@ export default function TodosProjetosClient() {
         if (incentiveLaws.length > 0) {
             setFilters(prevFilters => ({
                 ...prevFilters,
-                incentiveLaw: incentiveLaws.map(law => ({ law: law.nome, state: false }))
+                incentiveLaw: incentiveLaws.map(law => ({ law: law.sigla, state: false }))
             }));
         }
     }, [incentiveLaws]);
@@ -188,12 +211,17 @@ export default function TodosProjetosClient() {
         const min = parseFloat(minValue) || 0;
         const max = parseFloat(maxValue) || Infinity;
         
-        const activeLaws = incentiveLaw.filter((f) => f.state).map((f) => f.law);
+        const activeLawAcronyms = incentiveLaw.filter((f) => f.state).map((f) => f.law);
+        
+        const activeLawNames = incentiveLaws
+            .filter(law => activeLawAcronyms.includes(law.sigla))
+            .map(law => law.nome);
+            
         const activeODS = ODS.filter((f) => f.state).map((f) => f.numberODS);
 
         const filtered = projectsByTab(activeTab).filter((project) => {
             const matchValue = project.value >= min && project.value <= max;
-            const matchLaw = activeLaws.length === 0 || activeLaws.includes(project.incentiveLaw);
+            const matchLaw = activeLawNames.length === 0 || activeLawNames.includes(project.incentiveLaw);
             const matchODS = activeODS.length === 0 || project.ODS.some((ods) => activeODS.includes(ods.numberODS));
             return matchValue && matchLaw && matchODS;
         });
