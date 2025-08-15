@@ -6,8 +6,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast, Toaster } from "sonner";
 import { FaUsers, FaBalanceScale, FaPlus, FaEdit, FaTrash, FaSpinner, FaUserShield, FaUser, FaSearch } from "react-icons/fa";
-
 import { getInternalUsers, updateUserAdminStatus, getLaws, createLaw, updateLaw, deleteLaw } from "@/app/actions/adminActions";
+
+export const dynamic = "force-dynamic"
 
 // Tipos
 interface InternalUser {
