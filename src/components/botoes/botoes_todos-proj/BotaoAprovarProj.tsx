@@ -44,7 +44,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
   
   // Estados para o formulário de aprovação final por empresa
   const [empresaSelecionada, setEmpresaSelecionada] = useState("");
-  const [valorPorEmpresa, setValorPorEmpresa] = useState(""); 
+  const [valorPorEmpresa, setValorPorEmpresa] = useState("");
   const [empresasList, setEmpresasList] = useState<EmpresaComValor[]>([]);
   
   const [showConfirmation, setShowConfirmation] = useState(false);
