@@ -75,7 +75,7 @@ const ProjectCard = ({ project }: { project: ProjetoExt }) => {
             </div>
           </div>
           <div className="mt-4 flex justify-between items-center">
-            <Link href={`/detalhes-projeto?id=${project.id}`} className="text-pink-fcsn dark:text-pink-light hover:underline text-sm">
+            <Link href={`/detalhes-projeto/${project.id}`} className="text-pink-fcsn dark:text-pink-light hover:underline text-sm">
               Ver detalhes
             </Link>
           </div>
