@@ -1,7 +1,7 @@
 "use client";
 
 import Footer from "@/components/footer/footer";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
 import link from "src/assets/Link-svg.svg";
 import presentation from "src/assets/Presentation-svg.svg";
@@ -15,11 +15,10 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { FaPencilAlt } from "react-icons/fa";
+import { FaPencilAlt, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { writeBatch, arrayUnion } from "firebase/firestore";
-import { doc, getDoc, query, collection, where, getDocs, DocumentSnapshot, Timestamp, orderBy, updateDoc } from "firebase/firestore";
+import { doc, getDoc, query, collection, where, getDocs, Timestamp, orderBy, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
-import { useTheme } from "@/context/themeContext";
 import Image from "next/image";
 import { useParams, useRouter } from 'next/navigation';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -102,18 +101,18 @@ const formatFirebaseDate = (dateValue: any): string => {
   try {
     return new Date(dateValue).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   } catch (e) {
+    console.log(e)
     return 'Data inválida';
   }
 };
 
 const formatExternalUrl = (url: string | undefined | null): string | undefined => {
   if (!url) {
-    return undefined; // Retorna undefined para que o href seja omitido
+    return undefined;
   }
   if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url; // A URL já está no formato correto
+    return url;
   }
-  // Adiciona https:// se estiver faltando
   return `https://${url}`;
 };
 
@@ -123,11 +122,13 @@ export default function ProjectDetailsPage() {
   const identifier = params.identifier as string;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [notes, setNotes] = useState<string>("");
+
+  const [allSubmissions, setAllSubmissions] = useState<ProjectData[]>([]);
+  const [currentSubmissionIndex, setCurrentSubmissionIndex] = useState(0);
+
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [submissionCount, setSubmissionCount] = useState({ current: 0, total: 0 });
-  const { darkMode } = useTheme();
-  const [adm, setAdm] = useState<boolean | null>(null); // Inicia como nulo para sabermos que ainda está carregando
+  const [adm, setAdm] = useState<boolean | null>(null);
   const [formCadastroId, setFormCadastroId] = useState<string | null>(null);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
@@ -141,7 +142,7 @@ export default function ProjectDetailsPage() {
   const [editAgencia, setEditAgencia] = useState<string>("");
   const [editConta, setEditConta] = useState<string>("");
 
-  // Pega o usuário logado e verifica se é admin
+
   useEffect(() => {
     async function fetchUser() {
         try {
@@ -151,11 +152,7 @@ export default function ProjectDetailsPage() {
                 return;
             }
             const data = await res.json();
-            if (data.user?.userIntAdmin) { // Aqui verificamos se é ADM
-                setAdm(true);
-            } else {
-                setAdm(false);
-            }
+            setAdm(data.user?.userIntAdmin === true);
         } catch (error) {
             console.error("Falha ao buscar sessão do usuário:", error);
             setAdm(false);
@@ -167,101 +164,64 @@ export default function ProjectDetailsPage() {
   useEffect(() => {
     if (!identifier) return;
 
-    const fetchProjectData = async () => {
+    const fetchProjectSubmissions = async () => {
       setIsLoading(true);
       try {
-        // Try to get project from "projetos"
-        const projectDocRef = doc(db, "projetos", identifier);
-        const projectDocSnap = await getDoc(projectDocRef);
+        // 1. Fetch the base registration form
+        const cadastroQuery = query(collection(db, "forms-cadastro"), where("projetoID", "==", identifier));
+        const cadastroSnapshot = await getDocs(cadastroQuery);
 
-        let projectCoreData: Partial<ProjectData> = {};
-        let formData: Partial<ProjectData> = {};
-        let latestAcompanhamentoData: Partial<ProjectData> = {};
-        let numAcompanhamentos = 0;
-
-        if (projectDocSnap.exists()) {
-          projectCoreData = projectDocSnap.data();
-          const projectName = projectCoreData.nome;
-          if (projectName) {
-            const q = query(collection(db, "forms-cadastro"), where("nomeProjeto", "==", projectName));
-            const formQuerySnap = await getDocs(q);
-            if (!formQuerySnap.empty) {
-              formData = formQuerySnap.docs[0].data();
-              setFormCadastroId(formQuerySnap.docs[0].id);
-            }
-          }
-        } else {
-          // Try to find in "forms-cadastro" by identifier as document id
-          const formDocRef = doc(db, "forms-cadastro", identifier);
-          const formDocSnap = await getDoc(formDocRef);
-          if (formDocSnap.exists()) {
-            formData = formDocSnap.data();
-            setFormCadastroId(formDocSnap.id);
-          } else {
-            // Try to find by nomeProjeto
-            const decodedIdentifier = decodeURIComponent(identifier.replace(/\+/g, ' '));
-            const q = query(collection(db, "forms-cadastro"), where("nomeProjeto", "==", decodedIdentifier));
-            const formQuerySnap = await getDocs(q);
-            if (!formQuerySnap.empty) {
-              formData = formQuerySnap.docs[0].data();
-              setFormCadastroId(formQuerySnap.docs[0].id);
-            }
-          }
+        if (cadastroSnapshot.empty) {
+            toast.error("Formulário de cadastro do projeto não encontrado.");
+            setProjectData(null);
+            setIsLoading(false);
+            return;
         }
+        
+        const cadastroData = cadastroSnapshot.docs[0].data() as ProjectData;
+        setFormCadastroId(cadastroSnapshot.docs[0].id);
 
-        // Always try to get acompanhamentos by identifier (projetoID)
         const acompanhamentoQuery = query(
           collection(db, "forms-acompanhamento"),
           where("projetoID", "==", identifier),
           orderBy("dataResposta", "desc")
         );
         const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
-        numAcompanhamentos = acompanhamentoSnapshot.size;
-        if (!acompanhamentoSnapshot.empty) {
-          latestAcompanhamentoData = acompanhamentoSnapshot.docs[0].data();
-        }
+        const acompanhamentoDocs = acompanhamentoSnapshot.docs.map(doc => doc.data() as ProjectData);
 
-        const combinedData: ProjectData = {
-          ...formData,
-          ...projectCoreData,
-          ...latestAcompanhamentoData
-        };
+        const submissions: ProjectData[] = [...acompanhamentoDocs, cadastroData];
+        setAllSubmissions(submissions);
 
-        combinedData.etnia = {
-          branca: combinedData.qtdBrancas ?? 0,
-          amarela: combinedData.qtdAmarelas ?? 0,
-          indigena: combinedData.qtdIndigenas ?? 0,
-          parda: combinedData.qtdPardas ?? 0,
-          preta: combinedData.qtdPretas ?? 0,
-        };
-        combinedData.genero = {
-          mulherCis: combinedData.qtdMulherCis ?? 0,
-          mulherTrans: combinedData.qtdMulherTrans ?? 0,
-          homemCis: combinedData.qtdHomemCis ?? 0,
-          homemTrans: combinedData.qtdHomemTrans ?? 0,
-          naoBinario: combinedData.qtdNaoBinarios ?? 0,
-        };
-        combinedData.outros = {
-          pcd: combinedData.qtdPCD ?? 0,
-          lgbt: combinedData.qtdLGBT ?? 0,
-        };
-        if (combinedData.fotos && typeof combinedData.fotos === 'object') {
-          combinedData.imagensCarrossel = Object.values(combinedData.fotos);
-        }
-        
-        setProjectData(combinedData);
-        setSubmissionCount({ current: 1 + numAcompanhamentos, total: 1 + numAcompanhamentos });
+        setProjectData(submissions[0]);
+        setCurrentSubmissionIndex(0);
 
       } catch (error) {
         console.error("Erro ao buscar dados do projeto:", error);
+        toast.error("Erro ao carregar os dados do projeto.");
         setProjectData(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProjectData();
+    fetchProjectSubmissions();
   }, [identifier]);
+
+  const handleNextSubmission = () => {
+    if (currentSubmissionIndex > 0) {
+      const newIndex = currentSubmissionIndex - 1;
+      setCurrentSubmissionIndex(newIndex);
+      setProjectData(allSubmissions[newIndex]);
+    }
+  };
+
+  const handlePreviousSubmission = () => {
+    if (currentSubmissionIndex < allSubmissions.length - 1) {
+      const newIndex = currentSubmissionIndex + 1;
+      setCurrentSubmissionIndex(newIndex);
+      setProjectData(allSubmissions[newIndex]);
+    }
+  };
 
   const handleDeleteProject = async () => {
     // Use formCadastroId if available, otherwise identifier
@@ -395,6 +355,7 @@ export default function ProjectDetailsPage() {
       toast.success("Responsável atualizado!");
     } catch (error) {
       toast.error("Erro ao atualizar responsável.");
+      console.log(error);
     }
   };
 
@@ -408,6 +369,7 @@ export default function ProjectDetailsPage() {
       toast.success("Valor aprovado atualizado!");
     } catch (error) {
       toast.error("Erro ao atualizar valor aprovado.");
+      console.log(error);
     }
   };
 
@@ -424,21 +386,24 @@ export default function ProjectDetailsPage() {
       toast.success("Dados bancários atualizados!");
     } catch (error) {
       toast.error("Erro ao atualizar dados bancários.");
+      console.log(error);
     }
   };
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-screen text-xl dark:bg-blue-fcsn dark:text-white-off">Carregando dados do projeto...</div>;
-  }
 
-  if (!projectData) {
-    return <div className="flex justify-center items-center h-screen text-xl dark:bg-blue-fcsn dark:text-white-off">Projeto não encontrado.</div>;
-  }
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-screen text-xl dark:bg-blue-fcsn dark:text-white-off">Carregando dados do projeto...</div>;
+    }
+
+    if (!projectData) {
+        return <div className="flex justify-center items-center h-screen text-xl dark:bg-blue-fcsn dark:text-white-off">Projeto não encontrado.</div>;
+    }
+
 
   return (
     <main className="flex flex-col items-center min-h-screen bg-gray-50 dark:bg-blue-fcsn dark:text-white-off">
       <div className="w-full max-w-4xl p-6 space-y-6">
-        <div className="flex flex-col md:flex-row md:items-start">
+      <div className="flex flex-col md:flex-row md:items-start">
           <div className="space-y-2 flex-1">
             <h1 className="text-5xl font-bold text-gray-900 dark:text-white">{projectData.nome ?? projectData.nomeProjeto ?? 'N/A'}</h1>
             <h2 className="text-2xl text-gray-700 font-medium dark:text-gray-300">{projectData.instituicao ?? 'N/A'}</h2>
@@ -673,24 +638,24 @@ export default function ProjectDetailsPage() {
             <div className="flex flex-row gap-1">
               <div className="w-1/3 border-2 border-[var(--cultura)] rounded-2xl p-2">
                 <h4 className="font-bold text-gray-900 dark:text-white">ETNIA</h4>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">branca</p><p className="font-bold">{projectData.etnia?.branca ?? 0}</p></div>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">amarela</p><p className="font-bold">{projectData.etnia?.amarela ?? 0}</p></div>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">indígena</p><p className="font-bold">{projectData.etnia?.indigena ?? 0}</p></div>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">parda</p><p className="font-bold">{projectData.etnia?.parda ?? 0}</p></div>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">preta</p><p className="font-bold">{projectData.etnia?.preta ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">branca</p><p className="font-bold">{projectData.qtdBrancas ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">amarela</p><p className="font-bold">{projectData.qtdAmarelas ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">indígena</p><p className="font-bold">{projectData.qtdIndigenas ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">parda</p><p className="font-bold">{projectData.qtdPardas ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">preta</p><p className="font-bold">{projectData.qtdPretas ?? 0}</p></div>
               </div>
               <div className="w-1/3 border-2 border-[var(--cultura)] rounded-2xl p-2">
                 <h4 className="font-bold text-gray-900 dark:text-white">GÊNERO</h4>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">mulher cis</p><p className="font-bold">{projectData.genero?.mulherCis ?? 0}</p></div>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">mulher trans</p><p className="font-bold">{projectData.genero?.mulherTrans ?? 0}</p></div>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">homem cis</p><p className="font-bold">{projectData.genero?.homemCis ?? 0}</p></div>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">homem trans</p><p className="font-bold">{projectData.genero?.homemTrans ?? 0}</p></div>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">não-binário</p><p className="font-bold">{projectData.genero?.naoBinario ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">mulher cis</p><p className="font-bold">{projectData.qtdMulherCis ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">mulher trans</p><p className="font-bold">{projectData.qtdMulherTrans ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">homem cis</p><p className="font-bold">{projectData.qtdHomemCis ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">homem trans</p><p className="font-bold">{projectData.qtdHomemTrans ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p className="text-sm">não-binário</p><p className="font-bold">{projectData.qtdNaoBinarios ?? 0}</p></div>
               </div>
               <div className="w-1/3 h-3/4 border-2 border-[var(--cultura)] rounded-2xl p-2 self-end">
                 <h4 className="font-bold"></h4>
-                <div className="flex flex-row justify-between mt-14 text-gray-700 dark:text-gray-300"><p>PCD&#39;s</p><p className="font-bold">{projectData.outros?.pcd ?? 0}</p></div>
-                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p>LGBT+</p><p className="font-bold">{projectData.outros?.lgbt ?? 0}</p></div>
+                <div className="flex flex-row justify-between mt-14 text-gray-700 dark:text-gray-300"><p>PCD&#39;s</p><p className="font-bold">{projectData.qtdPCD ?? 0}</p></div>
+                <div className="flex flex-row justify-between text-gray-700 dark:text-gray-300"><p>LGBT+</p><p className="font-bold">{projectData.qtdLGBT ?? 0}</p></div>
               </div>
             </div>
           </div>
@@ -845,13 +810,27 @@ export default function ProjectDetailsPage() {
             </div>
               )}
           </>
-                
         
-        <div className="flex justify-center mt-6 text-gray-800 dark:text-gray-300">
-          <div>
-            <p>Última submissão: <span className="font-bold">{formatFirebaseDate(projectData.dataResposta ?? projectData.dataPreenchido)}</span></p>
-            <p className="text-center">submissão: <span className="font-bold">{submissionCount.current}/{submissionCount.total}</span></p>
-          </div>
+        {/* NEW SUBMISSION NAVIGATION */}
+        <div className="flex justify-center items-center mt-6 text-gray-800 dark:text-gray-300">
+            <button 
+                onClick={handlePreviousSubmission} 
+                disabled={currentSubmissionIndex === allSubmissions.length - 1}
+                className="disabled:opacity-50"
+            >
+                <FaArrowLeft size={24} />
+            </button>
+            <div className="mx-4 text-center">
+                <p>Última submissão: <span className="font-bold">{formatFirebaseDate(projectData.dataResposta ?? projectData.dataPreenchido)}</span></p>
+                <p>submissão: <span className="font-bold">{allSubmissions.length - currentSubmissionIndex}/{allSubmissions.length}</span></p>
+            </div>
+            <button 
+                onClick={handleNextSubmission} 
+                disabled={currentSubmissionIndex === 0}
+                className="disabled:opacity-50"
+            >
+                <FaArrowRight size={24} />
+            </button>
         </div>
       </div>
       <Toaster position="top-right" richColors/>
