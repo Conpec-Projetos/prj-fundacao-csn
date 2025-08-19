@@ -125,8 +125,7 @@ const EditableCell = ({
   getValue,
   row,
   column,
-  updateData,
-
+  updateData, 
   isEditable,
 }: EditableCellProps) => {
   const initialValue = getValue();
@@ -147,7 +146,7 @@ const EditableCell = ({
     />
 
   ) : (
-    <div className="w-full h-full p-2 truncate">
+    <div className="h-full p-2 break-words">
       {toDisplayValue(initialValue, column.id)}
     </div>
   );
@@ -306,7 +305,7 @@ const Planilha = (props: PlanilhaProps) => {
         cell: (props: CellContext<ProjetoComId, unknown>) => {
           const valor = props.getValue() as number;
           return (
-            <div className="p-2 truncate text-right">
+            <div className="p-2 break-words text-right">
               {formatCurrency(valor)}
             </div>
           );
@@ -335,7 +334,7 @@ const Planilha = (props: PlanilhaProps) => {
 
           return (
             <div className="p-2 flex items-center justify-between group">
-              <span className="truncate">{displayValue}</span>
+              <span className="break-words">{displayValue}</span>
               {isEditable && (
                 <button
                   onClick={() => {
@@ -609,14 +608,15 @@ const Planilha = (props: PlanilhaProps) => {
       </div>
 
       <div className="overflow-auto rounded-lg shadow-md border border-gray-200 dark:border-blue-fcsn2">
-        <table className="min-w-full bg-white dark:bg-blue-fcsn3">
+        <table className="min-w-full bg-white dark:bg-blue-fcsn3 table-fixed">
           <thead className="bg-white-off dark:bg-blue-fcsn2">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="p-3 text-left text-sm font-bold text-blue-fcsn dark:text-white-off uppercase tracking-wider align-top"
+                    className="w-full p-3 text-left text-sm font-bold text-blue-fcsn dark:text-white-off uppercase tracking-wider align-top"
+                    style={{ width: header.getSize() }}
                   >
                     <div
                       {...{
