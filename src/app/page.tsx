@@ -3,6 +3,8 @@ import { db } from "@/firebase/firebase-config";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { dadosEstados } from "@/firebase/schema/entities";
 
+export const dynamic = "force-dynamic"
+
 function somarDadosEstados(array: dadosEstados[]): dadosEstados {
   const maiorAporteGlobal = array
     .map((d) => d.maiorAporte)
