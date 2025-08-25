@@ -12,22 +12,9 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { useTheme } from "@/context/themeContext";
 import darkLogo from "@/assets/fcsn-logo-dark.svg";
 import { registrarUsuario} from "@/app/actions/signin";
+import { signinSchema } from "@/lib/schemas";
 
-const schema = z.object({
-    name: z.string().min(1, {message: "Nome inválido!"}),
-    email: z.string().email({message: "Email inválido!"}).min(1),
-    password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/, {message: "A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas e minúsculas e números."}),
-    confirmPassword: z.string().min(1, {message: "Confirmação de senha inválida!"})}).superRefine((data, ctx) => {
-    if (data.password !== data.confirmPassword) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "As senhas não coincidem.",
-            path: ["confirmPassword"],
-        });
-    }
-});
-
-type FormFields = z.infer<typeof schema>;
+type FormFields = z.infer<typeof signinSchema>;
 
 export default function SigninClient(){
     const router = useRouter();
@@ -40,7 +27,7 @@ export default function SigninClient(){
         register,
         handleSubmit,
         formState: { errors },
-    } = useForm<FormFields>({ resolver: zodResolver(schema),
+    } = useForm<FormFields>({ resolver: zodResolver(signinSchema),
         defaultValues: {
             name: "",
             email: "",
@@ -119,6 +106,13 @@ export default function SigninClient(){
                                     transition-all duration-300 px-4
                                     focus:shadow-lg focus:outline-none focus:border-2 focus:border-blue-fcsn dark:focus:bg-blue-fcsn3"
                         />
+                        <div className="min-h-[24px] mt-1">
+                            {errors.name && (
+                                <p className="text-red-600 dark:text-red-500 text-base">
+                                    {errors.name.message}
+                                </p>
+                            )}
+                        </div>
                     </div>
 
                     {/* Input do email */}

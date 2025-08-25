@@ -1,4 +1,3 @@
-
 import { db } from '@/firebase/firebase-config';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, addDoc } from 'firebase/firestore';
 import { Projetos, Associacao, usuarioExt } from '@/firebase/schema/entities';
