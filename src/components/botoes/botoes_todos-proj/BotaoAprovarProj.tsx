@@ -14,7 +14,6 @@ type BotaoAprovarProjProps = {
   projetosComplianceStatus?: boolean;
   complianceDocUrl?: string | null;
   additionalDocsUrls?: string[];
-  onApprovalSuccess: () => void;
 };
 
 // Componente de Modal para a dupla confirmação final
@@ -45,7 +44,7 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
   
   // Estados para o formulário de aprovação final por empresa
   const [empresaSelecionada, setEmpresaSelecionada] = useState("");
-  const [valorPorEmpresa, setValorPorEmpresa] = useState(""); 
+  const [valorPorEmpresa, setValorPorEmpresa] = useState("");
   const [empresasList, setEmpresasList] = useState<EmpresaComValor[]>([]);
   
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -80,7 +79,6 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
       const projectDocRef = querySnapshot.docs[0].ref;
       await updateDoc(projectDocRef, { compliance: true });
       
-      props.onApprovalSuccess();
     } catch (error) {
       console.error("Erro ao aprovar compliance:", error);
       alert(error instanceof Error ? error.message : "Falha ao aprovar a etapa de compliance.");
@@ -153,7 +151,6 @@ export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
       });
       
       setShowConfirmation(false);
-      props.onApprovalSuccess();
     } catch (error) {
       console.error("Erro na aprovação final do projeto:", error);
       alert(error instanceof Error ? error.message : "Ocorreu um erro desconhecido.");

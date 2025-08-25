@@ -13,8 +13,6 @@ export default function Footer(){
 
                     <button onClick={() => router.push("./politica-de-privacidade")} className="underline cursor-pointer mb:pb-1 ">Políticas de privacidade</button>
                     
-                    <button className="underline cursor-pointer md:pb-2">Termos e condições</button>
-                    
                     <h1 className="">© 2025 Fundação CSN. Todos os diretos reservados.</h1>
                     
                     <div className="flex flex-row">

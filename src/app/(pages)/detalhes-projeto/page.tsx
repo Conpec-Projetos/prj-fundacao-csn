@@ -25,7 +25,7 @@ export default function ProjectDetailsPage() {
     <main className="flex flex-col items-center min-h-screen bg-gray-50">
       <div className="w-full max-w-4xl p-6 space-y-6">
         {/* Project Header */}
-        <div className="flex flex-row">
+        <div className="flex flex-row pt-10">
           <div className="space-y-2">
             <h1 className="text-5xl font-bold">Projeto XYZ</h1>
             <h2 className="text-2xl text-gray-700 font-medium">

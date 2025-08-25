@@ -12,19 +12,8 @@ export default function Botao({ projectId, projectName }: { projectId: string; p
     // usamos para controlar se o usuario clicou 2 vezes
     const [duplaConfirmacao, setDuplaConfirmacao] = useState(false);
 
-    // Quando tudo for executado mudaremos o botao para ser apenas um conteudo visivel
-    const [aprovado, setAprovado] = useState(false);
-
     // caixaRef é a referencia de um elemento html, no caso nosso dropdown
     const caixaRef = useRef<HTMLDivElement>(null);
-
-    // Função para lidar com o sucesso da aprovação
-    const handleApprovalSuccess = () => {
-        console.log('Projeto aprovado');
-        setAprovado(true);
-        setConfirmar(false);
-        setIsOpen(false);
-    };
 
     //Usamos isso para fechar o dropdown quando clicarmos fora da caixa
     useEffect(() => {
@@ -34,7 +23,7 @@ export default function Botao({ projectId, projectName }: { projectId: string; p
         if (
         caixaRef.current &&
         event.target instanceof Node &&
-        // Aqui verificaremos se o evento foi fora da nossa caixa de referencia 
+        // Aqui verificaremos se o evento foi fora da nossa caixa de referencia
         !caixaRef.current.contains(event.target)
         ) {
         setIsOpen(false);
@@ -46,7 +35,7 @@ export default function Botao({ projectId, projectName }: { projectId: string; p
         document.removeEventListener('mousedown', handleCliqueFora);
     };
 
-    }, [isOpen]); 
+    }, [isOpen]);
 
     function Confirmar(){
       if(!duplaConfirmacao){
@@ -54,20 +43,16 @@ export default function Botao({ projectId, projectName }: { projectId: string; p
       }
       else{
         setConfirmar(true);
-      } 
+        setIsOpen(false);
+      }
     };
 
   return (
     <div className="relative inline-block">
-      {aprovado ? (
-        <div className="border-2 border-green-400 text-black bg-white px-4 py-2 rounded-2xl">
-          Projeto Aprovado
-        </div>
-      ) : confirmar ? (
-        <BotaoAprovarProj 
-          projectId={projectId} 
-          projectName={projectName} 
-          onApprovalSuccess={handleApprovalSuccess} 
+      {confirmar ? (
+        <BotaoAprovarProj
+          projectId={projectId}
+          projectName={projectName}
         />
       ) : duplaConfirmacao ? (
         <>

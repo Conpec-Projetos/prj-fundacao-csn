@@ -2,6 +2,26 @@ import { z } from "zod";
 import { validaCNPJ } from "./utils";
 import { publicoList } from "@/firebase/schema/entities";
 
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%&*()_+-=]{8,}$/;
+const passwordErrorMessage = "A senha precisa ter no mínimo 8 caracteres, incluindo letras maiúsculas, minúsculas e números.";
+
+export const loginSchema = z.object({
+    email: z.string().email("Email inválido"),
+    password: z.string().min(1, "A senha é obrigatória"), // Mantém uma verficação básica, a validação completa é feita no signin
+});
+
+export const signinSchema = z.object({
+    name: z.string().min(3, {message: "O nome deve incluir no mínimo 3 caracteres."}).regex(/^[A-Za-z\s]+$/, {message: "O nome deve conter apenas letras."}), // Nome deve conter apenas letras e espaços, com no mínimo 3 caracteres
+    email: z.string().email({message: "Email inválido!"}).min(1),
+    password: z.string().regex(passwordRegex, {
+        message: passwordErrorMessage
+    }),
+    confirmPassword: z.string()
+}).refine(data => data.password === data.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"],
+});
+
 const fileArraySchema = (acceptedTypes: string[], typeName: string, maxFileSize: number) => z.array(z.instanceof(File), {
         required_error: "O envio de arquivos é obrigatório.",
     })
