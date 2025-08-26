@@ -192,6 +192,7 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
 
     // Se o usuário não tem um documento de associação, ele não possui projetos
     if (associacaoSnapshot.empty) {
+         console.log("red 1");
         redirect('/inicio-externo');
     }
 
@@ -200,10 +201,12 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
 
     // Se o ID do projeto na URL não está na lista de projetos do usuário, redireciona
     if (!projetosDoUsuario.includes(projetoID)) {
+        console.log("red 2");
         redirect('/inicio-externo');
     }
 
     const isPendente = await verificarFormularioPendente(projetoID);
+    console.log(isPendente);
     if (!isPendente) {
         redirect('/inicio-externo');
     }
