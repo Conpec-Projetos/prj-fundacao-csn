@@ -154,12 +154,19 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                 />
 
             {/* Lei de incentivo do prj*/}
-                <LeiSelect
+                <Controller
+                name="lei"
+                control={control}
+                render={({ field, fieldState: { error } }) => (
+                    <LeiSelect
                     text="Lei de incentivo do projeto:"
                     list={leiList}
+                    value={field.value}
                     isNotMandatory={false}
-                    registration={register("lei")}
-                    error={errors.lei}
+                    onChange={field.onChange}
+                    error={error} 
+                    />
+                )}
                 />
                     
             {/* Pontos positivos do prj */}
