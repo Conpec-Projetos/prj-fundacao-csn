@@ -189,7 +189,7 @@ export default function ProjectDetailsPage() {
             return;
         }
         
-        const cadastroData = cadastroSnapshot.docs[0].data() as ProjectData;
+        const cadastroData = { id: cadastroSnapshot.docs[0].id, ...cadastroSnapshot.docs[0].data() as ProjectData };
         setFormCadastroId(cadastroSnapshot.docs[0].id);
 
         const acompanhamentoQuery = query(
@@ -198,36 +198,50 @@ export default function ProjectDetailsPage() {
           orderBy("dataResposta", "desc")
         );
         const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
-        const acompanhamentoDocs = acompanhamentoSnapshot.docs.map(doc => doc.data() as ProjectData);
+        const acompanhamentoDocs = acompanhamentoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as ProjectData }));
 
-        const submissions: ProjectData[] = [...acompanhamentoDocs, cadastroData].map(submission => ({
-          ...submission,
-          nome: projetoData.nome,
-          instituicao: projetoData.instituicao,
-          lei: projetoData.lei,
-          numeroLei: cadastroData.numeroLei,
-          publico: cadastroData.publico,
-          valorAprovado: projetoData.valorAprovado,
-          anotacoes: projetoData.anotacoes,
-          responsavel: cadastroData.responsavel,
-          valorApto: cadastroData.valorApto,
-          cnpj: cadastroData.cnpj,
-          representante: cadastroData.representante,
-          telefone: cadastroData.telefone,
-          emailResponsavel: cadastroData.emailResponsavel,
-          endereco: cadastroData.endereco,
-          cidade: cadastroData.cidade,
-          estado: cadastroData.estado,
-          numeroEndereco: cadastroData.numeroEndereco,
-          banco: cadastroData.banco,
-          agencia: cadastroData.agencia,
-          conta: cadastroData.conta,
-          observacoes: cadastroData.observacoes,
-        }));
+        const submissions: ProjectData[] = [...acompanhamentoDocs, cadastroData].map(submission => {
+          let imagensCarrossel: string[] = [];
+          if (submission.fotos) {
+            imagensCarrossel = Object.values(submission.fotos);
+          } else if (submission.imagensCarrossel) {
+            imagensCarrossel = submission.imagensCarrossel;
+          }
+
+          return {
+            ...submission,
+            nome: projetoData.nome,
+            instituicao: projetoData.instituicao,
+            lei: projetoData.lei,
+            numeroLei: cadastroData.numeroLei,
+            publico: cadastroData.publico,
+            valorAprovado: projetoData.valorAprovado,
+            anotacoes: projetoData.anotacoes,
+            responsavel: cadastroData.responsavel,
+            valorApto: cadastroData.valorApto,
+            cnpj: cadastroData.cnpj,
+            representante: cadastroData.representante,
+            telefone: cadastroData.telefone,
+            emailResponsavel: cadastroData.emailResponsavel,
+            endereco: cadastroData.endereco,
+            cidade: cadastroData.cidade,
+            estado: cadastroData.estado,
+            numeroEndereco: cadastroData.numeroEndereco,
+            banco: cadastroData.banco,
+            agencia: cadastroData.agencia,
+            conta: cadastroData.conta,
+            observacoes: cadastroData.observacoes,
+            imagensCarrossel: imagensCarrossel,
+          };
+        });
         setAllSubmissions(submissions);
 
-        setProjectData(submissions[0]);
-        setCurrentSubmissionIndex(0);
+        if (submissions.length > 0) {
+            setProjectData(submissions[0]);
+            setCurrentSubmissionIndex(0);
+        } else {
+            setProjectData(null);
+        }
 
       } catch (error) {
         console.error("Erro ao buscar dados do projeto:", error);
@@ -239,7 +253,7 @@ export default function ProjectDetailsPage() {
     };
 
     fetchProjectSubmissions();
-  }, [identifier]);
+}, [identifier]);
 
   const handleNextSubmission = () => {
     if (currentSubmissionIndex > 0) {
@@ -482,6 +496,11 @@ export default function ProjectDetailsPage() {
                   </button>
                 </>
               )}
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="text-xl text-gray-700 font-medium dark:text-gray-300">
+                Email do responsável: {projectData.emailResponsavel}
+              </p>
             </div>
             <p className="text-gray-600 dark:text-gray-400">
               Via {projectData.lei ?? 'N/A'}, projeto n. {projectData.numeroLei ?? 'N/A'}
