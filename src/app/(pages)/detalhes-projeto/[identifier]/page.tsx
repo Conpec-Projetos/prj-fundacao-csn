@@ -167,7 +167,18 @@ export default function ProjectDetailsPage() {
     const fetchProjectSubmissions = async () => {
       setIsLoading(true);
       try {
-        // 1. Fetch the base registration form
+        const projetoRef = doc(db, "projetos", identifier);
+        const projetoSnap = await getDoc(projetoRef);
+
+        if (!projetoSnap.exists()) {
+          toast.error("Projeto não encontrado.");
+          setProjectData(null);
+          setIsLoading(false);
+          return;
+        }
+
+        const projetoData = projetoSnap.data() as ProjectData;
+
         const cadastroQuery = query(collection(db, "forms-cadastro"), where("projetoID", "==", identifier));
         const cadastroSnapshot = await getDocs(cadastroQuery);
 
@@ -189,7 +200,30 @@ export default function ProjectDetailsPage() {
         const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
         const acompanhamentoDocs = acompanhamentoSnapshot.docs.map(doc => doc.data() as ProjectData);
 
-        const submissions: ProjectData[] = [...acompanhamentoDocs, cadastroData];
+        const submissions: ProjectData[] = [...acompanhamentoDocs, cadastroData].map(submission => ({
+          ...submission,
+          nome: projetoData.nome,
+          instituicao: projetoData.instituicao,
+          lei: projetoData.lei,
+          numeroLei: cadastroData.numeroLei,
+          publico: cadastroData.publico,
+          valorAprovado: projetoData.valorAprovado,
+          anotacoes: projetoData.anotacoes,
+          responsavel: cadastroData.responsavel,
+          valorApto: cadastroData.valorApto,
+          cnpj: cadastroData.cnpj,
+          representante: cadastroData.representante,
+          telefone: cadastroData.telefone,
+          emailResponsavel: cadastroData.emailResponsavel,
+          endereco: cadastroData.endereco,
+          cidade: cadastroData.cidade,
+          estado: cadastroData.estado,
+          numeroEndereco: cadastroData.numeroEndereco,
+          banco: cadastroData.banco,
+          agencia: cadastroData.agencia,
+          conta: cadastroData.conta,
+          observacoes: cadastroData.observacoes,
+        }));
         setAllSubmissions(submissions);
 
         setProjectData(submissions[0]);
@@ -224,7 +258,6 @@ export default function ProjectDetailsPage() {
   };
 
   const handleDeleteProject = async () => {
-    // Use formCadastroId if available, otherwise identifier
     const formId = formCadastroId || identifier;
     const projetoId = identifier;
 
@@ -238,7 +271,6 @@ export default function ProjectDetailsPage() {
     try {
       const batch = writeBatch(db);
 
-      // Delete from "projetos" only if exists
       if (projetoId) {
         const projetoRef = doc(db, "projetos", projetoId);
         const projetoSnap = await getDoc(projetoRef);
@@ -247,7 +279,6 @@ export default function ProjectDetailsPage() {
         }
       }
 
-      // Delete from "forms-cadastro" only if exists
       if (formId) {
         const formCadastroRef = doc(db, "forms-cadastro", formId);
         const formSnap = await getDoc(formCadastroRef);
@@ -256,7 +287,6 @@ export default function ProjectDetailsPage() {
         }
       }
 
-      // Delete all "forms-acompanhamento" with projetoID
       const acompanhamentoQuery = query(collection(db, "forms-acompanhamento"), where("projetoID", "==", projetoId));
       const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
       acompanhamentoSnapshot.forEach(doc => {
