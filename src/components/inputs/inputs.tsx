@@ -5,6 +5,8 @@ import { State, City } from "country-state-city";
 import { Upload } from "lucide-react";
 import { AiOutlineClose } from "react-icons/ai";
 import { FieldError, UseFormRegisterReturn } from "react-hook-form";
+import { RiArrowDropDownLine } from "react-icons/ri";
+
 
 
 // Props são como parâmetros, atributos. Como uma classe
@@ -163,37 +165,85 @@ export const HorizontalSelects: React.FC<ControlledSelectProps<number>> = ({ tex
     );
 }
 
-export const LeiSelect: React.FC<HookFormSelectProps> = ({ text, list, isNotMandatory, registration, error }) => {
-    return (
-        <div className="grid grid-rows-2 md:grid-rows-none md:grid-cols-[auto_1fr] md:gap-x-4 w-full py-3 items-center">
+export const LeiSelect: React.FC<ControlledSelectProps<number>> = ({text,list,value,onChange,error,isNotMandatory,}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const caixaRef = useRef<HTMLDivElement>(null);
+  const [search, setSearch] = useState("");
+  const filtrados = list.filter((string) => string.toLowerCase().includes(search.toLowerCase())); // Se nada for digitado (search === ""), o startsWith("") (ou includes como usamos aqui) é sempre true para qualquer string, então filtrados = list. Isso significa que a lista completa é exibida quando a pesquisa está vazia.
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleCliqueFora(event: MouseEvent) {
+      if (caixaRef.current && !caixaRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleCliqueFora);
+    return () => {
+      document.removeEventListener("mousedown", handleCliqueFora);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="grid grid-rows-2 md:grid-rows-none md:grid-cols-[auto_1fr] md:gap-x-4 w-full py-3 items-center">
+        <h2 className="text-xl md:text-xl text-blue-fcsn dark:text-white-off font-bold">
+        {text} {isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
+        </h2>
+
+        <div className="relative z-10" ref={caixaRef}>
+        {/* Botão que abre/fecha */}
+        <div
+            onClick={() => setIsOpen(!isOpen)}
+            className="bg-white dark:bg-blue-fcsn2 border-1 p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center justify-between"
+        >
             
-            <label htmlFor={registration.name} className="text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold">
-                {text} {isNotMandatory ? "" : <span className="text-[#B15265]">*</span>}
-            </label>
-            
-            <div>
-                <select 
-                    id={registration.name}
-                    {...registration} // Aplica as props do react-hook-form
-                    // O valor default agora é definido no useForm, não mais aqui
-                    className={`w-full md:max-w-[400px] h-[50px] text-blue-fcsn3 dark:text-white-off bg-white dark:bg-blue-fcsn3 border-1 cursor-pointer rounded-[7px] focus:ring focus:border-1 focus:shadow-2xl px-5 ${error ? bordaErro : bordaBase}`}
-                >
-                    {/* A opção desabilitada é importante para garantir que o usuário faça uma escolha ativa */}
-                    <option value="" disabled>Escolha uma opção</option>
-                    
-                    {list.map((string, index) => (
-                        <option key={index} value={index}>
-                            {string}
-                        </option>
-                    ))}
-                </select>
-                
-                {/* Exibe a mensagem de erro se a validação falhar */}
-                {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+            <div className="flex flex-row justify-between items-center w-full"> 
+            {value !== undefined && value !== null && list[value] !== undefined ? list[value] : "Clique para exibir as leis"}
+            <div><RiArrowDropDownLine size={45}/></div>
             </div>
+
         </div>
-    );
-}
+           
+        {/* Dropdown */}
+        {isOpen && (
+        <div className="absolute top-full left-0 mt-2 bg-white dark:bg-blue-fcsn2 rounded shadow-md w-full">
+            <input
+            type="text"
+            placeholder="Pesquisar lei ..."
+            className="w-full text-left p-2 border-b rounded-t bg-white dark:bg-blue-fcsn"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            />
+
+            {filtrados.length > 0 ? ( // Se algo foi encontrado (alguma lei começa com a palavra digitada)
+                filtrados.map((string, index) => (
+                    <button
+                        key={index}
+                        type="button"
+                        onClick={() => {
+                            onChange(list.indexOf(string));
+                            setIsOpen(false); // Fecha o dropdown
+                        }}
+                        className={`w-full text-left p-2 hover:bg-gray-100 dark:hover:bg-blue-fcsn ${
+                            value === list.indexOf(string) ? "bg-blue-100 dark:bg-blue-fcsn text-blue-fcsn font-bold" : ""
+                        }`}
+                        >
+                        {string}
+                    </button>
+                ))
+            ) : ( 
+            <span className="block p-2 text-gray-500">Nada encontrado</span>
+            )}
+        </div>
+        )}
+      </div>
+
+      {/* Exibe erro */}
+      {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+    </div>
+  );
+};
+
 
 export const NumeroEndInput: React.FC<HookFormInputProps> = ({ text, isNotMandatory, registration, error }) => {
     return (
