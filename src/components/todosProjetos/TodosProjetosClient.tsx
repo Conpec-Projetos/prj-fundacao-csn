@@ -148,7 +148,8 @@ export default function TodosProjetosClient() {
     useEffect(() => {
         const q = query(collection(db, "leis"));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const laws = querySnapshot.docs.map(doc => doc.data() as Lei);
+            let laws = querySnapshot.docs.map(doc => doc.data() as Lei);
+            laws.sort((a, b) => a.nome.localeCompare(b.nome));
             setIncentiveLaws(laws);
         });
 
