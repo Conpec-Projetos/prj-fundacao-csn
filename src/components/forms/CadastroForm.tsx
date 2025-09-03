@@ -140,7 +140,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
     useEffect(() => {
         const fetchLeis = async () => {
             const snapshot = await getDocs(collection(db, "leis"));
-            let leisFromDB: string[] = [];
+            const leisFromDB: string[] = [];
             snapshot.forEach((doc) => {
                 const data = doc.data() as { nome: string; sigla: string };
                 if (data.nome) {

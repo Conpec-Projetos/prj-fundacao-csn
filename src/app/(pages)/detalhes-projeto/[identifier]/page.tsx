@@ -95,11 +95,12 @@ interface ProjectData {
   anotacoes?: { [key: string]: string };
 }
 
-const formatFirebaseDate = (dateValue: any): string => {
+const formatFirebaseDate = (dateValue: string | Timestamp | null | undefined): string => {
   if (!dateValue) return 'N/A';
-  if (typeof dateValue.toDate === 'function') return dateValue.toDate().toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-  try {
-    return new Date(dateValue).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+  if (typeof (dateValue as Timestamp).toDate === 'function') 
+    return (dateValue as Timestamp).toDate().toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+  try { 
+    return new Date(dateValue as string).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   } catch (e) {
     console.log(e)
     return 'Data inválida';
