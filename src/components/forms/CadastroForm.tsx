@@ -140,13 +140,14 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
     useEffect(() => {
         const fetchLeis = async () => {
             const snapshot = await getDocs(collection(db, "leis"));
-            const leisFromDB: string[] = [];
+            let leisFromDB: string[] = [];
             snapshot.forEach((doc) => {
                 const data = doc.data() as { nome: string; sigla: string };
                 if (data.nome) {
                  leisFromDB.push(data.nome);
                 }
             });
+            leisFromDB.sort(); // Ordenando o array
             setLeiList(leisFromDB);
         }
         fetchLeis()
@@ -657,14 +658,20 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 )}
                             />
 
+                        <Controller
+                        name="lei"
+                        control={control}
+                        render={({ field, fieldState: { error } }) => (
                             <LeiSelect
-                                text="Lei de incentivo do projeto:"
-                                list={leiList}
-                                isNotMandatory={false}
-                                registration={register("lei")}
-                                error={errors.lei}
+                            text="Lei de incentivo do projeto:"
+                            list={leiList}
+                            value={field.value}
+                            isNotMandatory={false}
+                            onChange={field.onChange}
+                            error={error} 
                             />
-
+                        )}
+                        />
                             <NormalInput
                                 text="Número de aprovação do projeto por lei:"
                                 isNotMandatory={true}
