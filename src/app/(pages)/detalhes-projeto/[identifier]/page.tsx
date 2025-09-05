@@ -916,7 +916,7 @@ export default function ProjectDetailsPage() {
             <div className="bg-white p-6 rounded-lg text-center mx-4 w-full max-w-md">
               <h2 className="text-xl font-bold text-black mb-4">Adicionar Documentos</h2>
               <p className="text-gray-700 mb-4">
-                Selecione os arquivos para anexar ao campo "documentos" deste projeto.
+                Selecione os arquivos para anexar ao campo &quot;documentos&quot; deste projeto.
               </p>
               <input
                 type="file"
