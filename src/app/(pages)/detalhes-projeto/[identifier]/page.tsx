@@ -1,5 +1,5 @@
 "use client";
-
+import { IoCloudDoneOutline } from "react-icons/io5";
 import Footer from "@/components/footer/footer";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -21,8 +21,10 @@ import { doc, getDoc, query, collection, where, getDocs, Timestamp, orderBy, upd
 import { db } from "@/firebase/firebase-config";
 import Image from "next/image";
 import { useParams, useRouter } from 'next/navigation';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, listAll, StorageReference } from "firebase/storage";
 import { storage } from "@/firebase/firebase-config";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 interface ProjectData {
   nome?: string;
@@ -127,13 +129,21 @@ export default function ProjectDetailsPage() {
   const [allSubmissions, setAllSubmissions] = useState<ProjectData[]>([]);
   const [currentSubmissionIndex, setCurrentSubmissionIndex] = useState(0);
 
+  const [adm, setAdm] = useState<boolean | null>(null);
+  const [proponente, setProponente] = useState<boolean | null>(null);
+
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [adm, setAdm] = useState<boolean | null>(null);
+
+  // Use state para os documentos adicionais e recibos, usamos as variaveis para os dois
   const [formCadastroId, setFormCadastroId] = useState<string | null>(null);
-  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [showDocumentModal, setShowDocumentModal] = useState(false); // Controle para selecionar um arquivo
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [isUploadingDocuments, setIsUploadingDocuments] = useState(false);
+
+  // Use state para downloading
+  const [showDownloadingModal, setShowDownloadingModal] = useState(false); 
+
   const [isEditingResponsavel, setIsEditingResponsavel] = useState(false);
   const [editResponsavel, setEditResponsavel] = useState<string>("");
   const [isEditingValorAprovado, setIsEditingValorAprovado] = useState(false);
@@ -150,10 +160,12 @@ export default function ProjectDetailsPage() {
             const res = await fetch('/api/auth/session', { method: 'GET' });
             if (!res.ok) {
                 setAdm(false);
+                setProponente(false);
                 return;
             }
             const data = await res.json();
             setAdm(data.user?.userIntAdmin === true);
+            setProponente(data.user?.userExt === true);
         } catch (error) {
             console.error("Falha ao buscar sessão do usuário:", error);
             setAdm(false);
@@ -358,6 +370,7 @@ export default function ProjectDetailsPage() {
   };
 
   // Função para upload dos arquivos e atualização do campo "documentos" em forms-cadastro
+  // Pri: forms-cadastro/id/documents
   const handleUploadDocuments = async () => {
     if (!formCadastroId || documentFiles.length === 0) {
       toast.error("Selecione ao menos um arquivo para enviar.");
@@ -389,6 +402,162 @@ export default function ProjectDetailsPage() {
       setIsUploadingDocuments(false);
     }
   };
+
+  //Pri: forms-cadastro/id/recibos
+    const handleUploadReceipts = async () => {
+    if (!formCadastroId || documentFiles.length === 0) {
+      toast.error("Selecione ao menos um arquivo para enviar.");
+      return;
+    }
+    setIsUploadingDocuments(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of documentFiles) {
+        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/recibos/${Date.now()}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        uploadedUrls.push(url);
+      }
+
+      // Adiciona os novos arquivos ao array existente usando arrayUnion
+      const formDocRef = doc(db, "forms-cadastro", formCadastroId);
+      await updateDoc(formDocRef, {
+        documentos: arrayUnion(...uploadedUrls),
+      });
+
+      toast.success("Recibos enviados com sucesso!");
+      setShowDocumentModal(false);
+      setDocumentFiles([]);
+    } catch (error) {
+      console.error("Erro ao enviar recibos:", error);
+      toast.error("Falha ao enviar recibos.");
+    } finally {
+      setIsUploadingDocuments(false);
+    }
+  };
+
+
+const getAllFilesRecursively = async (
+  folderRef: StorageReference,
+  zip: JSZip,
+  currentPath: string = ""
+): Promise<number> => {
+  const res = await listAll(folderRef);
+  let fileCount = 0;
+
+  // Adiciona arquivos soltos
+  await Promise.all(
+    res.items.map(async (itemRef) => {
+      const url = await getDownloadURL(itemRef);
+      const response = await fetch(url);
+      const blob = await response.blob();
+      zip.file(`${currentPath}${itemRef.name}`, blob);
+      fileCount++;
+    })
+  );
+
+  // Percorre subpastas
+  await Promise.all(
+    res.prefixes.map(async (subFolderRef) => {
+      const subCount = await getAllFilesRecursively(
+        subFolderRef,
+        zip,
+        `${currentPath}${subFolderRef.name}/`
+      );
+      fileCount += subCount;
+    })
+  );
+
+  return fileCount;
+};
+
+const handleDownloadAll = async () => {
+  try {
+    const folderRef = ref(storage, `forms-cadastro/${formCadastroId}/`);
+    const zip = new JSZip();
+
+    const fileCount = await getAllFilesRecursively(folderRef, zip);
+
+    if (fileCount === 0) {
+      toast.error("Nenhum arquivo encontrado.");
+      return;
+    }
+
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(content, `Documentos_Cadastrais_${Date.now()}.zip`);
+  } catch (err) {
+    console.error("Erro ao baixar a pasta:", err);
+    toast.error("Erro ao baixar a pasta.");
+  }
+};
+
+
+
+    const handleDownloadReceipts = async () => {
+    try {
+      const folderRef = ref(storage, `forms-cadastro/${formCadastroId}/recibos/`); // nome da "pasta"
+
+      // 1. lista arquivos dentro do diretório
+      const res = await listAll(folderRef);
+
+      if (res.items.length === 0) {
+        toast.error("Nenhum arquivo encontrado.");
+        return;
+      }
+
+      const zip = new JSZip();
+
+      // 2. pega os downloads de cada arquivo
+      await Promise.all(
+        res.items.map(async (itemRef) => {
+          const url = await getDownloadURL(itemRef);
+          const response = await fetch(url);
+          const blob = await response.blob();
+          zip.file(itemRef.name, blob); // adiciona no zip
+        })
+      );
+
+      // 3. gera o zip e baixa
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `Recibos_${Date.now()}.zip`);
+    } catch (err) {
+      console.error("Erro ao baixar a pasta:", err);
+      alert("Erro ao baixar a pasta.");
+    }
+  }
+
+    const handleDownloadDocuments = async () => {
+    try {
+      const folderRef = ref(storage, `forms-cadastro/${formCadastroId}/documentos/`); // documents adicionados pelo adm
+
+      // 1. lista arquivos dentro do diretório
+      const res = await listAll(folderRef);
+
+      if (res.items.length === 0) {
+        toast.error("Nenhum arquivo encontrado.");
+        return;
+      }
+
+      const zip = new JSZip();
+
+      // 2. pega os downloads de cada arquivo
+      await Promise.all(
+        res.items.map(async (itemRef) => {
+          const url = await getDownloadURL(itemRef);
+          const response = await fetch(url);
+          const blob = await response.blob();
+          zip.file(itemRef.name, blob); // adiciona no zip
+        })
+      );
+
+      // 3. gera o zip e baixa
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `Documentos_${Date.now()}.zip`);
+    } catch (err) {
+      console.error("Erro ao baixar a pasta:", err);
+      alert("Erro ao baixar a pasta.");
+    }
+  }
 
   // Funções para salvar edição
   const handleSaveResponsavel = async () => {
@@ -838,7 +1007,7 @@ export default function ProjectDetailsPage() {
         )}
         <>
         
-              {adm && (
+          {adm && (
             <div className="w-full bg-white-off dark:bg-blue-fcsn2 p-5 rounded-2xl sm:w-0.6">
               <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">AÇÕES DO ADMINISTRADOR</h3>
               <div className="flex flex-row mt-4 gap-4">
@@ -854,11 +1023,42 @@ export default function ProjectDetailsPage() {
                 >
                   ADICIONAR DOCUMENTOS
                 </button>
+                <button 
+                  onClick={() => setShowDownloadingModal(true)} 
+                  className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-pink-light2 transition-colors"
+                  >
+                  VISUALIZAR DOCUMENTOS
+                </button>
               </div>
               <div className="flex justify-center mt-2">
               </div>
             </div>
-              )}
+          )}
+          </>
+
+          <>
+          {proponente && (
+            <div className="w-full bg-white-off dark:bg-blue-fcsn2 p-5 rounded-2xl sm:w-0.6">
+              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">AÇÕES DO PROPONENTE</h3>
+              <div className="flex flex-row mt-4 gap-4">
+
+                <button
+                  onClick={() => setShowDocumentModal(true)}
+                  className="bg-blue-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-blue-fcsn3 transition-colors"
+                >
+                  ADICIONAR RECIBOS
+                </button>
+                <button 
+                  onClick={() => setShowDownloadingModal(true)} 
+                  className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-pink-light2 transition-colors"
+                  >
+                  VISUALIZAR RECIBOS
+                </button>
+              </div>
+              <div className="flex justify-center mt-2">
+              </div>
+            </div>
+          )}
           </>
         
         {/* NEW SUBMISSION NAVIGATION */}
@@ -918,12 +1118,13 @@ export default function ProjectDetailsPage() {
               <p className="text-gray-700 mb-4">
                 Selecione os arquivos para anexar ao campo &quot;documentos&quot; deste projeto.
               </p>
+              
               <input
                 type="file"
                 multiple
                 accept="application/pdf,image/jpeg,image/png"
                 onChange={e => setDocumentFiles(Array.from(e.target.files ?? []))}
-                className="mb-4"
+                className="mb-4 file:underline file:text-blue-600 file:cursor-pointer file:font-medium file:hover:text-blue-800"
               />
               <div className="flex justify-center gap-4">
                 <button
@@ -934,7 +1135,7 @@ export default function ProjectDetailsPage() {
                   Cancelar
                 </button>
                 <button
-                  onClick={handleUploadDocuments}
+                  onClick={adm ? handleUploadDocuments : handleUploadReceipts}
                   className="bg-blue-fcsn text-white px-4 py-2 rounded-md hover:bg-blue-fcsn3"
                   disabled={isUploadingDocuments}
                 >
@@ -943,6 +1144,94 @@ export default function ProjectDetailsPage() {
               </div>
             </div>
           </div>
+        )}
+
+
+        {/* showDownloadingModal dos arquivos, separados por pastas: documentos, recibos, 
+        //TENHO Q FAZER A LOGICA PARA QUANDO NAO HOUVER ARQUIVOS */}
+        {showDownloadingModal && (
+          adm ? (
+          <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg text-center mx-4 w-3xl h-1/2">
+              <h2 className="text-xl font-bold text-black mb-4">
+                SELECIONE A PASTA QUE VOCÊ DESEJA BAIXAR
+              </h2>
+
+              <div className="flex flex-col gap-6 pt-6">
+                {/* Coluna 1 (com borda divisória à direita) */}
+                <div className="flex flex-col justify-center items-center space-y-6">
+                  <button
+                    onClick={handleDownloadAll}
+                    className="flex items-center justify-center space-x-2 bg-pink-fcsn text-white px-4 py-2 rounded-md hover:opacity-80 w-100"
+                  >
+                    <span>Baixar todos os Documentos Cadastrais</span>
+                    <IoCloudDoneOutline size={20} />
+                  </button>
+                </div>
+
+                {/* Coluna 2 (sem borda) */}
+                <div className="flex flex-col justify-center items-center space-y-6">
+                  <button
+                    onClick={handleDownloadReceipts}
+                    className="flex items-center justify-center space-x-2 bg-blue-fcsn text-white px-4 py-2 rounded-md hover:opacity-80 w-100"
+                  >
+                    <span>Baixar recibos</span>
+                    <IoCloudDoneOutline size={20} />
+                  </button>
+                </div>
+
+                <div className="flex flex-col justify-center items-center space-y-6">
+                  <button
+                    onClick={handleDownloadDocuments}
+                    className="flex items-center justify-center space-x-2 bg-pink-fcsn text-white px-4 py-2 rounded-md hover:opacity-80 w-100"
+                  >
+                    <span>Baixar documentos do ADM</span>
+                    <IoCloudDoneOutline size={20} />
+                  </button>
+                </div>
+              
+
+              {/* Botão cancelar */}
+            <div>
+              <button
+                onClick={() => setShowDownloadingModal(false)}
+                className="bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400 mt-4"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+          </div>
+        </div>
+          ) : (
+          <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg text-center mx-4 w-2xl h-70">
+              <h2 className="text-xl font-bold text-black mb-4">BAIXAR RECIBOS</h2>
+              
+              <div className="flex flex-col gap-6 pt-6">
+
+                <div className="flex flex-col justify-center items-center space-y-6">
+                  <button
+                    onClick={handleDownloadReceipts}
+                    className="flex items-center justify-center space-x-2 bg-pink-fcsn text-white px-4 py-2 rounded-md hover:opacity-80 w-70"
+                  >
+                    <span>Baixar todos os seus recibos</span>
+                    <IoCloudDoneOutline size={20} />
+                  </button>
+                </div>
+
+            <div>
+              <button
+                onClick={() => setShowDownloadingModal(false)}
+                className="bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400 mt-4"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+          </div>
+        </div>
+          )
         )}
     </main>
   );
