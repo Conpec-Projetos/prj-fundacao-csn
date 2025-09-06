@@ -193,10 +193,14 @@ const LawManagement = () => {
   };
 
   const filteredLaws = useMemo(() =>
-    laws.filter(law =>
-      law.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      law.sigla.toLowerCase().includes(searchTerm.toLowerCase())
-    ), [laws, searchTerm]);
+    laws
+      .filter(law =>
+        law.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        law.sigla.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .slice() // cria uma cópia para não mutar laws
+      .sort((a, b) => a.nome.localeCompare(b.nome))
+  , [laws, searchTerm]);
 
   if (loading) return <div className="flex justify-center items-center h-full"><FaSpinner className="animate-spin text-4xl" /></div>;
 

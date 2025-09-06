@@ -206,7 +206,7 @@ export const LeiSelect: React.FC<ControlledSelectProps<number>> = ({text,list,va
            
         {/* Dropdown */}
         {isOpen && (
-        <div className="absolute top-full left-0 mt-2 bg-white dark:bg-blue-fcsn2 rounded shadow-md w-full">
+        <div className="absolute top-full left-0 mt-2 bg-white dark:bg-blue-fcsn2 rounded shadow-md w-full max-h-[300px] overflow-y-auto">
             <input
             type="text"
             placeholder="Pesquisar lei ..."
