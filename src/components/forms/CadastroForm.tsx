@@ -39,7 +39,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
     const [leiList, setLeiList] = useState<string[]>([]);
 
     const router = useRouter()
-    
+
     const {
         register,
         handleSubmit,
@@ -73,6 +73,8 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             dataFim: "",
             banco: "",
             agencia: "",
+            numeroAgencia: "",
+            digitoAgencia: "",
             conta: "",
             segmento: undefined,
             descricao: "",
@@ -83,7 +85,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             estados: [],
             municipios: [],
             // @ts-expect-error O erro aqui é esperado porque o usuário vai precisar escolher uma opção
-            lei: "", 
+            lei: "",
             numeroLei: "",
             contrapartidasProjeto: "",
             observacoes: "",
@@ -100,6 +102,19 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
     const watchedPublico = watch('publico');
     const outroPublicoIndex = publicoList.findIndex(p => p.nome.toLowerCase().startsWith('outro'));
     const isOutroPublicoSelected = watchedPublico && watchedPublico[outroPublicoIndex];
+    const watchedNumeroAgencia = watch('numeroAgencia');
+    const watchedDigitoAgencia = watch('digitoAgencia');
+
+    useEffect(() => {
+        if (watchedNumeroAgencia || watchedDigitoAgencia) {
+            const agenciaCompleta = watchedDigitoAgencia
+                ? `${watchedNumeroAgencia}-${watchedDigitoAgencia}`
+                : watchedNumeroAgencia;
+            setValue('agencia', agenciaCompleta, { shouldValidate: true });
+        } else {
+            setValue('agencia', '', { shouldValidate: true });
+        }
+    }, [watchedNumeroAgencia, watchedDigitoAgencia, setValue]);
 
     useEffect(() => {
         const fetchPdfUrl = async () => {
@@ -144,7 +159,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             snapshot.forEach((doc) => {
                 const data = doc.data() as { nome: string; sigla: string };
                 if (data.nome) {
-                 leisFromDB.push(data.nome);
+                    leisFromDB.push(data.nome);
                 }
             });
             leisFromDB.sort(); // Ordenando o array
@@ -152,16 +167,16 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
         }
         fetchLeis()
     }, []);
-    
+
     return (
-        <form 
+        <form
             className="flex flex-col justify-center items-center max-w-[1500px] w-[90vw] sm:w-[80vw] xl:w-[70vw] mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-lg"
             onSubmit={handleSubmit(async (data) => {
-        
+
                 const loadingToastId = toast.loading("Enviando formulário...");
-        
+
                 const formData = new FormData();
-                
+
                 Object.entries(data).forEach(([key, value]) => {
                     if (Array.isArray(value) && value.every(item => item instanceof File)) {
                         // Tratado separadamente abaixo
@@ -171,21 +186,21 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                         formData.append(key, String(value));
                     }
                 });
-        
+
                 data.diario.forEach((file: File) => formData.append('diario', file));
                 data.apresentacao.forEach((file: File) => formData.append('apresentacao', file));
                 data.compliance.forEach((file: File) => formData.append('compliance', file));
                 data.documentos.forEach((file: File) => formData.append('documentos', file));
-                
+
                 if (usuarioAtualID) {
                     formData.append('usuarioAtualID', usuarioAtualID);
                 }
-        
+
                 try {
                     const result = await submitCadastroForm(formData);
-        
+
                     toast.dismiss(loadingToastId);
-        
+
                     if (result.success) {
                         toast.success("Formulário enviado com sucesso!");
                         if (usuarioAtualID) {
@@ -211,7 +226,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                 <div className="w-full">
                     <div className="flex flex-col items-center">
                         <div className="flex flex-col justify-around w-11/12 my-10 space-y-4">
-                            
+
                             <NormalInput
                                 text="Nome da instituição:"
                                 isNotMandatory={false}
@@ -346,8 +361,8 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                     error={errors.complemento}
                                 />
                             </div>
-                            
-                            <div className="flex flex-row h-full w-full justify-between items-start gap-x-4">      
+
+                            <div className="flex flex-row h-full w-full justify-between items-start gap-x-4">
                                 <GrowInput
                                     text="Cidade:"
                                     isNotMandatory={false}
@@ -369,7 +384,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                     )}
                                 />
                             </div>
-                            
+
                             <NormalInput
                                 text="Nome do Projeto:"
                                 isNotMandatory={false}
@@ -445,21 +460,21 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                     </div>
                                 )}
                             />
-                            
+
                             <DateInputs
-                                text="Período de captação:" 
+                                text="Período de captação:"
                                 isNotMandatory={false}
                                 startRegistration={register("dataComeco")}
                                 endRegistration={register("dataFim")}
                                 error_start={errors.dataComeco}
                                 error_end={errors.dataFim}
                             />
-                            
+
                             <Controller
                                 name="diario"
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error } }) => (
-                                    <FileInput 
+                                    <FileInput
                                         text={"Diário Oficial:"}
                                         isNotMandatory={false}
                                         value={value || []}
@@ -471,7 +486,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                             />
 
                             <h1 className="mt-5 text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
-                                >Dados Bancários
+                            >Dados Bancários
                             </h1>
 
                             <div className="flex flex-col gap-y-4 mx-7">
@@ -483,58 +498,88 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 />
 
                                 <div className="flex flex-col md:flex-row h-full w-full justify-between md:items-start gap-y-4 md:gap-x-4">
-                                <Controller
-                                    name="agencia"
-                                    control={control}
-                                    render={({ field, fieldState: { error } }) => (
-                                        <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
-                                            <label htmlFor="agencia" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
-                                                Agência: <span className="text-[#B15265]">*</span>
-                                            </label>
-                                            <div className="w-full">
-                                                <input
-                                                    id="agencia"
-                                                    type="text"
-                                                    {...field}
-                                                    onChange={(e) => {
-                                                        const valorFiltrado = filtraDigitos(e.target.value);
-                                                        field.onChange(valorFiltrado);
-                                                    }}
-                                                    className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
+                                    <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
+                                        <label htmlFor="numeroAgencia" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                            Agência: <span className="text-[#B15265]">*</span>
+                                        </label>
+                                        <div className="flex items-start w-full gap-x-2">
+                                            {/* Input para o Número da Agência */}
+                                            <div className="flex-grow">
+                                                <Controller
+                                                    name="numeroAgencia"
+                                                    control={control}
+                                                    render={({ field, fieldState: { error } }) => (
+                                                        <>
+                                                            <input
+                                                                id="numeroAgencia"
+                                                                type="text"
+                                                                placeholder="Número"
+                                                                {...field}
+                                                                onChange={(e) => {
+                                                                    const valorFiltrado = filtraDigitos(e.target.value);
+                                                                    field.onChange(valorFiltrado);
+                                                                }}
+                                                                className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
+                                                            />
+                                                            {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                                        </>
+                                                    )}
                                                 />
-                                                {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
                                             </div>
-                                        </div>
-                                    )}
-                                />
 
-                                <Controller
-                                    name="conta"
-                                    control={control}
-                                    render={({ field, fieldState: { error } }) => (
-                                        <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
-                                            <label htmlFor="conta" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
-                                                Conta Corrente: <span className="text-[#B15265]">*</span>
-                                            </label>
-                                            <div className="w-full">
-                                                <input
-                                                    id="conta"
-                                                    type="text"
-                                                    {...field}
-                                                    onChange={(e) => {
-                                                        const valorFiltrado = filtraDigitos(e.target.value);
-                                                        field.onChange(valorFiltrado);
-                                                    }}
-                                                    className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
+                                            {/* Input para o Dígito */}
+                                            <div className="w-1/4 max-w-[80px]">
+                                                <Controller
+                                                    name="digitoAgencia"
+                                                    control={control}
+                                                    render={({ field, fieldState: { error } }) => (
+                                                        <>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Dígito"
+                                                                maxLength={1}
+                                                                {...field}
+                                                                onChange={(e) => {
+                                                                    const valorFiltrado = filtraDigitos(e.target.value);
+                                                                    field.onChange(valorFiltrado);
+                                                                }}
+                                                                className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 text-center ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
+                                                            />
+                                                            {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                                        </>
+                                                    )}
                                                 />
-                                                {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
                                             </div>
                                         </div>
-                                    )}
+                                    </div>
+
+                                    <Controller
+                                        name="conta"
+                                        control={control}
+                                        render={({ field, fieldState: { error } }) => (
+                                            <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
+                                                <label htmlFor="conta" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                                    Conta Corrente: <span className="text-[#B15265]">*</span>
+                                                </label>
+                                                <div className="w-full">
+                                                    <input
+                                                        id="conta"
+                                                        type="text"
+                                                        {...field}
+                                                        onChange={(e) => {
+                                                            const valorFiltrado = filtraDigitos(e.target.value);
+                                                            field.onChange(valorFiltrado);
+                                                        }}
+                                                        className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
+                                                    />
+                                                    {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                                </div>
+                                            </div>
+                                        )}
                                     />
                                 </div>
                             </div>
-                            
+
                             <Controller
                                 name="segmento"
                                 control={control}
@@ -550,13 +595,13 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 )}
                             />
 
-                            <LongInput text="Breve descrição do projeto:" isNotMandatory={false} registration={register("descricao")} error={errors.descricao}/>
-                            
+                            <LongInput text="Breve descrição do projeto:" isNotMandatory={false} registration={register("descricao")} error={errors.descricao} />
+
                             <Controller
                                 name="apresentacao"
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error } }) => (
-                                    <FileInput 
+                                    <FileInput
                                         text={"Apresentação do projeto:"}
                                         isNotMandatory={false}
                                         value={value || []}
@@ -590,7 +635,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                     error={errors.outroPublico}
                                 />
                             </div>
-                            
+
                             <Controller
                                 name="ods"
                                 control={control}
@@ -607,14 +652,14 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                     />
                                 )}
                             />
-                            
+
                             <NumberInput
                                 text="Número de público direto que será beneficiado:"
                                 isNotMandatory={false}
                                 registration={register("beneficiariosDiretos")}
                                 error={errors.beneficiariosDiretos}
                             />
-                            
+
                             <Controller
                                 name="estados"
                                 control={control}
@@ -658,20 +703,20 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 )}
                             />
 
-                        <Controller
-                        name="lei"
-                        control={control}
-                        render={({ field, fieldState: { error } }) => (
-                            <LeiSelect
-                            text="Lei de incentivo do projeto:"
-                            list={leiList}
-                            value={field.value}
-                            isNotMandatory={false}
-                            onChange={field.onChange}
-                            error={error} 
+                            <Controller
+                                name="lei"
+                                control={control}
+                                render={({ field, fieldState: { error } }) => (
+                                    <LeiSelect
+                                        text="Lei de incentivo do projeto:"
+                                        list={leiList}
+                                        value={field.value}
+                                        isNotMandatory={false}
+                                        onChange={field.onChange}
+                                        error={error}
+                                    />
+                                )}
                             />
-                        )}
-                        />
                             <NormalInput
                                 text="Número de aprovação do projeto por lei:"
                                 isNotMandatory={true}
@@ -700,9 +745,9 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                     </div>
                 </div>
             )}
-            
+
             {currentPage === 2 && (
-                    <div className="w-full">
+                <div className="w-full">
                     <div className="flex flex-col w-full items-center gap-8 mt-10">
                         <div className="w-11/12">
                             {/* Botão de download para o formulário de compliance */}
@@ -727,7 +772,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 name="compliance"
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error } }) => (
-                                    <FileInput 
+                                    <FileInput
                                         text={"Formulário de compliance:"}
                                         isNotMandatory={false}
                                         value={value || []}
@@ -737,12 +782,12 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                     />
                                 )}
                             />
-                            
+
                             <Controller
                                 name="documentos"
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error } }) => (
-                                    <FileInput 
+                                    <FileInput
                                         text={"Documentos adicionais:"}
                                         isNotMandatory={false}
                                         value={value || []}
@@ -755,8 +800,8 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
 
                             <div className="flex flex-col pt-7">
                                 <div className="flex flex-row gap-x-2 items-center">
-                                    <input 
-                                        type="checkbox" 
+                                    <input
+                                        type="checkbox"
                                         className="w-5 h-5 accent-blue-fcsn cursor-pointer"
                                         {...register("termosPrivacidade")}
                                     />
@@ -773,14 +818,14 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 type="button"
                                 className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-gray-100 hover:bg-white rounded-[7px] text-md md:text-lg font-bold text-blue-fcsn cursor-pointer shadow-md mb-10"
                                 onClick={() => setCurrentPage(1)}
-                                >Página anterior
+                            >Página anterior
                             </button>
 
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
                                 className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10"
-                                >{isSubmitting ? "Enviando..." : "Enviar"}
+                            >{isSubmitting ? "Enviando..." : "Enviar"}
                             </button>
                         </div>
                     </div>

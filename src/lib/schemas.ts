@@ -105,6 +105,8 @@ export const formsCadastroSchema = z.object({
     dataFim: z.string().min(1, "A data de fim é obrigatória."),
     banco: z.string().trim().min(1, "O nome do banco é obrigatório.").max(50, "Máximo de 50 caracteres permitidos"),
     agencia: z.string().trim().min(1, "A agência é obrigatória.").max(10, "Máximo de 10 caracteres permitidos"),
+    numeroAgencia: z.string().trim().min(1, "O número da agência é obrigatório.").max(10, "Máximo de 10 caracteres permitidos"),
+    digitoAgencia: z.string().trim().min(1, "O dígito da agência é obrigatório.").optional(),
     conta: z.string().trim().min(1, "A conta corrente é obrigatória.").max(15, "Máximo de 15 caracteres permitidos"),
     segmento: z.coerce.number({ required_error: "A seleção do segmento é obrigatória.", invalid_type_error: "Selecione uma das opções" }).min(0, "A seleção do segmento é obrigatória."),
     descricao: z.string().trim().min(20, "A descrição deve ter no mínimo 20 caracteres.").max(500, "Máximo de 500 caracteres permitidos"),
