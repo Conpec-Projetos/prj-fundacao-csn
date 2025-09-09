@@ -40,7 +40,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
       </h3>
     </div>
 
-    <p className="text-4xl font-bold text-pink-fcsn mt-2">
+    <p className="text-xl md:text-2xl font-bold text-blue-fcsn dark:text-white-off mt-2">
       {value}
     </p>
   </div>
@@ -64,7 +64,7 @@ export default function AdminHomeClient({ dados, estadosAtendidos }: { dados: da
         {/* Planilha e Grid de Métricas */}
         <div className="flex flex-col gap-4">
           {/* Grid de métricas */}
-          <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
             <MetricCard
               title="Total de Projetos"
               value={`${dados.qtdProjetos}`}
