@@ -18,7 +18,7 @@ export default function Footer(){
                     <h1 className="text-xs sm:text-sm md:text-base lg:text-lg">Todos os diretos reservados. </h1>
                     </div>
 
-                    <div className="flex flex-row flex-wrap">
+                    <div className="flex flex-row flex-wrap gap-1">
                         <h1 className="">Site desenvolvido pela</h1>
                         <a href="https://www.conpec.com.br/" target="_blank"
                             // abrir em outra aba
