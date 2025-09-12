@@ -1,5 +1,4 @@
 "use client";
-import { IoCloudDoneOutline } from "react-icons/io5";
 import Footer from "@/components/footer/footer";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -15,7 +14,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { FaPencilAlt, FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { FaPencilAlt, FaArrowLeft, FaArrowRight} from "react-icons/fa";
 import { writeBatch, arrayUnion } from "firebase/firestore";
 import { doc, getDoc, query, collection, where, getDocs, Timestamp, orderBy, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
@@ -23,8 +22,8 @@ import Image from "next/image";
 import { useParams, useRouter } from 'next/navigation';
 import { ref, uploadBytes, getDownloadURL, listAll, StorageReference } from "firebase/storage";
 import { storage } from "@/firebase/firebase-config";
-import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { FaFolderOpen, FaRegFileLines } from "react-icons/fa6";
 
 interface ProjectData {
   nome?: string;
@@ -370,7 +369,7 @@ export default function ProjectDetailsPage() {
   };
 
   // Função para upload dos arquivos e atualização do campo "documentos" em forms-cadastro
-  // Pri: forms-cadastro/id/documents
+  // Pri: No storage esta: forms-cadastro/id/documentos
   const handleUploadDocuments = async () => {
     if (!formCadastroId || documentFiles.length === 0) {
       toast.error("Selecione ao menos um arquivo para enviar.");
@@ -380,7 +379,7 @@ export default function ProjectDetailsPage() {
     try {
       const uploadedUrls: string[] = [];
       for (const file of documentFiles) {
-        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/documentos/${Date.now()}_${file.name}`);
+        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/documentos/${file.name}_${Date.now()}`);
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
         uploadedUrls.push(url);
@@ -389,7 +388,7 @@ export default function ProjectDetailsPage() {
       // Adiciona os novos arquivos ao array existente usando arrayUnion
       const formDocRef = doc(db, "forms-cadastro", formCadastroId);
       await updateDoc(formDocRef, {
-        documentos: arrayUnion(...uploadedUrls),
+        documentos: arrayUnion(...uploadedUrls), // Para documentos temos o array documentos
       });
 
       toast.success("Documentos enviados com sucesso!");
@@ -403,8 +402,9 @@ export default function ProjectDetailsPage() {
     }
   };
 
-  //Pri: forms-cadastro/id/recibos
-    const handleUploadReceipts = async () => {
+  // Função para upload dos recibos pelo proponente
+  // Pri: No storage esta: forms-cadastro/id/recibos
+  const handleUploadReceipts = async () => {
     if (!formCadastroId || documentFiles.length === 0) {
       toast.error("Selecione ao menos um arquivo para enviar.");
       return;
@@ -413,16 +413,16 @@ export default function ProjectDetailsPage() {
     try {
       const uploadedUrls: string[] = [];
       for (const file of documentFiles) {
-        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/recibos/${Date.now()}_${file.name}`);
+        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/recibos/${file.name}_${Date.now()}`);
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
         uploadedUrls.push(url);
       }
 
-      // Adiciona os novos arquivos ao array existente usando arrayUnion
+      // Adiciona os novos arquivos ao array recibos que será criado pela primeira vez aqui
       const formDocRef = doc(db, "forms-cadastro", formCadastroId);
       await updateDoc(formDocRef, {
-        documentos: arrayUnion(...uploadedUrls),
+        recibos: arrayUnion(...uploadedUrls),
       });
 
       toast.success("Recibos enviados com sucesso!");
@@ -436,128 +436,76 @@ export default function ProjectDetailsPage() {
     }
   };
 
+// -------------------------------------------------------------------------//
+  const [currentPath, setCurrentPath] = useState("");
+  const [folders, setFolders] = useState<StorageReference[]>([]);
+  const [files, setFiles] = useState<StorageReference[]>([]);
+    
+  const ROOT_PATH = adm
+    ? `forms-cadastro/${formCadastroId}/`
+    : `forms-cadastro/${formCadastroId}/recibos/`;
 
-const getAllFilesRecursively = async (
-  folderRef: StorageReference,
-  zip: JSZip,
-  currentPath: string = ""
-): Promise<number> => {
-  const res = await listAll(folderRef);
-  let fileCount = 0;
+  // Mostra apenas o trecho depois do ROOT_PATH
+  const displayPath = currentPath.replace(ROOT_PATH, "") || "./";
 
-  // Adiciona arquivos soltos
-  await Promise.all(
-    res.items.map(async (itemRef) => {
-      const url = await getDownloadURL(itemRef);
-      const response = await fetch(url);
-      const blob = await response.blob();
-      zip.file(`${currentPath}${itemRef.name}`, blob);
-      fileCount++;
-    })
-  );
+    // Carrega conteúdo da pasta atual
+    const loadFolder = async (path: string) => {
+      const folderRef = ref(storage, path);
+      const res = await listAll(folderRef); // Pegamos tudo que esta dentro desta pasta (arquivos e outras pastas)
 
-  // Percorre subpastas
-  await Promise.all(
-    res.prefixes.map(async (subFolderRef) => {
-      const subCount = await getAllFilesRecursively(
-        subFolderRef,
-        zip,
-        `${currentPath}${subFolderRef.name}/`
-      );
-      fileCount += subCount;
-    })
-  );
+      setFolders(res.prefixes); // subpastas
+      setFiles(res.items); // arquivos que estao dentro desta pasta
+    };
 
-  return fileCount;
-};
-
-const handleDownloadAll = async () => {
-  try {
-    const folderRef = ref(storage, `forms-cadastro/${formCadastroId}/`);
-    const zip = new JSZip();
-
-    const fileCount = await getAllFilesRecursively(folderRef, zip);
-
-    if (fileCount === 0) {
-      toast.error("Nenhum arquivo encontrado.");
-      return;
-    }
-
-    const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, `Documentos_Cadastrais_${Date.now()}.zip`);
-  } catch (err) {
-    console.error("Erro ao baixar a pasta:", err);
-    toast.error("Erro ao baixar a pasta.");
-  }
-};
-
-
-
-    const handleDownloadReceipts = async () => {
-    try {
-      const folderRef = ref(storage, `forms-cadastro/${formCadastroId}/recibos/`); // nome da "pasta"
-
-      // 1. lista arquivos dentro do diretório
-      const res = await listAll(folderRef);
-
-      if (res.items.length === 0) {
-        toast.error("Nenhum arquivo encontrado.");
-        return;
+    useEffect(() => {
+      if (formCadastroId) { // Definimos o path de acordo com o id
+        const rootPath = adm
+          ? `forms-cadastro/${formCadastroId}/`
+          : `forms-cadastro/${formCadastroId}/recibos/`;
+        
+        setCurrentPath(rootPath);
+        loadFolder(rootPath);
       }
+    }, [formCadastroId]);
 
-      const zip = new JSZip();
 
-      // 2. pega os downloads de cada arquivo
-      await Promise.all(
-        res.items.map(async (itemRef) => {
-          const url = await getDownloadURL(itemRef);
-          const response = await fetch(url);
-          const blob = await response.blob();
-          zip.file(itemRef.name, blob); // adiciona no zip
-        })
-      );
+    const handleDownload = async (filePath: string, fileName: string) => {
+      try {
+        const res = await fetch(`/api/downloads/download?filePath=${encodeURIComponent(filePath)}`);
 
-      // 3. gera o zip e baixa
-      const content = await zip.generateAsync({ type: "blob" });
-      saveAs(content, `Recibos_${Date.now()}.zip`);
-    } catch (err) {
-      console.error("Erro ao baixar a pasta:", err);
-      alert("Erro ao baixar a pasta.");
-    }
-  }
+        if (!res.ok) {
+          // Tenta pegar mensagem de erro como texto, não JSON
+          const errorText = await res.text();
+          throw new Error(`Erro no servidor: ${errorText}`);
+        }
 
-    const handleDownloadDocuments = async () => {
-    try {
-      const folderRef = ref(storage, `forms-cadastro/${formCadastroId}/documentos/`); // documents adicionados pelo adm
-
-      // 1. lista arquivos dentro do diretório
-      const res = await listAll(folderRef);
-
-      if (res.items.length === 0) {
-        toast.error("Nenhum arquivo encontrado.");
-        return;
+        const blob = await res.blob(); // Aqui está o arquivo real (objeto do tipo arquivo)
+        saveAs(blob, fileName); // Baixamos o arquivo no computador do client
+      } catch (err) {
+        console.error("Erro ao baixar arquivo:", err);
       }
+    };
 
-      const zip = new JSZip();
+    const handleOpenFolder = (subFolderRef:  StorageReference) => {
+      // segurança: só deixa abrir se estiver dentro do ROOT_PATH
+      if (!subFolderRef.fullPath.startsWith(ROOT_PATH)) return;
+      const newPath = `${subFolderRef.fullPath}/`;
+      setCurrentPath(newPath);
+      loadFolder(newPath);
+    };
 
-      // 2. pega os downloads de cada arquivo
-      await Promise.all(
-        res.items.map(async (itemRef) => {
-          const url = await getDownloadURL(itemRef);
-          const response = await fetch(url);
-          const blob = await response.blob();
-          zip.file(itemRef.name, blob); // adiciona no zip
-        })
-      );
+    // Voltar para pasta anterior
+    const handleGoBack = () => {
+    if (currentPath === ROOT_PATH) return; // não volta além da raiz
+    
+    const parts = currentPath.split("/").filter(Boolean);
+    parts.pop(); // remove a última parte (pasta atual)
+    const newPath = parts.join("/") + "/";
+    setCurrentPath(newPath);
+    loadFolder(newPath);
+  };
 
-      // 3. gera o zip e baixa
-      const content = await zip.generateAsync({ type: "blob" });
-      saveAs(content, `Documentos_${Date.now()}.zip`);
-    } catch (err) {
-      console.error("Erro ao baixar a pasta:", err);
-      alert("Erro ao baixar a pasta.");
-    }
-  }
+//-------------------------------------------------------------------------//
 
   // Funções para salvar edição
   const handleSaveResponsavel = async () => {
@@ -1010,7 +958,7 @@ const handleDownloadAll = async () => {
           {adm && (
             <div className="w-full bg-white-off dark:bg-blue-fcsn2 p-5 rounded-2xl sm:w-0.6">
               <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">AÇÕES DO ADMINISTRADOR</h3>
-              <div className="flex flex-row mt-4 gap-4">
+              <div className="flex flex-row mt-4 gap-4 flex-wrap">
                 <button 
                   onClick={() => setShowDeleteConfirm(true)} 
                   className="bg-red-600 text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
@@ -1040,7 +988,7 @@ const handleDownloadAll = async () => {
           {proponente && (
             <div className="w-full bg-white-off dark:bg-blue-fcsn2 p-5 rounded-2xl sm:w-0.6">
               <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">AÇÕES DO PROPONENTE</h3>
-              <div className="flex flex-row mt-4 gap-4">
+              <div className="flex flex-row mt-4 gap-4 flex-wrap">
 
                 <button
                   onClick={() => setShowDocumentModal(true)}
@@ -1114,11 +1062,24 @@ const handleDownloadAll = async () => {
         {showDocumentModal && (
           <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded-lg text-center mx-4 w-full max-w-md">
+              {adm ? 
+              (<>
               <h2 className="text-xl font-bold text-black mb-4">Adicionar Documentos</h2>
-              <p className="text-gray-700 mb-4">
-                Selecione os arquivos para anexar ao campo &quot;documentos&quot; deste projeto.
-              </p>
-              
+                <p className="text-gray-700 mb-4">
+                  Selecione os arquivos para anexar ao campo &quot;documentos&quot; deste projeto.
+                </p>
+              </>
+              ):
+              (
+              <>
+              <h2 className="text-xl font-bold text-black mb-4">Adicionar Recibos</h2>
+                <p className="text-gray-700 mb-4">
+                  Selecione os arquivos para anexar ao campo &quot;recibos&quot; deste projeto.
+                </p>
+                </>
+                )
+              }
+
               <input
                 type="file"
                 multiple
@@ -1147,50 +1108,70 @@ const handleDownloadAll = async () => {
         )}
 
 
-        {/* showDownloadingModal dos arquivos, separados por pastas: documentos, recibos, 
-        //TENHO Q FAZER A LOGICA PARA QUANDO NAO HOUVER ARQUIVOS */}
+        {/* Modal para baixar arquivos*/}
         {showDownloadingModal && (
           adm ? (
           <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
-            <div className="bg-white p-6 rounded-lg text-center mx-4 w-3xl h-1/2">
-              <h2 className="text-xl font-bold text-black mb-4">
-                SELECIONE A PASTA QUE VOCÊ DESEJA BAIXAR
-              </h2>
-
-              <div className="flex flex-col gap-6 pt-6">
-                {/* Coluna 1 (com borda divisória à direita) */}
-                <div className="flex flex-col justify-center items-center space-y-6">
-                  <button
-                    onClick={handleDownloadAll}
-                    className="flex items-center justify-center space-x-2 bg-pink-fcsn text-white px-4 py-2 rounded-md hover:opacity-80 w-100"
-                  >
-                    <span>Baixar todos os Documentos Cadastrais</span>
-                    <IoCloudDoneOutline size={20} />
-                  </button>
-                </div>
-
-                {/* Coluna 2 (sem borda) */}
-                <div className="flex flex-col justify-center items-center space-y-6">
-                  <button
-                    onClick={handleDownloadReceipts}
-                    className="flex items-center justify-center space-x-2 bg-blue-fcsn text-white px-4 py-2 rounded-md hover:opacity-80 w-100"
-                  >
-                    <span>Baixar recibos</span>
-                    <IoCloudDoneOutline size={20} />
-                  </button>
-                </div>
-
-                <div className="flex flex-col justify-center items-center space-y-6">
-                  <button
-                    onClick={handleDownloadDocuments}
-                    className="flex items-center justify-center space-x-2 bg-pink-fcsn text-white px-4 py-2 rounded-md hover:opacity-80 w-100"
-                  >
-                    <span>Baixar documentos do ADM</span>
-                    <IoCloudDoneOutline size={20} />
-                  </button>
-                </div>
+            <div className="bg-white p-6 rounded-lg text-center  mx-4 w-4xl h-3/4">
+              <h2 className="text-xl font-bold text-black mb-4">BAIXAR DOCUMENTOS</h2>
               
+              <div className="flex flex-col gap-6 pt-6">
 
+                 <div className="p-4 border rounded-md overflow-y-auto">
+
+                    <div className="flex flex-row items-center justify-center gap-2">
+                      <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
+                      <h2 className="font-bold mb-2 text-black"> {displayPath}</h2>
+                      
+                    </div>
+                    
+
+                      {currentPath !== `forms-cadastro/${formCadastroId}/` && (
+                        <button
+                          onClick={handleGoBack}
+                          className="mb-4 px-3 py-1 bg-gray-300 text-black rounded-md hover:bg-gray-300"
+                        >
+                          ⬅ Voltar
+                        </button>
+                      )}
+
+                      <div className="space-y-4">
+                        {/* Subpastas */}
+                        {folders.map((sub) => (
+                          <div key={sub.fullPath} className="flex items-center justify-between">
+                            <div className="flex flex-row items-center gap-2">
+                              <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
+                              <span className="text-black">{sub.name}</span>
+                            </div>
+                            <button
+                              onClick={() => handleOpenFolder(sub)}
+                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
+                            >
+                              Abrir
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Arquivos */}
+                        {files.map((file) => (
+                          <div key={file.fullPath} className="flex items-center justify-between">
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              <FaRegFileLines size={20} color="#b37b97" />
+                              <span className="text-black">{file.name}</span>
+                            </div>                            <button
+                              onClick={() => handleDownload(file.fullPath, file.name)}
+                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
+                            >
+                              Baixar
+                            </button>
+                          </div>
+                        ))}
+
+                        {folders.length === 0 && files.length === 0 && (
+                          <p className="text-gray-600 py-4">Nenhum arquivo ou pasta aqui.</p>
+                        )}
+                      </div>
+                    </div>
               {/* Botão cancelar */}
             <div>
               <button
@@ -1205,34 +1186,70 @@ const handleDownloadAll = async () => {
         </div>
           ) : (
           <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
-            <div className="bg-white p-6 rounded-lg text-center mx-4 w-2xl h-70">
+            <div className="bg-white p-6 rounded-lg text-center mx-4 w-4xl h-3/4">
               <h2 className="text-xl font-bold text-black mb-4">BAIXAR RECIBOS</h2>
               
               <div className="flex flex-col gap-6 pt-6">
 
-                <div className="flex flex-col justify-center items-center space-y-6">
-                  <button
-                    onClick={handleDownloadReceipts}
-                    className="flex items-center justify-center space-x-2 bg-pink-fcsn text-white px-4 py-2 rounded-md hover:opacity-80 w-70"
-                  >
-                    <span>Baixar todos os seus recibos</span>
-                    <IoCloudDoneOutline size={20} />
-                  </button>
-                </div>
+                 <div className="p-4 border rounded-md">
+                    <div className="flex flex-row items-center justify-center gap-2">
+                      <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
+                      <h2 className="font-bold mb-2 text-black"> {displayPath}</h2>
+                      
+                    </div>
 
-            <div>
-              <button
-                onClick={() => setShowDownloadingModal(false)}
-                className="bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400 mt-4"
-              >
-                Cancelar
-              </button>
+                      <div className="space-y-4">
+                        {/* Subpastas */}
+                        {folders.map((sub) => (
+                          <div key={sub.fullPath} className="flex items-center justify-between">
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
+                              <span className="text-black">{sub.name}</span>
+                            </div>
+                            <button
+                              onClick={() => handleOpenFolder(sub)}
+                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
+                            >
+                              Abrir
+                            </button>
+                          </div>
+                        ))}
+
+                        {/* Arquivos */}
+                        {files.map((file) => (
+                          <div key={file.fullPath} className="flex items-center justify-between">
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              <FaRegFileLines size={20} color="#b37b97" />
+                              <span className="text-black">{file.name}</span>
+                            </div>
+                            <button
+                              onClick={() => handleDownload(file.fullPath, file.name)}
+                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
+                            >
+                              Baixar
+                            </button>
+                          </div>
+                        ))}
+
+                        {folders.length === 0 && files.length === 0 && (
+                          <p className="text-gray-600 py-4">Nenhum arquivo ou pasta aqui.</p>
+                        )}
+                      </div>
+                    </div>
+
+                  <div>
+                    <button
+                      onClick={() => setShowDownloadingModal(false)}
+                      className="bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400 mt-4"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
             </div>
           </div>
-          </div>
         </div>
-          )
-        )}
+        )
+      )}
     </main>
   );
 }
