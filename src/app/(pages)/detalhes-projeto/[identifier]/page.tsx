@@ -1085,7 +1085,7 @@ export default function ProjectDetailsPage() {
                 multiple
                 accept="application/pdf,image/jpeg,image/png"
                 onChange={e => setDocumentFiles(Array.from(e.target.files ?? []))}
-                className="mb-4 file:underline file:text-blue-600 file:cursor-pointer file:font-medium file:hover:text-blue-800"
+                className="dark:text-black mb-4 file:underline file:text-blue-600 file:cursor-pointer file:font-medium file:hover:text-blue-800"
               />
               <div className="flex justify-center gap-4">
                 <button
