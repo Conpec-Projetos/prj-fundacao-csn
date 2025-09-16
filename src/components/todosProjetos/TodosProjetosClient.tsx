@@ -283,10 +283,10 @@ export default function TodosProjetosClient() {
                     {isOpen && (
                         <div
                         ref={caixaRef}
-                        className="absolute top-full left-0 min-w-[280px] max-w-[700px] w-[280px] sm:w-[350px] md:w-[420px] lg:w-[650px] bg-white dark:bg-blue-fcsn2 p-4 rounded shadow-md z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                        className="absolute top-full left-0 min-w-[280px] max-w-[800px] w-[280px] sm:w-[350px] md:w-[420px] lg:w-[820px] bg-white dark:bg-blue-fcsn2 p-4 rounded shadow-md z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 max-h-[500px] overflow-y-auto"
                     >
-                        <div>
-                            <p className="py-2 mt-4 text-xl font-semibold">Valor</p>
+                        <div className="col-span-1 px-4">
+                            <p className="py-2 text-xl font-semibold">Valor</p>
                             <div className="flex flex-col min-w-[150px] max-w-[200px] items-center space-x-2">
                               <input type="number" placeholder="Mínimo" value={filters.minValue} onChange={(e) => setFilters(prev => ({...prev, minValue: e.target.value}))} className="w-full p-2 rounded border bg-white border-gray-300 dark:border-blue-fcsn dark:bg-blue-fcsn3 focus:outline-none focus:ring-2 focus:ring-blue-fcsn" />
                               <span>-</span>
@@ -294,19 +294,21 @@ export default function TodosProjetosClient() {
                             </div>
                         </div>
 
-                        <div>
+                        <div className="col-span-2 pl-4">
                             <p className="py-2 text-xl font-semibold">Lei de Incentivo</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2">
                             {filters.incentiveLaw.map(filter => (
                                 <label key={filter.law} className="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" checked={filter.state} onChange={() => incentiveLawFilters(filter.law)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300" />
+                                    <input type="checkbox" checked={filter.state} onChange={() => incentiveLawFilters(filter.law)} className="w-5 h-5 min-w-[20px] min-h-[20px] text-blue-fcsn rounded border-gray-300" />
                                     <span>{filter.law}</span>
                                 </label>
                             ))}
+                            </div>
                         </div>
 
-                        <div className="lg:col-span-2">
+                        <div className="col-span-2 pl-4">
                             <p className="py-2 text-xl font-semibold">ODS</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2">
                                 {filters.ODS.map(filter => (
                                     <label key={filter.numberODS} className="flex items-center space-x-2 cursor-pointer">
                                         <input type="checkbox" checked={filter.state} onChange={() => ODSFilters(filter.numberODS)} className="w-5 h-5 text-blue-fcsn rounded border-gray-300" />
