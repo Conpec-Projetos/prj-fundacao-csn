@@ -86,5 +86,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // Apenas essas rotas são verificadas pelo middleware
-  matcher: ["/", "/login", "/signin", "/dashboard", "/inicio-externo", "/todos-projetos", "/detalhes-projeto", "/gerenciamento", "/planilha-aprovacao", "/planilha-historico", "/planilha-monitoramento"]
+  matcher: ["/", "/login", "/signin", "/dashboard", "/inicio-externo", "/todos-projetos", "/detalhes-projeto/:id*", "/gerenciamento", "/planilha-aprovacao", "/planilha-historico", "/planilha-monitoramento"]
 };
