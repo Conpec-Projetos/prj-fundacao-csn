@@ -147,6 +147,9 @@ export default function BarChart({
         backgroundColor: generateGradientColors(data, colors[0]),
         borderWidth: 1,
         borderRadius: 8,
+        maxBarThickness: celular ? 40 : 100, // responsivo
+        barPercentage: 0.20,      // deixa espaço entre as barras
+        categoryPercentage: 0.8, // ajusta a proporção ocupada
       },
     ],
   };
