@@ -192,7 +192,7 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
 
     // Se o usuário não tem um documento de associação, ele não possui projetos
     if (associacaoSnapshot.empty) {
-         console.log("red 1");
+        // console.log("red 1"); //teste
         redirect('/inicio-externo');
     }
 
@@ -201,7 +201,7 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
 
     // Se o ID do projeto na URL não está na lista de projetos do usuário, redireciona
     if (!projetosDoUsuario.includes(projetoID)) {
-        console.log("red 2");
+        //console.log("red 2"); // teste
         redirect('/inicio-externo');
     }
 

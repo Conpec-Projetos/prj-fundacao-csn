@@ -412,7 +412,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
 
   const leisSiglas = await getLeisSiglas();
-  console.log("Leis Siglas:", leisSiglas);
+  //console.log("Leis Siglas:", leisSiglas);
   const segmentoNomes: string[] =
     dados?.segmento.map((item) => item.nome) ?? [];
   const segmentoValores: number[] =
