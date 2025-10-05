@@ -9,6 +9,7 @@ import {
   ColumnFiltersState,
   SortingState,
   FilterFn,
+  ColumnDef,
 } from "@tanstack/react-table";
 import { db } from "@/firebase/firebase-config";
 import {
@@ -367,23 +368,11 @@ const Planilha = (props: PlanilhaProps) => {
   };
 
   // Definição das colunas da tabela, define a ordem que cada coluna aparecera
-  const columns = useMemo(
-    () => [
 
-      {
-        accessorKey: "dataAprovado",
-        header: "Data de aprovação",
-        cell: (props: CellContext<ProjetoComId, unknown>) => {
-          const valor = props.getValue();
-          const time = toDisplayValue(valor, "dataAprovado");
-          return (
-            <div className="p-2 break-words text-right">
-              {time}
-            </div>
-          );
-        },
-        filterFn: numberFilterFn,
-      },
+const columns = useMemo(() => {
+  // Colunas comuns a todos os tipos
+  const baseColumns: ColumnDef<ProjetoComId, any>[] = [
+
       {
         accessorKey: "lei",
         header: "Lei",
@@ -406,42 +395,7 @@ const Planilha = (props: PlanilhaProps) => {
           />
         ),
       },
-      {
-        accessorKey: "aporteAnterior",
-        header: "Aporte Anterior",
-        cell: (props: CellContext<ProjetoComId, unknown>) => (
-          <EditableCell
-            {...props}
-            updateData={handleUpdateData}
-            isEditable={isEditable}
-          />
-        ),
-      },
-        // estou testando puxar do forms de cadastro
-      {
-        accessorKey: "valorApto",
-        header: "A Captar",
-        cell: (props: CellContext<ProjetoComId, unknown>) => {
-          const valor = props.getValue() as number;
-          return (
-            <div className="p-2 break-words text-right">
-              {formatCurrency(valor)}
-            </div>
-          );
-        },
-        filterFn: numberFilterFn,
-      },
-      {
-        accessorKey: "sugestao",
-        header: "Sugestão",
-        cell: (props: CellContext<ProjetoComId, unknown>) => (
-          <EditableCell
-            {...props}
-            updateData={handleUpdateData}
-            isEditable={isEditable}
-          />
-        ),
-      },
+
       {
         accessorKey: "valorAprovado",
         header: "Aprovado",
@@ -531,6 +485,161 @@ const Planilha = (props: PlanilhaProps) => {
         },
         filterFn: empresasFilterFn,
       },
+  ]
+
+  // Colunas específicas para cada tipo
+  const aprovacaoColumns: ColumnDef<ProjetoComId, any>[] = [
+      {
+        accessorKey: "lei",
+        header: "Lei",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell
+            {...props}
+            updateData={handleUpdateData}
+            isEditable={isEditable}
+          />
+        ),
+      },
+      {
+        accessorKey: "nome",
+        header: "Nome",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell
+            {...props}
+            updateData={handleUpdateData}
+            isEditable={isEditable}
+          />
+        ),
+      },
+      {
+        accessorKey: "aporteAnterior",
+        header: "Aporte Anterior",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell
+            {...props}
+            updateData={handleUpdateData}
+            isEditable={isEditable}
+          />
+        ),
+      },
+        // estou testando puxar do forms de cadastro
+      {
+        accessorKey: "valorApto",
+        header: "A Captar",
+        cell: (props: CellContext<ProjetoComId, unknown>) => {
+          const valor = props.getValue() as number;
+          return (
+            <div className="p-2 break-words text-right">
+              {formatCurrency(valor)}
+            </div>
+          );
+        },
+        filterFn: numberFilterFn,
+      },
+      {
+        accessorKey: "sugestao",
+        header: "Sugestão",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell
+            {...props}
+            updateData={handleUpdateData}
+            isEditable={isEditable}
+          />
+        ),
+      },
+
+      {
+        accessorKey: "valorAprovado",
+        header: "Aprovado",
+        cell: (props: CellContext<ProjetoComId, unknown>) => {
+          const valor = props.getValue() as number;
+          return (
+            <div className="p-2 break-words text-right">
+              {formatCurrency(valor)}
+            </div>
+          );
+        },
+        filterFn: numberFilterFn,
+      },
+      {
+        accessorKey: "instituicao",
+        header: "Proponente",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell
+            {...props}
+            updateData={handleUpdateData}
+            isEditable={isEditable}
+          />
+        ),
+      },
+
+      {
+        accessorKey: "indicacao",
+        header: "Indicação",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell
+            {...props}
+            updateData={handleUpdateData}
+            isEditable={isEditable}
+          />
+        ),
+      },
+      {
+        accessorKey: "estados",
+        header: "Estados",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell
+            {...props}
+            updateData={handleUpdateData}
+            isEditable={isEditable}
+          />
+
+        ),
+        filterFn: arrayIncludesFilterFn,
+      },
+      {
+        accessorKey: "municipios",
+        header: "Municípios",
+        cell: (props: CellContext<ProjetoComId, unknown>) => (
+          <EditableCell
+            {...props}
+            updateData={handleUpdateData}
+            isEditable={isEditable}
+          />
+        ),
+        filterFn: arrayIncludesFilterFn,
+      },
+      {
+        accessorKey: "empresas",
+        header: "Empresas Grupo CSN",
+        cell: (props: CellContext<ProjetoComId, unknown>) => {
+          const empresas = props.getValue() as Empresa[];
+          const displayValue = Array.isArray(empresas)
+            ? empresas.map(e => `${e.nome} (${formatCurrency(e.valorAportado)})`).join("; ")
+            : "";
+
+          return (
+            <div className="p-2 flex items-center justify-between group">
+              <span className="break-words">{displayValue}</span>
+              {isEditable && (
+                <button
+                  onClick={() => {
+                    setEditingProject(props.row.original);
+                    setIsModalOpen(true);
+                  }}
+                  className="p-1 rounded-full text-blue-fcsn dark:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <FaEdit />
+                </button>
+              )}
+            </div>
+          )
+        },
+        filterFn: empresasFilterFn,
+      },
+  ];
+
+  const monitoramentoColumns: ColumnDef<ProjetoComId, any>[] = [
       {
         accessorKey: "odsArray",
         header: "ods",
@@ -557,9 +666,38 @@ const Planilha = (props: PlanilhaProps) => {
         },
         filterFn: numberFilterFn,
       },
-    ],
-    [handleUpdateData, isEditable]
-  );
+  ];
+
+  const historicoColumns: ColumnDef<ProjetoComId, any>[] = [
+      {
+        accessorKey: "dataAprovado",
+        header: "Data de aprovação",
+        cell: (props: CellContext<ProjetoComId, unknown>) => {
+          const valor = props.getValue();
+          const time = toDisplayValue(valor, "dataAprovado");
+          return (
+            <div className="p-2 break-words text-right">
+              {time}
+            </div>
+          );
+        },
+        filterFn: numberFilterFn,
+      },
+  ];
+
+  // Retorna colunas diferentes dependendo do tipo de planilha
+  if (props.tipoPlanilha === "aprovacao") {
+    return [...aprovacaoColumns];
+  }
+  if (props.tipoPlanilha === "monitoramento") {
+    return [...baseColumns, ...monitoramentoColumns]; // coloquei as colunas do baseColums primeiro
+  }
+  if (props.tipoPlanilha === "historico") {
+    return [...historicoColumns, ...baseColumns]; // colocamos a coluna de data e o resto é igual ao baseColumns
+  }
+
+  return baseColumns; // fallback
+}, [handleUpdateData, isEditable, props.tipoPlanilha]);
 
   // Instância da tabela com todas as configurações
   const table = useReactTable({
@@ -627,28 +765,64 @@ const Planilha = (props: PlanilhaProps) => {
     const worksheet = workbook.addWorksheet("Projetos");
 
     // Define as colunas (cabeçalhos, chaves de dados e larguras), mudei a ordem das tabelas para ficar igual à do site
-    worksheet.columns = [
-      { header: "Nome do Projeto", key: "nome", width: 40 },
-      { header: "Lei de Incentivo", key: "lei", width: 30 },
-      {
-        header: "Valor Aportado",
-        key: "valorAprovado",
-        width: 20,
-        style: { numFmt: '"R$"#,##0.00' },
-      },
-      { header: "Proponente", key: "instituicao", width: 30 },
-      { header: "Indicação", key: "indicacao", width: 25 },
-      { header: "Estados", key: "estados", width: 30 },
-      { header: "Municípios", key: "municipios", width: 40 },
-      { header: "Empresas Grupo CSN", key: "empresas", width: 35 },
+    if (props.tipoPlanilha == 'aprovacao') {
+      worksheet.columns = [
+        { header: "Lei", key: "lei", width: 30 },
+        { header: "Nome do Projeto", key: "nome", width: 40 },
+        { header: "Aporte Anterior", key: "aporteAnterior", width: 40 },
+        { header: "A Captar", key: "valorApto", width: 40 },
+        { header: "Sugestão", key: "sugestao", width: 40 },
+        { header: "Valor Aportado", key: "valorAprovado", width: 20, style: { numFmt: '"R$"#,##0.00' },},
+        { header: "Proponente", key: "instituicao", width: 30 },
+        { header: "Indicação", key: "indicacao", width: 25 },
+        { header: "Estados", key: "estados", width: 30 },
+        { header: "Municípios", key: "municipios", width: 40 },
+        { header: "Empresas Grupo CSN", key: "empresas", width: 35 },
 
-    ];
+      ];
+    }
+    else if(props.tipoPlanilha == 'historico'){
+      worksheet.columns = [
+        { header: "Data de Aprovação", key: "dataAprovado", width: 30 },
+        { header: "Lei", key: "lei", width: 30 },
+        { header: "Nome do Projeto", key: "nome", width: 40 },
+        { header: "Valor Aportado", key: "valorAprovado", width: 20, style: { numFmt: '"R$"#,##0.00' },},
+        { header: "Proponente", key: "instituicao", width: 30 },
+        { header: "Indicação", key: "indicacao", width: 25 },
+        { header: "Estados", key: "estados", width: 30 },
+        { header: "Municípios", key: "municipios", width: 40 },
+        { header: "Empresas Grupo CSN", key: "empresas", width: 35 },
 
+      ];  
+    }
+    else{
+      worksheet.columns = [
+        { header: "Lei", key: "lei", width: 30 },
+        { header: "Nome do Projeto", key: "nome", width: 40 },
+        { header: "Valor Aportado", key: "valorAprovado", width: 20, style: { numFmt: '"R$"#,##0.00' },},
+        { header: "Proponente", key: "instituicao", width: 30 },
+        { header: "Indicação", key: "indicacao", width: 25 },
+        { header: "Estados", key: "estados", width: 30 },
+        { header: "Municípios", key: "municipios", width: 40 },
+        { header: "Empresas Grupo CSN", key: "empresas", width: 50 },
+        { header: "ODS", key: "odsArray", width: 35 },
+        { header: "Número de beneficiários", key: "beneficiariosDiretos", width: 35 },
+
+      ]; 
+    }
     const rows = table.getFilteredRowModel().rows;
     const dataToExport = rows.map((row) => {
-      const data = row.original;
+    const data = row.original;
+
+    let dataFormatada = "";
+    if (data.dataAprovado instanceof Timestamp) {
+      dataFormatada = data.dataAprovado.toDate().toLocaleDateString("pt-BR");
+    } else if (typeof data.dataAprovado === "string") {
+      dataFormatada = data.dataAprovado;
+    }
       return {
         ...data,
+        dataAprovado: dataFormatada,
         empresas: Array.isArray(data.empresas) ? data.empresas.map(e => `${e.nome} (${formatCurrency(e.valorAportado)})`).join("; ") : "",
         municipios: Array.isArray(data.municipios)
           ? data.municipios.join(", ")
