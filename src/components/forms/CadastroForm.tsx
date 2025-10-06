@@ -508,6 +508,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                 <Controller
                                                     name="numeroAgencia"
                                                     control={control}
+                                                    rules={{ required: false }}
                                                     render={({ field, fieldState: { error } }) => (
                                                         <>
                                                             <input
@@ -532,6 +533,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                 <Controller
                                                     name="digitoAgencia"
                                                     control={control}
+                                                    rules={{ required: false }}
                                                     render={({ field, fieldState: { error } }) => (
                                                         <>
                                                             <input
@@ -556,6 +558,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                     <Controller
                                         name="conta"
                                         control={control}
+                                        rules={{ required: false }}
                                         render={({ field, fieldState: { error } }) => (
                                             <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
                                                 <label htmlFor="conta" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">

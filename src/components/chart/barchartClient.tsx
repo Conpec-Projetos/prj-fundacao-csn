@@ -147,7 +147,10 @@ export default function BarChart({
         if (!odsNumber || odsNumber < 1 || odsNumber > 17) return;
 
         const iconIndex = odsNumber -1 ; // Ícone correto (0-based)
+             
+
         const icon = iconsRef.current[iconIndex];
+         console.log(`Label: ${label}, ODS: ${odsNumber}, IconIndex: ${iconIndex}, HasIcon: ${!!icon}`)
         if (!icon) return;
 
         // Posicionamento
