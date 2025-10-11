@@ -119,7 +119,7 @@ export const formsCadastroSchema = z.object({
     lei: z.coerce.number({ required_error: "A seleção da lei é obrigatória." }).min(0, "A seleção da lei é obrigatória."),
     numeroLei: z.string().trim().max(20, "Máximo de 20 caracteres permitidos"),
     contrapartidasProjeto: z.string().trim().min(10, "A descrição das contrapartidas é obrigatória.").max(400, "Máximo de 400 caracteres permitidos"),
-    observacoes: z.string().trim().min(10, "As observações devem ter no mínimo 10 caracteres.").max(400, "Máximo de 400 caracteres permitidos"),
+    observacoes: z.string().trim().max(400, "Máximo de 400 caracteres permitidos").optional(),
     diario: fileArraySchema(['application/pdf', 'image/jpeg', 'image/png'], 'PDF ou Imagens', 10),
     apresentacao: fileArraySchema(['application/pdf', 'image/jpeg', 'image/png'], 'PDF ou Imagens', 10),
     compliance: fileArraySchema(['application/pdf'], 'PDF', 10),

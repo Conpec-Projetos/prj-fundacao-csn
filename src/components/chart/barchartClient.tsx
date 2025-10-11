@@ -116,17 +116,17 @@ export default function BarChart({
         icons.push(img);
       }
 
-      iconsRef.current = icons;
-      setIconsLoaded(true);
+      iconsRef.current = icons; // salva o array de ícones em uma referência (ou seja, aqui => const icons: HTMLImageElement[] = [];)
+      setIconsLoaded(true); // marca que os ícones foram carregados.
     };
 
     loadIcons();
-  }, []);
+  }, []); // executa quando o componente é montado.
 
   // Função auxiliar para extrair número da ODS
-  const extractOdsNumber = (label: string): number | null => {
-    const match = label.match(/\d+/);
-    return match ? parseInt(match[0]) : null;
+  const extractOdsNumber = (label: string): number | null => { // Cada label segue o padrão "ODS X: Nome", o que permite extrair o número da ODS (1 a 17).
+    const match = label.match(/\d+/); // encontra o primeiro número da string que será o numero da ods
+    return match ? parseInt(match[0]) : null; // se houver o numero na string, retorna ele ja convetido para int, caso contrario retorna null
   };
 
   // useMemo memoriza o plugin para evitar recriações desnecessárias
@@ -139,7 +139,8 @@ export default function BarChart({
 
       if (!xAxis || !yAxis || !iconsRef.current.length) return;
 
-      data.labels?.forEach((label: unknown, filteredIndex: number) => {
+      console.log(data)
+      data.labels?.forEach((label: unknown, filteredIndex: number) => { // para cada label
         if (!label) return;
 
         // Extrair número da ODS do label atual
@@ -149,13 +150,13 @@ export default function BarChart({
         const iconIndex = odsNumber -1 ; // Ícone correto (0-based)
              
 
-        const icon = iconsRef.current[iconIndex];
+        const icon = iconsRef.current[iconIndex]; // encontra a ods no array iconsRef
          console.log(`Label: ${label}, ODS: ${odsNumber}, IconIndex: ${iconIndex}, HasIcon: ${!!icon}`)
         if (!icon) return;
 
         // Posicionamento
-        const x = !horizontal ? xAxis.getPixelForValue(filteredIndex) : xAxis.left + 10;
-        const y = !horizontal ? yAxis.bottom + 10 : yAxis.getPixelForValue(filteredIndex);
+        const x = !horizontal ? xAxis.getPixelForTick(filteredIndex) : xAxis.left + 10;
+        const y = !horizontal ? yAxis.bottom + 10 : yAxis.getPixelForTick(filteredIndex);
 
         const iconeTamanho = !horizontal 
           ? Math.min(60, chart.width / 20) 
@@ -169,7 +170,7 @@ export default function BarChart({
         }
       });
     }
-  }), [horizontal]);
+  }), [darkMode, horizontal, celular, labels, data, isPdfMode]); //usando useMemo só executamos isso quando horizontal muda, evitando recriações desnecessárias.
 
   // Dynamically update chart options based on dark mode
   const options:ChartOptions<'bar'> = useMemo(() => ({

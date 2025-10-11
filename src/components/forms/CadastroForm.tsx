@@ -736,7 +736,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
 
                             <LongInput
                                 text="Observações:"
-                                isNotMandatory={false}
+                                isNotMandatory={true}
                                 registration={register("observacoes")}
                                 error={errors.observacoes}
                             />
