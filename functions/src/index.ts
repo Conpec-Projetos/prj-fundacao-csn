@@ -414,7 +414,10 @@ const recalculateStateIndicators = async (stateName: string) => {
       if ("beneficiariosIndiretos" in formData) {
         totalBeneficiariosIndiretos += formData.beneficiariosIndiretos || 0;
       }
+
+
       formData.ods?.forEach((ods) => allODS[ods] += 1);
+
       segmentCounts[formData.segmento] = (segmentCounts[formData.segmento] || 0) + 1;
     }
   }
@@ -430,7 +433,7 @@ const recalculateStateIndicators = async (stateName: string) => {
     beneficiariosDireto: totalBeneficiariosDiretos,
     beneficiariosIndireto: totalBeneficiariosIndiretos,
     qtdOrganizacoes: uniqueInstituicoes.size,
-    projetosODS: Array.from(allODS).sort((a, b) => a - b),
+    projetosODS: Array.from(allODS), // retirei o .sort((a, b) => a - b)
     segmento: Object.entries(segmentCounts).map(([nome, qtd]) => ({ nome: nome, qtdProjetos: qtd })),
     lei: Object.entries(leiCounts).map(([nome, qtd]) => ({ nome: nome, qtdProjetos: qtd })),
   };

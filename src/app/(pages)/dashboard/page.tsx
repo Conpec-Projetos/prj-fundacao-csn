@@ -68,7 +68,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     estado: string
   ): Promise<dadosEstados | null> {
     const docRef = doc(db, "dadosEstados", estado);
-    console.log(estado);
 
     try {
       const docSnapshot = await getDoc(docRef);
@@ -219,6 +218,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
     array.forEach((d) => {
       d.ods.forEach((element) => {
+        console.log(element)
         projetosODS[element] += 1;
       });
     });
@@ -387,7 +387,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     dadosMapa = dadosGerais.dadosMapa;
     estadosAtendidos = dadosGerais.estadosAtendidos;
   }
-
   const odsData = {
     labels: [
       "ODS 1: Erradicação da Pobreza",
@@ -410,7 +409,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     ],
   };
 
-
   const leisSiglas = await getLeisSiglas();
   //console.log("Leis Siglas:", leisSiglas);
   const segmentoNomes: string[] =
@@ -422,6 +420,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
   const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
 
+  console.log(dados)
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">
