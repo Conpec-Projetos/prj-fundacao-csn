@@ -184,19 +184,19 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                 // 2. Soma o tamanho de todos os arquivos (em bytes)
                 const totalSizeInBytes = allFiles.reduce((acc, file) => acc + file.size, 0);
 
-                // 3. Define o limite. O do Firebase é 10MB, usamos 9.5MB para ter uma margem de segurança.
-                const limitInBytes = 9.5 * 1024 * 1024; // 9.5 MB
+                // 3. Define o limite. O do Firebase é 100MB.
+                const limitInBytes = 100 * 1024 * 1024; // 100 MB
 
                 // 4. Compara o tamanho total com o limite
                 if (totalSizeInBytes > limitInBytes) {
                     toast.error(
                         "Envio cancelado: Arquivos muito grandes.",
                         {
-                            description: `O tamanho total dos seus anexos (${(totalSizeInBytes / 1024 / 1024).toFixed(2)} MB) excede o nosso limite de 9.5 MB. Por favor, reduza o tamanho dos arquivos.`,
-                            duration: 12000, // 12 segundos
+                            description: `O tamanho total dos seus anexos (${(totalSizeInBytes / 1024 / 1024).toFixed(2)} MB) excede o nosso limite de 100 MB. Por favor, reduza o tamanho dos arquivos.`,
+                            duration: 10000,
                         }
                     );
-                    return; // Impede completamente o envio do formulário
+                    return;
                 }
                             
                 const loadingToastId = toast.loading("Enviando formulário...");
