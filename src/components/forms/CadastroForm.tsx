@@ -20,7 +20,7 @@ import {
 import { db, storage } from "@/firebase/firebase-config";
 import { odsList, publicoList, segmentoList } from "@/firebase/schema/entities";
 import { FormsCadastroFormFields, formsCadastroSchema } from "@/lib/schemas";
-import { filtraDigitos, formatCEP, formatCNPJ, formatMoeda, formatTelefone } from "@/lib/utils";
+import { filtraDigitos, formatCEP, formatCNPJ, formatMoeda, formatTelefone, normalizeStoredUrl } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { upload as vercelUpload } from "@vercel/blob/client";
 import { City, State } from "country-state-city";
@@ -915,22 +915,27 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                     <div className="flex flex-col w-full items-center gap-8 mt-10">
                         <div className="w-11/12">
                             {/* Botão de download para o formulário de compliance */}
-                            {compliancePdfUrl && (
-                                <div className="flex flex-col items-start mb-4 gap-y-2">
-                                    <p className="text-xl text-blue-fcsn dark:text-white-off font-bold">
-                                        Faça o download do formulário de compliance, preencha-o e anexe no campo abaixo.
-                                    </p>
-                                    <a
-                                        href={compliancePdfUrl}
-                                        download="Formulario_Compliance.pdf"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-fit px-4 h-[50px] bg-blue-fcsn dark:bg-blue-fcsn3 dark:hover:bg-blue-fcsn hover:bg-blue-fcsn2 rounded-[7px] text-md font-bold text-white cursor-pointer shadow-md flex items-center justify-center"
-                                    >
-                                        Baixar Formulário de Compliance
-                                    </a>
-                                </div>
-                            )}
+                            {(() => {
+                                const normalizedCompliancePdfUrl = normalizeStoredUrl(compliancePdfUrl) || null;
+                                if (!normalizedCompliancePdfUrl) return null;
+                                return (
+                                    <div className="flex flex-col items-start mb-4 gap-y-2">
+                                        <p className="text-xl text-blue-fcsn dark:text-white-off font-bold">
+                                            Faça o download do formulário de compliance, preencha-o e anexe no campo
+                                            abaixo.
+                                        </p>
+                                        <a
+                                            href={normalizedCompliancePdfUrl}
+                                            download="Formulario_Compliance.pdf"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-fit px-4 h-[50px] bg-blue-fcsn dark:bg-blue-fcsn3 dark:hover:bg-blue-fcsn hover:bg-blue-fcsn2 rounded-[7px] text-md font-bold text-white cursor-pointer shadow-md flex items-center justify-center"
+                                        >
+                                            Baixar Formulário de Compliance
+                                        </a>
+                                    </div>
+                                );
+                            })()}
 
                             <Controller
                                 name="compliance"
