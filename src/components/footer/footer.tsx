@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Footer(){
@@ -11,8 +12,9 @@ export default function Footer(){
 
                 <div className="flex flex-col items-start ml-5">
 
-                    <button onClick={() => router.push("./politica-de-privacidade")} className="underline cursor-pointer mb:pb-1 ">Políticas de privacidade</button>
-                    
+                    <Link href="/politica-de-privacidade" className="underline cursor-pointer">
+                    Políticas de privacidade
+                    </Link>
                     <div className="flex flex-col sm:flex-row md:flex-row  lg:flex-row gap-2">
                     <h1 className="text-xs sm:text-sm md:text-base lg:text-lg">© 2025 Fundação CSN. </h1>
                     <h1 className="text-xs sm:text-sm md:text-base lg:text-lg">Todos os diretos reservados. </h1>

@@ -716,24 +716,49 @@ const Planilha = (props: PlanilhaProps) => {
         const dataToExport = rows.map(row => {
             const data = row.original;
 
-            let dataFormatada = "";
-            if (data.dataAprovado instanceof Timestamp) {
-                dataFormatada = data.dataAprovado.toDate().toLocaleDateString("pt-BR");
-            } else if (typeof data.dataAprovado === "string") {
-                dataFormatada = data.dataAprovado;
-            }
-            return {
-                ...data,
-                dataAprovado: dataFormatada,
-                empresas: Array.isArray(data.empresas)
-                    ? data.empresas.map(e => `${e.nome} (${formatCurrency(e.valorAportado)})`).join("; ")
-                    : "",
-                municipios: Array.isArray(data.municipios) ? data.municipios.join(", ") : "",
-                estados: Array.isArray(data.estados) ? data.estados.join(", ") : "",
-            };
-        });
+    let dataFormatada = "";
+    if (data.dataAprovado instanceof Timestamp) {
+      dataFormatada = data.dataAprovado.toDate().toLocaleDateString("pt-BR");
+    } else if (typeof data.dataAprovado === "string") {
+      dataFormatada = data.dataAprovado;
+    }
+      return {
+        ...data,
+        dataAprovado: dataFormatada,
+        empresas: Array.isArray(data.empresas) ? data.empresas.map(e => `${e.nome} (${formatCurrency(e.valorAportado)})`).join("; ") : "",
+        municipios: Array.isArray(data.municipios)
+          ? data.municipios.join(", ")
+          : "",
+        estados: Array.isArray(data.estados) ? data.estados.join(", ") : "",
+        valorApto: data.valorApto ? formatCurrency(data.valorApto) : "",
+        aporteAnterior: data.aporteAnterior ? formatCurrency(data.aporteAnterior) : "",
+        odsArray: Array.isArray(data.odsArray) ? data.odsArray.join(", ") : data.odsArray || "", // deixara separado por virgula
+      };
+    });
 
-        worksheet.addRows(dataToExport);
+    // 🔹 Número de colunas baseado nas colunas da planilha
+    const numColunas = worksheet.columns.length;
+
+  // 🔹 Adiciona título mesclado
+    worksheet.mergeCells(1, 1, 1, numColunas);
+    const titleCell = worksheet.getCell("A1");
+    if(props.tipoPlanilha == "aprovacao")
+      titleCell.value = "PROJETOS PARA APROVAÇÃO";
+    else if(props.tipoPlanilha == "monitoramento")
+      titleCell.value = "PROJETOS EM MONITORAMENTO";
+    else  
+      titleCell.value = "HISTÓRICO DE PROJETOS";
+    titleCell.font = { size: 16, bold: true, color: { argb: "FFFFFF" } };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    titleCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "ffb37b97" },
+    };
+    worksheet.getRow(1).height = 28;
+
+    // 🔹 Cabeçalho automático (ExcelJS usa os headers definidos)
+    const headerRow = worksheet.addRow(worksheet.columns.map(c => c.header));
 
         const borderStyle: Partial<ExcelJS.Borders> = {
             top: { style: "thin", color: { argb: "ff292944" } },
@@ -742,31 +767,35 @@ const Planilha = (props: PlanilhaProps) => {
             right: { style: "thin", color: { argb: "ff292944" } },
         };
 
-        // Estilização do Cabeçalho
-        worksheet.getRow(1).eachCell(cell => {
-            cell.font = {
-                bold: true,
-                color: { argb: "FFFFFF" }, // Cor do texto: Branco
-            };
-            cell.fill = {
-                type: "pattern",
-                pattern: "solid",
-                fgColor: { argb: "ffb37b97" }, // Cor de fundo: Rosa curadoria
-            };
-            cell.alignment = {
-                vertical: "middle",
-                horizontal: "center",
-            };
-            cell.border = borderStyle;
-        });
+    // Estilização do Cabeçalho
+    headerRow.eachCell((cell) => {
+      cell.font = {
+        bold: true,
+        color: { argb: "FFFFFF" }, // Cor do texto: Branco
+      };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "ffb37b97" }, // Cor de fundo: Rosa curadoria
+      };
+      cell.alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+      cell.border = borderStyle;
+    });
 
-        worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-            if (rowNumber > 1) {
-                row.eachCell({ includeEmpty: true }, cell => {
-                    cell.border = borderStyle;
-                });
-            }
+      // 🔹 Adiciona os dados
+    worksheet.addRows(dataToExport);
+
+    worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+      if (rowNumber > 1) {
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          cell.border = borderStyle;
+          cell.alignment = { wrapText: true, vertical: "middle" };
         });
+      }
+    });
 
         // Gera o ficheiro e aciona o download
         const buffer = await workbook.xlsx.writeBuffer();
