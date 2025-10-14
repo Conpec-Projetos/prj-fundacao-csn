@@ -1,27 +1,26 @@
-'use server'
+"use server";
 
-import { collection, addDoc, updateDoc, doc} from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
-import { formsAcompanhamentoDados, segmentoList, ambitoList } from "@/firebase/schema/entities";
-import { getOdsIds, getItemNome } from "@/lib/utils";
-import { formsAcompanhamentoSchema, FormsAcompanhamentoFormFields } from "@/lib/schemas";
-import { getLeisFromDB } from "@/lib/utils";
-import { uploadFileAndGetUrlAdmin } from './adminActions';
+import { ambitoList, formsAcompanhamentoDados, segmentoList } from "@/firebase/schema/entities";
+import { FormsAcompanhamentoFormFields, formsAcompanhamentoSchema } from "@/lib/schemas";
+import { getItemNome, getLeisFromDB, getOdsIds } from "@/lib/utils";
+import { addDoc, collection, doc, updateDoc } from "firebase/firestore";
+import { uploadFileAndGetUrlAdmin } from "./adminActions";
 
 export async function submitAcompanhamentoForm(formData: FormData) {
     const rawFormData = Object.fromEntries(formData.entries());
-    const projetoID = formData.get('projetoID') as string;
-    const usuarioAtualID = formData.get('usuarioAtualID') as string;
-    const fotos = formData.getAll('fotos') as File[];
+    const projetoID = formData.get("projetoID") as string;
+    const usuarioAtualID = formData.get("usuarioAtualID") as string;
+    const fotos = formData.getAll("fotos") as (File | string)[];
 
     const dataToValidate = {
         ...rawFormData,
         fotos, // Adiciona o array de arquivos
-        
+
         // Converte os campos que foram stringificados de volta para arrays
-        ods: typeof rawFormData.ods === 'string' ? JSON.parse(rawFormData.ods) : [],
-        estados: typeof rawFormData.estados === 'string' ? JSON.parse(rawFormData.estados) : [],
-        municipios: typeof rawFormData.municipios === 'string' ? JSON.parse(rawFormData.municipios) : [],
+        ods: typeof rawFormData.ods === "string" ? JSON.parse(rawFormData.ods) : [],
+        estados: typeof rawFormData.estados === "string" ? JSON.parse(rawFormData.estados) : [],
+        municipios: typeof rawFormData.municipios === "string" ? JSON.parse(rawFormData.municipios) : [],
     };
 
     const validationResult = formsAcompanhamentoSchema.safeParse(dataToValidate);
@@ -29,11 +28,11 @@ export async function submitAcompanhamentoForm(formData: FormData) {
     if (!validationResult.success) {
         // Log detalhado do erro no servidor para ajudar na depuração
         console.error("Erro de validação no servidor:", validationResult.error.flatten().fieldErrors);
-        
+
         // Retorna uma mensagem de erro genérica e clara para o cliente
-        return { 
-            success: false, 
-            error: "Dados inválidos. Por favor, verifique os campos e tente novamente." 
+        return {
+            success: false,
+            error: "Dados inválidos. Por favor, verifique os campos e tente novamente.",
         };
     }
 
@@ -41,12 +40,18 @@ export async function submitAcompanhamentoForm(formData: FormData) {
     const data: FormsAcompanhamentoFormFields = validationResult.data;
 
     try {
-        const fotoURLs = await Promise.all(data.fotos.map(file => uploadFileAndGetUrlAdmin(file, 'forms-acompanhamento', projetoID)));
+        const fotoURLs = await Promise.all(
+            data.fotos.map(file =>
+                typeof file === "string"
+                    ? Promise.resolve(file)
+                    : uploadFileAndGetUrlAdmin(file, "forms-acompanhamento", projetoID)
+            )
+        );
         const leiList = await getLeisFromDB();
-        
+
         const uploadFirestore: formsAcompanhamentoDados = {
             projetoID: projetoID,
-            dataResposta: new Date().toISOString().split('T')[0],
+            dataResposta: new Date().toISOString().split("T")[0],
             usuarioID: usuarioAtualID,
             instituicao: data.instituicao,
             descricao: data.descricao,
@@ -66,7 +71,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
             contrapartidasProjeto: data.contrapartidasProjeto,
             beneficiariosDiretos: data.beneficiariosDiretos,
             beneficiariosIndiretos: data.beneficiariosIndiretos,
-            diversidade: data.diversidade === 'true',
+            diversidade: data.diversidade === "true",
             qtdAmarelas: data.qtdAmarelas,
             qtdBrancas: data.qtdBrancas,
             qtdIndigenas: data.qtdIndigenas,
@@ -95,7 +100,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
             estados: data.estados, // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
             municipios: data.municipios,
             lei: getItemNome(data.lei, leiList),
-            ultimoFormulario: formsAcompanhamentoRef.id
+            ultimoFormulario: formsAcompanhamentoRef.id,
         });
 
         return { success: true };
