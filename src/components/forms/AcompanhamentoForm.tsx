@@ -1,35 +1,35 @@
-'use client';
+"use client";
 
+import { submitAcompanhamentoForm } from "@/app/actions/formsAcompanhamentoActions";
 import {
-    NormalInput, 
-    LongInput,
-    NumberInput,
-    HorizontalSelects,
-    VerticalSelects,
+    CidadeInput,
     DateInputs,
     EstadoInput,
-    LeiSelect,
-    YesNoInput,
     FileInput,
-    CidadeInput
-    } from "@/components/inputs/inputs";
-import { toast } from "sonner";
-import { odsList, segmentoList, ambitoList } from "@/firebase/schema/entities";
+    HorizontalSelects,
+    LeiSelect,
+    LongInput,
+    NormalInput,
+    NumberInput,
+    VerticalSelects,
+    YesNoInput,
+} from "@/components/inputs/inputs";
+import { db } from "@/firebase/firebase-config";
+import { ambitoList, odsList, segmentoList } from "@/firebase/schema/entities";
+import { FormsAcompanhamentoFormFields, formsAcompanhamentoSchema } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, SubmitHandler, Controller, FieldError } from "react-hook-form";
-import { State, City } from "country-state-city";
-import { formsAcompanhamentoSchema, FormsAcompanhamentoFormFields } from "@/lib/schemas";
-import { submitAcompanhamentoForm } from "@/app/actions/formsAcompanhamentoActions";
+import { upload as vercelUpload } from "@vercel/blob/client";
+import { City, State } from "country-state-city";
+import { collection, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase/firebase-config";
-
+import { Controller, FieldError, SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 interface AcompanhamentoFormProps {
-  projetoID: string;
-  usuarioAtualID: string;
-  initialData: Partial<FormsAcompanhamentoFormFields>;
+    projetoID: string;
+    usuarioAtualID: string;
+    initialData: Partial<FormsAcompanhamentoFormFields>;
 }
 
 export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialData }: AcompanhamentoFormProps) {
@@ -49,26 +49,62 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
         mode: "onBlur",
     });
 
-    const watchedEstados = watch('estados');
+    const watchedEstados = watch("estados");
+
+    const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+
+    const uploadFileToVercel = async (file: File, fieldName: string) => {
+        try {
+            setUploadProgress(prev => ({ ...prev, [fieldName]: 0 }));
+            const clientPayload = JSON.stringify({ size: file.size, type: file.type });
+            const pathname = `${fieldName}/${Date.now()}-${file.name}`;
+            const result = await vercelUpload(pathname, file, {
+                access: "public",
+                handleUploadUrl: "/api/upload",
+                clientPayload,
+                onUploadProgress: ({ percentage }) =>
+                    setUploadProgress(prev => ({ ...prev, [fieldName]: Math.round(percentage) })),
+                multipart: true,
+            });
+            // Normalize result to a usable public URL
+            type VercelResult = { url?: string; downloadUrl?: string; pathname?: string; key?: string };
+            const vr = result as VercelResult;
+            const publicUrl: string | null =
+                vr.url ??
+                vr.downloadUrl ??
+                (() => {
+                    const pathnameFromResult = vr.pathname ?? vr.key ?? null;
+                    if (!pathnameFromResult) return null;
+                    const base = process.env.NEXT_PUBLIC_VERCEL_BLOB_BASE_URL || window.location.origin;
+                    return `${base.replace(/\/$/, "")}/${String(pathnameFromResult).replace(/^\//, "")}`;
+                })();
+            setUploadProgress(prev => ({ ...prev, [fieldName]: 100 }));
+            if (!publicUrl) throw new Error("Upload succeeded but no public URL was returned by Vercel Blob");
+            return publicUrl;
+        } catch (err) {
+            console.error("Upload error", err);
+            setUploadProgress(prev => ({ ...prev, [fieldName]: 0 }));
+            throw err;
+        }
+    };
 
     // fetch leis from firebase
     useEffect(() => {
         const fetchLeis = async () => {
             const snapshot = await getDocs(collection(db, "leis"));
             const leisFromDB: string[] = [];
-            snapshot.forEach((doc) => {
+            snapshot.forEach(doc => {
                 const data = doc.data() as { nome: string; sigla: string };
                 if (data.nome) {
-                 leisFromDB.push(data.nome);
+                    leisFromDB.push(data.nome);
                 }
             });
             setLeiList(leisFromDB);
-        }
-        fetchLeis()
+        };
+        fetchLeis();
     }, []);
 
-
-    const onSubmit: SubmitHandler<FormsAcompanhamentoFormFields> = async (data) => {
+    const onSubmit: SubmitHandler<FormsAcompanhamentoFormFields> = async data => {
         if (!usuarioAtualID) {
             toast.error("Usuário não autenticado. Por favor, faça login.");
             return;
@@ -79,22 +115,25 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
         const formData = new FormData();
         // Preenche o FormData
         Object.entries(data).forEach(([key, value]) => {
-            if (key === 'fotos' && Array.isArray(value)) {
+            if (key === "fotos" && Array.isArray(value)) {
                 // Arquivos serão adicionados depois
-            } else if (typeof value === 'object' && value !== null) {
+            } else if (typeof value === "object" && value !== null) {
                 formData.append(key, JSON.stringify(value));
             } else if (value !== undefined && value !== null) {
                 formData.append(key, String(value));
             }
         });
 
-        // Adiciona os arquivos
-        data.fotos.forEach(file => formData.append('fotos', file));
-        
+        // Adiciona os arquivos (cada item pode ser File ou URL string)
+        data.fotos.forEach((item: File | string) => {
+            if (item instanceof File) formData.append("fotos", item);
+            else formData.append("fotos", item);
+        });
+
         // Adiciona IDs necessários para a action
-        formData.append('projetoID', projetoID);
-        formData.append('usuarioAtualID', usuarioAtualID);
-        
+        formData.append("projetoID", projetoID);
+        formData.append("usuarioAtualID", usuarioAtualID);
+
         try {
             const result = await submitAcompanhamentoForm(formData);
             toast.dismiss(loadingToastId);
@@ -102,27 +141,25 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                 toast.success("Formulário de acompanhamento enviado com sucesso!");
 
                 setTimeout(() => {
-                    router.push('/inicio-externo');
+                    router.push("/inicio-externo");
                 }, 3000);
-
             } else {
                 toast.error(`Erro: ${result.error}`);
             }
         } catch (error) {
-             toast.dismiss(loadingToastId);
-             toast.error(`Ocorreu um erro inesperado: ${error}`);
+            toast.dismiss(loadingToastId);
+            toast.error(`Ocorreu um erro inesperado: ${error}`);
         }
     };
 
-    return(
-        <form 
+    return (
+        <form
             className="flex flex-col justify-center items-center max-w-[1500px] w-[90vw] sm:w-[80vw] xl:w-[70vw] mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-lg overflow-hidden no-scrollbar"
             onSubmit={handleSubmit(onSubmit)}
-            noValidate>
-            
-
+            noValidate
+        >
             <div className="flex flex-col justify-around w-11/12 h-23/24 py-10">
-            {/* Nome da instituição */}
+                {/* Nome da instituição */}
                 <NormalInput
                     text="Nome da instituição:"
                     isNotMandatory={false}
@@ -130,14 +167,14 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     error={errors.instituicao}
                 />
 
-            {/* Breve descrição do prj */}
+                {/* Breve descrição do prj */}
                 <LongInput
                     text="Breve descrição do projeto:"
                     registration={register("descricao")}
                     error={errors.descricao}
                     isNotMandatory={false}
                 />
-            {/* Seg do Projeto */}
+                {/* Seg do Projeto */}
                 <Controller
                     name="segmento"
                     control={control}
@@ -153,23 +190,23 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     )}
                 />
 
-            {/* Lei de incentivo do prj*/}
+                {/* Lei de incentivo do prj*/}
                 <Controller
-                name="lei"
-                control={control}
-                render={({ field, fieldState: { error } }) => (
-                    <LeiSelect
-                    text="Lei de incentivo do projeto:"
-                    list={leiList}
-                    value={field.value}
-                    isNotMandatory={false}
-                    onChange={field.onChange}
-                    error={error} 
-                    />
-                )}
+                    name="lei"
+                    control={control}
+                    render={({ field, fieldState: { error } }) => (
+                        <LeiSelect
+                            text="Lei de incentivo do projeto:"
+                            list={leiList}
+                            value={field.value}
+                            isNotMandatory={false}
+                            onChange={field.onChange}
+                            error={error}
+                        />
+                    )}
                 />
-                    
-            {/* Pontos positivos do prj */}
+
+                {/* Pontos positivos do prj */}
                 <LongInput
                     text="Pontos positivos do projeto:"
                     isNotMandatory={true}
@@ -177,23 +214,23 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     error={errors.positivos}
                 />
 
-            {/* Pontos negtivos do prj */}
+                {/* Pontos negtivos do prj */}
                 <LongInput
-                    text="Pontos negativos do projeto:" 
+                    text="Pontos negativos do projeto:"
                     isNotMandatory={true}
                     registration={register("negativos")}
                     error={errors.negativos}
                 />
 
-            {/* Pontos de atenção do prj */}
+                {/* Pontos de atenção do prj */}
                 <LongInput
                     text="Pontos de atenção do projeto:"
                     isNotMandatory={true}
                     registration={register("atencao")}
                     error={errors.atencao}
                 />
-            
-            {/* Ambito de desenvolvimento do prj */}
+
+                {/* Ambito de desenvolvimento do prj */}
                 <Controller
                     name="ambito"
                     control={control}
@@ -209,7 +246,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     )}
                 />
 
-            {/* Estados onde ele atua: */}
+                {/* Estados onde ele atua: */}
                 <Controller
                     name="estados"
                     control={control}
@@ -220,9 +257,9 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                             if (stateObject) {
                                 const estadoUF = stateObject.isoCode;
                                 const cidadesDoEstado = new Set(City.getCitiesOfState("BR", estadoUF).map(c => c.name));
-                                const cidadesAtuais = watch('municipios');
+                                const cidadesAtuais = watch("municipios");
                                 const novasCidades = cidadesAtuais.filter(cidade => !cidadesDoEstado.has(cidade));
-                                setValue('municipios', novasCidades, { shouldValidate: true });
+                                setValue("municipios", novasCidades, { shouldValidate: true });
                             }
                         };
                         return (
@@ -238,7 +275,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     }}
                 />
 
-            {/* Municipios onde ele atua: */}
+                {/* Municipios onde ele atua: */}
                 <Controller
                     name="municipios"
                     control={control}
@@ -254,7 +291,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     )}
                 />
 
-            {/* Especificações do territorio de atuação do prj: */}
+                {/* Especificações do territorio de atuação do prj: */}
                 <LongInput
                     text="Especificações do territorio de atuação do projeto:"
                     isNotMandatory={false}
@@ -262,9 +299,9 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     error={errors.especificacoes}
                 />
 
-            {/* Periodo de execução do prj: */}
+                {/* Periodo de execução do prj: */}
                 <DateInputs
-                    text="Período de execução do projeto:" 
+                    text="Período de execução do projeto:"
                     isNotMandatory={false}
                     startRegistration={register("dataComeco")}
                     endRegistration={register("dataFim")}
@@ -272,142 +309,140 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     error_end={errors.dataFim}
                 />
 
-            {/* Contrapartidas do projeto: */}
-                <LongInput 
-                    text="Contrapartidas do projeto:" 
+                {/* Contrapartidas do projeto: */}
+                <LongInput
+                    text="Contrapartidas do projeto:"
                     isNotMandatory={false}
                     registration={register("contrapartidasProjeto")}
                     error={errors.contrapartidasProjeto}
                 />
                 <div className="flex flex-col gap-3 py-4">
-                {/* Numero total de beneficiários diretos: */}
-                    <NumberInput 
-                        text="Número total de beneficiários diretos no projeto:" 
+                    {/* Numero total de beneficiários diretos: */}
+                    <NumberInput
+                        text="Número total de beneficiários diretos no projeto:"
                         isNotMandatory={false}
                         registration={register("beneficiariosDiretos")}
                         error={errors.beneficiariosDiretos}
                     />
-                
-                {/* Numero total de beneficiários indiretos: */}
-                    <NumberInput 
-                        text="Número total de beneficiários indiretos no projeto:" 
+
+                    {/* Numero total de beneficiários indiretos: */}
+                    <NumberInput
+                        text="Número total de beneficiários indiretos no projeto:"
                         isNotMandatory={false}
                         registration={register("beneficiariosIndiretos")}
                         error={errors.beneficiariosIndiretos}
                     />
 
-                {/* Adota politicas de diversidade?: */}
-                    <YesNoInput 
-                        text="Sua instituição adota políticas de diversidade?" 
+                    {/* Adota politicas de diversidade?: */}
+                    <YesNoInput
+                        text="Sua instituição adota políticas de diversidade?"
                         list={["Sim", "Não"]}
                         isNotMandatory={false}
                         registration={register("diversidade")}
                         error={errors.diversidade}
                     />
 
-                {/* Amarelas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Amarelas na sua instituição:" 
+                    {/* Amarelas: */}
+                    <NumberInput
+                        text="Quantidade de pessoas Amarelas na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdAmarelas")}
                         error={errors.qtdAmarelas}
                     />
 
-                {/* Brancas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Brancas na sua instituição:" 
+                    {/* Brancas: */}
+                    <NumberInput
+                        text="Quantidade de pessoas Brancas na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdBrancas")}
                         error={errors.qtdBrancas}
-                        />
+                    />
 
-                {/* Indígenas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Indígenas na sua instituição:" 
+                    {/* Indígenas: */}
+                    <NumberInput
+                        text="Quantidade de pessoas Indígenas na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdIndigenas")}
                         error={errors.qtdIndigenas}
                     />
 
-                {/* Pardas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Pardas na sua instituição:" 
+                    {/* Pardas: */}
+                    <NumberInput
+                        text="Quantidade de pessoas Pardas na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdPardas")}
                         error={errors.qtdPardas}
-                        />
+                    />
 
-                {/* Pretas: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Pretas na sua instituição:" 
+                    {/* Pretas: */}
+                    <NumberInput
+                        text="Quantidade de pessoas Pretas na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdPretas")}
                         error={errors.qtdPretas}
                     />
 
-                {/* Mulher cis: */}
-                    <NumberInput 
-                        text="Quantidade de Mulheres Cisgênero na sua instituição:" 
+                    {/* Mulher cis: */}
+                    <NumberInput
+                        text="Quantidade de Mulheres Cisgênero na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdMulherCis")}
                         error={errors.qtdMulherCis}
-                        />
+                    />
 
-                {/* Mulher trans: */}
-                    <NumberInput 
-                        text="Quantidade de Mulheres Transgênero na sua instituição:" 
+                    {/* Mulher trans: */}
+                    <NumberInput
+                        text="Quantidade de Mulheres Transgênero na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdMulherTrans")}
                         error={errors.qtdMulherTrans}
                     />
 
-                {/* Homem cis: */}
-                    <NumberInput 
-                        text="Quantidade de Homens Cisgênero na sua instituição:" 
+                    {/* Homem cis: */}
+                    <NumberInput
+                        text="Quantidade de Homens Cisgênero na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdHomemCis")}
                         error={errors.qtdHomemCis}
                     />
 
-                {/* Homem trans: */}
-                    <NumberInput 
-                        text="Quantidade de Homens Transgênero na sua instituição:" 
+                    {/* Homem trans: */}
+                    <NumberInput
+                        text="Quantidade de Homens Transgênero na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdHomemTrans")}
                         error={errors.qtdHomemTrans}
                     />
 
-                {/* NBs: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas Não-Binárias na sua instituição:" 
+                    {/* NBs: */}
+                    <NumberInput
+                        text="Quantidade de pessoas Não-Binárias na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdNaoBinarios")}
                         error={errors.qtdNaoBinarios}
                     />
 
-                {/* PCDs: */}
-                    <NumberInput 
-                        text="Quantidade de Pessoas Com Deficiência (PCD) na sua instituição:" 
+                    {/* PCDs: */}
+                    <NumberInput
+                        text="Quantidade de Pessoas Com Deficiência (PCD) na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdPCD")}
                         error={errors.qtdPCD}
                     />
 
-                {/* LGBTs: */}
-                    <NumberInput 
-                        text="Quantidade de pessoas da comunidade LGBTQIA+ na sua instituição:" 
+                    {/* LGBTs: */}
+                    <NumberInput
+                        text="Quantidade de pessoas da comunidade LGBTQIA+ na sua instituição:"
                         isNotMandatory={false}
                         registration={register("qtdLGBT")}
                         error={errors.qtdLGBT}
-                        />
-
+                    />
                 </div>
-            {/* ODSs: */}
+                {/* ODSs: */}
                 <Controller
                     name="ods"
                     control={control}
                     render={({ field, fieldState: { error } }) => (
-
                         <VerticalSelects
                             text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
                             subtext="Selecione até 3 opções."
@@ -420,30 +455,48 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     )}
                 />
 
-            {/* Relato de um beneficiário: */}
-                <LongInput 
-                    text="Breve relato de um beneficiário do projeto:" 
+                {/* Relato de um beneficiário: */}
+                <LongInput
+                    text="Breve relato de um beneficiário do projeto:"
                     isNotMandatory={true}
                     registration={register("relato")}
                     error={errors.relato}
                 />
-            {/* Cinco fotos: */}
+                {/* Cinco fotos: */}
                 <Controller
                     name="fotos"
                     control={control}
                     render={({ field: { onChange, value }, fieldState: { error } }) => (
-                        <FileInput 
-                            text={"Cinco fotos das atividades do projeto:"}
-                            isNotMandatory={false}
-                            value={value || []}
-                            onChange={onChange}
-                            error={error}
-                            acceptedFileTypes={['image/jpeg', 'image/png']}
-                        />
+                        <div>
+                            <FileInput
+                                text={"Cinco fotos das atividades do projeto:"}
+                                isNotMandatory={false}
+                                value={value || []}
+                                onChange={async files => {
+                                    const processed: (File | string)[] = [];
+                                    for (const f of files) {
+                                        if (typeof f === "string") processed.push(f);
+                                        else {
+                                            try {
+                                                processed.push(await uploadFileToVercel(f, "fotos"));
+                                            } catch {
+                                                toast.error("Falha ao enviar foto.");
+                                            }
+                                        }
+                                    }
+                                    onChange(processed as unknown as (File | string)[]);
+                                }}
+                                error={error}
+                                acceptedFileTypes={["image/jpeg", "image/png"]}
+                            />
+                            {uploadProgress["fotos"] != null && (
+                                <p className="text-sm">Progresso: {uploadProgress["fotos"]}%</p>
+                            )}
+                        </div>
                     )}
                 />
 
-            {/* Links para as website: */}
+                {/* Links para as website: */}
                 <NormalInput
                     text="Link para website:"
                     isNotMandatory={true}
@@ -451,30 +504,31 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     error={errors.website}
                 />
 
-            {/* Links para as redes sociais */}
-                <LongInput 
-                    text="Links para as redes sociais:" 
+                {/* Links para as redes sociais */}
+                <LongInput
+                    text="Links para as redes sociais:"
                     isNotMandatory={true}
                     registration={register("links")}
                     error={errors.links}
                 />
 
-            {/* Contrapartidas apresentadas e executadas: */}
-                <LongInput 
-                    text="Contrapartidas apresentadas e contrapartidas executadas:" 
+                {/* Contrapartidas apresentadas e executadas: */}
+                <LongInput
+                    text="Contrapartidas apresentadas e contrapartidas executadas:"
                     isNotMandatory={true}
                     registration={register("contrapartidasExecutadas")}
                     error={errors.contrapartidasExecutadas}
                 />
-
             </div>
-                
+
             <div className="flex w-11/12 items-start">
-                <button 
+                <button
                     type="submit"
                     disabled={isSubmitting}
                     className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10"
-                >{isSubmitting ? "Enviando..." : "Enviar"}</button>
+                >
+                    {isSubmitting ? "Enviando..." : "Enviar"}
+                </button>
             </div>
         </form>
     );
