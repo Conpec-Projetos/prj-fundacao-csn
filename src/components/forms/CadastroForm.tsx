@@ -518,7 +518,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                             <div className="flex flex-col gap-y-4 mx-7">
                                 <NormalInput
                                     text="Banco:"
-                                    isNotMandatory={false}
+                                    isNotMandatory={true} // mudei para nao ser mais obrigatorio
                                     registration={register("banco")}
                                     error={errors.banco}
                                 />
@@ -526,7 +526,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 <div className="flex flex-col md:flex-row h-full w-full justify-between md:items-start gap-y-4 md:gap-x-4">
                                     <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
                                         <label htmlFor="numeroAgencia" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
-                                            Agência: <span className="text-[#B15265]">*</span>
+                                            Agência:
                                         </label>
                                         <div className="flex items-start w-full gap-x-2">
                                             {/* Input para o Número da Agência */}
@@ -534,6 +534,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                 <Controller
                                                     name="numeroAgencia"
                                                     control={control}
+                                                    rules={{ required: false }}
                                                     render={({ field, fieldState: { error } }) => (
                                                         <>
                                                             <input
@@ -558,6 +559,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                 <Controller
                                                     name="digitoAgencia"
                                                     control={control}
+                                                    rules={{ required: false }}
                                                     render={({ field, fieldState: { error } }) => (
                                                         <>
                                                             <input
@@ -582,10 +584,11 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                     <Controller
                                         name="conta"
                                         control={control}
+                                        rules={{ required: false }}
                                         render={({ field, fieldState: { error } }) => (
                                             <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
                                                 <label htmlFor="conta" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
-                                                    Conta Corrente: <span className="text-[#B15265]">*</span>
+                                                    Conta Corrente:
                                                 </label>
                                                 <div className="w-full">
                                                     <input
@@ -759,7 +762,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
 
                             <LongInput
                                 text="Observações:"
-                                isNotMandatory={false}
+                                isNotMandatory={true}
                                 registration={register("observacoes")}
                                 error={errors.observacoes}
                             />
