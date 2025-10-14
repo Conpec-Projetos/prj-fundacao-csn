@@ -1,30 +1,50 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { db } from "@/firebase/firebase-config";
-import { collection, getDocs, query, updateDoc, where, arrayUnion } from "firebase/firestore";
+import { normalizeStoredUrl } from "@/lib/utils";
+import { arrayUnion, collection, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { useEffect, useRef, useState } from "react";
 
 // Importa a lista de empresas do seu arquivo JSON local
 import listaDeEmpresasPermitidas from "./empresas.json";
 
 // As props que o componente recebe do pai
 type BotaoAprovarProjProps = {
-  projectId: string;
-  projectName: string;
-  projetosComplianceStatus?: boolean;
-  complianceDocUrl?: string | null;
-  additionalDocsUrls?: string[];
+    projectId: string;
+    projectName: string;
+    projetosComplianceStatus?: boolean;
+    complianceDocUrl?: string | null;
+    additionalDocsUrls?: string[];
 };
 
 // Componente de Modal para a dupla confirmação final
-const ConfirmationModal = ({ message, onConfirm, onCancel, isUpdating }: { message: string, onConfirm: () => void, onCancel: () => void, isUpdating: boolean }) => (
+const ConfirmationModal = ({
+    message,
+    onConfirm,
+    onCancel,
+    isUpdating,
+}: {
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+    isUpdating: boolean;
+}) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
         <div className="bg-white dark:bg-blue-fcsn2 p-6 rounded-lg shadow-xl text-center w-full max-w-md">
             <p className="text-blue-fcsn dark:text-white-off mb-4 text-lg">{message}</p>
             <div className="flex justify-center gap-4">
-                <button onClick={onCancel} className="bg-gray-200 dark:bg-blue-fcsn3 hover:bg-gray-300 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off font-bold py-2 px-4 rounded-lg transition-colors">Cancelar</button>
-                <button onClick={onConfirm} disabled={isUpdating} className="bg-red-fcsn hover:bg-opacity-90 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 transition-colors">
-                    {isUpdating ? 'Confirmando...' : 'Confirmar Definitivamente'}
+                <button
+                    onClick={onCancel}
+                    className="bg-gray-200 dark:bg-blue-fcsn3 hover:bg-gray-300 dark:hover:bg-blue-fcsn text-blue-fcsn dark:text-white-off font-bold py-2 px-4 rounded-lg transition-colors"
+                >
+                    Cancelar
+                </button>
+                <button
+                    onClick={onConfirm}
+                    disabled={isUpdating}
+                    className="bg-red-fcsn hover:bg-opacity-90 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 transition-colors"
+                >
+                    {isUpdating ? "Confirmando..." : "Confirmar Definitivamente"}
                 </button>
             </div>
         </div>
@@ -33,257 +53,294 @@ const ConfirmationModal = ({ message, onConfirm, onCancel, isUpdating }: { messa
 
 // Interface para organizar os dados da empresa com seu valor
 interface EmpresaComValor {
-  nome: string;
-  valorAportado: number;
+    nome: string;
+    valorAportado: number;
 }
 
 export default function BotaoAprovarProj(props: BotaoAprovarProjProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const caixaRef = useRef<HTMLDivElement>(null);
-  
-  // Estados para o formulário de aprovação final por empresa
-  const [empresaSelecionada, setEmpresaSelecionada] = useState("");
-  const [valorPorEmpresa, setValorPorEmpresa] = useState("");
-  const [empresasList, setEmpresasList] = useState<EmpresaComValor[]>([]);
-  
-  const [showConfirmation, setShowConfirmation] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const caixaRef = useRef<HTMLDivElement>(null);
 
-  // Fecha o dropdown se o estado de compliance mudar (após a primeira aprovação)
-  useEffect(() => {
-    setIsOpen(false);
-  }, [props.projetosComplianceStatus]);
-  
-  // Lógica para fechar o dropdown ao clicar fora
-  useEffect(() => {
-    if (!isOpen) return;
-    function handleCliqueFora(event: MouseEvent) {
-      if (caixaRef.current && !caixaRef.current.contains(event.target as Node)) {
+    // Estados para o formulário de aprovação final por empresa
+    const [empresaSelecionada, setEmpresaSelecionada] = useState("");
+    const [valorPorEmpresa, setValorPorEmpresa] = useState("");
+    const [empresasList, setEmpresasList] = useState<EmpresaComValor[]>([]);
+
+    const [showConfirmation, setShowConfirmation] = useState(false);
+
+    // Fecha o dropdown se o estado de compliance mudar (após a primeira aprovação)
+    useEffect(() => {
         setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleCliqueFora);
-    return () => {
-      document.removeEventListener('mousedown', handleCliqueFora);
+    }, [props.projetosComplianceStatus]);
+
+    // Lógica para fechar o dropdown ao clicar fora
+    useEffect(() => {
+        if (!isOpen) return;
+        function handleCliqueFora(event: MouseEvent) {
+            if (caixaRef.current && !caixaRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleCliqueFora);
+        return () => {
+            document.removeEventListener("mousedown", handleCliqueFora);
+        };
+    }, [isOpen]);
+
+    // Função para a primeira etapa: Aprovar Compliance
+    const handleComplianceApproval = async () => {
+        setIsUpdating(true);
+        try {
+            const q = query(collection(db, "projetos"), where("nome", "==", props.projectName));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) throw new Error("Registro do projeto não encontrado na coleção 'projetos'.");
+
+            const projectDocRef = querySnapshot.docs[0].ref;
+            await updateDoc(projectDocRef, { compliance: true });
+        } catch (error) {
+            console.error("Erro ao aprovar compliance:", error);
+            alert(error instanceof Error ? error.message : "Falha ao aprovar a etapa de compliance.");
+        } finally {
+            setIsUpdating(false);
+        }
     };
-  }, [isOpen]);
 
-  // Função para a primeira etapa: Aprovar Compliance
-  const handleComplianceApproval = async () => {
-    setIsUpdating(true);
-    try {
-      const q = query(collection(db, "projetos"), where("nome", "==", props.projectName));
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) throw new Error("Registro do projeto não encontrado na coleção 'projetos'.");
-      
-      const projectDocRef = querySnapshot.docs[0].ref;
-      await updateDoc(projectDocRef, { compliance: true });
-      
-    } catch (error) {
-      console.error("Erro ao aprovar compliance:", error);
-      alert(error instanceof Error ? error.message : "Falha ao aprovar a etapa de compliance.");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+    // Função para adicionar o par (empresa, valor) à lista
+    const handleAddEmpresa = () => {
+        if (!empresaSelecionada) {
+            alert("Por favor, selecione uma empresa.");
+            return;
+        }
+        const valorNumerico = parseFloat(valorPorEmpresa);
+        if (valorPorEmpresa.trim() === "" || isNaN(valorNumerico)) {
+            alert("Por favor, insira um valor numérico válido.");
+            return;
+        }
+        if (empresasList.some(e => e.nome === empresaSelecionada)) {
+            alert("Esta empresa já foi adicionada.");
+            return;
+        }
 
-  // Função para adicionar o par (empresa, valor) à lista
-  const handleAddEmpresa = () => {
-    if (!empresaSelecionada) {
-      alert("Por favor, selecione uma empresa.");
-      return;
-    }
-    const valorNumerico = parseFloat(valorPorEmpresa);
-    if (valorPorEmpresa.trim() === "" || isNaN(valorNumerico)) {
-      alert("Por favor, insira um valor numérico válido.");
-      return;
-    }
-    if (empresasList.some(e => e.nome === empresaSelecionada)) {
-      alert("Esta empresa já foi adicionada.");
-      return;
-    }
-    
-    const novaEmpresa: EmpresaComValor = {
-      nome: empresaSelecionada,
-      valorAportado: valorNumerico
+        const novaEmpresa: EmpresaComValor = {
+            nome: empresaSelecionada,
+            valorAportado: valorNumerico,
+        };
+
+        setEmpresasList(prevList => [...prevList, novaEmpresa]);
+        // Limpa os campos para a próxima adição
+        setEmpresaSelecionada("");
+        setValorPorEmpresa("");
     };
-    
-    setEmpresasList(prevList => [...prevList, novaEmpresa]);
-    // Limpa os campos para a próxima adição
-    setEmpresaSelecionada("");
-    setValorPorEmpresa("");
-  };
 
-  // Função para remover uma empresa da lista
-  const handleRemoveEmpresa = (indexToRemove: number) => {
-    setEmpresasList(prevList => prevList.filter((_, index) => index !== indexToRemove));
-  };
+    // Função para remover uma empresa da lista
+    const handleRemoveEmpresa = (indexToRemove: number) => {
+        setEmpresasList(prevList => prevList.filter((_, index) => index !== indexToRemove));
+    };
 
-  // Função para a segunda etapa: Aprovar Projeto (abre o modal de confirmação)
-  const handleProjectApprovalSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (empresasList.length === 0) {
-      alert("Adicione pelo menos uma empresa com seu respectivo valor aprovado.");
-      return;
+    // Função para a segunda etapa: Aprovar Projeto (abre o modal de confirmação)
+    const handleProjectApprovalSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
+        if (empresasList.length === 0) {
+            alert("Adicione pelo menos uma empresa com seu respectivo valor aprovado.");
+            return;
+        }
+        setShowConfirmation(true);
+    };
+
+    // Função final que executa a aprovação
+    async function executeFinalApproval() {
+        if (isUpdating) return;
+        setIsUpdating(true);
+        try {
+            const q = query(collection(db, "projetos"), where("nome", "==", props.projectName));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) throw new Error("Registro do projeto não encontrado.");
+
+            const projectDocRef = querySnapshot.docs[0].ref;
+
+            // Calcula a soma total dos valores da lista de empresas
+            const valorTotalAprovado = empresasList.reduce((sum, empresa) => sum + empresa.valorAportado, 0);
+
+            // Prepara os dados para o Firebase
+            await updateDoc(projectDocRef, {
+                status: "aprovado",
+                valorAprovado: valorTotalAprovado,
+                empresas: arrayUnion(...empresasList),
+            });
+
+            setShowConfirmation(false);
+        } catch (error) {
+            console.error("Erro na aprovação final do projeto:", error);
+            alert(error instanceof Error ? error.message : "Ocorreu um erro desconhecido.");
+        } finally {
+            setIsUpdating(false);
+        }
     }
-    setShowConfirmation(true);
-  };
 
-  // Função final que executa a aprovação
-  async function executeFinalApproval() {
-    if (isUpdating) return;
-    setIsUpdating(true);
-    try {
-      const q = query(collection(db, "projetos"), where("nome", "==", props.projectName));
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) throw new Error("Registro do projeto não encontrado.");
-      
-      const projectDocRef = querySnapshot.docs[0].ref;
+    // Define o conteúdo do dropdown com base no status da compliance
+    const renderContent = () => {
+        // ESTADO 1: Compliance Pendente
+        if (!props.projetosComplianceStatus) {
+            return (
+                <div
+                    ref={caixaRef}
+                    className="absolute top-full left-0 w-[300px] p-4 rounded-lg shadow-lg bg-white dark:bg-blue-fcsn2 z-10"
+                >
+                    <div className="space-y-3">
+                        <label className="text-blue-fcsn dark:text-white-off block font-semibold">
+                            Documentos para Análise:
+                        </label>
+                        <a
+                            href={normalizeStoredUrl(props.complianceDocUrl) || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`w-full block text-center py-2 rounded-lg ${props.complianceDocUrl ? "bg-blue-fcsn text-white-off hover:bg-blue-fcsn2 transition-colors" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
+                        >
+                            Baixar Doc. Compliance
+                        </a>
 
-      // Calcula a soma total dos valores da lista de empresas
-      const valorTotalAprovado = empresasList.reduce((sum, empresa) => sum + empresa.valorAportado, 0);
+                        {props.additionalDocsUrls && props.additionalDocsUrls.length > 0 ? (
+                            props.additionalDocsUrls.map((url, index) => (
+                                <a
+                                    key={index}
+                                    href={normalizeStoredUrl(url) || "#"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full block text-center py-2 rounded-lg bg-blue-fcsn text-white-off hover:bg-blue-fcsn2 transition-colors"
+                                >
+                                    Baixar Doc. Adicional {index + 1}
+                                </a>
+                            ))
+                        ) : (
+                            <a className="w-full block text-center py-2 rounded-lg bg-gray-300 text-gray-500 cursor-not-allowed">
+                                Nenhum Doc. Adicional
+                            </a>
+                        )}
 
-      // Prepara os dados para o Firebase
-      await updateDoc(projectDocRef, {
-        status: "aprovado",
-        valorAprovado: valorTotalAprovado, 
-        empresas: arrayUnion(...empresasList) 
-      });
-      
-      setShowConfirmation(false);
-    } catch (error) {
-      console.error("Erro na aprovação final do projeto:", error);
-      alert(error instanceof Error ? error.message : "Ocorreu um erro desconhecido.");
-    } finally {
-      setIsUpdating(false);
-    }
-  }
-
-  // Define o conteúdo do dropdown com base no status da compliance
-  const renderContent = () => {
-    // ESTADO 1: Compliance Pendente
-    if (!props.projetosComplianceStatus) {
-      return (
-        <div ref={caixaRef} className="absolute top-full left-0 w-[300px] p-4 rounded-lg shadow-lg bg-white dark:bg-blue-fcsn2 z-10">
-          <div className="space-y-3">
-            <label className="text-blue-fcsn dark:text-white-off block font-semibold">Documentos para Análise:</label>
-            <a href={props.complianceDocUrl || '#'} target="_blank" rel="noopener noreferrer" className={`w-full block text-center py-2 rounded-lg ${props.complianceDocUrl ? 'bg-blue-fcsn text-white-off hover:bg-blue-fcsn2 transition-colors' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
-              Baixar Doc. Compliance
-            </a>
-            
-            {props.additionalDocsUrls && props.additionalDocsUrls.length > 0 ? (
-              props.additionalDocsUrls.map((url, index) => (
-                <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="w-full block text-center py-2 rounded-lg bg-blue-fcsn text-white-off hover:bg-blue-fcsn2 transition-colors">
-                  Baixar Doc. Adicional {index + 1}
-                </a>
-              ))
-            ) : (
-              <a className="w-full block text-center py-2 rounded-lg bg-gray-300 text-gray-500 cursor-not-allowed">
-                Nenhum Doc. Adicional
-              </a>
-            )}
-
-            <hr className="my-3 border-gray-200 dark:border-blue-fcsn3"/>
-            <button onClick={handleComplianceApproval} disabled={isUpdating} className="bg-pink-fcsn text-white-off w-full py-2 rounded-lg hover:bg-pink-light2 transition-colors disabled:opacity-50">
-              {isUpdating ? 'Aprovando...' : 'Aprovar Compliance'}
-            </button>
-          </div>
-        </div>
-      );
-    }
-    
-    // ESTADO 2: Compliance Aprovado, Projeto Pendente
-    return (
-      <div ref={caixaRef} className="absolute top-full left-0 w-[350px] p-4 rounded-lg shadow-lg bg-white dark:bg-blue-fcsn2 z-10 text-blue-fcsn dark:text-white-off">
-        <form onSubmit={handleProjectApprovalSubmit}>
-          
-          <div className="mb-3 p-3 border rounded-lg border-gray-200 dark:border-blue-fcsn3">
-            <p className="font-semibold block mb-2">Adicionar Empresa e Valor</p>
-            <div className="mb-2">
-              <label className="text-sm block mb-1">Empresa:</label>
-              <select 
-                value={empresaSelecionada} 
-                onChange={(e) => setEmpresaSelecionada(e.target.value)}
-                className="w-full p-2 border rounded-md text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-gray-300 dark:border-blue-fcsn focus:outline-none focus:ring-2 focus:ring-blue-fcsn"
-              >
-                <option value="">-- Selecione --</option>
-                {listaDeEmpresasPermitidas.map(empresa => (
-                  <option key={empresa} value={empresa}>{empresa}</option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-2">
-              <label className="text-sm block mb-1">Valor Aprovado:</label>
-              <input 
-                type="number" 
-                placeholder="Ex: 50000.00"
-                value={valorPorEmpresa} 
-                onChange={(e) => {
-                  if (e.target.value === '' || parseFloat(e.target.value) >= 0) {
-                    setValorPorEmpresa(e.target.value);
-                  }
-                }}
-                min="0"
-                className="w-full p-2 border rounded-md text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-gray-300 dark:border-blue-fcsn focus:outline-none focus:ring-2 focus:ring-blue-fcsn" 
-              />
-            </div>
-            <button 
-              type="button" 
-              onClick={handleAddEmpresa} 
-              className="bg-blue-fcsn text-white-off w-full mt-1 py-2 rounded-lg hover:bg-blue-fcsn2 transition-colors"
-            >
-              Adicionar
-            </button>
-          </div>
-
-          {empresasList.length > 0 && (
-            <div className="mb-4 p-2 border border-gray-200 dark:border-blue-fcsn3 rounded-lg">
-              <p className="text-sm font-semibold mb-1">Empresas a serem aprovadas:</p>
-              <div className="flex flex-col gap-2 mt-2 max-h-32 overflow-y-auto">
-                {empresasList.map((empresa, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-100 dark:bg-blue-fcsn3 rounded-md px-3 py-1 text-sm">
-                    <div>
-                      <span className="font-bold">{empresa.nome}: </span>
-                      <span>{empresa.valorAportado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                        <hr className="my-3 border-gray-200 dark:border-blue-fcsn3" />
+                        <button
+                            onClick={handleComplianceApproval}
+                            disabled={isUpdating}
+                            className="bg-pink-fcsn text-white-off w-full py-2 rounded-lg hover:bg-pink-light2 transition-colors disabled:opacity-50"
+                        >
+                            {isUpdating ? "Aprovando..." : "Aprovar Compliance"}
+                        </button>
                     </div>
-                    <button type="button" onClick={() => handleRemoveEmpresa(index)} className="ml-2 text-red-fcsn hover:text-red-500 font-bold">x</button>
-                  </div>
-                ))}
-              </div>
+                </div>
+            );
+        }
+
+        // ESTADO 2: Compliance Aprovado, Projeto Pendente
+        return (
+            <div
+                ref={caixaRef}
+                className="absolute top-full left-0 w-[350px] p-4 rounded-lg shadow-lg bg-white dark:bg-blue-fcsn2 z-10 text-blue-fcsn dark:text-white-off"
+            >
+                <form onSubmit={handleProjectApprovalSubmit}>
+                    <div className="mb-3 p-3 border rounded-lg border-gray-200 dark:border-blue-fcsn3">
+                        <p className="font-semibold block mb-2">Adicionar Empresa e Valor</p>
+                        <div className="mb-2">
+                            <label className="text-sm block mb-1">Empresa:</label>
+                            <select
+                                value={empresaSelecionada}
+                                onChange={e => setEmpresaSelecionada(e.target.value)}
+                                className="w-full p-2 border rounded-md text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-gray-300 dark:border-blue-fcsn focus:outline-none focus:ring-2 focus:ring-blue-fcsn"
+                            >
+                                <option value="">-- Selecione --</option>
+                                {listaDeEmpresasPermitidas.map(empresa => (
+                                    <option key={empresa} value={empresa}>
+                                        {empresa}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="mb-2">
+                            <label className="text-sm block mb-1">Valor Aprovado:</label>
+                            <input
+                                type="number"
+                                placeholder="Ex: 50000.00"
+                                value={valorPorEmpresa}
+                                onChange={e => {
+                                    if (e.target.value === "" || parseFloat(e.target.value) >= 0) {
+                                        setValorPorEmpresa(e.target.value);
+                                    }
+                                }}
+                                min="0"
+                                className="w-full p-2 border rounded-md text-blue-fcsn dark:text-white-off bg-white dark:bg-blue-fcsn3 border-gray-300 dark:border-blue-fcsn focus:outline-none focus:ring-2 focus:ring-blue-fcsn"
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleAddEmpresa}
+                            className="bg-blue-fcsn text-white-off w-full mt-1 py-2 rounded-lg hover:bg-blue-fcsn2 transition-colors"
+                        >
+                            Adicionar
+                        </button>
+                    </div>
+
+                    {empresasList.length > 0 && (
+                        <div className="mb-4 p-2 border border-gray-200 dark:border-blue-fcsn3 rounded-lg">
+                            <p className="text-sm font-semibold mb-1">Empresas a serem aprovadas:</p>
+                            <div className="flex flex-col gap-2 mt-2 max-h-32 overflow-y-auto">
+                                {empresasList.map((empresa, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-center justify-between bg-gray-100 dark:bg-blue-fcsn3 rounded-md px-3 py-1 text-sm"
+                                    >
+                                        <div>
+                                            <span className="font-bold">{empresa.nome}: </span>
+                                            <span>
+                                                {empresa.valorAportado.toLocaleString("pt-BR", {
+                                                    style: "currency",
+                                                    currency: "BRL",
+                                                })}
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveEmpresa(index)}
+                                            className="ml-2 text-red-fcsn hover:text-red-500 font-bold"
+                                        >
+                                            x
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <button
+                        type="submit"
+                        className="bg-pink-fcsn text-white-off px-4 py-2 rounded-lg w-full hover:bg-pink-light2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        disabled={empresasList.length === 0 || isUpdating}
+                    >
+                        Aprovar Projeto
+                    </button>
+                </form>
             </div>
-          )}
+        );
+    };
 
-          <button 
-            type="submit" 
-            className="bg-pink-fcsn text-white-off px-4 py-2 rounded-lg w-full hover:bg-pink-light2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-            disabled={empresasList.length === 0 || isUpdating}
-          >
-            Aprovar Projeto
-          </button>
-        </form>
-      </div>
+    return (
+        <div className="relative inline-block">
+            <button
+                onClick={() => setIsOpen(prev => !prev)}
+                className="bg-pink-fcsn text-white-off font-bold px-4 py-2 rounded-lg hover:bg-pink-light2 dark:hover:bg-pink-light2 transition-colors shadow-md text-sm whitespace-nowrap cursor-pointer"
+            >
+                {props.projetosComplianceStatus ? "Aprovar Projeto" : "Aprovar Compliance"}
+            </button>
+
+            {isOpen && renderContent()}
+
+            {showConfirmation && (
+                <ConfirmationModal
+                    message={`Tem certeza que deseja aprovar o projeto "${props.projectName}"?`}
+                    onConfirm={executeFinalApproval}
+                    onCancel={() => setShowConfirmation(false)}
+                    isUpdating={isUpdating}
+                />
+            )}
+        </div>
     );
-  };
-  
-  return (
-    <div className="relative inline-block">
-      <button
-        onClick={() => setIsOpen(prev => !prev)}
-        className="bg-pink-fcsn text-white-off font-bold px-4 py-2 rounded-lg hover:bg-pink-light2 dark:hover:bg-pink-light2 transition-colors shadow-md text-sm whitespace-nowrap cursor-pointer"
-      >
-        {props.projetosComplianceStatus ? 'Aprovar Projeto' : 'Aprovar Compliance'}
-      </button>
-
-      {isOpen && renderContent()}
-
-      {showConfirmation && (
-        <ConfirmationModal
-          message={`Tem certeza que deseja aprovar o projeto "${props.projectName}"?`}
-          onConfirm={executeFinalApproval}
-          onCancel={() => setShowConfirmation(false)}
-          isUpdating={isUpdating}
-        />
-      )}
-    </div>
-  );
 }

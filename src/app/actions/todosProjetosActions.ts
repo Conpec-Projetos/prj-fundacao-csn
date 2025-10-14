@@ -1,31 +1,32 @@
-'use server';
+"use server";
 
 import { db } from "@/firebase/firebase-config";
-import { collection, getDocs, query, where } from "firebase/firestore";
 import { Projetos } from "@/firebase/schema/entities";
+import { normalizeStoredUrl } from "@/lib/utils";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 interface ODS {
-  numberODS: number;
-  src: string;
+    numberODS: number;
+    src: string;
 }
 
 export interface ProjectComponentProps {
-  id: string;
-  name: string;
-  finalStatus: "aprovado" | "pendente" | "reprovado";
-  projetosComplianceStatus: boolean;
-  value: number;
-  incentiveLaw: string;
-  description: string;
-  ODS: ODS[];
-  complianceUrl: string | null;
-  additionalDocsUrls: string[];
-  isActive: boolean;
+    id: string;
+    name: string;
+    finalStatus: "aprovado" | "pendente" | "reprovado";
+    projetosComplianceStatus: boolean;
+    value: number;
+    incentiveLaw: string;
+    description: string;
+    ODS: ODS[];
+    complianceUrl: string | null;
+    additionalDocsUrls: string[];
+    isActive: boolean;
 }
 
 export async function getProjects(): Promise<ProjectComponentProps[]> {
     const projectsSnapshot = await getDocs(collection(db, "projetos"));
-    const projectsPromises = projectsSnapshot.docs.map(async (projectDoc) => {
+    const projectsPromises = projectsSnapshot.docs.map(async projectDoc => {
         const projectData = projectDoc.data() as Projetos;
         const projectId = projectDoc.id;
 
@@ -35,7 +36,9 @@ export async function getProjects(): Promise<ProjectComponentProps[]> {
         let additionalDocsUrls: string[] = [];
 
         if (projectData.ultimoFormulario) {
-            const formsSnapshot = await getDocs(query(collection(db, "forms-cadastro"), where("projetoID", "==", projectId)));
+            const formsSnapshot = await getDocs(
+                query(collection(db, "forms-cadastro"), where("projetoID", "==", projectId))
+            );
             if (!formsSnapshot.empty) {
                 const formData = formsSnapshot.docs[0].data();
                 description = formData.descricao || "Sem descrição.";
@@ -56,11 +59,11 @@ export async function getProjects(): Promise<ProjectComponentProps[]> {
             finalStatus: projectData.status,
             projetosComplianceStatus: projectData.compliance === true,
             value: projectData.valorAprovado || 0,
-            incentiveLaw: projectData.lei ? projectData.lei.split('-')[0].trim() : "Não informada",
+            incentiveLaw: projectData.lei ? projectData.lei.split("-")[0].trim() : "Não informada",
             description: description,
             ODS: processedODS,
-            complianceUrl: complianceUrl,
-            additionalDocsUrls: additionalDocsUrls,
+            complianceUrl: normalizeStoredUrl(complianceUrl) || null,
+            additionalDocsUrls: (additionalDocsUrls || []).map(u => normalizeStoredUrl(u) || u),
             isActive: projectData.ativo,
         };
     });
