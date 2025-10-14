@@ -145,6 +145,8 @@ export default function ProjectDetailsPage() {
 
   const [isEditingResponsavel, setIsEditingResponsavel] = useState(false);
   const [editResponsavel, setEditResponsavel] = useState<string>("");
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [editEmail, setEditEmail] = useState<string>("");
   const [isEditingValorAprovado, setIsEditingValorAprovado] = useState(false);
   const [editValorAprovado, setEditValorAprovado] = useState<number | undefined>(undefined);
   const [isEditingDadosBancarios, setIsEditingDadosBancarios] = useState(false);
@@ -521,6 +523,19 @@ export default function ProjectDetailsPage() {
     }
   };
 
+    const handleSaveEmail = async () => {
+    if (!formCadastroId) return;
+    try {
+      await updateDoc(doc(db, "forms-cadastro", formCadastroId), { emailResponsavel: editEmail });
+      setProjectData(prev => prev ? { ...prev, emailResponsavel: editEmail } : prev);
+      setIsEditingEmail(false);
+      toast.success("Email atualizado!");
+    } catch (error) {
+      toast.error("Erro ao atualizar email.");
+      console.log(error);
+    }
+  };
+
   const handleSaveValorAprovado = async () => {
     // Agora atualiza na coleção "projetos" e não mais em "forms-cadastro"
     if (!identifier) return;
@@ -615,11 +630,61 @@ export default function ProjectDetailsPage() {
                 </>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <p className="text-xl text-gray-700 font-medium dark:text-gray-300">
                 Email do responsável: {projectData.emailResponsavel}
               </p>
+
+            </div> */}
+
+             {/* Email do responsável + Edit */}
+            <div className="flex items-center gap-2">
+              <p className="text-xl text-gray-700 font-medium dark:text-gray-300">
+                Email do responsável:{" "}
+                {isEditingEmail ? (
+                  <input
+                    type="text"
+                    className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-gray-900 dark:text-white-off"
+                    value={editEmail}
+                    onChange={e => setEditEmail(e.target.value)}
+                  />
+                ) : (
+                  <span>{projectData.emailResponsavel ?? 'N/A'}</span>
+                )}
+              </p>
+              {adm && !isEditingEmail && (
+                <button
+                  className="ml-2 text-gray-500 hover:text-blue-fcsn"
+                  onClick={() => {
+                    setEditEmail(projectData.emailResponsavel ?? "");
+                    setIsEditingEmail(true);
+                  }}
+                  title="Editar email do responsável"
+                >
+                  <FaPencilAlt />
+                </button>
+              )}
+              {adm && isEditingEmail && (
+                <>
+                  <button
+                    className="ml-2 bg-blue-fcsn text-white px-2 py-1 rounded"
+                    onClick={handleSaveEmail}
+                    title="Salvar"
+                  >
+                    Salvar
+                  </button>
+                  <button
+                    className="ml-2 bg-gray-300 text-black px-2 py-1 rounded"
+                    onClick={() => setIsEditingEmail(false)}
+                    title="Cancelar"
+                  >
+                    Cancelar
+                  </button>
+                </>
+              )}
             </div>
+
+
             <p className="text-gray-600 dark:text-gray-400">
               Via {projectData.lei ?? 'N/A'}, projeto n. {projectData.numeroLei ?? 'N/A'}
             </p>
@@ -917,7 +982,7 @@ export default function ProjectDetailsPage() {
               </div>
             </div>
           )}
-          <p><span className="font-bold">Observações:</span> {projectData.observacoes ?? 'N/A'}</p>
+          <p><span className="font-bold">Observações:</span> {projectData.observacoes == '' ? 'N/A': projectData.observacoes }</p>
         </div>
         <hr className="border-gray-300 dark:border-gray-700 my-4" />
         {adm && (
@@ -1131,7 +1196,7 @@ export default function ProjectDetailsPage() {
                           onClick={handleGoBack}
                           className="mb-4 px-3 py-1 bg-gray-300 text-black rounded-md hover:bg-gray-300"
                         >
-                          ⬅ Voltar
+                          Voltar
                         </button>
                       )}
 

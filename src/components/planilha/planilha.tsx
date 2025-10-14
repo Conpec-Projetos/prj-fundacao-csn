@@ -828,10 +828,35 @@ const columns = useMemo(() => {
           ? data.municipios.join(", ")
           : "",
         estados: Array.isArray(data.estados) ? data.estados.join(", ") : "",
+        valorApto: data.valorApto ? formatCurrency(data.valorApto) : "",
+        aporteAnterior: data.aporteAnterior ? formatCurrency(data.aporteAnterior) : "",
+        odsArray: Array.isArray(data.odsArray) ? data.odsArray.join(", ") : data.odsArray || "", // deixara separado por virgula
       };
     });
 
-    worksheet.addRows(dataToExport);
+    // 🔹 Número de colunas baseado nas colunas da planilha
+    const numColunas = worksheet.columns.length;
+
+  // 🔹 Adiciona título mesclado
+    worksheet.mergeCells(1, 1, 1, numColunas);
+    const titleCell = worksheet.getCell("A1");
+    if(props.tipoPlanilha == "aprovacao")
+      titleCell.value = "PROJETOS PARA APROVAÇÃO";
+    else if(props.tipoPlanilha == "monitoramento")
+      titleCell.value = "PROJETOS EM MONITORAMENTO";
+    else  
+      titleCell.value = "HISTÓRICO DE PROJETOS";
+    titleCell.font = { size: 16, bold: true, color: { argb: "FFFFFF" } };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    titleCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "ffb37b97" },
+    };
+    worksheet.getRow(1).height = 28;
+
+    // 🔹 Cabeçalho automático (ExcelJS usa os headers definidos)
+    const headerRow = worksheet.addRow(worksheet.columns.map(c => c.header));
 
     const borderStyle: Partial<ExcelJS.Borders> = {
       top: { style: "thin", color: { argb: "ff292944" } },
@@ -841,7 +866,7 @@ const columns = useMemo(() => {
     };
 
     // Estilização do Cabeçalho
-    worksheet.getRow(1).eachCell((cell) => {
+    headerRow.eachCell((cell) => {
       cell.font = {
         bold: true,
         color: { argb: "FFFFFF" }, // Cor do texto: Branco
@@ -858,10 +883,14 @@ const columns = useMemo(() => {
       cell.border = borderStyle;
     });
 
+      // 🔹 Adiciona os dados
+    worksheet.addRows(dataToExport);
+
     worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
       if (rowNumber > 1) {
         row.eachCell({ includeEmpty: true }, (cell) => {
           cell.border = borderStyle;
+          cell.alignment = { wrapText: true, vertical: "middle" };
         });
       }
     });
