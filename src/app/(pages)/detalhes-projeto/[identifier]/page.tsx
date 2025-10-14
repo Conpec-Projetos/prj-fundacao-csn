@@ -1072,29 +1072,42 @@ export default function ProjectDetailsPage() {
 
                 <hr className="border-gray-300 dark:border-gray-700 my-4" />
                 <div className="flex justify-center relative">
-                    <Carousel opts={{ align: "start", loop: true }} className="w-full">
-                        <CarouselContent>
-                            {projectData.imagensCarrossel?.map((url, index) => (
-                                <CarouselItem key={index} className="basis-1/3">
-                                    <div className="flex justify-center">
-                                        <Image
-                                            src={url}
-                                            alt={`Imagem do projeto ${index + 1}`}
-                                            width={800}
-                                            height={450}
-                                            className="rounded-lg object-cover"
-                                        />
-                                    </div>
-                                </CarouselItem>
-                            )) ?? (
-                                <CarouselItem>
+                    {(() => {
+                        // Build a normalized list of carousel image URLs using the same read-time normalizer
+                        const normalizedCarouselUrls = (projectData.imagensCarrossel ?? [])
+                            .map(u => normalizeReadUrl(u) as string)
+                            .filter(Boolean);
+
+                        if (normalizedCarouselUrls.length === 0) {
+                            return (
+                                <div className="w-full flex justify-center">
                                     <p className="flex justify-center w-full">Nenhuma imagem disponível.</p>
-                                </CarouselItem>
-                            )}
-                        </CarouselContent>
-                        <CarouselPrevious className="absolute left-5 bg-transparent cursor-pointer text-black dark:text-white" />
-                        <CarouselNext className="absolute right-5 bg-transparent cursor-pointer text-black dark:text-white" />
-                    </Carousel>
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <Carousel opts={{ align: "start", loop: true }} className="w-full">
+                                <CarouselContent>
+                                    {normalizedCarouselUrls.map((url, index) => (
+                                        <CarouselItem key={index} className="basis-1/3">
+                                            <div className="flex justify-center">
+                                                <Image
+                                                    src={url}
+                                                    alt={`Imagem do projeto ${index + 1}`}
+                                                    width={800}
+                                                    height={450}
+                                                    className="rounded-lg object-cover"
+                                                />
+                                            </div>
+                                        </CarouselItem>
+                                    ))}
+                                </CarouselContent>
+                                <CarouselPrevious className="absolute left-5 bg-transparent cursor-pointer text-black dark:text-white" />
+                                <CarouselNext className="absolute right-5 bg-transparent cursor-pointer text-black dark:text-white" />
+                            </Carousel>
+                        );
+                    })()}
                 </div>
 
                 <hr className="border-gray-300 dark:border-gray-700 my-4" />
