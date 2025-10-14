@@ -785,7 +785,7 @@ export default function ProjectDetailsPage() {
                                     )}
 
                                     {normalizedApresentacaoUrls.length > 1 && showApresentacaoMenu && (
-                                        <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border rounded shadow-lg z-50">
+                                        <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border rounded shadow-lg z-40">
                                             <div className="p-2">
                                                 <p className="text-sm font-semibold mb-1 text-gray-700 dark:text-gray-200">
                                                     Apresentações
