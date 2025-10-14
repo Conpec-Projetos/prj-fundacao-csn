@@ -814,7 +814,7 @@ export default function ProjectDetailsPage() {
                                                                     href={url}
                                                                     download
                                                                     title={`Baixar ${filename}`}
-                                                                    className="text-sm text-gray-600 hover:text-gray-900 ml-2"
+                                                                    className="text-sm text-gray-600 border rounded-full p-1 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 ml-2 cursor-pointer"
                                                                 >
                                                                     Baixar
                                                                 </a>
