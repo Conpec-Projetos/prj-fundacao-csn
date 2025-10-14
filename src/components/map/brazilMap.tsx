@@ -63,7 +63,7 @@ export default function BrazilMap({ data }: BrazilMapProps) {
       {/* Tooltip for Hovered State */}
       {hoveredState && (
         <div
-          className="absolute bg-white text-black p-4 rounded shadow-lg border border-gray-300"
+          className="absolute bg-white text-black p-4 rounded shadow-lg border border-gray-300  pointer-events-none "
           style={{
             top: '50px', // Adjust position as needed
             left: '50px', // Adjust position as needed

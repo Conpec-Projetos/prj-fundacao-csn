@@ -27,7 +27,7 @@ interface DashboardContentProps {
   estadosSiglas: Record<string, string>;
 }
 
-export default function DashboardContent({
+export default function DashboardContent({ // parametros, eles sao passados na page dashboard
   dados,
   dadosMapa,
   estadosAtendidos,
@@ -197,8 +197,9 @@ export default function DashboardContent({
         </h2>
         <div className="w-full sm:overflow-x-auto md:overflow-x-hidden">
           <div className="min-h-96 h-fit min-w-[600]px md:min-w-0">
-            <BarChart
-              data={dados?.projetosODS ?? []}
+          
+            <BarChart 
+              data={dados?.projetosODS ?? []} // se nao tiver o array projetosODS passamos um array vazio
               labels={odsData.labels}
               colors={["#b37b97"]}
               horizontal={false}
