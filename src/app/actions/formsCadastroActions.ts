@@ -87,6 +87,35 @@ export async function submitCadastroForm(formData: FormData) {
                     : uploadFileAndGetUrlAdmin(f, "forms-cadastro", projetoID, "apresentacao")
             )
         );
+        // Normalize apresentacao entries into absolute URLs when possible.
+        // Also unwrap JSON-stringified arrays like '["https://..."]' which can be produced
+        // by legacy clients so they don't become stored as invalid path-like values.
+        const normalizeUrl = (u: string | null | undefined): string | null | undefined => {
+            if (!u) return u;
+            // Defensive: if the stored value is a JSON-stringified array, parse and use first item.
+            try {
+                const trimmed = u.trim();
+                if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                    const parsed = JSON.parse(trimmed);
+                    if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "string") {
+                        u = parsed[0];
+                    }
+                }
+            } catch {
+                // ignore parse errors and fall back to treating u as raw string
+            }
+
+            if (u.startsWith("http://") || u.startsWith("https://")) return u;
+            const base =
+                process.env.NEXT_PUBLIC_VERCEL_BLOB_BASE_URL ??
+                (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
+            if (base) return `${base.replace(/\/$/, "")}/${u.replace(/^\//, "")}`;
+            return u;
+        };
+        const apresentacaoUrlNormalized = apresentacaoUrl
+            .flat()
+            .map(u => normalizeUrl(u) as string)
+            .filter(Boolean);
         const complianceUrl = await Promise.all(
             data.compliance.map(f =>
                 typeof f === "string"
@@ -140,7 +169,7 @@ export async function submitCadastroForm(formData: FormData) {
             termosPrivacidade: data.termosPrivacidade,
             projetoID: projetoID,
             diario: diarioUrl.flat(),
-            apresentacao: apresentacaoUrl.flat(),
+            apresentacao: apresentacaoUrlNormalized,
             compliance: complianceUrl.flat(),
             documentos: documentosUrl.flat(),
         };
