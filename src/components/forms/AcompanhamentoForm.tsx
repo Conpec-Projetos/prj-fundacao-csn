@@ -488,10 +488,9 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                                 }}
                                 error={error}
                                 acceptedFileTypes={["image/jpeg", "image/png"]}
+                                progress={uploadProgress["fotos"] ?? null}
                             />
-                            {uploadProgress["fotos"] != null && (
-                                <p className="text-sm">Progresso: {uploadProgress["fotos"]}%</p>
-                            )}
+                            
                         </div>
                     )}
                 />

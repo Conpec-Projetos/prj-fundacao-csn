@@ -589,10 +589,9 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                             }}
                                             error={error}
                                             acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                            progress={uploadProgress["diario"] ?? null}
                                         />
-                                        {uploadProgress["diario"] != null && (
-                                            <p className="text-sm">Progresso: {uploadProgress["diario"]}%</p>
-                                        )}
+                                        
                                     </div>
                                 )}
                             />
@@ -758,10 +757,8 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                             }}
                                             error={error}
                                             acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                            progress={uploadProgress["apresentacao"] ?? null}
                                         />
-                                        {uploadProgress["apresentacao"] != null && (
-                                            <p className="text-sm">Progresso: {uploadProgress["apresentacao"]}%</p>
-                                        )}
                                     </div>
                                 )}
                             />
@@ -957,10 +954,8 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                             }}
                                             error={error as FieldError}
                                             acceptedFileTypes={["application/pdf"]}
+                                            progress={uploadProgress["compliance"] ?? null}
                                         />
-                                        {uploadProgress["compliance"] != null && (
-                                            <p className="text-sm">Progresso: {uploadProgress["compliance"]}%</p>
-                                        )}
                                     </div>
                                 )}
                             />
@@ -990,10 +985,9 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                             }}
                                             error={error as FieldError}
                                             acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                            progress={uploadProgress["documentos"] ?? null}
                                         />
-                                        {uploadProgress["documentos"] != null && (
-                                            <p className="text-sm">Progresso: {uploadProgress["documentos"]}%</p>
-                                        )}
+                                        
                                     </div>
                                 )}
                             />

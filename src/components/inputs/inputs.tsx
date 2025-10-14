@@ -1087,6 +1087,8 @@ interface ControlledFileInputProps {
     onChange: (files: (File | string)[]) => void; // A função para atualizar o array de arquivos
     error?: FieldError;
     acceptedFileTypes?: string[];
+    // Optional upload progress for this field (0-100). When provided a visual progress bar will be shown.
+    progress?: number | null;
 }
 
 export const FileInput: React.FC<ControlledFileInputProps> = ({
@@ -1096,6 +1098,7 @@ export const FileInput: React.FC<ControlledFileInputProps> = ({
     onChange,
     error,
     acceptedFileTypes = [],
+    progress = null,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const files = useMemo(() => value || [], [value]);
@@ -1230,6 +1233,21 @@ export const FileInput: React.FC<ControlledFileInputProps> = ({
                                     </div>
                                 );
                             })}
+                        </div>
+                    )}
+                    {/* Progress bar (optional) */}
+                    {typeof progress === "number" && (
+                        <div className="mt-2">
+                            <div className="w-full bg-gray-600 dark:bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div
+                                    className="h-full bg-blue-fcsn"
+                                    style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
+                                    aria-valuenow={progress}
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                />
+                            </div>
+                            <p className="text-sm text-blue-fcsn3 dark:text-white-off mt-1">Progresso: {progress}%</p>
                         </div>
                     )}
                 </label>
