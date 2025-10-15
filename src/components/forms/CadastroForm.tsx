@@ -749,7 +749,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                         try {
                                                             processed.push(await uploadFileToVercel(f, "apresentacao"));
                                                         } catch {
-                                                            toast.error("Falha ao enviar arquivo.");
+                                                            toast.error("Falha ao enviar arquivo.", {description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão."});
                                                         }
                                                     }
                                                 }
@@ -951,7 +951,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                         try {
                                                             processed.push(await uploadFileToVercel(f, "compliance"));
                                                         } catch {
-                                                            toast.error("Falha ao enviar arquivo.");
+                                                            toast.error("Falha ao enviar arquivo.", {description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão."});
                                                         }
                                                     }
                                                 }
@@ -982,7 +982,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                         try {
                                                             processed.push(await uploadFileToVercel(f, "documentos"));
                                                         } catch {
-                                                            toast.error("Falha ao enviar arquivo.");
+                                                            toast.error("Falha ao enviar arquivo.", {description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão."});
                                                         }
                                                     }
                                                 }
