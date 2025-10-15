@@ -1,9 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function Footer(){
-    const router = useRouter();
 
     return(
         <footer className="flex flex-row justify-between items-center w-full h-auto sm:h-[20vh] bg-blue-fcsn2 text-white-off text-xs sm:text-sm md:text-base lg:text-lg p-4">
