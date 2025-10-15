@@ -581,7 +581,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                             const url = await uploadFileToVercel(f, "diario");
                                                             processed.push(url);
                                                         } catch {
-                                                            toast.error("Falha ao enviar arquivo.");
+                                                            toast.error("Falha ao enviar arquivo.", { description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão." });
                                                         }
                                                     }
                                                 }
