@@ -138,6 +138,7 @@ export interface dadosEstados {
   projetosODS?: number[];
   segmento: { nome: string; qtdProjetos: number }[];
   lei: { nome: string; qtdProjetos: number }[];
+  idProjects: string[]
 }
 
  export interface dadosProjeto {

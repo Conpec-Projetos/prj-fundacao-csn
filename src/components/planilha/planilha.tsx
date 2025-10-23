@@ -20,7 +20,8 @@ import {
   where,
   query,
   Timestamp,
-  getDocs
+  getDocs,
+  getDoc
 } from "firebase/firestore";
 import { Projetos } from "@/firebase/schema/entities";
 import { Filter } from "./filter";
@@ -39,6 +40,7 @@ import {
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { EmpresasEditModal } from "./empresasEditModal";
+import { formsAcompanhamentoDados} from "functions/src/tipos/entities";
 
 interface Empresa {
   nome: string;
@@ -56,8 +58,8 @@ interface ProjetoComId extends Omit<Projetos, 'empresas'> {
   empresas: Empresa[];
   dataAprovado?: Timestamp;
   valorApto?: number; // vem do forms-cadastro, só podemos visualizar
-  beneficiariosDiretos?: number; // vem do forms-cadastro, só podemos visualizar
-  odsArray?: number[];
+  beneficiariosDiretos?: number; // vem do forms-cadastro, ou do forms-acompanhamento, só podemos visualizar
+  odsArray?: number[]; // vem do forms-cadastro, ou do forms-acompanhamento, só visualizar
   sugestao?: string; // preenchido manualmente
   aporteAnterior?: number;  // preenchido manualmente
 }
@@ -279,41 +281,58 @@ const Planilha = (props: PlanilhaProps) => {
   }, [props.tipoPlanilha]);
 
   // essa funcao adicionara os campos valorApto, do forms de cadastro a (data).
-  useEffect(() => {
-    if (data.length === 0) return;
-    const fetchValorApto = async () => {
-      
-      const colecaoForms = collection(db, "forms-cadastro");
-      
-      const novosDados = await Promise.all(
-        data.map(async (element) => {
-          const consultaForms = query(colecaoForms, where("projetoID", "==", element.id));
-          
-          const querySnapshot = await getDocs(consultaForms);
-          if (!querySnapshot.empty) {
-            const dados = querySnapshot.docs[0].data();
-            // se for array de números:
-            const odsArray = Array.isArray(dados.ods) 
-              ? dados.ods.map(e => Number(e) + 1) // somamos 1 pois a ods 1 é a 0 no array
-              : [];
+  // os campos que vem do forms de cadastro podem nao precisar aparecer se o ultimo formulario preenchido for o forms-acompanhamento pois nele o proponente altera alguns campo (ex: as ods) e se nao pegarmos dele ficará errado
+useEffect(() => {
+  if (data.length === 0) return;
 
-            return { 
-              ...element,
-              valorApto: dados.valorApto ?? 0,
-              beneficiariosDiretos: dados.beneficiariosDiretos ?? 0,
-              odsArray: odsArray
-            };
-            
-          } else {
-            return { ...element, valorApto: 0, beneficiariosDiretos: 0 };
+  const fetchValorApto = async () => {
+    const novosDados = await Promise.all(
+      data.map(async (element) => {
+        const latestFormId = element.ultimoFormulario;
+        let odsAcompanhamento: number[] | null = null;
+
+        // Se existir um ultimoFormulario, tenta buscar no forms-acompanhamento
+        if (latestFormId) {
+          const acompanhamentoRef = doc(db, "forms-acompanhamento", latestFormId);
+          const acompanhamentoSnap = await getDoc(acompanhamentoRef);
+          if (acompanhamentoSnap.exists()) {
+            odsAcompanhamento = (acompanhamentoSnap.data() as formsAcompanhamentoDados).ods;
           }
-        })
-      );
-      setData(novosDados); 
-    };
-    fetchValorApto();
-  }, [data.length]);
+        }
 
+        // Busca obrigatória no forms-cadastro
+        const cadastroQuery = query(
+          collection(db, "forms-cadastro"),
+          where("projetoID", "==", element.id)
+        );
+        const cadastroSnap = await getDocs(cadastroQuery);
+
+        if (!cadastroSnap.empty) {
+          const dados = cadastroSnap.docs[0].data();
+
+          // Decide qual ODS usar
+          const odsOrigem = odsAcompanhamento ?? dados.ods;
+          const odsArray = Array.isArray(odsOrigem)
+            ? odsOrigem.map((e: number) => Number(e) + 1)
+            : [];
+
+          return {
+            ...element,
+            valorApto: dados.valorApto ?? 0,
+            beneficiariosDiretos: dados.beneficiariosDiretos ?? 0,
+            odsArray,
+          };
+        } else {
+          return { ...element, valorApto: 0, beneficiariosDiretos: 0 };
+        }
+      })
+    );
+
+    setData(novosDados);
+  };
+
+  fetchValorApto();
+}, [data.length]);
 
 
   // Função para atualizar um campo no Firestore quando uma célula é editada
@@ -371,7 +390,7 @@ const Planilha = (props: PlanilhaProps) => {
 
 const columns = useMemo(() => {
   // Colunas comuns a todos os tipos
-  const baseColumns: ColumnDef<ProjetoComId, any>[] = [
+  const baseColumns: ColumnDef<ProjetoComId, string | number | string[]>[] = [
 
       {
         accessorKey: "lei",
@@ -488,7 +507,7 @@ const columns = useMemo(() => {
   ]
 
   // Colunas específicas para cada tipo
-  const aprovacaoColumns: ColumnDef<ProjetoComId, any>[] = [
+  const aprovacaoColumns: ColumnDef<ProjetoComId, string | number | string[]>[] = [
       {
         accessorKey: "lei",
         header: "Lei",
@@ -639,7 +658,7 @@ const columns = useMemo(() => {
       },
   ];
 
-  const monitoramentoColumns: ColumnDef<ProjetoComId, any>[] = [
+  const monitoramentoColumns: ColumnDef<ProjetoComId, string | number | string[]>[] = [
       {
         accessorKey: "odsArray",
         header: "ods",
@@ -668,7 +687,7 @@ const columns = useMemo(() => {
       },
   ];
 
-  const historicoColumns: ColumnDef<ProjetoComId, any>[] = [
+  const historicoColumns: ColumnDef<ProjetoComId, string | number | string[]>[] = [
       {
         accessorKey: "dataAprovado",
         header: "Data de aprovação",
