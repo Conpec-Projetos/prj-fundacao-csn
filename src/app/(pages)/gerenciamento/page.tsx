@@ -1,5 +1,5 @@
 'use client';
-
+import { MdOutlineDisabledByDefault } from "react-icons/md";
 import { useState, useEffect, useTransition, useMemo } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast, Toaster } from "sonner";
 import { FaUsers, FaBalanceScale, FaPlus, FaEdit, FaTrash, FaSpinner, FaUserShield, FaUser, FaSearch } from "react-icons/fa";
 import { getInternalUsers, updateUserAdminStatus, getLaws, createLaw, updateLaw, deleteLaw } from "@/app/actions/adminActions";
+import { useAppContext } from "@/context/AppContext";
 
 // Tipos
 interface InternalUser {
@@ -247,9 +248,38 @@ const LawManagement = () => {
   );
 };
 
+const DisableManagement = () => {
+  const { paginaDesabilitada, setPaginaDesabilitada } = useAppContext();
+  
+  return (
+    <div className="p-6">
+      <h2 className="text-3xl font-bold mb-10">Gerenciamento da Inscrição de projetos</h2>
+
+      <div className="bg-white dark:bg-blue-fcsn3 p-8 rounded-lg shadow flex justify-between items-center mb-5">
+        
+        <div className="font-bold text-2xl">
+          {paginaDesabilitada ? "Habilitar Inscrição de Projetos" : "Desabilitar Inscrição de Projetos"}
+        </div>
+          
+        <button
+          className={`px-6 py-2 rounded transition-all dark:text-black ${
+            paginaDesabilitada 
+              ? "bg-green-300 hover:bg-green-400 active:scale-95 "
+              : "bg-red-400 hover:bg-red-500 active:scale-95"
+          }`}
+          onClick={() => setPaginaDesabilitada(!paginaDesabilitada)}
+        >
+          {paginaDesabilitada ? "Habilitar" : "Desabilitar"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
 // Componente Principal da Página
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'users' | 'laws'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'laws' | 'desabilitar'>('users');
 
   return (
     <div className="min-h-screen flex bg-gray-50 dark:bg-blue-fcsn text-gray-900 dark:text-gray-100">
@@ -269,11 +299,19 @@ export default function AdminPage() {
           >
             <FaBalanceScale /> Leis
           </button>
+          <button
+            onClick={() => setActiveTab('desabilitar')}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${activeTab === 'desabilitar' ? 'bg-pink-fcsn text-white' : 'hover:bg-gray-100 dark:hover:bg-blue-fcsn3'}`}
+          >
+            <MdOutlineDisabledByDefault /> Desabilitar inscrição
+
+          </button>
         </nav>
       </aside>
       <main className="flex-1 p-8 overflow-y-auto">
         {activeTab === 'users' && <UserManagement />}
         {activeTab === 'laws' && <LawManagement />}
+        {activeTab === 'desabilitar' && <DisableManagement />}
       </main>
     </div>
   );

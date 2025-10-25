@@ -363,6 +363,7 @@ const recalculateStateIndicators = async (stateName: string) => {
       qtdProjetos: 0,
       qtdMunicipios: 0,
       municipios: [],
+      idProjects: [],
       valorTotal: 0,
       maiorAporte: { nome: '', valorAportado: 0 },
       beneficiariosDireto: 0,
@@ -379,6 +380,7 @@ const recalculateStateIndicators = async (stateName: string) => {
   let totalValorAportado = 0;
   let totalBeneficiariosDiretos = 0;
   let totalBeneficiariosIndiretos = 0;
+  const idProjects = new Set<string>();
   const uniqueInstituicoes = new Set<string>();
   const allMunicipios = new Set<string>();
   const allODS = new Array(17).fill(0);
@@ -387,15 +389,21 @@ const recalculateStateIndicators = async (stateName: string) => {
   let maiorAporte = { nome: "", valorAportado: 0 };
 
   // 4. Itera sobre cada projeto encontrado para somar os dados
+  // Porem se um projeto atua em dois estados diferentes, no documento de cada estado estará as ods, ou seja na soma temos que desconsiderar se esse projeto estiver em mais de um estado
+  // vou guardar os ids dos projetos para saber se ja contamos
   for (const projectDoc of projectsSnapshot.docs) {
     const projeto = projectDoc.data() as Projetos;
+    const idProjeto = projectDoc.id; // ID gerado pelo Firestore
+    
     const formData = await getFormData(projeto.ultimoFormulario || "");
 
+    // vamos verificar se tem mais de um estado
     // Agregação principal
     totalValorAportado += Number(projeto.valorAprovado) || 0;
     uniqueInstituicoes.add(projeto.instituicao);
     projeto.municipios.forEach((mun) => allMunicipios.add(mun));
-
+    
+    idProjects.add(idProjeto); // usa o ID do documento, não dos dados
     // Atualiza o maior aporte
     if (projeto.valorAprovado > maiorAporte.valorAportado) {
       maiorAporte = {
@@ -427,6 +435,7 @@ const recalculateStateIndicators = async (stateName: string) => {
     nomeEstado: stateName,
     qtdProjetos: projectsSnapshot.size,
     qtdMunicipios: allMunicipios.size,
+    idProjects: Array.from(idProjects), // precisa disso, pq nossa interface é um array de string
     municipios: Array.from(allMunicipios).sort(),
     valorTotal: totalValorAportado,
     maiorAporte: maiorAporte,

@@ -87,6 +87,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   function somarDadosEstados(array: dadosEstados[]): dadosEstados {
+    const projetosUnicos = new Set<string>(); // fazemos isso pois ao inserir no firebase ha duplicacoes (ex: se o mesmo projeto atua em dois estados entao no doc de cada estado estará a informacao desse projeto em cada um e isso da duplicacao na soma)
     const maiorAporteGlobal = array
       .map((d) => d.maiorAporte)
       .reduce((max, curr) => {
@@ -103,7 +104,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       nomeEstado: "Todos",
       valorTotal: 0,
       maiorAporte: maiorAporteGlobal,
-      qtdProjetos: 0,
+      qtdProjetos: 0,  // usaremos isso
       beneficiariosDireto: 0,
       beneficiariosIndireto: 0,
       qtdOrganizacoes: 0,
@@ -111,66 +112,55 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       lei: [],
       segmento: [],
       municipios: [],
+      idProjects: [],
+      projetosODS: Array(17).fill(0), // ✅ inicializa aqui
     };
   
     return array.reduce((acc, curr) => {
-      // Soma dos valores escalares
-      const novoAcc = {
-        nomeEstado: "Todos",
-        valorTotal: (acc.valorTotal ?? 0) + (curr.valorTotal ?? 0),
-        maiorAporte: maiorAporteGlobal,
-        qtdProjetos: (acc.qtdProjetos ?? 0) + (curr.qtdProjetos ?? 0),
-        beneficiariosDireto:
-          (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
-        beneficiariosIndireto:
-          (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
-        qtdOrganizacoes:
-          (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
-        qtdMunicipios: (acc.qtdMunicipios ?? 0) + (curr.qtdMunicipios ?? 0),
-        projetosODS: acc.projetosODS
-          ? acc.projetosODS.map((v, i) => v + (curr.projetosODS?.[i] ?? 0))
-          : curr.projetosODS ?? [],
-        lei: [] as { nome: string; qtdProjetos: number }[],
-        segmento: [] as { nome: string; qtdProjetos: number }[],
-        municipios: [...(acc.municipios ?? []), ...(curr.municipios ?? [])],
-      };
-  
-      // Agora agrupa e soma os segmentos
-  
-      const segmentosCombinados = [
-        ...(acc.segmento || []),
-        ...(curr.segmento || []),
-      ];
-      const leiCombinada = [...(acc.lei || []), ...(curr.lei || [])];
-  
-      const segmentoAgrupado = segmentosCombinados.reduce((segAcc, segCurr) => {
-        const index = segAcc.findIndex((item) => item.nome === segCurr.nome);
-        if (index >= 0) {
-          segAcc[index].qtdProjetos += segCurr.qtdProjetos || 0;
-        } else {
-          segAcc.push({ ...segCurr });
-        }
-        return segAcc;
-      }, [] as { nome: string; qtdProjetos: number }[]);
-  
-      novoAcc.segmento = segmentoAgrupado;
-  
-      const leiAgrupada = leiCombinada.reduce((leiAcc, leiCurr) => {
-        const index = leiAcc.findIndex((item) => item.nome === leiCurr.nome);
-        if (index >= 0) {
-          leiAcc[index].qtdProjetos += leiCurr.qtdProjetos || 0;
-        } else {
-          leiAcc.push({ ...leiCurr });
-        }
-        return leiAcc;
-      }, [] as { nome: string; qtdProjetos: number }[]);
-  
-      novoAcc.lei = leiAgrupada;
-  
-      return novoAcc;
-    }, initialValue);
-  }
+    // Soma somente projetos únicos
+    if (curr.idProjects) {
+      curr.idProjects.forEach((idProj) => {
+        if (!projetosUnicos.has(idProj)) {
+          projetosUnicos.add(idProj);
 
+          acc.valorTotal += curr.valorTotal ?? 0;
+          acc.beneficiariosDireto += curr.beneficiariosDireto ?? 0;
+          acc.beneficiariosIndireto += curr.beneficiariosIndireto ?? 0;
+          acc.qtdOrganizacoes += curr.qtdOrganizacoes ?? 0;
+          acc.qtdMunicipios += curr.qtdMunicipios ?? 0;
+          acc.qtdProjetos += curr.qtdProjetos ?? 0;
+
+          // Soma ODS
+          if (curr.projetosODS) {
+            curr.projetosODS?.forEach((valor, i) => {
+              acc.projetosODS = acc.projetosODS ?? Array(17).fill(0); // garante que existe
+              acc.projetosODS[i] = (acc.projetosODS[i] ?? 0) + valor;
+            });
+          }
+
+          // Acumula municípios
+          acc.municipios.push(...(curr.municipios ?? []));
+
+          // Acumula segmentos
+          curr.segmento?.forEach((seg) => {
+            const idx = acc.segmento.findIndex((s) => s.nome === seg.nome);
+            if (idx >= 0) acc.segmento[idx].qtdProjetos += seg.qtdProjetos;
+            else acc.segmento.push({ ...seg });
+          });
+
+          // Acumula leis
+          curr.lei?.forEach((lei) => {
+            const idx = acc.lei.findIndex((l) => l.nome === lei.nome);
+            if (idx >= 0) acc.lei[idx].qtdProjetos += lei.qtdProjetos;
+            else acc.lei.push({ ...lei });
+          });
+        }
+      });
+    }
+
+    return acc;
+  }, initialValue);
+}
   function somarDadosMunicipios(array: dadosProjeto[]): dadosEstados {
     const maiorAporteGlobal = array
       .map((d) => d.valorAprovado)
@@ -236,6 +226,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       lei: [],
       segmento: [],
       municipios: [],
+      idProjects: [] // nunca sera preenchido aq
     };
 
     return array.reduce(
@@ -321,7 +312,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       const refForms = doc(db, "forms-acompanhamento", id);
       const formsSnapshot = await getDoc(refForms);
 
-      if (formsSnapshot.exists()) {
+      if (formsSnapshot.exists()) { // verifica se o forms de acompanhamento existe, pois se existir os dados vem dele
         const dado = formsSnapshot.data();
         const dadoFiltrado: dadosProjeto = {
           instituicao: dado.instituicao,
