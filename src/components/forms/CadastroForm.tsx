@@ -1,44 +1,42 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from "react";
-import { ref, getDownloadURL } from "firebase/storage";
-import { storage } from "@/firebase/firebase-config";
+import { submitCadastroForm } from "@/app/actions/formsCadastroActions";
 import {
-    NormalInput,
-    LongInput,
-    NumeroEndInput,
-    NumberInput,
-    HorizontalSelects,
-    VerticalSelects,
+    CidadeInput,
     DateInputs,
     EstadoInput,
-    LeiSelect,
     FileInput,
-    CidadeInput,
     GrowInput,
+    HorizontalSelects,
+    LeiSelect,
+    LongInput,
+    NormalInput,
+    NumberInput,
+    NumeroEndInput,
+    PublicoInput,
     SingleEstadoInput,
-    PublicoInput
+    VerticalSelects,
 } from "@/components/inputs/inputs";
-import { State, City } from "country-state-city";
-import { toast } from "sonner";
-import { odsList, segmentoList, publicoList } from "@/firebase/schema/entities";
-import { formatCNPJ, formatCEP, formatTelefone, formatMoeda, filtraDigitos } from "@/lib/utils";
+import { db, storage } from "@/firebase/firebase-config";
+import { odsList, publicoList, segmentoList } from "@/firebase/schema/entities";
+import { FormsCadastroFormFields, formsCadastroSchema } from "@/lib/schemas";
+import { filtraDigitos, formatCEP, formatCNPJ, formatMoeda, formatTelefone, normalizeStoredUrl } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller, FieldError } from "react-hook-form";
-import { submitCadastroForm } from '@/app/actions/formsCadastroActions';
-import { formsCadastroSchema, FormsCadastroFormFields } from "@/lib/schemas";
-import { useRouter } from "next/navigation";
+import { upload as vercelUpload } from "@vercel/blob/client";
+import { City, State } from "country-state-city";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase/firebase-config";
-
-
+import { getDownloadURL, ref } from "firebase/storage";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Controller, FieldError, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: string | null }) {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [compliancePdfUrl, setCompliancePdfUrl] = useState<string | null>(null);
     const [leiList, setLeiList] = useState<string[]>([]);
 
-    const router = useRouter()
+    const router = useRouter();
 
     const {
         register,
@@ -97,29 +95,75 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
         },
     });
 
-    const watchedCep = watch('cep');
-    const watchedEstados = watch('estados');
-    const watchedPublico = watch('publico');
-    const outroPublicoIndex = publicoList.findIndex(p => p.nome.toLowerCase().startsWith('outro'));
+    // upload progress state keyed by field name
+    const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+
+    // helper: upload a single file via Vercel Blob client upload
+    const uploadFileToVercel = async (file: File, fieldName: string) => {
+        try {
+            setUploadProgress(prev => ({ ...prev, [fieldName]: 0 }));
+
+            const clientPayload = JSON.stringify({ size: file.size, type: file.type });
+
+            // Build a pathname including a folder and original filename
+            const pathname = `${fieldName}/${Date.now()}-${file.name}`;
+
+            const result = await vercelUpload(pathname, file, {
+                access: "public",
+                handleUploadUrl: "/api/upload",
+                clientPayload,
+                onUploadProgress: ({ percentage }) => {
+                    setUploadProgress(prev => ({ ...prev, [fieldName]: Math.round(percentage) }));
+                },
+                multipart: true, // allow multipart for larger files
+            });
+
+            // Normalize to a canonical public URL string.
+            type VercelResult = { url?: string; downloadUrl?: string; pathname?: string; key?: string };
+            const vr = result as VercelResult;
+            const publicUrl: string | null =
+                vr.url ??
+                vr.downloadUrl ??
+                (() => {
+                    const pathnameFromResult = vr.pathname ?? vr.key ?? null;
+                    if (!pathnameFromResult) return null;
+                    const base = process.env.NEXT_PUBLIC_VERCEL_BLOB_BASE_URL || window.location.origin;
+                    return `${base.replace(/\/$/, "")}/${String(pathnameFromResult).replace(/^\//, "")}`;
+                })();
+
+            setUploadProgress(prev => ({ ...prev, [fieldName]: 100 }));
+            if (!publicUrl) throw new Error("Upload succeeded but no public URL was returned by Vercel Blob");
+            return publicUrl;
+        } catch (err) {
+            console.error("Upload failed", err);
+            setUploadProgress(prev => ({ ...prev, [fieldName]: 0 }));
+            throw err;
+        }
+    };
+
+    const watchedCep = watch("cep");
+    const watchedEstados = watch("estados");
+    const watchedPublico = watch("publico");
+    const outroPublicoIndex = publicoList.findIndex(p => p.nome.toLowerCase().startsWith("outro"));
     const isOutroPublicoSelected = watchedPublico && watchedPublico[outroPublicoIndex];
-    const watchedNumeroAgencia = watch('numeroAgencia');
-    const watchedDigitoAgencia = watch('digitoAgencia');
+    const watchedNumeroAgencia = watch("numeroAgencia");
+    const watchedDigitoAgencia = watch("digitoAgencia");
 
     useEffect(() => {
         if (watchedNumeroAgencia || watchedDigitoAgencia) {
             const agenciaCompleta = watchedDigitoAgencia
                 ? `${watchedNumeroAgencia}-${watchedDigitoAgencia}`
                 : watchedNumeroAgencia;
-            setValue('agencia', agenciaCompleta, { shouldValidate: true });
+            setValue("agencia", agenciaCompleta, { shouldValidate: true });
         } else {
-            setValue('agencia', '', { shouldValidate: true });
+            setValue("agencia", "", { shouldValidate: true });
         }
     }, [watchedNumeroAgencia, watchedDigitoAgencia, setValue]);
 
     useEffect(() => {
         const fetchPdfUrl = async () => {
             try {
-                const storageRef = ref(storage, 'publico/Formulário de Doações e Patrocínios - 2025.pdf');
+                const storageRef = ref(storage, "publico/Formulário de Doações e Patrocínios - 2025.pdf");
                 const url = await getDownloadURL(storageRef);
                 setCompliancePdfUrl(url);
             } catch (error) {
@@ -133,11 +177,11 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
 
     useEffect(() => {
         const fetchAddress = async (cep: string) => {
-            const cepFormatado = cep.replace(/\D/g, '');
+            const cepFormatado = cep.replace(/\D/g, "");
             if (cepFormatado.length !== 8) return;
             try {
                 const response = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepFormatado}`);
-                if (!response.ok) throw new Error('CEP não encontrado');
+                if (!response.ok) throw new Error("CEP não encontrado");
                 const data = await response.json();
                 const fullAddress = data.neighborhood ? `${data.street} - ${data.neighborhood}` : data.street;
                 setValue("endereco", fullAddress, { shouldValidate: true });
@@ -150,13 +194,12 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
         fetchAddress(watchedCep);
     }, [watchedCep, setValue]);
 
-
     // fetch leis from firebase
     useEffect(() => {
         const fetchLeis = async () => {
             const snapshot = await getDocs(collection(db, "leis"));
             const leisFromDB: string[] = [];
-            snapshot.forEach((doc) => {
+            snapshot.forEach(doc => {
                 const data = doc.data() as { nome: string; sigla: string };
                 if (data.nome) {
                     leisFromDB.push(data.nome);
@@ -164,41 +207,33 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             });
             leisFromDB.sort(); // Ordenando o array
             setLeiList(leisFromDB);
-        }
-        fetchLeis()
+        };
+        fetchLeis();
     }, []);
 
     return (
         <form
             className="flex flex-col justify-center items-center max-w-[1500px] w-[90vw] sm:w-[80vw] xl:w-[70vw] mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-lg"
-            onSubmit={handleSubmit(async (data) => {
-            console.log("Formulário submetido", data); // Adicione este log
+            onSubmit={handleSubmit(async data => {
+                console.log("Formulário submetido", data); // Adicione este log
                 // Verificação do tam
-                const allFiles = [
-                    ...data.diario,
-                    ...data.apresentacao,
-                    ...data.compliance,
-                    ...data.documentos,
-                ];
+                const allFiles = [...data.diario, ...data.apresentacao, ...data.compliance, ...data.documentos];
 
                 // 2. Soma o tamanho de todos os arquivos (em bytes)
                 const totalSizeInBytes = allFiles.reduce((acc, file) => acc + file.size, 0);
 
-                // 3. Define o limite. O do Firebase é 10MB, usamos 9.5MB para ter uma margem de segurança.
-                const limitInBytes = 9.5 * 1024 * 1024; // 9.5 MB
+                // 3. Define o limite. O do Firebase é 100MB.
+                const limitInBytes = 100 * 1024 * 1024; // 100 MB
 
                 // 4. Compara o tamanho total com o limite
                 if (totalSizeInBytes > limitInBytes) {
-                    toast.error(
-                        "Envio cancelado: Arquivos muito grandes.",
-                        {
-                            description: `O tamanho total dos seus anexos (${(totalSizeInBytes / 1024 / 1024).toFixed(2)} MB) excede o nosso limite de 9.5 MB. Por favor, reduza o tamanho dos arquivos.`,
-                            duration: 12000, // 12 segundos
-                        }
-                    );
-                    return; // Impede completamente o envio do formulário
+                    toast.error("Envio cancelado: Arquivos muito grandes.", {
+                        description: `O tamanho total dos seus anexos (${(totalSizeInBytes / 1024 / 1024).toFixed(2)} MB) excede o nosso limite de 100 MB. Por favor, reduza o tamanho dos arquivos.`,
+                        duration: 10000,
+                    });
+                    return;
                 }
-                            
+
                 const loadingToastId = toast.loading("Enviando formulário...");
 
                 const formData = new FormData();
@@ -206,20 +241,33 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                 Object.entries(data).forEach(([key, value]) => {
                     if (Array.isArray(value) && value.every(item => item instanceof File)) {
                         // Tratado separadamente abaixo
-                    } else if (typeof value === 'object' && value !== null) {
+                    } else if (typeof value === "object" && value !== null) {
                         formData.append(key, JSON.stringify(value));
                     } else if (value !== undefined && value !== null) {
                         formData.append(key, String(value));
                     }
                 });
 
-                data.diario.forEach((file: File) => formData.append('diario', file));
-                data.apresentacao.forEach((file: File) => formData.append('apresentacao', file));
-                data.compliance.forEach((file: File) => formData.append('compliance', file));
-                data.documentos.forEach((file: File) => formData.append('documentos', file));
+                // Append file fields: each item may be a File (new upload) or a string URL (already uploaded)
+                data.diario.forEach((item: File | string) => {
+                    if (item instanceof File) formData.append("diario", item);
+                    else formData.append("diario", item);
+                });
+                data.apresentacao.forEach((item: File | string) => {
+                    if (item instanceof File) formData.append("apresentacao", item);
+                    else formData.append("apresentacao", item);
+                });
+                data.compliance.forEach((item: File | string) => {
+                    if (item instanceof File) formData.append("compliance", item);
+                    else formData.append("compliance", item);
+                });
+                data.documentos.forEach((item: File | string) => {
+                    if (item instanceof File) formData.append("documentos", item);
+                    else formData.append("documentos", item);
+                });
 
                 if (usuarioAtualID) {
-                    formData.append('usuarioAtualID', usuarioAtualID);
+                    formData.append("usuarioAtualID", usuarioAtualID);
                 }
 
                 try {
@@ -230,11 +278,11 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                     if (result.success) {
                         toast.success("Formulário enviado com sucesso!");
                         if (usuarioAtualID) {
-                            router.push('/inicio-externo');
+                            router.push("/inicio-externo");
                         } else {
-                            reset()
-                            setCurrentPage(1)
-                            window.scrollTo(0, 0)
+                            reset();
+                            setCurrentPage(1);
+                            window.scrollTo(0, 0);
                         }
                     } else {
                         toast.error(`Erro: ${result.error}`);
@@ -247,12 +295,10 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             })}
             noValidate
         >
-
             {currentPage === 1 && (
                 <div className="w-full">
                     <div className="flex flex-col items-center">
                         <div className="flex flex-col justify-around w-11/12 my-10 space-y-4">
-
                             <NormalInput
                                 text="Nome da instituição:"
                                 isNotMandatory={false}
@@ -265,7 +311,10 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 control={control}
                                 render={({ field, fieldState: { error } }) => (
                                     <div className="flex flex-col lg:flex-row w-auto md:gap-x-4 items-start sm:items-center grow">
-                                        <label htmlFor="cnpj" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                        <label
+                                            htmlFor="cnpj"
+                                            className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold"
+                                        >
                                             CNPJ: <span className="text-[#B15265]">*</span>
                                         </label>
                                         <div className="w-full">
@@ -273,7 +322,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                 id="cnpj"
                                                 type="text"
                                                 {...field}
-                                                onChange={(e) => {
+                                                onChange={e => {
                                                     const valorFormatado = formatCNPJ(e.target.value);
                                                     field.onChange(valorFormatado);
                                                 }}
@@ -297,7 +346,10 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 control={control}
                                 render={({ field, fieldState: { error } }) => (
                                     <div className="flex flex-col lg:flex-row w-auto md:gap-x-4 items-start sm:items-center grow">
-                                        <label htmlFor="telefone" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                        <label
+                                            htmlFor="telefone"
+                                            className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold"
+                                        >
                                             Telefone do representante legal: <span className="text-[#B15265]">*</span>
                                         </label>
                                         <div className="w-full">
@@ -307,7 +359,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                 // Espalha as propriedades do field (name, onBlur, ref, value)
                                                 {...field}
                                                 // Sobrescreve o onChange para incluir a formatação
-                                                onChange={(e) => {
+                                                onChange={e => {
                                                     const valorFormatado = formatTelefone(e.target.value);
                                                     // Chama o onChange do Controller com o valor já formatado
                                                     field.onChange(valorFormatado);
@@ -345,7 +397,10 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 control={control}
                                 render={({ field, fieldState: { error } }) => (
                                     <div className="flex flex-col lg:flex-row w-auto md:gap-x-4 items-start sm:items-center grow">
-                                        <label htmlFor="cep" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                        <label
+                                            htmlFor="cep"
+                                            className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold"
+                                        >
                                             CEP: <span className="text-[#B15265]">*</span>
                                         </label>
                                         <div className="w-full">
@@ -353,7 +408,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                 id="cep"
                                                 type="text"
                                                 {...field}
-                                                onChange={(e) => {
+                                                onChange={e => {
                                                     const valorFormatado = formatCEP(e.target.value);
                                                     field.onChange(valorFormatado);
                                                 }}
@@ -430,7 +485,10 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 control={control}
                                 render={({ field, fieldState: { error } }) => (
                                     <div className="flex flex-col lg:flex-row w-auto md:gap-x-4 items-start sm:items-center grow">
-                                        <label htmlFor="valorAprovado" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                        <label
+                                            htmlFor="valorAprovado"
+                                            className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold"
+                                        >
                                             Valor aprovado: <span className="text-[#B15265]">*</span>
                                         </label>
                                         <div className="w-full">
@@ -442,10 +500,12 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                 ref={field.ref}
                                                 name={field.name}
                                                 value={field.value ? formatMoeda(field.value) : ""}
-                                                onChange={(e) => {
+                                                onChange={e => {
                                                     const digitsOnly = filtraDigitos(e.target.value);
                                                     const limitedDigits = digitsOnly.slice(0, 18);
-                                                    const numericValue = limitedDigits ? parseInt(limitedDigits, 10) / 100 : undefined;
+                                                    const numericValue = limitedDigits
+                                                        ? parseInt(limitedDigits, 10) / 100
+                                                        : undefined;
                                                     field.onChange(numericValue);
                                                 }}
                                                 className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
@@ -461,7 +521,10 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 control={control}
                                 render={({ field, fieldState: { error } }) => (
                                     <div className="flex flex-col lg:flex-row w-auto md:gap-x-4 items-start sm:items-center grow">
-                                        <label htmlFor="valorApto" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                        <label
+                                            htmlFor="valorApto"
+                                            className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold"
+                                        >
                                             Valor apto a captar: <span className="text-[#B15265]">*</span>
                                         </label>
                                         <div className="w-full">
@@ -473,10 +536,12 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                 ref={field.ref}
                                                 name={field.name}
                                                 value={field.value ? formatMoeda(field.value) : ""}
-                                                onChange={(e) => {
+                                                onChange={e => {
                                                     const digitsOnly = filtraDigitos(e.target.value);
                                                     const limitedDigits = digitsOnly.slice(0, 18);
-                                                    const numericValue = limitedDigits ? parseInt(limitedDigits, 10) / 100 : undefined;
+                                                    const numericValue = limitedDigits
+                                                        ? parseInt(limitedDigits, 10) / 100
+                                                        : undefined;
                                                     field.onChange(numericValue);
                                                 }}
                                                 className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
@@ -500,19 +565,39 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 name="diario"
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error } }) => (
-                                    <FileInput
-                                        text={"Diário Oficial:"}
-                                        isNotMandatory={false}
-                                        value={value || []}
-                                        onChange={onChange}
-                                        error={error}
-                                        acceptedFileTypes={['application/pdf', 'image/jpeg', 'image/png']}
-                                    />
+                                    <div>
+                                        <FileInput
+                                            text={"Diário Oficial:"}
+                                            isNotMandatory={false}
+                                            value={value || []}
+                                            onChange={async files => {
+                                                // Upload any File objects and replace them with URLs
+                                                const processed: (File | string)[] = [];
+                                                for (const f of files) {
+                                                    if (typeof f === "string") {
+                                                        processed.push(f);
+                                                    } else {
+                                                        try {
+                                                            const url = await uploadFileToVercel(f, "diario");
+                                                            processed.push(url);
+                                                        } catch {
+                                                            toast.error("Falha ao enviar arquivo.", { description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão." });
+                                                        }
+                                                    }
+                                                }
+                                                onChange(processed);
+                                            }}
+                                            error={error}
+                                            acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                            progress={uploadProgress["diario"] ?? null}
+                                        />
+                                        
+                                    </div>
                                 )}
                             />
 
-                            <h1 className="mt-5 text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold"
-                            >Dados Bancários
+                            <h1 className="mt-5 text-xl md:text-xl lg:lg text-blue-fcsn dark:text-white-off font-bold">
+                                Dados Bancários
                             </h1>
 
                             <div className="flex flex-col gap-y-4 mx-7">
@@ -525,7 +610,10 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
 
                                 <div className="flex flex-col md:flex-row h-full w-full justify-between md:items-start gap-y-4 md:gap-x-4">
                                     <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
-                                        <label htmlFor="numeroAgencia" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                        <label
+                                            htmlFor="numeroAgencia"
+                                            className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold"
+                                        >
                                             Agência:
                                         </label>
                                         <div className="flex items-start w-full gap-x-2">
@@ -542,13 +630,17 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                                 type="text"
                                                                 placeholder="Número"
                                                                 {...field}
-                                                                onChange={(e) => {
+                                                                onChange={e => {
                                                                     const valorFiltrado = filtraDigitos(e.target.value);
                                                                     field.onChange(valorFiltrado);
                                                                 }}
                                                                 className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
                                                             />
-                                                            {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                                            {error && (
+                                                                <p className="text-red-500 mt-1 text-sm">
+                                                                    {error.message}
+                                                                </p>
+                                                            )}
                                                         </>
                                                     )}
                                                 />
@@ -567,13 +659,17 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                                 placeholder="Dígito"
                                                                 maxLength={1}
                                                                 {...field}
-                                                                onChange={(e) => {
+                                                                onChange={e => {
                                                                     const valorFiltrado = filtraDigitos(e.target.value);
                                                                     field.onChange(valorFiltrado);
                                                                 }}
                                                                 className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 text-center ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
                                                             />
-                                                            {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                                            {error && (
+                                                                <p className="text-red-500 mt-1 text-sm">
+                                                                    {error.message}
+                                                                </p>
+                                                            )}
                                                         </>
                                                     )}
                                                 />
@@ -587,7 +683,10 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                         rules={{ required: false }}
                                         render={({ field, fieldState: { error } }) => (
                                             <div className="flex flex-col lg:flex-row w-full md:gap-x-4 items-start sm:items-center grow">
-                                                <label htmlFor="conta" className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold">
+                                                <label
+                                                    htmlFor="conta"
+                                                    className="min-w-fit text-xl text-blue-fcsn dark:text-white-off self-start lg:self-center mb-1 font-bold"
+                                                >
                                                     Conta Corrente:
                                                 </label>
                                                 <div className="w-full">
@@ -595,13 +694,15 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                                         id="conta"
                                                         type="text"
                                                         {...field}
-                                                        onChange={(e) => {
+                                                        onChange={e => {
                                                             const valorFiltrado = filtraDigitos(e.target.value);
                                                             field.onChange(valorFiltrado);
                                                         }}
                                                         className={`w-full h-[50px] bg-white dark:bg-blue-fcsn3 rounded-[7px] border-1 focus:shadow-lg focus:outline-none focus:border-2 px-3 ${error ? "border-red-600 dark:border-red-500 focus:border-red-600 dark:focus:border-red-500" : "border-blue-fcsn dark:border-blue-fcsn focus:border-blue-fcsn dark:focus:border-blue-fcsn"}`}
                                                     />
-                                                    {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
+                                                    {error && (
+                                                        <p className="text-red-500 mt-1 text-sm">{error.message}</p>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
@@ -624,20 +725,41 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 )}
                             />
 
-                            <LongInput text="Breve descrição do projeto:" isNotMandatory={false} registration={register("descricao")} error={errors.descricao} />
+                            <LongInput
+                                text="Breve descrição do projeto:"
+                                isNotMandatory={false}
+                                registration={register("descricao")}
+                                error={errors.descricao}
+                            />
 
                             <Controller
                                 name="apresentacao"
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error } }) => (
-                                    <FileInput
-                                        text={"Apresentação do projeto:"}
-                                        isNotMandatory={false}
-                                        value={value || []}
-                                        onChange={onChange}
-                                        error={error}
-                                        acceptedFileTypes={['application/pdf', 'image/jpeg', 'image/png']}
-                                    />
+                                    <div>
+                                        <FileInput
+                                            text={"Apresentação do projeto:"}
+                                            isNotMandatory={false}
+                                            value={value || []}
+                                            onChange={async files => {
+                                                const processed: (File | string)[] = [];
+                                                for (const f of files) {
+                                                    if (typeof f === "string") processed.push(f);
+                                                    else {
+                                                        try {
+                                                            processed.push(await uploadFileToVercel(f, "apresentacao"));
+                                                        } catch {
+                                                            toast.error("Falha ao enviar arquivo.", {description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão."});
+                                                        }
+                                                    }
+                                                }
+                                                onChange(processed);
+                                            }}
+                                            error={error}
+                                            acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                            progress={uploadProgress["apresentacao"] ?? null}
+                                        />
+                                    </div>
                                 )}
                             />
 
@@ -656,7 +778,9 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 )}
                             />
 
-                            <div className={`transition-all duration-300 ease-in-out w-full ${isOutroPublicoSelected ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                            <div
+                                className={`transition-all duration-300 ease-in-out w-full ${isOutroPublicoSelected ? "max-h-40 opacity-100" : "max-h-0 opacity-0 overflow-hidden"}`}
+                            >
                                 <NormalInput
                                     text="Especifique o público:"
                                     isNotMandatory={false}
@@ -669,7 +793,6 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 name="ods"
                                 control={control}
                                 render={({ field, fieldState: { error } }) => (
-
                                     <VerticalSelects
                                         text="Objetivos de Desenvolvimento Sustentável (ODS) contemplados pelo projeto:"
                                         subtext="Selecione até 3 opções."
@@ -698,10 +821,14 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                         const estadoObject = allStates.find(s => s.name === stateName);
                                         if (estadoObject) {
                                             const estadoUF = estadoObject.isoCode;
-                                            const cidadesDoEstado = new Set(City.getCitiesOfState("BR", estadoUF).map(c => c.name));
-                                            const cidadesAtuais = watch('municipios');
-                                            const novasCidades = cidadesAtuais.filter(cidade => !cidadesDoEstado.has(cidade));
-                                            setValue('municipios', novasCidades, { shouldValidate: true });
+                                            const cidadesDoEstado = new Set(
+                                                City.getCitiesOfState("BR", estadoUF).map(c => c.name)
+                                            );
+                                            const cidadesAtuais = watch("municipios");
+                                            const novasCidades = cidadesAtuais.filter(
+                                                cidade => !cidadesDoEstado.has(cidade)
+                                            );
+                                            setValue("municipios", novasCidades, { shouldValidate: true });
                                         }
                                     };
                                     return (
@@ -766,10 +893,15 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 registration={register("observacoes")}
                                 error={errors.observacoes}
                             />
-
                         </div>
                         <div className="flex justify-end w-full px-[5%]">
-                            <button type="button" className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10" onClick={() => setCurrentPage(2)}>Próxima página</button>
+                            <button
+                                type="button"
+                                className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10"
+                                onClick={() => setCurrentPage(2)}
+                            >
+                                Próxima página
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -780,35 +912,56 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                     <div className="flex flex-col w-full items-center gap-8 mt-10">
                         <div className="w-11/12">
                             {/* Botão de download para o formulário de compliance */}
-                            {compliancePdfUrl && (
-                                <div className="flex flex-col items-start mb-4 gap-y-2">
-                                    <p className="text-xl text-blue-fcsn dark:text-white-off font-bold">
-                                        Faça o download do formulário de compliance, preencha-o e anexe no campo abaixo.
-                                    </p>
-                                    <a
-                                        href={compliancePdfUrl}
-                                        download="Formulario_Compliance.pdf"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-fit px-4 h-[50px] bg-blue-fcsn dark:bg-blue-fcsn3 dark:hover:bg-blue-fcsn hover:bg-blue-fcsn2 rounded-[7px] text-md font-bold text-white cursor-pointer shadow-md flex items-center justify-center"
-                                    >
-                                        Baixar Formulário de Compliance
-                                    </a>
-                                </div>
-                            )}
+                            {(() => {
+                                const normalizedCompliancePdfUrl = normalizeStoredUrl(compliancePdfUrl) || null;
+                                if (!normalizedCompliancePdfUrl) return null;
+                                return (
+                                    <div className="flex flex-col items-start mb-4 gap-y-2">
+                                        <p className="text-xl text-blue-fcsn dark:text-white-off font-bold">
+                                            Faça o download do formulário de compliance, preencha-o e anexe no campo
+                                            abaixo.
+                                        </p>
+                                        <a
+                                            href={normalizedCompliancePdfUrl}
+                                            download="Formulario_Compliance.pdf"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-fit px-4 h-[50px] bg-blue-fcsn dark:bg-blue-fcsn3 dark:hover:bg-blue-fcsn hover:bg-blue-fcsn2 rounded-[7px] text-md font-bold text-white cursor-pointer shadow-md flex items-center justify-center"
+                                        >
+                                            Baixar Formulário de Compliance
+                                        </a>
+                                    </div>
+                                );
+                            })()}
 
                             <Controller
                                 name="compliance"
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error } }) => (
-                                    <FileInput
-                                        text={"Formulário de compliance:"}
-                                        isNotMandatory={false}
-                                        value={value || []}
-                                        onChange={onChange}
-                                        error={error as FieldError}
-                                        acceptedFileTypes={['application/pdf']}
-                                    />
+                                    <div>
+                                        <FileInput
+                                            text={"Formulário de compliance:"}
+                                            isNotMandatory={false}
+                                            value={value || []}
+                                            onChange={async files => {
+                                                const processed: (File | string)[] = [];
+                                                for (const f of files) {
+                                                    if (typeof f === "string") processed.push(f);
+                                                    else {
+                                                        try {
+                                                            processed.push(await uploadFileToVercel(f, "compliance"));
+                                                        } catch {
+                                                            toast.error("Falha ao enviar arquivo.", {description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão."});
+                                                        }
+                                                    }
+                                                }
+                                                onChange(processed);
+                                            }}
+                                            error={error as FieldError}
+                                            acceptedFileTypes={["application/pdf"]}
+                                            progress={uploadProgress["compliance"] ?? null}
+                                        />
+                                    </div>
                                 )}
                             />
 
@@ -816,14 +969,31 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 name="documentos"
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error } }) => (
-                                    <FileInput
-                                        text={"Documentos adicionais:"}
-                                        isNotMandatory={false}
-                                        value={value || []}
-                                        onChange={onChange}
-                                        error={error as FieldError}
-                                        acceptedFileTypes={['application/pdf', 'image/jpeg', 'image/png']}
-                                    />
+                                    <div>
+                                        <FileInput
+                                            text={"Documentos adicionais:"}
+                                            isNotMandatory={false}
+                                            value={value || []}
+                                            onChange={async files => {
+                                                const processed: (File | string)[] = [];
+                                                for (const f of files) {
+                                                    if (typeof f === "string") processed.push(f);
+                                                    else {
+                                                        try {
+                                                            processed.push(await uploadFileToVercel(f, "documentos"));
+                                                        } catch {
+                                                            toast.error("Falha ao enviar arquivo.", {description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão."});
+                                                        }
+                                                    }
+                                                }
+                                                onChange(processed);
+                                            }}
+                                            error={error as FieldError}
+                                            acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                            progress={uploadProgress["documentos"] ?? null}
+                                        />
+                                        
+                                    </div>
                                 )}
                             />
 
@@ -835,11 +1005,14 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                         {...register("termosPrivacidade")}
                                     />
                                     <p className="text-lg text-blue-fcsn dark:text-white">
-                                        Eu declaro ter lido e concordado com os Termos de Uso e a Política de Privacidade
+                                        Eu declaro ter lido e concordado com os Termos de Uso e a Política de
+                                        Privacidade
                                         <span className="text-[#B15265]">*</span>
                                     </p>
                                 </div>
-                                {errors.termosPrivacidade && <p className="text-red-500 text-sm mt-1 pl-7">{errors.termosPrivacidade.message}</p>}
+                                {errors.termosPrivacidade && (
+                                    <p className="text-red-500 text-sm mt-1 pl-7">{errors.termosPrivacidade.message}</p>
+                                )}
                             </div>
                         </div>
                         <div className="flex flex-row w-11/12 justify-between gap-4 mt-8">
@@ -847,14 +1020,16 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 type="button"
                                 className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-gray-100 hover:bg-white rounded-[7px] text-md md:text-lg font-bold text-blue-fcsn cursor-pointer shadow-md mb-10"
                                 onClick={() => setCurrentPage(1)}
-                            >Página anterior
+                            >
+                                Página anterior
                             </button>
 
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
                                 className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10"
-                            >{isSubmitting ? "Enviando..." : "Enviar"}
+                            >
+                                {isSubmitting ? "Enviando..." : "Enviar"}
                             </button>
                         </div>
                     </div>
