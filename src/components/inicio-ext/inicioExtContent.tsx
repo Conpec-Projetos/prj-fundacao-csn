@@ -79,17 +79,16 @@ const ProjectCard = ({ project }: { project: ProjetoExt }) => {
               Ver detalhes
             </Link>
           </div>
-          {project.formularioPendente && effectiveStatus !== 'finalizado' && (
-            <div className="mt-4 p-3 bg-yellow-50 dark:bg-[#5A5A72] rounded-lg flex items-center">
-              <FaExclamationCircle className="text-yellow-500 mr-2" />
-              <p className="text-sm text-yellow-700 dark:text-yellow-500">
-                Formulário de acompanhamento pendente
+            <div className="mt-4 p-3 bg-[#ede8f8] dark:bg-[#6c5d94] rounded-lg flex items-center">
+              <FaExclamationCircle className="text-purple-700 dark:text-black mr-2" />
+              <p className="text-sm text-black dark:text-white">
+                Formulário de acompanhamento
                 <Link href={`/forms-acompanhamento/${project.id}`} className="ml-2 text-pink-fcsn dark:text-pink-light hover:underline">
                   Preencher agora
                 </Link>
               </p>
             </div>
-          )}
+
         </div>
     );
 };

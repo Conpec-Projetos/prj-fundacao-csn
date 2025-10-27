@@ -1,5 +1,5 @@
 import Footer from "@/components/footer/footer";
-import CadastroForm from "@/components/forms/CadastroForm";
+import FormsCadastroWrapper from "@/components/forms/FormsCadastroWrapper";
 import { getCurrentUser } from "@/lib/auth";
 import { Toaster } from "sonner";
 
@@ -18,7 +18,8 @@ export default async function FormsCadastroPage() {
                 </h1>
             </div>
             
-            <CadastroForm usuarioAtualID={usuarioAtualID}/>
+            <FormsCadastroWrapper usuarioAtualID={usuarioAtualID} />
+            
 
             <Toaster richColors closeButton />
             <Footer/>

@@ -5,6 +5,7 @@ import "./globals.css";     //arquivo de estilos globais
 import { ThemeProvider } from '@/context/themeContext';
 import { PDFProvider } from '@/context/pdfContext';
 import HeaderWrapper from "@/components/header/headerWrapper";
+import { AppProvider } from '@/context/AppContext';
 
 // Configurando as Fontes CSN
 
@@ -39,6 +40,7 @@ export default function RootLayout({
     <html lang="en">
       {/*Abaixo injetaremos a variável CSS que criamos no escopo global (no <body>)*/}
       <body className={` ${fonteTextoFCSN.variable}  antialiased`}>
+       <AppProvider> {/*Todas as paginas poderao usar o contexto (se precisar desabilitar uma pagina) */}
         <ThemeProvider>
           <PDFProvider>
             <HeaderWrapper>
@@ -46,6 +48,7 @@ export default function RootLayout({
             </HeaderWrapper>
           </PDFProvider>
         </ThemeProvider>
+      </AppProvider>
       </body>
     </html>
   );
