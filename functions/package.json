@@ -19,7 +19,7 @@
     "@react-email/components": "^0.2.0",
     "firebase-admin": "^12.6.0",
     "firebase-functions": "^6.0.1",
-    "next": "^15.3.5",
+    "next": "^15.5.6",
     "react": "^19.1.0",
     "react-email": "^4.1.0",
     "resend": "^4.6.0"
