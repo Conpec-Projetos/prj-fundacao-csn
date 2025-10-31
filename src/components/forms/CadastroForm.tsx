@@ -90,7 +90,11 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             diario: [],
             apresentacao: [],
             compliance: [],
-            documentos: [],
+            documentos: { // mudanca pq agora é um objeto de arrays
+                estatuto: [],
+                ata: [],
+                contrato: [],
+            },
             termosPrivacidade: false,
         },
     });
@@ -964,37 +968,109 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                     </div>
                                 )}
                             />
-
+                            {/* Estatuto */}
                             <Controller
-                                name="documentos"
-                                control={control}
-                                render={({ field: { onChange, value }, fieldState: { error } }) => (
-                                    <div>
-                                        <FileInput
-                                            text={"Documentos adicionais:"}
-                                            isNotMandatory={false}
-                                            value={value || []}
-                                            onChange={async files => {
-                                                const processed: (File | string)[] = [];
-                                                for (const f of files) {
-                                                    if (typeof f === "string") processed.push(f);
-                                                    else {
-                                                        try {
-                                                            processed.push(await uploadFileToVercel(f, "documentos"));
-                                                        } catch {
-                                                            toast.error("Falha ao enviar arquivo.", {description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão."});
-                                                        }
-                                                    }
-                                                }
-                                                onChange(processed);
-                                            }}
-                                            error={error as FieldError}
-                                            acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
-                                            progress={uploadProgress["documentos"] ?? null}
-                                        />
-                                        
-                                    </div>
-                                )}
+                            name="documentos.estatuto"
+                            control={control}
+                            render={({ field: { onChange, value }, fieldState: { error } }) => (
+                                <div>
+                                <FileInput
+                                    text={"Estatuto:"}
+                                    isNotMandatory={false}
+                                    value={value || []}
+                                    onChange={async files => {
+                                    const processed: (File | string)[] = [];
+                                    for (const f of files) {
+                                        if (typeof f === "string") processed.push(f);
+                                        else {
+                                        try {
+                                            processed.push(await uploadFileToVercel(f, "documentos/estatuto"));
+                                        } catch {
+                                            toast.error("Falha ao enviar arquivo.", {
+                                            description:
+                                                "Assegure que o arquivo tem menos de 10MB e verifique sua conexão.",
+                                            });
+                                        }
+                                        }
+                                    }
+                                    onChange(processed);
+                                    }}
+                                    error={error as FieldError}
+                                    acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                    progress={uploadProgress["documentos.estatuto"] ?? null}
+                                />
+                                </div>
+                            )}
+                            />
+
+                            {/* Ata */}
+                            <Controller
+                            name="documentos.ata"
+                            control={control}
+                            render={({ field: { onChange, value }, fieldState: { error } }) => (
+                                <div>
+                                <FileInput
+                                    text={"Ata:"}
+                                    isNotMandatory={false}
+                                    value={value || []}
+                                    onChange={async files => {
+                                    const processed: (File | string)[] = [];
+                                    for (const f of files) {
+                                        if (typeof f === "string") processed.push(f);
+                                        else {
+                                        try {
+                                            processed.push(await uploadFileToVercel(f, "documentos/ata"));
+                                        } catch {
+                                            toast.error("Falha ao enviar arquivo.", {
+                                            description:
+                                                "Assegure que o arquivo tem menos de 10MB e verifique sua conexão.",
+                                            });
+                                        }
+                                        }
+                                    }
+                                    onChange(processed);
+                                    }}
+                                    error={error as FieldError}
+                                    acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                    progress={uploadProgress["documentos.ata"] ?? null}
+                                />
+                                </div>
+                            )}
+                            />
+
+                            {/* Contrato */}
+                            <Controller
+                            name="documentos.contrato"
+                            control={control}
+                            render={({ field: { onChange, value }, fieldState: { error } }) => (
+                                <div>
+                                <FileInput
+                                    text={"Contrato:"}
+                                    isNotMandatory={false}
+                                    value={value || []}
+                                    onChange={async files => {
+                                    const processed: (File | string)[] = [];
+                                    for (const f of files) {
+                                        if (typeof f === "string") processed.push(f);
+                                        else {
+                                        try {
+                                            processed.push(await uploadFileToVercel(f, "documentos/contrato"));
+                                        } catch {
+                                            toast.error("Falha ao enviar arquivo.", {
+                                            description:
+                                                "Assegure que o arquivo tem menos de 10MB e verifique sua conexão.",
+                                            });
+                                        }
+                                        }
+                                    }
+                                    onChange(processed);
+                                    }}
+                                    error={error as FieldError}
+                                    acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                    progress={uploadProgress["documentos.contrato"] ?? null}
+                                />
+                                </div>
+                            )}
                             />
 
                             <div className="flex flex-col pt-7">

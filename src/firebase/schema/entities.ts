@@ -79,7 +79,11 @@ export interface formsCadastroDados {
   diario: string[];
   apresentacao: string[];
   compliance: string[];
-  documentos: string[];
+  documentos: { // objeto com arrays agora
+    estatuto: string[],
+    ata: string[],
+    contrato: string[],
+  };
 }
 
 export interface formsAcompanhamentoDados {

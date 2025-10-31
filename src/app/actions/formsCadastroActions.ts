@@ -87,6 +87,23 @@ export async function submitCadastroForm(formData: FormData) {
                     : uploadFileAndGetUrlAdmin(f, "forms-cadastro", projetoID, "apresentacao")
             )
         );
+        const documentosUrls = {
+        estatuto: await Promise.all(
+            data.documentos.estatuto.map(f =>
+            typeof f === "string" ? Promise.resolve(f) : uploadFileAndGetUrlAdmin(f, "forms-cadastro", projetoID, "documentos.estatuto")
+            )
+        ),
+        ata: await Promise.all(
+            data.documentos.ata.map(f =>
+            typeof f === "string" ? Promise.resolve(f) : uploadFileAndGetUrlAdmin(f, "forms-cadastro", projetoID, "documentos.ata")
+            )
+        ),
+        contrato: await Promise.all(
+            data.documentos.contrato.map(f =>
+            typeof f === "string" ? Promise.resolve(f) : uploadFileAndGetUrlAdmin(f, "forms-cadastro", projetoID, "documentos.contrato")
+            )
+        )
+        };
         // Normalize apresentacao entries into absolute URLs when possible.
         // Also unwrap JSON-stringified arrays like '["https://..."]' which can be produced
         // by legacy clients so they don't become stored as invalid path-like values.
@@ -123,11 +140,7 @@ export async function submitCadastroForm(formData: FormData) {
                     : uploadFileAndGetUrlAdmin(f, "forms-cadastro", projetoID, "compliance")
             )
         );
-        const documentosUrl = await Promise.all(
-            data.documentos.map(f =>
-                typeof f === "string" ? Promise.resolve(f) : uploadFileAndGetUrlAdmin(f, "forms-cadastro", projetoID)
-            )
-        );
+
 
         const firestoreData: formsCadastroDados = {
             dataPreenchido: new Date().toISOString().split("T")[0],
@@ -171,7 +184,7 @@ export async function submitCadastroForm(formData: FormData) {
             diario: diarioUrl.flat(),
             apresentacao: apresentacaoUrlNormalized,
             compliance: complianceUrl.flat(),
-            documentos: documentosUrl.flat(),
+            documentos: documentosUrls,
         };
 
         const docCadastroRef = await addDoc(collection(db, "forms-cadastro"), firestoreData);

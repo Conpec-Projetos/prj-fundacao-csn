@@ -252,8 +252,15 @@ export const formsCadastroSchema = z
         observacoes: z.string().trim().max(400, "Máximo de 400 caracteres permitidos").optional(),
         diario: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
         apresentacao: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
+
         compliance: fileArraySchema(["application/pdf"], "PDF", 10),
-        documentos: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
+
+        documentos: z.object({
+            estatuto: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
+            ata: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
+            contrato: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
+        }),
+
         termosPrivacidade: z.coerce.boolean().refine(val => val === true, {
             message: "Você deve aceitar os termos de privacidade para continuar.",
         }),

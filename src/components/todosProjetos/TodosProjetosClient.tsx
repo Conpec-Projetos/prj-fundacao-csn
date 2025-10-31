@@ -98,7 +98,15 @@ export default function TodosProjetosClient() {
                 let description = "Sem descrição.";
                 let ods: number[] = [];
                 let complianceUrl: string | null = null;
-                let additionalDocsUrls: string[] = [];
+                let additionalDocsUrls: {
+                    estatuto: string[];
+                    ata: string[];
+                    contrato: string[];
+                } = {
+                    estatuto: [],
+                    ata: [],
+                    contrato: [],
+                };
 
                 const cadastroQuery = query(collection(db, "forms-cadastro"), where("projetoID", "==", projectId));
                 const cadastroSnapshot = await getDocs(cadastroQuery);
@@ -107,7 +115,9 @@ export default function TodosProjetosClient() {
                 if (cadastroDoc) {
                     const cadastroData = cadastroDoc.data() as formsCadastroDados;
                     complianceUrl = cadastroData.compliance?.[0] || null;
-                    additionalDocsUrls = cadastroData.documentos || [];
+                        additionalDocsUrls.estatuto = cadastroData.documentos?.estatuto || [];
+                        additionalDocsUrls.ata = cadastroData.documentos?.ata || [];
+                        additionalDocsUrls.contrato = cadastroData.documentos?.contrato || [];
                 }
 
                 const latestFormId = projectData.ultimoFormulario;
@@ -149,7 +159,15 @@ export default function TodosProjetosClient() {
                     description: description,
                     ODS: processedODS,
                     complianceUrl: normalizeStoredUrl(complianceUrl) || null,
-                    additionalDocsUrls: (additionalDocsUrls || []).map(u => normalizeStoredUrl(u) || u),
+                    // esta juntando tudo em um unico array, pois esses documentos sao exibidos no botao aprovar compliance (entao juntamos todos aq para facilitar)
+                    additionalDocsUrls: additionalDocsUrls
+                    ? [
+                        ...additionalDocsUrls.estatuto.map(u => normalizeStoredUrl(u) || u),
+                        ...additionalDocsUrls.ata.map(u => normalizeStoredUrl(u) || u),
+                        ...additionalDocsUrls.contrato.map(u => normalizeStoredUrl(u) || u),
+                        ]
+                    : [],
+
                     isActive: projectData.ativo,
                 };
             });

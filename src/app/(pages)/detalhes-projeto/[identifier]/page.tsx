@@ -381,7 +381,7 @@ export default function ProjectDetailsPage() {
     try {
       const uploadedUrls: string[] = [];
       for (const file of documentFiles) {
-        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/documentos/${file.name}_${Date.now()}`);
+        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/documentosADM/${file.name}_${Date.now()}`);
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
         uploadedUrls.push(url);
