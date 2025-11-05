@@ -253,34 +253,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                     }
                 });
 
-                // Append file fields: each item may be a File (new upload) or a string URL (already uploaded)
-                data.diario.forEach((item: File | string) => {
-                    if (item instanceof File) formData.append("diario", item);
-                    else formData.append("diario", item);
-                });
-                data.apresentacao.forEach((item: File | string) => {
-                    if (item instanceof File) formData.append("apresentacao", item);
-                    else formData.append("apresentacao", item);
-                });
-                data.compliance.forEach((item: File | string) => {
-                    if (item instanceof File) formData.append("compliance", item);
-                    else formData.append("compliance", item);
-                });
                 console.log("Documentos sendo enviados:");
-                Object.entries(data.documentos).forEach(([tipo, arquivos]) => {
-                if (Array.isArray(arquivos)) {
-                    arquivos.forEach(item => {
-                    if (item instanceof File) {
-                        formData.append(`documentos[${tipo}][]`, item);
-                    } else if (typeof item === "string") {
-                        formData.append(`documentos[${tipo}][]`, item);
-                    }
-                    });
-                }
-                });
-
-
-
 
                 if (usuarioAtualID) {
                     formData.append("usuarioAtualID", usuarioAtualID);
