@@ -221,11 +221,12 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             onSubmit={handleSubmit(async data => {
                 console.log("Formulário submetido", data); // Adicione este log
                 // Verificação do tam
-                const allFiles = [...data.diario, ...data.apresentacao, ...data.compliance, ...data.documentos];
+                const allFiles = [...data.diario, ...data.apresentacao, ...data.compliance,  ...Object.values(data.documentos).flat(),];
 
                 // 2. Soma o tamanho de todos os arquivos (em bytes)
-                const totalSizeInBytes = allFiles.reduce((acc, file) => acc + file.size, 0);
-
+                const totalSizeInBytes = allFiles.reduce((acc, file) => {
+                    return acc + (file instanceof File ? file.size : 0);
+                }, 0);
                 // 3. Define o limite. O do Firebase é 100MB.
                 const limitInBytes = 100 * 1024 * 1024; // 100 MB
 
@@ -265,10 +266,17 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                     if (item instanceof File) formData.append("compliance", item);
                     else formData.append("compliance", item);
                 });
-                data.documentos.forEach((item: File | string) => {
-                    if (item instanceof File) formData.append("documentos", item);
-                    else formData.append("documentos", item);
+                console.log("Documentos sendo enviados:");
+                Object.entries(data.documentos).forEach(([tipo, arquivos]) => {
+                console.log(tipo, arquivos);
+                if (Array.isArray(arquivos)) {
+                    arquivos.forEach(item => {
+                    formData.append(`documentos[${tipo}]`, item);
+                    });
+                }
                 });
+
+
 
                 if (usuarioAtualID) {
                     formData.append("usuarioAtualID", usuarioAtualID);
