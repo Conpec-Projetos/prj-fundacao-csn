@@ -98,7 +98,7 @@ export default function TodosProjetosClient() {
                 let description = "Sem descrição.";
                 let ods: number[] = [];
                 let complianceUrl: string | null = null;
-                let additionalDocsUrls: {
+                const additionalDocsUrls: {
                     estatuto: string[];
                     ata: string[];
                     contrato: string[];
