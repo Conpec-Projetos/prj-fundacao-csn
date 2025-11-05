@@ -268,13 +268,17 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                 });
                 console.log("Documentos sendo enviados:");
                 Object.entries(data.documentos).forEach(([tipo, arquivos]) => {
-                console.log(tipo, arquivos);
                 if (Array.isArray(arquivos)) {
                     arquivos.forEach(item => {
-                    formData.append(`documentos[${tipo}]`, item);
+                    if (item instanceof File) {
+                        formData.append(`documentos[${tipo}][]`, item);
+                    } else if (typeof item === "string") {
+                        formData.append(`documentos[${tipo}][]`, item);
+                    }
                     });
                 }
                 });
+
 
 
 
