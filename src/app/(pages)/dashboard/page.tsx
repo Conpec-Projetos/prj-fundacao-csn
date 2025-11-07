@@ -23,6 +23,8 @@ type CorrecaoDadosGerais = {
   beneficiariosDiretos: number;
   beneficiariosIndiretos: number;
   ods: number[];
+  segmento: string;
+  lei: string;
 };
 
 type IdEscolhido = {
@@ -163,7 +165,7 @@ export default async function DashboardPage({
         lei: [] as { nome: string; qtdProjetos: number }[],
         segmento: [] as { nome: string; qtdProjetos: number }[],
         municipios: [...(acc.municipios ?? []), ...(curr.municipios ?? [])],
-        idProjects: [],
+        idProjects: [...(acc.idProjects ?? []), ...(curr.idProjects ?? [])], // nao precisamos desse campo, entao nao importa o que estiver aq
       };
 
       // Agora agrupa e soma os segmentos
@@ -249,6 +251,8 @@ export default async function DashboardPage({
       beneficiariosDiretos: 0,
       beneficiariosIndiretos: 0,
       ods: [],
+      lei: "",
+      segmento: ""
     };
 
     try {
@@ -268,6 +272,8 @@ export default async function DashboardPage({
 
           correcao.beneficiariosDiretos = data?.beneficiariosDiretos ?? 0;
           correcao.ods = data?.ods ?? [];
+          correcao.lei = data?.lei ?? ""
+          correcao.segmento = data?.segmento ?? ""
           return correcao;
         }
       }
@@ -282,23 +288,29 @@ export default async function DashboardPage({
         correcao.beneficiariosIndiretos =
           data?.beneficiariosIndireto ?? data?.beneficiariosIndiretos ?? 0;
         correcao.ods = data?.ods ?? [];
+        correcao.lei = data?.lei ?? ""
+        correcao.segmento = data?.segmento ?? ""
         return correcao;
       }
+      else{ // ESSE CENARIO PARECE NAO OCORRER, MAS POR PRECAUCAO: caso que possui o id do ultimo formulario (logo ja criou pelo menos um forms de acompanhamento) mas por algum motivo é o id do de cadastro que foi atualizado por ultimo
+        const refCadastro = doc(db, "forms-cadastro", id.id);
+        const cadastroSnapshot = await getDoc(refCadastro);
 
-      const refCadastro = doc(db, "forms-cadastro", id.id);
-      const cadastroSnapshot = await getDoc(refCadastro);
-
-      if (cadastroSnapshot.exists()) {
-        const data = cadastroSnapshot.data();
-        correcao.beneficiariosDiretos =
-          data?.beneficiariosDireto ?? data?.beneficiariosDiretos ?? 0;
-        correcao.ods = data?.ods ?? [];
-        return correcao;
+        if (cadastroSnapshot.exists()) {
+          const data = cadastroSnapshot.data();
+          correcao.beneficiariosDiretos =
+            data?.beneficiariosDireto ?? data?.beneficiariosDiretos ?? 0;
+          correcao.ods = data?.ods ?? [];
+          correcao.lei = data?.lei ?? ""
+          correcao.segmento = data?.segmento ?? ""
+          return correcao;
+        }
       }
+
 
       return correcao;
     } catch (error) {
-      console.error(`Erro ao buscar beneficiários para form ${id.id}:`, error);
+      console.error(`Erro ao buscar dados do forms com id ${id.id}:`, error);
       return correcao;
     }
   }
@@ -330,7 +342,6 @@ export default async function DashboardPage({
 
     // passando o projRepetidos por parametro para a soma
     let dadosSomados = somarDadosEstados(todosDados, projRepetidos);
-
     const projetosRepetidosIds = Array.from(projRepetidos.entries())
       .filter(([, info]) => info.repetiu)
       .map(([id]) => id);
@@ -343,30 +354,41 @@ export default async function DashboardPage({
         if (info.repetiu && projetosRepetidosData[id]) {
           const projetoData = projetosRepetidosData[id];
 
-          // ✅ CORREÇÃO: Aplicar todas as correções
+          // CORREÇÃO: Aplicar todas as correções
           dadosSomados.qtdProjetos -= info.vezes - 1;
-
-          // ✅ CORREÇÃO: Subtrair valor total (assumindo que está em projetoData.valorAprovado)
+          // CORREÇÃO: esses dados vem da colecao projeto
           const valorProjeto = projetoData.valorAprovado ?? 0;
-          console.log(valorProjeto);
           dadosSomados.valorTotal -= valorProjeto * (info.vezes - 1);
+          dadosSomados.qtdOrganizacoes -= projetoData.empresas.length * (info.vezes - 1)
 
-          // ✅ CORREÇÃO: Buscar e subtrair beneficiários
+          // CORREÇÃO: Buscar e subtrair dados que obtemos do forms de cadastro ou do de acompanhamento
           const escolhaDoId: IdEscolhido = {
             id: projetoData.ultimoFormulario,
             idEscolhido: "ultimoForms",
           };
-          if (escolhaDoId.id == undefined || 0 || null) {
+          if (escolhaDoId.id === undefined || escolhaDoId.id === "" || escolhaDoId.id === null) {
             escolhaDoId.id = id; // esse id é que esta na colecao dadosEstados para cada estado dentro do array idProjects que estamos percorrendo, e ele é id do projeto na colecao projetos
             escolhaDoId.idEscolhido = "projetos";
           }
           const correcao = await correcaoSoma(escolhaDoId);
-          dadosSomados.beneficiariosDireto -=
-            correcao.beneficiariosDiretos * (info.vezes - 1);
-          dadosSomados.beneficiariosIndireto -=
-            correcao.beneficiariosIndiretos * (info.vezes - 1);
+          dadosSomados.beneficiariosDireto -= correcao.beneficiariosDiretos * (info.vezes - 1);
+          dadosSomados.beneficiariosIndireto -= correcao.beneficiariosIndiretos * (info.vezes - 1);
+          // Correcao da lei em dadosSomados
+          for (const l of dadosSomados.lei) {
+            if (l.nome === correcao.lei) {
+              l.qtdProjetos -= (info.vezes - 1); 
+              break; // já achou a lei, pode sair do loop
+            }
+          }
 
-          // ✅ CORREÇÃO: Subtrair ODS
+          for (const seg of dadosSomados.segmento) {
+            if (seg.nome === correcao.segmento) {
+              seg.qtdProjetos -= (info.vezes - 1); 
+              break; // já achou a lei, pode sair do loop
+            }
+          }
+
+          // CORREÇÃO: Subtrair ODS
           if (dadosSomados.projetosODS && correcao.ods.length > 0) {
             dadosSomados.projetosODS = dadosSomados.projetosODS.map(
               (valor, index) => {
@@ -444,7 +466,6 @@ export default async function DashboardPage({
 
     array.forEach((d) => {
       d.ods.forEach((element) => {
-        console.log(element);
         projetosODS[element] += 1;
       });
     });
@@ -607,8 +628,8 @@ export default async function DashboardPage({
     ],
   };
 
+ // fazer um if pois so vai buscar dessa forma se nao houver proj repetidos 
   const leisSiglas = await getLeisSiglas();
-  //console.log("Leis Siglas:", leisSiglas);
   const segmentoNomes: string[] =
     dados?.segmento.map((item) => item.nome) ?? [];
   const segmentoValores: number[] =
@@ -618,7 +639,7 @@ export default async function DashboardPage({
     dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
   const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
 
-  console.log(dados);
+  // console.log(dados);
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">

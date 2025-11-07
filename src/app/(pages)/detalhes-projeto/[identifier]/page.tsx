@@ -119,6 +119,8 @@ const formatExternalUrl = (url: string | undefined | null): string | undefined =
 };
 
 export default function ProjectDetailsPage() {
+  const [ativo, setAtivo] = useState<boolean>(false);
+  const [showActivationConfirm, setShowActivationConfirm] = useState<boolean>(false);
   const router = useRouter();
   const params = useParams();
   const identifier = params.identifier as string;
@@ -190,6 +192,10 @@ export default function ProjectDetailsPage() {
           setIsLoading(false);
           return;
         }
+        
+        const data = projetoSnap.data();
+        setAtivo(data.ativo === true); // define se está ativo
+          
 
         const projetoData = projetoSnap.data() as ProjectData;
 
@@ -567,6 +573,22 @@ export default function ProjectDetailsPage() {
     }
   };
 
+  const handleActive = async () => {
+    if (!identifier) return;
+
+    const novoValor = !ativo; // calcula o novo estado antes, pois o useSate é assincrono e nao muda imediatamente
+    setAtivo(novoValor);
+
+    try {
+      await updateDoc(doc(db, "projetos", identifier), { ativo: novoValor });
+      toast.success(
+        novoValor ? "Projeto ativado com sucesso!" : "Projeto desativado com sucesso!"
+      );
+    } catch (error) {
+      toast.error("Erro ao atualizar valor de 'ativo'.");
+      console.log(error);
+    }
+  };
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-screen text-xl dark:bg-blue-fcsn dark:text-white-off">Carregando dados do projeto...</div>;
@@ -1032,7 +1054,7 @@ export default function ProjectDetailsPage() {
                 </button>
                 <button
                   onClick={() => setShowDocumentModal(true)}
-                  className="bg-blue-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-blue-fcsn3 transition-colors"
+                  className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-blue-fcsn3 transition-colors"
                 >
                   ADICIONAR DOCUMENTOS
                 </button>
@@ -1041,6 +1063,12 @@ export default function ProjectDetailsPage() {
                   className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-pink-light2 transition-colors"
                   >
                   VISUALIZAR DOCUMENTOS
+                </button>
+                <button 
+                  onClick={() =>  setShowActivationConfirm(true)} 
+                  className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-pink-light2 transition-colors"
+                  >
+                  ATIVAR/DESATIVAR
                 </button>
               </div>
               <div className="flex justify-center mt-2">
@@ -1117,6 +1145,31 @@ export default function ProjectDetailsPage() {
                   className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
                 >
                   Sim, Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showActivationConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg text-center mx-4">
+              <h2 className="text-xl font-bold text-black mb-4">Confirmar Ativação</h2>
+              <p className="text-gray-700 mb-6">
+                Atualmente esse projeto está {ativo ? "ativo" : "inativo"}. Tem certeza que deseja {ativo ? "desativar" : "ativar"} este projeto? 
+              </p>
+              <div className="flex justify-center gap-4">
+                <button 
+                  onClick={() => setShowActivationConfirm(false)} 
+                  className="bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleActive} 
+                  className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                >
+                  Sim, {ativo ? "desativar" : "ativar"}
                 </button>
               </div>
             </div>

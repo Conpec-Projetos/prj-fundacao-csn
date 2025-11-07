@@ -262,15 +262,16 @@ type IdEscolhido = {
         if (info.repetiu && projetosRepetidosData[id]) {
           const projetoData = projetosRepetidosData[id];
 
-          // ✅ CORREÇÃO: Aplicar todas as correções
+          // CORREÇÃO: Aplicar todas as correções
           dadosSomados.qtdProjetos -= info.vezes - 1;
 
-          // ✅ CORREÇÃO: Subtrair valor total (assumindo que está em projetoData.valorAprovado)
+          // CORREÇÃO: Subtrair valor total (assumindo que está em projetoData.valorAprovado)
           const valorProjeto = projetoData.valorAprovado ?? 0;
           console.log(valorProjeto);
           dadosSomados.valorTotal -= valorProjeto * (info.vezes - 1);
+          dadosSomados.qtdOrganizacoes -= projetoData.empresas.length * (info.vezes - 1)
 
-          // ✅ CORREÇÃO: Buscar e subtrair beneficiários
+          // CORREÇÃO: Buscar e subtrair beneficiários
           const escolhaDoId: IdEscolhido = {
             id: projetoData.ultimoFormulario,
             idEscolhido: "ultimoForms",
@@ -285,7 +286,7 @@ type IdEscolhido = {
           dadosSomados.beneficiariosIndireto -=
             correcao.beneficiariosIndiretos * (info.vezes - 1);
 
-          // ✅ CORREÇÃO: Subtrair ODS
+          // CORREÇÃO: Subtrair ODS
           if (dadosSomados.projetosODS && correcao.ods.length > 0) {
             dadosSomados.projetosODS = dadosSomados.projetosODS.map(
               (valor, index) => {
