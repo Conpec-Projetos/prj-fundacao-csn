@@ -12,6 +12,7 @@ import { db } from "@/firebase/firebase-config";
 import { dadosEstados, dadosProjeto } from "@/firebase/schema/entities";
 import DashboardClientArea from "@/components/dashboard/dashboardAreaClient";
 import DashboardContent from "@/components/dashboard/dashboardContent";
+import { Projetos } from "functions/src/tipos/entities";
 
 //interface para o searchParams
 interface DashboardPageProps {
@@ -28,7 +29,7 @@ type CorrecaoDadosGerais = {
 };
 
 type IdEscolhido = {
-  id: string;
+  id: string | null;
   idEscolhido: string; // se for do ultimoforms = ultimoForms se for do de projetos = projetos
 };
 
@@ -212,8 +213,8 @@ export default async function DashboardPage({
 
   async function buscarProjetosEmLote(
     projetoIds: string[]
-  ): Promise<Record<string, any>> {
-    const resultado: Record<string, any> = {};
+  ): Promise<Record<string, Projetos>> {
+    const resultado: Record<string, Projetos> = {};
 
     // Se não há IDs, retorna objeto vazio
     if (projetoIds.length === 0) {
@@ -234,7 +235,7 @@ export default async function DashboardPage({
 
       const snapshot = await getDocs(projetosQuery);
       snapshot.forEach((doc) => {
-        resultado[doc.id] = doc.data();
+        resultado[doc.id] = doc.data() as Projetos;
       });
 
       // Pequena pausa para evitar limites do Firestore
@@ -278,7 +279,7 @@ export default async function DashboardPage({
         }
       }
       // ✅ CORREÇÃO: Tratar campos inconsistentes entre formulários
-      const refAcompanhamento = doc(db, "forms-acompanhamento", id.id);
+      const refAcompanhamento = doc(db, "forms-acompanhamento", id.id!);
       const acompanhamentoSnapshot = await getDoc(refAcompanhamento);
 
       if (acompanhamentoSnapshot.exists()) {
@@ -293,7 +294,7 @@ export default async function DashboardPage({
         return correcao;
       }
       else{ // ESSE CENARIO PARECE NAO OCORRER, MAS POR PRECAUCAO: caso que possui o id do ultimo formulario (logo ja criou pelo menos um forms de acompanhamento) mas por algum motivo é o id do de cadastro que foi atualizado por ultimo
-        const refCadastro = doc(db, "forms-cadastro", id.id);
+        const refCadastro = doc(db, "forms-cadastro", id.id!);
         const cadastroSnapshot = await getDoc(refCadastro);
 
         if (cadastroSnapshot.exists()) {
@@ -341,7 +342,7 @@ export default async function DashboardPage({
     const projRepetidos = new Map<string, ProjetoInfo>();
 
     // passando o projRepetidos por parametro para a soma
-    let dadosSomados = somarDadosEstados(todosDados, projRepetidos);
+    const dadosSomados = somarDadosEstados(todosDados, projRepetidos);
     const projetosRepetidosIds = Array.from(projRepetidos.entries())
       .filter(([, info]) => info.repetiu)
       .map(([id]) => id);
@@ -363,10 +364,10 @@ export default async function DashboardPage({
 
           // CORREÇÃO: Buscar e subtrair dados que obtemos do forms de cadastro ou do de acompanhamento
           const escolhaDoId: IdEscolhido = {
-            id: projetoData.ultimoFormulario,
+            id: projetoData.ultimoFormulario ?? null, // se nao existir sera null
             idEscolhido: "ultimoForms",
           };
-          if (escolhaDoId.id === undefined || escolhaDoId.id === "" || escolhaDoId.id === null) {
+          if ( escolhaDoId.id === null|| escolhaDoId.id === "" ||escolhaDoId.id === undefined ) {
             escolhaDoId.id = id; // esse id é que esta na colecao dadosEstados para cada estado dentro do array idProjects que estamos percorrendo, e ele é id do projeto na colecao projetos
             escolhaDoId.idEscolhido = "projetos";
           }

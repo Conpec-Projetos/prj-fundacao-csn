@@ -2,10 +2,12 @@ import AdminHomeClient from "@/components/homeAdmin/homeClient";
 import { db } from "@/firebase/firebase-config";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { dadosEstados } from "@/firebase/schema/entities";
+import { Projetos } from "functions/src/tipos/entities";
 
 export const dynamic = "force-dynamic"
 
 type ProjetoInfo = { id: string; repetiu: boolean; vezes: number };
+
 
 type CorrecaoDadosGerais = {
   beneficiariosDiretos: number;
@@ -14,7 +16,7 @@ type CorrecaoDadosGerais = {
 };
 
 type IdEscolhido = {
-  id: string;
+  id: string | null;
   idEscolhido: string; // se for do ultimoforms = ultimoForms se for do de projetos = projetos
 };
 
@@ -129,9 +131,8 @@ type IdEscolhido = {
 
   async function buscarProjetosEmLote(
     projetoIds: string[]
-  ): Promise<Record<string, any>> {
-    const resultado: Record<string, any> = {};
-
+  ): Promise<Record<string, Projetos>> {
+    const resultado: Record<string, Projetos> = {};
     // Se não há IDs, retorna objeto vazio
     if (projetoIds.length === 0) {
       return resultado;
@@ -151,7 +152,7 @@ type IdEscolhido = {
 
       const snapshot = await getDocs(projetosQuery);
       snapshot.forEach((doc) => {
-        resultado[doc.id] = doc.data();
+        resultado[doc.id] = doc.data() as Projetos;
       });
 
       // Pequena pausa para evitar limites do Firestore
@@ -181,7 +182,7 @@ type IdEscolhido = {
         const cadastroSnapshot = await getDocs(formCadastro);
 
         if (!cadastroSnapshot.empty) {
-          // ✅ CORREÇÃO: Acessar o primeiro documento corretamente
+          // CORREÇÃO: Acessar o primeiro documento corretamente
           const doc = cadastroSnapshot.docs[0];
           const data = doc.data();
 
@@ -190,8 +191,8 @@ type IdEscolhido = {
           return correcao;
         }
       }
-      // ✅ CORREÇÃO: Tratar campos inconsistentes entre formulários
-      const refAcompanhamento = doc(db, "forms-acompanhamento", id.id);
+      // CORREÇÃO: Tratar campos inconsistentes entre formulários
+      const refAcompanhamento = doc(db, "forms-acompanhamento", id.id!); // temos certeza que vai existir
       const acompanhamentoSnapshot = await getDoc(refAcompanhamento);
 
       if (acompanhamentoSnapshot.exists()) {
@@ -204,7 +205,7 @@ type IdEscolhido = {
         return correcao;
       }
 
-      const refCadastro = doc(db, "forms-cadastro", id.id);
+      const refCadastro = doc(db, "forms-cadastro", id.id!); // temos certeza que vai existir
       const cadastroSnapshot = await getDoc(refCadastro);
 
       if (cadastroSnapshot.exists()) {
@@ -248,7 +249,7 @@ type IdEscolhido = {
     const projRepetidos = new Map<string, ProjetoInfo>();
 
     // passando o projRepetidos por parametro para a soma
-    let dadosSomados = somarDadosEstados(todosDados, projRepetidos);
+    const dadosSomados = somarDadosEstados(todosDados, projRepetidos);
 
     const projetosRepetidosIds = Array.from(projRepetidos.entries())
       .filter(([, info]) => info.repetiu)
@@ -273,10 +274,10 @@ type IdEscolhido = {
 
           // CORREÇÃO: Buscar e subtrair beneficiários
           const escolhaDoId: IdEscolhido = {
-            id: projetoData.ultimoFormulario,
+            id: projetoData.ultimoFormulario ?? null,
             idEscolhido: "ultimoForms",
           };
-          if (escolhaDoId.id == undefined || 0 || null) {
+          if ( escolhaDoId.id === null|| escolhaDoId.id === "" ||escolhaDoId.id === undefined ) {
             escolhaDoId.id = id; // esse id é que esta na colecao dadosEstados para cada estado dentro do array idProjects que estamos percorrendo, e ele é id do projeto na colecao projetos
             escolhaDoId.idEscolhido = "projetos";
           }
