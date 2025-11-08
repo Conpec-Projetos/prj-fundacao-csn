@@ -1,29 +1,49 @@
 import AdminHomeClient from "@/components/homeAdmin/homeClient";
 import { db } from "@/firebase/firebase-config";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { dadosEstados } from "@/firebase/schema/entities";
+import { Projetos } from "functions/src/tipos/entities";
 
 export const dynamic = "force-dynamic"
 
-function somarDadosEstados(array: dadosEstados[]): dadosEstados {
-    const projetosUnicos = new Set<string>(); // fazemos isso pois ao inserir no firebase ha duplicacoes (ex: se o mesmo projeto atua em dois estados entao no doc de cada estado estará a informacao desse projeto em cada um e isso da duplicacao na soma)
+type ProjetoInfo = { id: string; repetiu: boolean; vezes: number };
+
+
+type CorrecaoDadosGerais = {
+  beneficiariosDiretos: number;
+  beneficiariosIndiretos: number;
+  ods: number[];
+};
+
+type IdEscolhido = {
+  id: string | null;
+  idEscolhido: string; // se for do ultimoforms = ultimoForms se for do de projetos = projetos
+};
+
+  function somarDadosEstados(
+    array: dadosEstados[],
+    projRepetidos: Map<string, ProjetoInfo>
+  ): dadosEstados {
     const maiorAporteGlobal = array
       .map((d) => d.maiorAporte)
-      .reduce((max, curr) => {
-        if (!max || (curr && curr.valorAportado > max.valorAportado)) {
-          return curr;
-        }
-        return max;
-      }, null as { nome: string; valorAportado: number } | null) ?? {
+      .reduce(
+        (max, curr) => {
+          if (!max || (curr && curr.valorAportado > max.valorAportado)) {
+            return curr;
+          }
+          return max;
+        },
+        null as { nome: string; valorAportado: number } | null
+      ) ?? {
       nome: "",
       valorAportado: 0,
     };
-  
+
     const initialValue: dadosEstados = {
       nomeEstado: "Todos",
       valorTotal: 0,
       maiorAporte: maiorAporteGlobal,
-      qtdProjetos: 0,  // usaremos isso
+      qtdProjetos: 0,
       beneficiariosDireto: 0,
       beneficiariosIndireto: 0,
       qtdOrganizacoes: 0,
@@ -32,80 +52,267 @@ function somarDadosEstados(array: dadosEstados[]): dadosEstados {
       segmento: [],
       municipios: [],
       idProjects: [],
-      projetosODS: Array(17).fill(0), // ✅ inicializa aqui
     };
-  
+
     return array.reduce((acc, curr) => {
-    // Soma somente projetos únicos
-    if (curr.idProjects) {
-      curr.idProjects.forEach((idProj) => {
-        if (!projetosUnicos.has(idProj)) {
-          projetosUnicos.add(idProj);
-
-          acc.valorTotal += curr.valorTotal ?? 0;
-          acc.beneficiariosDireto += curr.beneficiariosDireto ?? 0;
-          acc.beneficiariosIndireto += curr.beneficiariosIndireto ?? 0;
-          acc.qtdOrganizacoes += curr.qtdOrganizacoes ?? 0;
-          acc.qtdMunicipios += curr.qtdMunicipios ?? 0;
-          acc.qtdProjetos += curr.qtdProjetos ?? 0;
-
-          // Soma ODS
-          if (curr.projetosODS) {
-            curr.projetosODS?.forEach((valor, i) => {
-              acc.projetosODS = acc.projetosODS ?? Array(17).fill(0); // garante que existe
-              acc.projetosODS[i] = (acc.projetosODS[i] ?? 0) + valor;
-            });
-          }
-
-          // Acumula municípios
-          acc.municipios.push(...(curr.municipios ?? []));
-
-          // Acumula segmentos
-          curr.segmento?.forEach((seg) => {
-            const idx = acc.segmento.findIndex((s) => s.nome === seg.nome);
-            if (idx >= 0) acc.segmento[idx].qtdProjetos += seg.qtdProjetos;
-            else acc.segmento.push({ ...seg });
-          });
-
-          // Acumula leis
-          curr.lei?.forEach((lei) => {
-            const idx = acc.lei.findIndex((l) => l.nome === lei.nome);
-            if (idx >= 0) acc.lei[idx].qtdProjetos += lei.qtdProjetos;
-            else acc.lei.push({ ...lei });
-          });
+      for (const id of curr.idProjects ?? []) {
+        if (projRepetidos.has(id)) {
+          const info = projRepetidos.get(id)!;
+          info.vezes += 1;
+          info.repetiu = true;
+        } else {
+          projRepetidos.set(id, { id, repetiu: false, vezes: 1 });
         }
-      });
+      }
+      // Soma dos valores escalares
+
+      const novoAcc = {
+        nomeEstado: "Todos",
+        valorTotal: (acc.valorTotal ?? 0) + (curr.valorTotal ?? 0),
+        maiorAporte: maiorAporteGlobal,
+        qtdProjetos: (acc.qtdProjetos ?? 0) + (curr.qtdProjetos ?? 0),
+        beneficiariosDireto:
+          (acc.beneficiariosDireto ?? 0) + (curr.beneficiariosDireto ?? 0),
+        beneficiariosIndireto:
+          (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
+        qtdOrganizacoes:
+          (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
+        qtdMunicipios: (acc.qtdMunicipios ?? 0) + (curr.qtdMunicipios ?? 0),
+        projetosODS: acc.projetosODS
+          ? acc.projetosODS.map((v, i) => v + (curr.projetosODS?.[i] ?? 0))
+          : (curr.projetosODS ?? []),
+        lei: [] as { nome: string; qtdProjetos: number }[],
+        segmento: [] as { nome: string; qtdProjetos: number }[],
+        municipios: [...(acc.municipios ?? []), ...(curr.municipios ?? [])],
+        idProjects: [],
+      };
+
+      // Agora agrupa e soma os segmentos
+
+      const segmentosCombinados = [
+        ...(acc.segmento || []),
+        ...(curr.segmento || []),
+      ];
+      const leiCombinada = [...(acc.lei || []), ...(curr.lei || [])];
+
+      const segmentoAgrupado = segmentosCombinados.reduce(
+        (segAcc, segCurr) => {
+          const index = segAcc.findIndex((item) => item.nome === segCurr.nome);
+          if (index >= 0) {
+            segAcc[index].qtdProjetos += segCurr.qtdProjetos || 0;
+          } else {
+            segAcc.push({ ...segCurr });
+          }
+          return segAcc;
+        },
+        [] as { nome: string; qtdProjetos: number }[]
+      );
+
+      novoAcc.segmento = segmentoAgrupado;
+
+      const leiAgrupada = leiCombinada.reduce(
+        (leiAcc, leiCurr) => {
+          const index = leiAcc.findIndex((item) => item.nome === leiCurr.nome);
+          if (index >= 0) {
+            leiAcc[index].qtdProjetos += leiCurr.qtdProjetos || 0;
+          } else {
+            leiAcc.push({ ...leiCurr });
+          }
+          return leiAcc;
+        },
+        [] as { nome: string; qtdProjetos: number }[]
+      );
+
+      novoAcc.lei = leiAgrupada;
+
+      return novoAcc;
+    }, initialValue);
+  }
+
+  async function buscarProjetosEmLote(
+    projetoIds: string[]
+  ): Promise<Record<string, Projetos>> {
+    const resultado: Record<string, Projetos> = {};
+    // Se não há IDs, retorna objeto vazio
+    if (projetoIds.length === 0) {
+      return resultado;
     }
 
-    return acc;
-  }, initialValue);
-}
+    // Firestore limita a 10 documentos por consulta com "in"
+    const batchSize = 10;
 
-async function buscarDadosGerais(): Promise<{
-  dados: dadosEstados;
-  estadosAtendidos: number;
-}> {
-  const consulta = query(
-    collection(db, "dadosEstados"),
-    where("qtdProjetos", "!=", 0)
-  );
+    for (let i = 0; i < projetoIds.length; i += batchSize) {
+      const batchIds = projetoIds.slice(i, i + batchSize);
 
-  const consultaSnapshot = await getDocs(consulta);
-  const todosDados: dadosEstados[] = [];
+      // ✅ CORREÇÃO: batchIds é um array de strings
+      const projetosQuery = query(
+        collection(db, "projetos"),
+        where("__name__", "in", batchIds)
+      );
 
-  consultaSnapshot.forEach((doc) => {
-    const data = doc.data() as dadosEstados;
-    todosDados.push(data);
-  });
+      const snapshot = await getDocs(projetosQuery);
+      snapshot.forEach((doc) => {
+        resultado[doc.id] = doc.data() as Projetos;
+      });
 
-  const dadosSomados = somarDadosEstados(todosDados);
-  const totalEstadosAtendidos = todosDados.length;
+      // Pequena pausa para evitar limites do Firestore
+      if (i + batchSize < projetoIds.length) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
 
-  return {
-    dados: dadosSomados,
-    estadosAtendidos: totalEstadosAtendidos,
-  };
-} 
+    return resultado;
+  }
+
+  async function correcaoSoma(id: IdEscolhido): Promise<CorrecaoDadosGerais> {
+    const correcao: CorrecaoDadosGerais = {
+      beneficiariosDiretos: 0,
+      beneficiariosIndiretos: 0,
+      ods: [],
+    };
+
+    try {
+      // como esse id é do ultimo formulario ele pode nao existir, pois so é criado se ja preenchemos o forms de acompanhamento
+      if (id.idEscolhido == "projetos") {
+        // ou seja so tem forms de cadastro obrigatoriamente
+        const formCadastro = query(
+          collection(db, "forms-cadastro"),
+          where("projetoID", "==", id.id)
+        );
+        const cadastroSnapshot = await getDocs(formCadastro);
+
+        if (!cadastroSnapshot.empty) {
+          // CORREÇÃO: Acessar o primeiro documento corretamente
+          const doc = cadastroSnapshot.docs[0];
+          const data = doc.data();
+
+          correcao.beneficiariosDiretos = data?.beneficiariosDiretos ?? 0;
+          correcao.ods = data?.ods ?? [];
+          return correcao;
+        }
+      }
+      // CORREÇÃO: Tratar campos inconsistentes entre formulários
+      const refAcompanhamento = doc(db, "forms-acompanhamento", id.id!); // temos certeza que vai existir
+      const acompanhamentoSnapshot = await getDoc(refAcompanhamento);
+
+      if (acompanhamentoSnapshot.exists()) {
+        const data = acompanhamentoSnapshot.data();
+        correcao.beneficiariosDiretos =
+          data?.beneficiariosDireto ?? data?.beneficiariosDiretos ?? 0;
+        correcao.beneficiariosIndiretos =
+          data?.beneficiariosIndireto ?? data?.beneficiariosIndiretos ?? 0;
+        correcao.ods = data?.ods ?? [];
+        return correcao;
+      }
+
+      const refCadastro = doc(db, "forms-cadastro", id.id!); // temos certeza que vai existir
+      const cadastroSnapshot = await getDoc(refCadastro);
+
+      if (cadastroSnapshot.exists()) {
+        const data = cadastroSnapshot.data();
+        correcao.beneficiariosDiretos =
+          data?.beneficiariosDireto ?? data?.beneficiariosDiretos ?? 0;
+        correcao.ods = data?.ods ?? [];
+        return correcao;
+      }
+
+      return correcao;
+    } catch (error) {
+      console.error(`Erro ao buscar beneficiários para form ${id.id}:`, error);
+      return correcao;
+    }
+  }
+
+  async function buscarDadosGerais(): Promise<{
+    dados: dadosEstados;
+    dadosMapa: Record<string, number>;
+    estadosAtendidos: number;
+  }> {
+    const consulta = query(
+      collection(db, "dadosEstados"),
+      where("qtdProjetos", "!=", 0)
+    );
+
+    const consultaSnapshot = await getDocs(consulta);
+    const todosDados: dadosEstados[] = [];
+    const dadosMapaTemp: Record<string, number> = {};
+
+    consultaSnapshot.forEach((doc) => {
+      const data = doc.data() as dadosEstados;
+      todosDados.push(data);
+      if (data.nomeEstado) {
+        dadosMapaTemp[data.nomeEstado] = data.qtdProjetos;
+      }
+    });
+
+    // inicialização
+    const projRepetidos = new Map<string, ProjetoInfo>();
+
+    // passando o projRepetidos por parametro para a soma
+    const dadosSomados = somarDadosEstados(todosDados, projRepetidos);
+
+    const projetosRepetidosIds = Array.from(projRepetidos.entries())
+      .filter(([, info]) => info.repetiu)
+      .map(([id]) => id);
+
+    if (projetosRepetidosIds.length > 0) {
+      const projetosRepetidosData =
+        await buscarProjetosEmLote(projetosRepetidosIds);
+
+      for (const [id, info] of projRepetidos) {
+        if (info.repetiu && projetosRepetidosData[id]) {
+          const projetoData = projetosRepetidosData[id];
+
+          // CORREÇÃO: Aplicar todas as correções
+          dadosSomados.qtdProjetos -= info.vezes - 1;
+
+          // CORREÇÃO: Subtrair valor total (assumindo que está em projetoData.valorAprovado)
+          const valorProjeto = projetoData.valorAprovado ?? 0;
+          console.log(valorProjeto);
+          dadosSomados.valorTotal -= valorProjeto * (info.vezes - 1);
+          dadosSomados.qtdOrganizacoes -= projetoData.empresas.length * (info.vezes - 1)
+
+          // CORREÇÃO: Buscar e subtrair beneficiários
+          const escolhaDoId: IdEscolhido = {
+            id: projetoData.ultimoFormulario ?? null,
+            idEscolhido: "ultimoForms",
+          };
+          if ( escolhaDoId.id === null|| escolhaDoId.id === "" ||escolhaDoId.id === undefined ) {
+            escolhaDoId.id = id; // esse id é que esta na colecao dadosEstados para cada estado dentro do array idProjects que estamos percorrendo, e ele é id do projeto na colecao projetos
+            escolhaDoId.idEscolhido = "projetos";
+          }
+          const correcao = await correcaoSoma(escolhaDoId);
+          dadosSomados.beneficiariosDireto -=
+            correcao.beneficiariosDiretos * (info.vezes - 1);
+          dadosSomados.beneficiariosIndireto -=
+            correcao.beneficiariosIndiretos * (info.vezes - 1);
+
+          // CORREÇÃO: Subtrair ODS
+          if (dadosSomados.projetosODS && correcao.ods.length > 0) {
+            dadosSomados.projetosODS = dadosSomados.projetosODS.map(
+              (valor, index) => {
+                // Se este ODS está no projeto, subtrai 1 para cada repetição
+                const shouldSubtract =
+                  correcao.ods.includes(index + 1) ||
+                  correcao.ods.includes(index);
+                return shouldSubtract
+                  ? Math.max(0, valor - (info.vezes - 1))
+                  : valor;
+              }
+            );
+          }
+        }
+      }
+    }
+
+    const totalEstadosAtendidos = todosDados.length;
+
+    return {
+      dados: dadosSomados,
+      dadosMapa: dadosMapaTemp,
+      estadosAtendidos: totalEstadosAtendidos,
+    };
+  }
 
 export default async function AdminHomePage() {
   const dadosGerais = await buscarDadosGerais()
