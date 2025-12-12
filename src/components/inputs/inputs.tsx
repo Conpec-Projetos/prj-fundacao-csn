@@ -209,8 +209,7 @@ export const LeiSelect: React.FC<LeiSelectProps> = ({
     const caixaRef = useRef<HTMLDivElement>(null);
     const [search, setSearch] = useState("");
 
-    // // Lei selecionada (objeto)
-    // const selectedLei = list.find(lei => lei.id === value);
+    // // Lei selecionada (objeto) - o valor que sera armazenado no banco vai ser o id
     const selectedLei = list.find(lei => lei.nome === value);
     // Filtro por nome OU sigla
     const filtrados = list.filter(lei =>

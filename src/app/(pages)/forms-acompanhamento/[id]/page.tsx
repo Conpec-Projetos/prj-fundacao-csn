@@ -22,7 +22,6 @@ interface ProjetoInfo {
 async function getProjetoData(projetoID: string): Promise<{ initialData: Partial<FormsAcompanhamentoFormFields>; projetoInfo: ProjetoInfo }> {
     let initialData: Partial<FormsAcompanhamentoFormFields> = {};
     let projetoInfo: ProjetoInfo = {};
-    const leiList: Leis[] = await getLeisFromDB();
 
     // 1. Busca sempre o formulário de cadastro original para as informações estáticas
     const cadastroQuery = query(collection(db, "forms-cadastro"), where("projetoID", "==", projetoID), limit(1));
@@ -52,6 +51,7 @@ async function getProjetoData(projetoID: string): Promise<{ initialData: Partial
     const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
 
     if (!acompanhamentoSnapshot.empty) {
+        // const leiList: Leis[] = await getLeisFromDB();
         // Se já existe um acompanhamento, usa seus dados
         const data = acompanhamentoSnapshot.docs[0].data() as formsAcompanhamentoDados;
         const odsBooleans = new Array(odsList.length).fill(false);
@@ -63,7 +63,7 @@ async function getProjetoData(projetoID: string): Promise<{ initialData: Partial
             instituicao: data.instituicao,
             descricao: data.descricao,
             segmento: segmentoList.findIndex(s => s.nome === data.segmento),
-            lei: leiList.findIndex(l => l.nome === data.lei),
+            lei: data.lei,
             positivos: data.pontosPositivos,
             negativos: data.pontosNegativos,
             atencao: data.pontosAtencao,
@@ -107,7 +107,7 @@ async function getProjetoData(projetoID: string): Promise<{ initialData: Partial
             instituicao: cadastroData.instituicao,
             descricao: cadastroData.descricao,
             segmento: segmentoList.findIndex(s => s.nome === cadastroData.segmento),
-            lei: leiList.findIndex(l => l.nome === cadastroData.lei),
+            lei: cadastroData.lei,
             estados: cadastroData.estados,
             municipios: cadastroData.municipios,
             dataComeco: cadastroData.dataInicial,

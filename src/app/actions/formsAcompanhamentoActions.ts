@@ -56,7 +56,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
             instituicao: data.instituicao,
             descricao: data.descricao,
             segmento: getItemNome(data.segmento, segmentoList),
-            lei: getItemNome(data.lei, leiList),
+            lei: data.lei,
             pontosPositivos: data.positivos,
             pontosNegativos: data.negativos,
             pontosAtencao: data.atencao,
@@ -91,7 +91,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
             links: data.links,
             contrapartidasExecutadas: data.contrapartidasExecutadas,
         };
-
+        console.log('acompanhamento: ' , uploadFirestore)
         const formsAcompanhamentoRef = await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
 
         const projetoDocRef = doc(db, "projetos", projetoID);
@@ -99,7 +99,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
             instituicao: data.instituicao,
             estados: data.estados, // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
             municipios: data.municipios,
-            lei: getItemNome(data.lei, leiList),
+            lei: data.lei,
             ultimoFormulario: formsAcompanhamentoRef.id,
         });
 

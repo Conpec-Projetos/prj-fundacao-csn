@@ -17,6 +17,7 @@ import {
 import { db } from "@/firebase/firebase-config";
 import { ambitoList, odsList, segmentoList } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields, formsAcompanhamentoSchema } from "@/lib/schemas";
+import { getLeisFromDB, Leis } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { upload as vercelUpload } from "@vercel/blob/client";
 import { City, State } from "country-state-city";
@@ -34,7 +35,7 @@ interface AcompanhamentoFormProps {
 
 export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialData }: AcompanhamentoFormProps) {
     const router = useRouter();
-    const [leiList, setLeiList] = useState<string[]>([]);
+    const [leiList, setLeiList] = useState<Leis[]>([]);
 
     const {
         register,
@@ -88,20 +89,13 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
         }
     };
 
-    // fetch leis from firebase
     useEffect(() => {
-        const fetchLeis = async () => {
-            const snapshot = await getDocs(collection(db, "leis"));
-            const leisFromDB: string[] = [];
-            snapshot.forEach(doc => {
-                const data = doc.data() as { nome: string; sigla: string };
-                if (data.nome) {
-                    leisFromDB.push(data.nome);
-                }
-            });
-            setLeiList(leisFromDB);
-        };
-        fetchLeis();
+    async function carregarLeis() {
+        const leis = await getLeisFromDB();
+        setLeiList(leis);
+    }
+
+    carregarLeis();
     }, []);
 
     const onSubmit: SubmitHandler<FormsAcompanhamentoFormFields> = async data => {
@@ -198,7 +192,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                         <LeiSelect
                             text="Lei de incentivo do projeto:"
                             list={leiList}
-                            value={field.value}
+                            value={field.value ?? null}
                             isNotMandatory={false}
                             onChange={field.onChange}
                             error={error}

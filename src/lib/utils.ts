@@ -156,7 +156,7 @@ export type Leis = {
 export type LeiSelectProps = {
   text: string;
   list: Leis[];
-  value: string | null; // id da lei selecionada
+  value: string | null; // id (que é string) da lei selecionada
   onChange: (id: string) => void;
   error?: any;
   isNotMandatory?: boolean;

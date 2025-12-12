@@ -512,6 +512,25 @@ async function buscarArquivos() {
 
     window.open(url, "_blank");
   };
+  const handleDownloadFile = (arquivo: string) => {
+  const url = normalizeStoredUrl(arquivo);
+
+  if (!url) {
+    console.error("URL inválida:", arquivo);
+    return;
+  }
+
+  const link = document.createElement("a");
+  link.href = url;
+
+  // Nome sugerido (opcional)
+  link.download = url.split("/").pop() || "arquivo";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 
 //-------------------------------------------------------------------------//
 
@@ -1253,12 +1272,20 @@ async function buscarArquivos() {
                       <span className="text-black">{arq.campo}</span>
                     </div>
 
+                    <div className="flex flex-row space-x-2.5">
                     <button
                       onClick={() => handleOpenFile(arq.url)}
                       className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
                     >
+                      Abrir
+                    </button>
+                    <button
+                      onClick={() => handleDownloadFile(arq.url)}
+                      className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
+                    >
                       Baixar
                     </button>
+                    </div>
                   </div>
                 ))}
 

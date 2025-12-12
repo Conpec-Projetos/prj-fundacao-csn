@@ -176,11 +176,6 @@ export const segmentoList: Segmento[] = [
   { id: 4, nome: "Saúde" },
 ];
 
-export interface Lei {
-  nome: string;
-  sigla: string;
-}
-
 export interface Publico {
   id: number;
   nome: string;

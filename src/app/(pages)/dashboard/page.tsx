@@ -63,19 +63,26 @@ const estadosSiglas: { [key: string]: string } = {
   "Tocantins": "TO",
 };
 
+
 async function getLeisSiglas(): Promise<{ [key: string]: string }> {
   const snapshot = await getDocs(collection(db, "leis"));
   const map: { [nome: string]: string } = {};
 
   snapshot.forEach((doc) => {
-    const data = doc.data() as { nome: string; sigla: string }; // mudar para tipo lei
-    if (data.nome && data.sigla) {
-      map[data.nome] = data.sigla;
+    const data = doc.data() as { nome: string; sigla?: string };
+
+    if (!data.sigla) {
+      console.warn("Lei sem sigla detectada:", data.nome);
+      return;
     }
+
+    map[data.nome] = data.sigla;
   });
 
+  console.log("Mapa final de leis:", map);
   return map;
 }
+
 
 export default async function DashboardPage({
   searchParams,
@@ -639,8 +646,9 @@ export default async function DashboardPage({
   const leiSiglas: string[] =
     dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
   const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
-  console.log(dados)
-   console.log(leiSiglas);
+  console.log('dados: ',dados)
+   console.log('siglas: ', leiSiglas);
+   console.log('nomes: ', leiNomes);
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">

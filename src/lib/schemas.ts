@@ -83,7 +83,7 @@ export const formsAcompanhamentoSchema = z
             .number({ required_error: "A seleção do segmento é obrigatória." })
             .min(0, "A seleção do segmento é obrigatória."),
         lei: z.coerce
-            .number({ required_error: "A seleção da lei é obrigatória." })
+            .string()
             .min(0, "A seleção da lei é obrigatória."),
         positivos: z.string().max(500, "Máximo de 500 caracteres permitidos").optional(),
         negativos: z.string().max(500, "Máximo de 500 caracteres permitidos").optional(),
