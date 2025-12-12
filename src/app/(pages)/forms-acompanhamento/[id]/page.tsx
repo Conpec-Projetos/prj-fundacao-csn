@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import AcompanhamentoForm from "@/components/forms/AcompanhamentoForm";
 import ProjetoInfoBloco from "@/components/forms/projetoInfoBloco";
-import { getLeisFromDB } from "@/lib/utils";
+import { getLeisFromDB, Leis } from "@/lib/utils";
 
 
 interface ProjetoInfo {
@@ -22,7 +22,7 @@ interface ProjetoInfo {
 async function getProjetoData(projetoID: string): Promise<{ initialData: Partial<FormsAcompanhamentoFormFields>; projetoInfo: ProjetoInfo }> {
     let initialData: Partial<FormsAcompanhamentoFormFields> = {};
     let projetoInfo: ProjetoInfo = {};
-    const leiList = await getLeisFromDB();
+    const leiList: Leis[] = await getLeisFromDB();
 
     // 1. Busca sempre o formulário de cadastro original para as informações estáticas
     const cadastroQuery = query(collection(db, "forms-cadastro"), where("projetoID", "==", projetoID), limit(1));

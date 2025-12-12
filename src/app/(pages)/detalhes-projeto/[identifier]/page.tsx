@@ -14,7 +14,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { FaPencilAlt, FaArrowLeft, FaArrowRight} from "react-icons/fa";
+import { FaPencilAlt, FaArrowLeft, FaArrowRight, FaFileAlt} from "react-icons/fa";
 import { writeBatch, arrayUnion } from "firebase/firestore";
 import { doc, getDoc, query, collection, where, getDocs, Timestamp, orderBy, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
@@ -24,6 +24,8 @@ import { ref, uploadBytes, getDownloadURL, listAll, StorageReference } from "fir
 import { storage } from "@/firebase/firebase-config";
 import { saveAs } from "file-saver";
 import { FaFolderOpen, FaRegFileLines } from "react-icons/fa6";
+import { normalizeStoredUrl } from "@/lib/utils";
+import { Arquivo } from "@/app/api/downloads/[identifier]/route";
 
 interface ProjectData {
   nome?: string;
@@ -445,72 +447,70 @@ export default function ProjectDetailsPage() {
   };
 
 // -------------------------------------------------------------------------//
-  const [currentPath, setCurrentPath] = useState("");
-  const [folders, setFolders] = useState<StorageReference[]>([]);
-  const [files, setFiles] = useState<StorageReference[]>([]);
-    
-  const ROOT_PATH = adm
-    ? `forms-cadastro/${formCadastroId}/`
-    : `forms-cadastro/${formCadastroId}/recibos/`;
 
-  // Mostra apenas o trecho depois do ROOT_PATH
-  const displayPath = currentPath.replace(ROOT_PATH, "") || "./";
+const [arquivos, setArquivos] = useState<Arquivo[]>([]);
 
-    // Carrega conteúdo da pasta atual
-    const loadFolder = async (path: string) => {
-      const folderRef = ref(storage, path);
-      const res = await listAll(folderRef); // Pegamos tudo que esta dentro desta pasta (arquivos e outras pastas)
+async function buscarArquivos() {
+  if (!identifier) {
+    console.log("ID ainda não carregou");
+    return;
+  }
 
-      setFolders(res.prefixes); // subpastas
-      setFiles(res.items); // arquivos que estao dentro desta pasta
+  const res = await fetch(`/api/downloads/${identifier}`);
+  const data = await res.json();
+  console.log("Arquivos:", data);
+
+  const listaBase: Arquivo[] = adm
+    ? data.arquivos
+    : data.arquivos.filter((arq: Arquivo) => arq.campo === "recibos");
+
+  // ---- NORMALIZAÇÃO DOS CAMPOS REPETIDOS ----
+  const contador: Record<string, number> = {};
+
+  const listaNumerada = listaBase.map((arq) => {
+    const base = arq.campo;
+
+    // já apareceu antes?
+    if (contador[base] == null) {
+      contador[base] = 0; // primeira vez
+    } else {
+      contador[base] += 1; // incrementa
+    }
+
+    // se for o primeiro (0), usa o nome original sem número
+    const novoNome = contador[base] === 0 ? base : `${base}${contador[base]}`;
+
+    return {
+      ...arq,
+      campo: novoNome,
     };
+  });
 
-    useEffect(() => {
-      if (formCadastroId) { // Definimos o path de acordo com o id
-        const rootPath = adm
-          ? `forms-cadastro/${formCadastroId}/`
-          : `forms-cadastro/${formCadastroId}/recibos/`;
-        
-        setCurrentPath(rootPath);
-        loadFolder(rootPath);
-      }
-    }, [formCadastroId]);
+  setArquivos(listaNumerada);
+}
 
 
-    const handleDownload = async (filePath: string, fileName: string) => {
-      try {
-        const res = await fetch(`/api/downloads/download?filePath=${encodeURIComponent(filePath)}`);
+//   function extrairPastaDaUrl(url: string): string {
+//   try {
+//     const path = new URL(url).pathname; // "/diario/arquivo.pdf"
+//     const parts = path.split("/").filter(Boolean); // ["diario", "arquivo.pdf"]
+//     return parts[0] || ""; // "diario"
+//   } catch {
+//     return "";
+//   }
+// }
 
-        if (!res.ok) {
-          // Tenta pegar mensagem de erro como texto, não JSON
-          const errorText = await res.text();
-          throw new Error(`Erro no servidor: ${errorText}`);
-        }
 
-        const blob = await res.blob(); // Aqui está o arquivo real (objeto do tipo arquivo)
-        saveAs(blob, fileName); // Baixamos o arquivo no computador do client
-      } catch (err) {
-        console.error("Erro ao baixar arquivo:", err);
-      }
-    };
+  const handleOpenFile = (arquivo: string) => {
+    const url = normalizeStoredUrl(arquivo);
+     console.log("Recebido:", JSON.stringify(arquivo));
+      console.log("Recebido:", JSON.stringify(url));
+    if (!url) {
+      console.error("URL inválida:", arquivo);
+      return;
+    }
 
-    const handleOpenFolder = (subFolderRef:  StorageReference) => {
-      // segurança: só deixa abrir se estiver dentro do ROOT_PATH
-      if (!subFolderRef.fullPath.startsWith(ROOT_PATH)) return;
-      const newPath = `${subFolderRef.fullPath}/`;
-      setCurrentPath(newPath);
-      loadFolder(newPath);
-    };
-
-    // Voltar para pasta anterior
-    const handleGoBack = () => {
-    if (currentPath === ROOT_PATH) return; // não volta além da raiz
-    
-    const parts = currentPath.split("/").filter(Boolean);
-    parts.pop(); // remove a última parte (pasta atual)
-    const newPath = parts.join("/") + "/";
-    setCurrentPath(newPath);
-    loadFolder(newPath);
+    window.open(url, "_blank");
   };
 
 //-------------------------------------------------------------------------//
@@ -1059,7 +1059,11 @@ export default function ProjectDetailsPage() {
                   ADICIONAR DOCUMENTOS
                 </button>
                 <button 
-                  onClick={() => setShowDownloadingModal(true)} 
+                  onClick={() =>
+                    { setShowDownloadingModal(true)
+                     buscarArquivos();
+                  }
+                  } 
                   className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-pink-light2 transition-colors"
                   >
                   VISUALIZAR DOCUMENTOS
@@ -1090,7 +1094,10 @@ export default function ProjectDetailsPage() {
                   ADICIONAR RECIBOS
                 </button>
                 <button 
-                  onClick={() => setShowDownloadingModal(true)} 
+                 onClick={() => {
+                  setShowDownloadingModal(true);
+                  buscarArquivos();
+                }} 
                   className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-pink-light2 transition-colors"
                   >
                   VISUALIZAR RECIBOS
@@ -1228,68 +1235,38 @@ export default function ProjectDetailsPage() {
 
         {/* Modal para baixar arquivos*/}
         {showDownloadingModal && (
-          adm ? (
+          
           <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded-lg text-center  mx-4 w-4xl h-3/4">
               <h2 className="text-xl font-bold text-black mb-4">BAIXAR DOCUMENTOS</h2>
               
               <div className="flex flex-col gap-6 pt-6">
 
-                 <div className="p-4 border rounded-md overflow-y-auto">
+                 <div className="p-4 border rounded-md overflow-y-auto max-h-[50vh]">
 
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
-                      <h2 className="font-bold mb-2 text-black"> {displayPath}</h2>
-                      
+              <div className="space-y-4">
+                {/* Arquivos */}
+                {arquivos.map((arq, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex flex-row items-center gap-2">
+                      <FaFileAlt size={20} color="rgb(156, 163, 175)" />
+                      <span className="text-black">{arq.campo}</span>
                     </div>
-                    
 
-                      {currentPath !== `forms-cadastro/${formCadastroId}/` && (
-                        <button
-                          onClick={handleGoBack}
-                          className="mb-4 px-3 py-1 bg-gray-300 text-black rounded-md hover:bg-gray-300"
-                        >
-                          Voltar
-                        </button>
-                      )}
+                    <button
+                      onClick={() => handleOpenFile(arq.url)}
+                      className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
+                    >
+                      Baixar
+                    </button>
+                  </div>
+                ))}
 
-                      <div className="space-y-4">
-                        {/* Subpastas */}
-                        {folders.map((sub) => (
-                          <div key={sub.fullPath} className="flex items-center justify-between">
-                            <div className="flex flex-row items-center gap-2">
-                              <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
-                              <span className="text-black">{sub.name}</span>
-                            </div>
-                            <button
-                              onClick={() => handleOpenFolder(sub)}
-                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
-                            >
-                              Abrir
-                            </button>
-                          </div>
-                        ))}
-
-                        {/* Arquivos */}
-                        {files.map((file) => (
-                          <div key={file.fullPath} className="flex items-center justify-between">
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              <FaRegFileLines size={20} color="#b37b97" />
-                              <span className="text-black">{file.name}</span>
-                            </div>                            <button
-                              onClick={() => handleDownload(file.fullPath, file.name)}
-                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
-                            >
-                              Baixar
-                            </button>
-                          </div>
-                        ))}
-
-                        {folders.length === 0 && files.length === 0 && (
-                          <p className="text-gray-600 py-4">Nenhum arquivo ou pasta aqui.</p>
-                        )}
-                      </div>
-                    </div>
+                {arquivos.length === 0 && (
+                  <p className="text-gray-600 py-4">Nenhum arquivo aqui.</p>
+                )}
+              </div>
+              </div>
               {/* Botão cancelar */}
             <div>
               <button
@@ -1302,71 +1279,6 @@ export default function ProjectDetailsPage() {
           </div>
           </div>
         </div>
-          ) : (
-          <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
-            <div className="bg-white p-6 rounded-lg text-center mx-4 w-4xl h-3/4">
-              <h2 className="text-xl font-bold text-black mb-4">BAIXAR RECIBOS</h2>
-              
-              <div className="flex flex-col gap-6 pt-6">
-
-                 <div className="p-4 border rounded-md">
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
-                      <h2 className="font-bold mb-2 text-black"> {displayPath}</h2>
-                      
-                    </div>
-
-                      <div className="space-y-4">
-                        {/* Subpastas */}
-                        {folders.map((sub) => (
-                          <div key={sub.fullPath} className="flex items-center justify-between">
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
-                              <span className="text-black">{sub.name}</span>
-                            </div>
-                            <button
-                              onClick={() => handleOpenFolder(sub)}
-                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
-                            >
-                              Abrir
-                            </button>
-                          </div>
-                        ))}
-
-                        {/* Arquivos */}
-                        {files.map((file) => (
-                          <div key={file.fullPath} className="flex items-center justify-between">
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              <FaRegFileLines size={20} color="#b37b97" />
-                              <span className="text-black">{file.name}</span>
-                            </div>
-                            <button
-                              onClick={() => handleDownload(file.fullPath, file.name)}
-                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
-                            >
-                              Baixar
-                            </button>
-                          </div>
-                        ))}
-
-                        {folders.length === 0 && files.length === 0 && (
-                          <p className="text-gray-600 py-4">Nenhum arquivo ou pasta aqui.</p>
-                        )}
-                      </div>
-                    </div>
-
-                  <div>
-                    <button
-                      onClick={() => setShowDownloadingModal(false)}
-                      className="bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400 mt-4"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-            </div>
-          </div>
-        </div>
-        )
       )}
     </main>
   );

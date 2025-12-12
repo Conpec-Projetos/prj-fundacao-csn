@@ -241,7 +241,7 @@ export const formsCadastroSchema = z
         estados: z.array(z.string()).min(1, "Selecione pelo menos um estado."),
         municipios: z.array(z.string()).min(1, "Selecione pelo menos um município."),
         lei: z.coerce
-            .number({ required_error: "A seleção da lei é obrigatória." })
+            .string()
             .min(0, "A seleção da lei é obrigatória."),
         numeroLei: z.string().trim().max(20, "Máximo de 20 caracteres permitidos"),
         contrapartidasProjeto: z

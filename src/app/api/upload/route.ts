@@ -94,3 +94,29 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: message }, { status: 500 });
     }
 }
+
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const uid = searchParams.get("uid"); // opcional: para buscar apenas os arquivos do usuário
+
+    let query = dbAdmin.collection("blob-uploads").orderBy("createdAt", "desc");
+
+    if (uid) {
+      query = query.where("uid", "==", uid); // pegamos pelo id
+    }
+
+    const snapshot = await query.get();
+
+    const files = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    return NextResponse.json(files);
+  } catch (error) {
+    console.error("Erro ao listar arquivos:", error);
+    return NextResponse.json({ error: "Erro ao listar arquivos" }, { status: 500 });
+  }
+}

@@ -639,8 +639,8 @@ export default async function DashboardPage({
   const leiSiglas: string[] =
     dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
   const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
-
-  // console.log(dados);
+  console.log(dados)
+   console.log(leiSiglas);
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">

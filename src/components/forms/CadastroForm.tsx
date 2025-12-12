@@ -20,7 +20,7 @@ import {
 import { db, storage } from "@/firebase/firebase-config";
 import { odsList, publicoList, segmentoList } from "@/firebase/schema/entities";
 import { FormsCadastroFormFields, formsCadastroSchema } from "@/lib/schemas";
-import { filtraDigitos, formatCEP, formatCNPJ, formatMoeda, formatTelefone, normalizeStoredUrl } from "@/lib/utils";
+import { filtraDigitos, formatCEP, formatCNPJ, formatMoeda, formatTelefone, getLeisFromDB, Leis, normalizeStoredUrl } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { upload as vercelUpload } from "@vercel/blob/client";
 import { City, State } from "country-state-city";
@@ -34,7 +34,7 @@ import { toast } from "sonner";
 export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: string | null }) {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [compliancePdfUrl, setCompliancePdfUrl] = useState<string | null>(null);
-    const [leiList, setLeiList] = useState<string[]>([]);
+    const [leiList, setLeiList] = useState<Leis[]>([]);
 
     const router = useRouter();
 
@@ -82,7 +82,6 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             beneficiariosDiretos: undefined,
             estados: [],
             municipios: [],
-            // @ts-expect-error O erro aqui é esperado porque o usuário vai precisar escolher uma opção
             lei: "",
             numeroLei: "",
             contrapartidasProjeto: "",
@@ -110,7 +109,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
 
             const result = await vercelUpload(pathname, file, {
                 access: "public",
-                handleUploadUrl: "/api/upload",
+                handleUploadUrl: "/api/upload", // chama a api
                 clientPayload,
                 onUploadProgress: ({ percentage }) => {
                     setUploadProgress(prev => ({ ...prev, [fieldName]: Math.round(percentage) }));
@@ -194,22 +193,15 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
         fetchAddress(watchedCep);
     }, [watchedCep, setValue]);
 
-    // fetch leis from firebase
     useEffect(() => {
-        const fetchLeis = async () => {
-            const snapshot = await getDocs(collection(db, "leis"));
-            const leisFromDB: string[] = [];
-            snapshot.forEach(doc => {
-                const data = doc.data() as { nome: string; sigla: string };
-                if (data.nome) {
-                    leisFromDB.push(data.nome);
-                }
-            });
-            leisFromDB.sort(); // Ordenando o array
-            setLeiList(leisFromDB);
-        };
-        fetchLeis();
+    async function carregarLeis() {
+        const leis = await getLeisFromDB();
+        setLeiList(leis);
+    }
+
+    carregarLeis();
     }, []);
+
 
     return (
         <form
@@ -217,22 +209,21 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             onSubmit={handleSubmit(async data => {
                 console.log("Formulário submetido", data); // Adicione este log
                 // Verificação do tam
-                const allFiles = [...data.diario, ...data.apresentacao, ...data.compliance, ...data.documentos];
 
-                // 2. Soma o tamanho de todos os arquivos (em bytes)
-                const totalSizeInBytes = allFiles.reduce((acc, file) => acc + file.size, 0);
+                // // 2. Soma o tamanho de todos os arquivos (em bytes)
+                // const totalSizeInBytes = allFiles.reduce((acc, file) => acc + file.size, 0);
 
-                // 3. Define o limite. O do Firebase é 100MB.
-                const limitInBytes = 100 * 1024 * 1024; // 100 MB
+                // // 3. Define o limite. O do Firebase é 100MB.
+                // const limitInBytes = 100 * 1024 * 1024; // 100 MB
 
-                // 4. Compara o tamanho total com o limite
-                if (totalSizeInBytes > limitInBytes) {
-                    toast.error("Envio cancelado: Arquivos muito grandes.", {
-                        description: `O tamanho total dos seus anexos (${(totalSizeInBytes / 1024 / 1024).toFixed(2)} MB) excede o nosso limite de 100 MB. Por favor, reduza o tamanho dos arquivos.`,
-                        duration: 10000,
-                    });
-                    return;
-                }
+                // // 4. Compara o tamanho total com o limite
+                // if (totalSizeInBytes > limitInBytes) {
+                //     toast.error("Envio cancelado: Arquivos muito grandes.", {
+                //         description: `O tamanho total dos seus anexos (${(totalSizeInBytes / 1024 / 1024).toFixed(2)} MB) excede o nosso limite de 100 MB. Por favor, reduza o tamanho dos arquivos.`,
+                //         duration: 10000,
+                //     });
+                //     return;
+                // }
 
                 const loadingToastId = toast.loading("Enviando formulário...");
 
@@ -248,23 +239,45 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                     }
                 });
 
-                // Append file fields: each item may be a File (new upload) or a string URL (already uploaded)
-                data.diario.forEach((item: File | string) => {
-                    if (item instanceof File) formData.append("diario", item);
-                    else formData.append("diario", item);
-                });
-                data.apresentacao.forEach((item: File | string) => {
-                    if (item instanceof File) formData.append("apresentacao", item);
-                    else formData.append("apresentacao", item);
-                });
-                data.compliance.forEach((item: File | string) => {
-                    if (item instanceof File) formData.append("compliance", item);
-                    else formData.append("compliance", item);
-                });
-                data.documentos.forEach((item: File | string) => {
-                    if (item instanceof File) formData.append("documentos", item);
-                    else formData.append("documentos", item);
-                });
+                // envia para vercel
+                for(const file of data.diario){
+                    if(file instanceof File){
+                        const publicUrl = await uploadFileToVercel(file, "diario");
+                        formData.append("diario", publicUrl);
+                    }
+                    else    
+                        console.log("erro nao é File")
+                }
+
+                // envia para vercel
+                for(const file of data.apresentacao){
+                    if(file instanceof File){
+                        const publicUrl = await uploadFileToVercel(file, "apresentacao");
+                        formData.append("apresentacao", publicUrl);
+                    }
+                    else    
+                        console.log("erro nao é File")
+                }
+
+                                // envia para vercel
+                for(const file of data.compliance){
+                    if(file instanceof File){
+                        const publicUrl = await uploadFileToVercel(file, "compliance");
+                        formData.append("compliance", publicUrl);
+                    }
+                    else    
+                        console.log("erro nao é File")
+                }
+
+                // envia para vercel
+                for(const file of data.documentos){
+                    if(file instanceof File){
+                        const publicUrl = await uploadFileToVercel(file, "documentos");
+                        formData.append("documentos", publicUrl);
+                    }
+                    else    
+                        console.log("erro nao é File")
+                }
 
                 if (usuarioAtualID) {
                     formData.append("usuarioAtualID", usuarioAtualID);
@@ -570,22 +583,9 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                             text={"Diário Oficial:"}
                                             isNotMandatory={false}
                                             value={value || []}
-                                            onChange={async files => {
-                                                // Upload any File objects and replace them with URLs
-                                                const processed: (File | string)[] = [];
-                                                for (const f of files) {
-                                                    if (typeof f === "string") {
-                                                        processed.push(f);
-                                                    } else {
-                                                        try {
-                                                            const url = await uploadFileToVercel(f, "diario");
-                                                            processed.push(url);
-                                                        } catch {
-                                                            toast.error("Falha ao enviar arquivo.", { description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão." });
-                                                        }
-                                                    }
-                                                }
-                                                onChange(processed);
+                                            onChange={files => {
+                                            // Agora simplesmente salva os arquivos no form
+                                            onChange(files);
                                             }}
                                             error={error}
                                             acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
@@ -741,19 +741,9 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                             text={"Apresentação do projeto:"}
                                             isNotMandatory={false}
                                             value={value || []}
-                                            onChange={async files => {
-                                                const processed: (File | string)[] = [];
-                                                for (const f of files) {
-                                                    if (typeof f === "string") processed.push(f);
-                                                    else {
-                                                        try {
-                                                            processed.push(await uploadFileToVercel(f, "apresentacao"));
-                                                        } catch {
-                                                            toast.error("Falha ao enviar arquivo.", {description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão."});
-                                                        }
-                                                    }
-                                                }
-                                                onChange(processed);
+                                            onChange={files => {
+                                            // Agora simplesmente salva os arquivos no form
+                                            onChange(files);
                                             }}
                                             error={error}
                                             acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
@@ -865,14 +855,15 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                 render={({ field, fieldState: { error } }) => (
                                     <LeiSelect
                                         text="Lei de incentivo do projeto:"
-                                        list={leiList}
-                                        value={field.value}
-                                        isNotMandatory={false}
-                                        onChange={field.onChange}
+                                        list={leiList}               // <-- agora é Leis[]
+                                        value={field.value ?? null}           // <-- string (id da lei)
+                                        onChange={field.onChange}    // <-- devolve um id
                                         error={error}
+                                        isNotMandatory={false}
                                     />
                                 )}
                             />
+
                             <NormalInput
                                 text="Número de aprovação do projeto por lei:"
                                 isNotMandatory={true}
@@ -943,19 +934,9 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                             text={"Formulário de compliance:"}
                                             isNotMandatory={false}
                                             value={value || []}
-                                            onChange={async files => {
-                                                const processed: (File | string)[] = [];
-                                                for (const f of files) {
-                                                    if (typeof f === "string") processed.push(f);
-                                                    else {
-                                                        try {
-                                                            processed.push(await uploadFileToVercel(f, "compliance"));
-                                                        } catch {
-                                                            toast.error("Falha ao enviar arquivo.", {description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão."});
-                                                        }
-                                                    }
-                                                }
-                                                onChange(processed);
+                                            onChange={files => {
+                                            // Agora simplesmente salva os arquivos no form
+                                            onChange(files);
                                             }}
                                             error={error as FieldError}
                                             acceptedFileTypes={["application/pdf"]}
@@ -974,19 +955,9 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                                             text={"Documentos adicionais:"}
                                             isNotMandatory={false}
                                             value={value || []}
-                                            onChange={async files => {
-                                                const processed: (File | string)[] = [];
-                                                for (const f of files) {
-                                                    if (typeof f === "string") processed.push(f);
-                                                    else {
-                                                        try {
-                                                            processed.push(await uploadFileToVercel(f, "documentos"));
-                                                        } catch {
-                                                            toast.error("Falha ao enviar arquivo.", {description: "Assegure que o arquivo tem menos de 10MB e verifique sua conexão."});
-                                                        }
-                                                    }
-                                                }
-                                                onChange(processed);
+                                            onChange={files => {
+                                            // Agora simplesmente salva os arquivos no form
+                                            onChange(files);
                                             }}
                                             error={error as FieldError}
                                             acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
