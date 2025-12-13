@@ -512,7 +512,9 @@ async function buscarArquivos() {
 
     window.open(url, "_blank");
   };
-  const handleDownloadFile = (arquivo: string) => {
+
+
+const handleDownloadFile = async (arquivo: string) => {
   const url = normalizeStoredUrl(arquivo);
 
   if (!url) {
@@ -520,16 +522,31 @@ async function buscarArquivos() {
     return;
   }
 
-  const link = document.createElement("a");
-  link.href = url;
+  try {
+    // 👇 passa a URL codificada
+    const response = await fetch(
+      `/api/downloads/especifico?url=${encodeURIComponent(url)}`,
+      {
+        method: "GET",
+      }
+    );
 
-  // Nome sugerido (opcional)
-  link.download = url.split("/").pop() || "arquivo";
+    if (!response.ok) {
+      throw new Error("Erro ao buscar arquivo");
+    }
 
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    const blob = await response.blob();
+
+    const fileName =
+      url.split("/").pop()?.split("?")[0] || "arquivo";
+
+    saveAs(blob, fileName);
+  } catch (error) {
+    console.error("Erro ao baixar arquivo:", error);
+  }
 };
+
+
 
 
 //-------------------------------------------------------------------------//

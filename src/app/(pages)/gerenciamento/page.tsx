@@ -179,19 +179,19 @@ const LawManagement = () => {
     });
   };
 
-  const handleDeleteLaw = (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir esta lei?")) {
-      startTransition(async () => {
-        const result = await deleteLaw(id);
-        if (result.success) {
-          setLaws(laws.filter(l => l.id !== id));
-          toast.success("Lei excluída com sucesso!");
-        } else {
-          toast.error("Falha ao excluir a lei.");
-        }
-      });
-    }
-  };
+  // const handleDeleteLaw = (id: string) => {
+  //   if (window.confirm("Tem certeza que deseja excluir esta lei?")) {
+  //     startTransition(async () => {
+  //       const result = await deleteLaw(id);
+  //       if (result.success) {
+  //         setLaws(laws.filter(l => l.id !== id));
+  //         toast.success("Lei excluída com sucesso!");
+  //       } else {
+  //         toast.error("Falha ao excluir a lei.");
+  //       }
+  //     });
+  //   }
+  // };
 
   const filteredLaws = useMemo(() =>
     laws
@@ -236,9 +236,9 @@ const LawManagement = () => {
               <button onClick={() => { setEditingLaw(law); setIsModalOpen(true); }} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 cursor-pointer">
                 <FaEdit />
               </button>
-              <button onClick={() => handleDeleteLaw(law.id)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 cursor-pointer">
+              {/* <button onClick={() => handleDeleteLaw(law.id)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 cursor-pointer">
                 <FaTrash />
-              </button>
+              </button> */}
             </div>
           </div>
         ))}

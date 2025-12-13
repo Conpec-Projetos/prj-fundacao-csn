@@ -227,7 +227,7 @@ export default function DashboardContent({ // parametros, eles sao passados na p
                   labels={Object.keys(dadosMapa).map(
                     (nome) => estadosSiglas[nome] ?? nome
                   )}
-                  colors={["#b37b97"]}
+                  colors={["#ff2377"]}
                   horizontal={true}
                   useIcons={false}
                 />
@@ -273,7 +273,7 @@ export default function DashboardContent({ // parametros, eles sao passados na p
             <div className="flex-grow w-full overflow-x-auto">
               <div className="">
                 <BarChartLeis
-                  colors={["#b37b97"]}
+                  colors={["#ff2377"]}
                   data={leiValores}
                   siglas={leiSiglas}
                   labels={leiNomes}
