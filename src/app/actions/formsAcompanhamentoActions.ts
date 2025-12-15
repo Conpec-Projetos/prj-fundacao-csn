@@ -3,7 +3,7 @@
 import { db } from "@/firebase/firebase-config";
 import { ambitoList, formsAcompanhamentoDados, segmentoList } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields, formsAcompanhamentoSchema } from "@/lib/schemas";
-import { getItemNome, getLeisFromDB, getOdsIds } from "@/lib/utils";
+import { getItemNome, getOdsIds } from "@/lib/utils";
 import { addDoc, collection, doc, updateDoc } from "firebase/firestore";
 import { uploadFileAndGetUrlAdmin } from "./adminActions";
 
@@ -47,7 +47,6 @@ export async function submitAcompanhamentoForm(formData: FormData) {
                     : uploadFileAndGetUrlAdmin(file, "forms-acompanhamento", projetoID)
             )
         );
-        const leiList = await getLeisFromDB();
 
         const uploadFirestore: formsAcompanhamentoDados = {
             projetoID: projetoID,

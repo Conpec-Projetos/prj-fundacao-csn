@@ -3,7 +3,7 @@
 import { db } from "@/firebase/firebase-config";
 import { Projetos, formsCadastroDados, segmentoList } from "@/firebase/schema/entities";
 import { formsCadastroSchema } from "@/lib/schemas";
-import { getItemNome, getLeisFromDB, getOdsIds, getPublicoNomes, Leis } from "@/lib/utils";
+import { getItemNome, getOdsIds, getPublicoNomes} from "@/lib/utils";
 import { addDoc, arrayUnion, collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 
 export async function submitCadastroForm(formData: FormData) {

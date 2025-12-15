@@ -14,14 +14,12 @@ import {
     VerticalSelects,
     YesNoInput,
 } from "@/components/inputs/inputs";
-import { db } from "@/firebase/firebase-config";
 import { ambitoList, odsList, segmentoList } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields, formsAcompanhamentoSchema } from "@/lib/schemas";
 import { getLeisFromDB, Leis } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { upload as vercelUpload } from "@vercel/blob/client";
 import { City, State } from "country-state-city";
-import { collection, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, FieldError, SubmitHandler, useForm } from "react-hook-form";

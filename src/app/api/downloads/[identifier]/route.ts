@@ -32,7 +32,7 @@ export async function GET(
 
 
 
-let arquivos: Arquivo[] = [];
+const arquivos: Arquivo[] = [];
 
 if (data) {
   if (Array.isArray(data.diario)) {
@@ -71,10 +71,19 @@ if (data) {
     );
   }
 
-  if (Array.isArray(data.recibos)) {
+  if (Array.isArray(data.recibosProponente)) {
     arquivos.push(
-      ...data.apresentacao.map((url: string) => ({
-        campo: "recibos",
+      ...data.recibosProponente.map((url: string) => ({
+        campo: "recibosProponente",
+        url
+      }))
+    );
+  }
+
+  if (Array.isArray(data.docsAdmin)) {
+    arquivos.push(
+      ...data.docsAdmin.map((url: string) => ({
+        campo: "docsAdmin",
         url
       }))
     );

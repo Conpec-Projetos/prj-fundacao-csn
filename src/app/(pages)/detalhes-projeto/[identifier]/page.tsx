@@ -1,4 +1,5 @@
 "use client";
+import { upload as vercelUpload } from "@vercel/blob/client";
 import Footer from "@/components/footer/footer";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -14,16 +15,13 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { FaPencilAlt, FaArrowLeft, FaArrowRight, FaFileAlt} from "react-icons/fa";
+import { FaPencilAlt, FaArrowLeft, FaArrowRight, FaFileAlt, FaSpinner} from "react-icons/fa";
 import { writeBatch, arrayUnion } from "firebase/firestore";
 import { doc, getDoc, query, collection, where, getDocs, Timestamp, orderBy, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import Image from "next/image";
 import { useParams, useRouter } from 'next/navigation';
-import { ref, uploadBytes, getDownloadURL, listAll, StorageReference } from "firebase/storage";
-import { storage } from "@/firebase/firebase-config";
 import { saveAs } from "file-saver";
-import { FaFolderOpen, FaRegFileLines } from "react-icons/fa6";
 import { normalizeStoredUrl } from "@/lib/utils";
 import { Arquivo } from "@/app/api/downloads/[identifier]/route";
 
@@ -380,75 +378,150 @@ export default function ProjectDetailsPage() {
 
   // Função para upload dos arquivos e atualização do campo "documentos" em forms-cadastro
   // Pri: No storage esta: forms-cadastro/id/documentos
-  const handleUploadDocuments = async () => {
-    if (!formCadastroId || documentFiles.length === 0) {
-      toast.error("Selecione ao menos um arquivo para enviar.");
-      return;
-    }
-    setIsUploadingDocuments(true);
-    try {
-      const uploadedUrls: string[] = [];
-      for (const file of documentFiles) {
-        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/documentos/${file.name}_${Date.now()}`);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        uploadedUrls.push(url);
-      }
+  // const handleUploadDocuments = async () => {
+  //   if (!formCadastroId || documentFiles.length === 0) {
+  //     toast.error("Selecione ao menos um arquivo para enviar.");
+  //     return;
+  //   }
+  //   setIsUploadingDocuments(true);
+  //   try {
+  //     const uploadedUrls: string[] = [];
+  //     for (const file of documentFiles) {
+  //       const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/documentos/${file.name}_${Date.now()}`);
+  //       await uploadBytes(storageRef, file);
+  //       const url = await getDownloadURL(storageRef);
+  //       uploadedUrls.push(url);
+  //     }
 
-      // Adiciona os novos arquivos ao array existente usando arrayUnion
-      const formDocRef = doc(db, "forms-cadastro", formCadastroId);
-      await updateDoc(formDocRef, {
-        documentos: arrayUnion(...uploadedUrls), // Para documentos temos o array documentos
+  //     // Adiciona os novos arquivos ao array existente usando arrayUnion
+  //     const formDocRef = doc(db, "forms-cadastro", formCadastroId);
+  //     await updateDoc(formDocRef, {
+  //       documentos: arrayUnion(...uploadedUrls), // Para documentos temos o array documentos
+  //     });
+
+  //     toast.success("Documentos enviados com sucesso!");
+  //     setShowDocumentModal(false);
+  //     setDocumentFiles([]);
+  //   } catch (error) {
+  //     console.error("Erro ao enviar documentos:", error);
+  //     toast.error("Falha ao enviar documentos.");
+  //   } finally {
+  //     setIsUploadingDocuments(false);
+  //   }
+  // };
+    // helper: upload a single file via Vercel Blob client upload
+  const uploadFileToVercel = async (fieldName: string) => {
+  if (!formCadastroId || documentFiles.length === 0) {
+    toast.error("Selecione ao menos um arquivo para enviar.");
+    return;
+  }
+
+  setIsUploadingDocuments(true);
+
+  try {
+    const uploadedUrls: string[] = [];
+
+    for (const file of documentFiles) {
+      const clientPayload = JSON.stringify({
+        size: file.size,
+        type: file.type,
       });
 
-      toast.success("Documentos enviados com sucesso!");
-      setShowDocumentModal(false);
-      setDocumentFiles([]);
-    } catch (error) {
-      console.error("Erro ao enviar documentos:", error);
-      toast.error("Falha ao enviar documentos.");
-    } finally {
-      setIsUploadingDocuments(false);
-    }
-  };
+      const pathname = `${fieldName}/${Date.now()}-${file.name}`;
 
+      const result = await vercelUpload(pathname, file, {
+        access: "public",
+        handleUploadUrl: "/api/upload",
+        clientPayload,
+        multipart: true,
+      });
+
+      type VercelResult = {
+        url?: string;
+        downloadUrl?: string;
+        pathname?: string;
+        key?: string;
+      };
+
+      const vr = result as VercelResult;
+
+      const publicUrl =
+        vr.url ??
+        vr.downloadUrl ??
+        (() => {
+          const pathnameFromResult = vr.pathname ?? vr.key ?? null;
+          if (!pathnameFromResult) return null;
+          const base =
+            process.env.NEXT_PUBLIC_VERCEL_BLOB_BASE_URL ??
+            window.location.origin;
+          return `${base.replace(/\/$/, "")}/${String(
+            pathnameFromResult
+          ).replace(/^\//, "")}`;
+        })();
+
+      if (!publicUrl) {
+        throw new Error(
+          "Upload ok, mas nenhuma URL pública foi retornada"
+        );
+      }
+
+      // ✅ agora sim salvamos
+      uploadedUrls.push(publicUrl);
+    }
+
+    // ✅ atualiza o Firestore UMA vez
+    const formDocRef = doc(db, "forms-cadastro", formCadastroId);
+    await updateDoc(formDocRef, {
+      [fieldName]: arrayUnion(...uploadedUrls), // recibosProponente ou docsAdmin (será array)
+    });
+
+    toast.success("Documentos enviados com sucesso!");
+    setShowDocumentModal(false);
+  } catch (err) {
+    console.error("Upload failed", err);
+    toast.error("Erro ao enviar documentos");
+  } finally {
+    setIsUploadingDocuments(false);
+  }
+};
   // Função para upload dos recibos pelo proponente
   // Pri: No storage esta: forms-cadastro/id/recibos
-  const handleUploadReceipts = async () => {
-    if (!formCadastroId || documentFiles.length === 0) {
-      toast.error("Selecione ao menos um arquivo para enviar.");
-      return;
-    }
-    setIsUploadingDocuments(true);
-    try {
-      const uploadedUrls: string[] = [];
-      for (const file of documentFiles) {
-        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/recibos/${file.name}_${Date.now()}`);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        uploadedUrls.push(url);
-      }
+  // const handleUploadReceipts = async () => {
+  //   if (!formCadastroId || documentFiles.length === 0) {
+  //     toast.error("Selecione ao menos um arquivo para enviar.");
+  //     return;
+  //   }
+  //   setIsUploadingDocuments(true);
+  //   try {
+  //     const uploadedUrls: string[] = [];
+  //     for (const file of documentFiles) {
+  //       const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/recibos/${file.name}_${Date.now()}`);
+  //       await uploadBytes(storageRef, file);
+  //       const url = await getDownloadURL(storageRef);
+  //       uploadedUrls.push(url);
+  //     }
 
-      // Adiciona os novos arquivos ao array recibos que será criado pela primeira vez aqui
-      const formDocRef = doc(db, "forms-cadastro", formCadastroId);
-      await updateDoc(formDocRef, {
-        recibos: arrayUnion(...uploadedUrls),
-      });
+  //     // Adiciona os novos arquivos ao array recibos que será criado pela primeira vez aqui
+  //     const formDocRef = doc(db, "forms-cadastro", formCadastroId);
+  //     await updateDoc(formDocRef, {
+  //       recibos: arrayUnion(...uploadedUrls),
+  //     });
 
-      toast.success("Recibos enviados com sucesso!");
-      setShowDocumentModal(false);
-      setDocumentFiles([]);
-    } catch (error) {
-      console.error("Erro ao enviar recibos:", error);
-      toast.error("Falha ao enviar recibos.");
-    } finally {
-      setIsUploadingDocuments(false);
-    }
-  };
+  //     toast.success("Recibos enviados com sucesso!");
+  //     setShowDocumentModal(false);
+  //     setDocumentFiles([]);
+  //   } catch (error) {
+  //     console.error("Erro ao enviar recibos:", error);
+  //     toast.error("Falha ao enviar recibos.");
+  //   } finally {
+  //     setIsUploadingDocuments(false);
+  //   }
+  // };
 
 // -------------------------------------------------------------------------//
 
 const [arquivos, setArquivos] = useState<Arquivo[]>([]);
+const [loading, setLoading] = useState<boolean>(false);
 
 async function buscarArquivos() {
   if (!identifier) {
@@ -462,7 +535,7 @@ async function buscarArquivos() {
 
   const listaBase: Arquivo[] = adm
     ? data.arquivos
-    : data.arquivos.filter((arq: Arquivo) => arq.campo === "recibos");
+    : data.arquivos.filter((arq: Arquivo) => arq.campo === "recibosProponente");
 
   // ---- NORMALIZAÇÃO DOS CAMPOS REPETIDOS ----
   const contador: Record<string, number> = {};
@@ -485,10 +558,9 @@ async function buscarArquivos() {
       campo: novoNome,
     };
   });
-
+  setLoading(false)
   setArquivos(listaNumerada);
 }
-
 
 //   function extrairPastaDaUrl(url: string): string {
 //   try {
@@ -1096,8 +1168,10 @@ const handleDownloadFile = async (arquivo: string) => {
                 </button>
                 <button 
                   onClick={() =>
-                    { setShowDownloadingModal(true)
-                     buscarArquivos();
+                    { 
+                    setShowDownloadingModal(true)
+                    setLoading(true)
+                    buscarArquivos();
                   }
                   } 
                   className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-pink-light2 transition-colors"
@@ -1132,6 +1206,7 @@ const handleDownloadFile = async (arquivo: string) => {
                 <button 
                  onClick={() => {
                   setShowDownloadingModal(true);
+                  setLoading(true)
                   buscarArquivos();
                 }} 
                   className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-pink-light2 transition-colors"
@@ -1257,7 +1332,7 @@ const handleDownloadFile = async (arquivo: string) => {
                   Cancelar
                 </button>
                 <button
-                  onClick={adm ? handleUploadDocuments : handleUploadReceipts}
+                  onClick={() => adm ? uploadFileToVercel("docsAdmin") : uploadFileToVercel("recibosProponente")}
                   className="bg-blue-fcsn text-white px-4 py-2 rounded-md hover:bg-blue-fcsn3"
                   disabled={isUploadingDocuments}
                 >
@@ -1279,6 +1354,13 @@ const handleDownloadFile = async (arquivo: string) => {
               <div className="flex flex-col gap-6 pt-6">
 
                  <div className="p-4 border rounded-md overflow-y-auto max-h-[50vh]">
+
+                  {loading && (
+                    <div className="flex justify-center items-center">
+                      <FaSpinner className="animate-spin text-4xl text-blue-fcsn dark:text-blue-fcsn"  />
+                    </div>
+                  )}
+
 
               <div className="space-y-4">
                 {/* Arquivos */}
@@ -1306,7 +1388,7 @@ const handleDownloadFile = async (arquivo: string) => {
                   </div>
                 ))}
 
-                {arquivos.length === 0 && (
+                {(arquivos.length === 0 && !loading)&& (
                   <p className="text-gray-600 py-4">Nenhum arquivo aqui.</p>
                 )}
               </div>

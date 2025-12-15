@@ -17,14 +17,13 @@ import {
     SingleEstadoInput,
     VerticalSelects,
 } from "@/components/inputs/inputs";
-import { db, storage } from "@/firebase/firebase-config";
+import { storage } from "@/firebase/firebase-config";
 import { odsList, publicoList, segmentoList } from "@/firebase/schema/entities";
 import { FormsCadastroFormFields, formsCadastroSchema } from "@/lib/schemas";
 import { filtraDigitos, formatCEP, formatCNPJ, formatMoeda, formatTelefone, getLeisFromDB, Leis, normalizeStoredUrl } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { upload as vercelUpload } from "@vercel/blob/client";
 import { City, State } from "country-state-city";
-import { collection, getDocs } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

@@ -3,8 +3,8 @@
 import { ProjectComponentProps } from "@/app/actions/todosProjetosActions";
 import BotaoAprovarProj from "@/components/botoes/botoes_todos-proj/BotaoAprovarProj";
 import { db } from "@/firebase/firebase-config";
-import { formsAcompanhamentoDados, formsCadastroDados, Lei, Projetos } from "@/firebase/schema/entities";
-import { normalizeStoredUrl } from "@/lib/utils";
+import { formsAcompanhamentoDados, formsCadastroDados, Projetos } from "@/firebase/schema/entities";
+import { Leis, normalizeStoredUrl } from "@/lib/utils";
 import { collection, doc, getDoc, getDocs, onSnapshot, query, where } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
@@ -78,7 +78,7 @@ interface Filters {
 
 export default function TodosProjetosClient() {
     const [allProjects, setAllProjects] = useState<ProjectComponentProps[]>([]);
-    const [incentiveLaws, setIncentiveLaws] = useState<Lei[]>([]);
+    const [incentiveLaws, setIncentiveLaws] = useState<Leis[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<"Pendentes" | "Aprovados" | "Finalizados" | "Todos">("Pendentes");
     const [search, setSearch] = useState("");
@@ -166,7 +166,7 @@ export default function TodosProjetosClient() {
     useEffect(() => {
         const q = query(collection(db, "leis"));
         const unsubscribe = onSnapshot(q, querySnapshot => {
-            const laws = querySnapshot.docs.map(doc => doc.data() as Lei);
+            const laws = querySnapshot.docs.map(doc => doc.data() as Leis);
             laws.sort((a, b) => a.nome.localeCompare(b.nome));
             setIncentiveLaws(laws);
         });

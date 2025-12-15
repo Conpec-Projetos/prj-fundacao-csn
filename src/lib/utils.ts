@@ -2,6 +2,7 @@ import { db } from "@/firebase/firebase-config";
 import { odsList, publicoList } from "@/firebase/schema/entities";
 import { clsx, type ClassValue } from "clsx";
 import { collection, getDocs } from "firebase/firestore";
+import { FieldError } from "react-hook-form";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -158,7 +159,7 @@ export type LeiSelectProps = {
   list: Leis[];
   value: string | null; // id (que é string) da lei selecionada
   onChange: (id: string) => void;
-  error?: any;
+  error?: FieldError | undefined;
   isNotMandatory?: boolean;
 };
 

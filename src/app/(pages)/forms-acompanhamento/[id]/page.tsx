@@ -8,7 +8,6 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import AcompanhamentoForm from "@/components/forms/AcompanhamentoForm";
 import ProjetoInfoBloco from "@/components/forms/projetoInfoBloco";
-import { getLeisFromDB, Leis } from "@/lib/utils";
 
 
 interface ProjetoInfo {
