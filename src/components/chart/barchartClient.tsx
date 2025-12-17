@@ -139,7 +139,6 @@ export default function BarChart({
 
       if (!xAxis || !yAxis || !iconsRef.current.length) return;
 
-      console.log(data)
       data.labels?.forEach((label: unknown, filteredIndex: number) => { // para cada label
         if (!label) return;
 
@@ -151,7 +150,7 @@ export default function BarChart({
              
 
         const icon = iconsRef.current[iconIndex]; // encontra a ods no array iconsRef
-         console.log(`Label: ${label}, ODS: ${odsNumber}, IconIndex: ${iconIndex}, HasIcon: ${!!icon}`)
+        //  console.log(`Label: ${label}, ODS: ${odsNumber}, IconIndex: ${iconIndex}, HasIcon: ${!!icon}`)
         if (!icon) return;
 
         // Posicionamento

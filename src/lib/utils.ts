@@ -39,7 +39,10 @@ export function getPublicoNomes(selectedPublico: boolean[], outroValue: string):
     return nomes;
 }
 
-export function getItemNome(selectedItem: number, ItemList: { id: number; nome: string }[]): string {
+export function getItemNome(selectedItem: number | undefined, ItemList: { id: number; nome: string }[]): string {
+    if(!selectedItem){
+        return ""
+    }
     const itemObj = ItemList.find(item => item.id === selectedItem);
     return itemObj ? itemObj.nome : "";
 }
@@ -184,14 +187,11 @@ export async function getLeisFromDB(): Promise<Leis[]> {
  * and path-like values by prefixing with NEXT_PUBLIC_VERCEL_BLOB_BASE_URL or VERCEL_URL or window.origin.
  * Returns null when input is empty/invalid.
  */export function normalizeStoredUrl(u?: string | string[] | null): string | null {
-    console.log("passou1")
-    console.log(u)
     if (!u) return null;
     
     // 1) Se já é array real → pegue o primeiro item
     if (Array.isArray(u)) {
         if (u.length > 0 && typeof u[0] === "string") {
-            console.log("passou")
             return u[0];
             
         }
@@ -202,7 +202,6 @@ export async function getLeisFromDB(): Promise<Leis[]> {
     let s = String(u).trim();
     if (!s) return null;
 
-    console.log("passou3")
     // 2) Remove aspas externas
     if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
         s = s.slice(1, -1).trim();
@@ -224,7 +223,6 @@ export async function getLeisFromDB(): Promise<Leis[]> {
             /* Se der erro, continua como string normal */
         }
     }
-                console.log("passou4")
 
     // 5) Já é URL normal
     if (s.startsWith("http://") || s.startsWith("https://")) {
@@ -237,7 +235,6 @@ export async function getLeisFromDB(): Promise<Leis[]> {
             ? window.location.origin
             : (process.env.NEXT_PUBLIC_VERCEL_BLOB_BASE_URL ??
               (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined));
-    console.log(base)
     if (!base) return s;
 
     return `${base.replace(/\/$/, "")}/${s.replace(/^\//, "")}`;

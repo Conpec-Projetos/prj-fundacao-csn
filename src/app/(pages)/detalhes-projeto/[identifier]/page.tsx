@@ -531,7 +531,6 @@ async function buscarArquivos() {
 
   const res = await fetch(`/api/downloads/${identifier}`);
   const data = await res.json();
-  console.log("Arquivos:", data);
 
   const listaBase: Arquivo[] = adm
     ? data.arquivos
@@ -575,8 +574,6 @@ async function buscarArquivos() {
 
   const handleOpenFile = (arquivo: string) => {
     const url = normalizeStoredUrl(arquivo);
-     console.log("Recebido:", JSON.stringify(arquivo));
-      console.log("Recebido:", JSON.stringify(url));
     if (!url) {
       console.error("URL inválida:", arquivo);
       return;
@@ -595,18 +592,28 @@ const handleDownloadFile = async (arquivo: string) => {
   }
 
   try {
-    // 👇 passa a URL codificada
-    const response = await fetch(
-      `/api/downloads/especifico?url=${encodeURIComponent(url)}`,
-      {
-        method: "GET",
-      }
+    let response: Response | null = null;
+
+    // tenta Vercel Blob
+    response = await fetch(
+      `/api/downloads/especifico?url=${encodeURIComponent(url)}`
     );
 
+    // se falhar, tenta Firebase
     if (!response.ok) {
-      throw new Error("Erro ao buscar arquivo");
+
+      response = await fetch(
+        `/api/downloads/firebase?filePath=${encodeURIComponent(url)}`
+      );
+
+      if (!response.ok) {
+        const message = await response.text();
+        toast.error(message || "Erro ao buscar arquivo");
+        return; // para tudo
+      }
     }
 
+    // só chega aqui se alguma das duas deu certo
     const blob = await response.blob();
 
     const fileName =
@@ -615,11 +622,9 @@ const handleDownloadFile = async (arquivo: string) => {
     saveAs(blob, fileName);
   } catch (error) {
     console.error("Erro ao baixar arquivo:", error);
+    toast.error("Erro inesperado ao baixar arquivo");
   }
 };
-
-
-
 
 //-------------------------------------------------------------------------//
 

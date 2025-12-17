@@ -72,22 +72,18 @@ export async function updateLaw(
   sigla: string
 ) {
   try {
-    console.log("▶ updateLaw chamada");
 
     const lawRef = doc(db, "leis", lawId);
     const lawSnap = await getDoc(lawRef);
 
     if (!lawSnap.exists()) {
-      console.log("❌ Lei não encontrada");
+      console.log("Lei não encontrada");
       return { success: false };
     }
 
     const oldNome = lawSnap.data().nome;
-    console.log("OLD:", `"${oldNome}"`);
-    console.log("NEW:", `"${nome}"`);
 
     await updateDoc(lawRef, { nome, sigla });
-    console.log("✔ Lei atualizada");
 
     const collections = [
       "projetos",
@@ -96,7 +92,6 @@ export async function updateLaw(
     ];
 
     for (const col of collections) {
-      console.log(`🔍 Buscando em ${col}`);
 
       const q = query(
         collection(db, col),
@@ -104,24 +99,21 @@ export async function updateLaw(
       );
 
       const snapshot = await getDocs(q);
-      console.log(`📦 ${col}:`, snapshot.size);
 
       if (snapshot.empty) continue;
 
       const batch = writeBatch(db);
 
       snapshot.forEach((d) => {
-        console.log("↻ atualizando", d.id);
         batch.update(d.ref, { lei: nome });
       });
 
       await batch.commit();
-      console.log(`✅ ${col} atualizado`);
     }
 
     return { success: true };
   } catch (e) {
-    console.error("🔥 ERRO:", e);
+    console.error("ERRO:", e);
     return { success: false };
   }
 }

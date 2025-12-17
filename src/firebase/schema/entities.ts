@@ -86,14 +86,14 @@ export interface formsAcompanhamentoDados {
   projetoID: string;
   dataResposta: string;
   usuarioID: string;
-  instituicao: string;
-  descricao: string;
+  instituicao?: string;
+  descricao?: string;
   segmento: string;
   lei: string;
   pontosPositivos?: string;
   pontosNegativos?: string;
   pontosAtencao? : string;
-  ambito: string;
+  ambito?: string;
   qtdEstados: number;
   estados: string[];
   qtdMunicipios: number;

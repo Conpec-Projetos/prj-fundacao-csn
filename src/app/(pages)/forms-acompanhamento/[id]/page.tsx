@@ -44,7 +44,7 @@ async function getProjetoData(projetoID: string): Promise<{ initialData: Partial
     const acompanhamentoQuery = query(
         collection(db, "forms-acompanhamento"),
         where("projetoID", "==", projetoID),
-        orderBy("dataResposta", "desc"),
+        orderBy("dataResposta", "asc"), // ordenando pela data da resposta e nao pelo ultimo forms, acredito que funciona
         limit(1)
     );
     const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
@@ -195,7 +195,6 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
 
     // Se o usuário não tem um documento de associação, ele não possui projetos
     if (associacaoSnapshot.empty) {
-        // console.log("red 1"); //teste
         redirect('/inicio-externo');
     }
 
@@ -204,7 +203,6 @@ export default async function FormsAcompanhamento({ params }: { params: Promise<
 
     // Se o ID do projeto na URL não está na lista de projetos do usuário, redireciona
     if (!projetosDoUsuario.includes(projetoID)) {
-        //console.log("red 2"); // teste
         redirect('/inicio-externo');
     }
 

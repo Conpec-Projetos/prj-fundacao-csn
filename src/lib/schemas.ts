@@ -72,13 +72,15 @@ export const formsAcompanhamentoSchema = z
         instituicao: z
             .string()
             .trim()
-            .min(1, "O nome da instituição é obrigatório.")
-            .max(100, "Máximo de 100 caracteres permitidos"),
+            // .min(1, "O nome da instituição é obrigatório.") // pois agora nao é mais obrigatorio
+            .max(100, "Máximo de 100 caracteres permitidos")
+            .optional(),
         descricao: z
             .string()
             .trim()
-            .min(20, "A descrição deve ter no mínimo 20 caracteres.")
-            .max(500, "Máximo de 500 caracteres permitidos"),
+            // .min(20, "A descrição deve ter no mínimo 20 caracteres.") // pois agora nao é mais obrigatorio
+            .max(500, "Máximo de 500 caracteres permitidos")
+            .optional(),
         segmento: z.coerce
             .number({ required_error: "A seleção do segmento é obrigatória." })
             .min(0, "A seleção do segmento é obrigatória."),
@@ -89,8 +91,10 @@ export const formsAcompanhamentoSchema = z
         negativos: z.string().max(500, "Máximo de 500 caracteres permitidos").optional(),
         atencao: z.string().max(500, "Máximo de 500 caracteres permitidos").optional(),
         ambito: z.coerce
-            .number({ required_error: "A seleção do âmbito é obrigatória." })
-            .min(0, "A seleção do âmbito é obrigatória."),
+            .number()
+            .optional(),
+            // .number({ required_error: "A seleção do âmbito é obrigatória." }),
+            // .min(0, "A seleção do âmbito é obrigatória."), // pois agora nao é mais obrigatorio
         estados: z.array(z.string()).min(1, "Selecione pelo menos um estado."),
         municipios: z.array(z.string()).min(1, "Selecione pelo menos um município."),
         especificacoes: z

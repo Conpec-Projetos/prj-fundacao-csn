@@ -54,7 +54,7 @@ async function syncProjetosUsuario(uid: string, email: string) {
                 await updateDoc(assocDoc.ref, {
                     projetosIDs: arrayUnion(...newProjectIds)
                 });
-                console.log(`Projetos sincronizados para o usuário ${uid}. Adicionados: ${newProjectIds.length}`);
+                // console.log(`Projetos sincronizados para o usuário ${uid}. Adicionados: ${newProjectIds.length}`);
             }
         } else {
             // Se o documento de associação não existe, cria um novo
@@ -63,7 +63,7 @@ async function syncProjetosUsuario(uid: string, email: string) {
                 projetosIDs: allProjectIdsFromForms
             };
             await addDoc(collection(db, "associacao"), newAssociacaoDoc);
-            console.log(`Novo documento de associação criado para o usuário ${uid} com ${allProjectIdsFromForms.length} projetos.`);
+            // console.log(`Novo documento de associação criado para o usuário ${uid} com ${allProjectIdsFromForms.length} projetos.`);
         }
 
     } catch (error) {

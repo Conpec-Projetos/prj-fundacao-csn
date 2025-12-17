@@ -144,7 +144,7 @@ export const LongInput: React.FC<HookFormInputProps> = ({ text, isNotMandatory, 
 interface ControlledSelectProps<T> {
     text: string;
     list: string[];
-    value: T; // Valor atual vindo do react-hook-form
+    value: T | undefined; // Valor atual vindo do react-hook-form
     onChange: (value: T) => void; // Função para atualizar o valor no react-hook-form
     error?: FieldError;
     isNotMandatory: boolean;
@@ -204,7 +204,6 @@ export const LeiSelect: React.FC<LeiSelectProps> = ({
     error,
     isNotMandatory
 }) => {
-    console.log("lista de leis:", list)
     const [isOpen, setIsOpen] = useState(false);
     const caixaRef = useRef<HTMLDivElement>(null);
     const [search, setSearch] = useState("");

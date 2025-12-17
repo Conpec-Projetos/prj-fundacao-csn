@@ -78,8 +78,6 @@ async function getLeisSiglas(): Promise<{ [key: string]: string }> {
 
     map[data.nome] = data.sigla;
   });
-
-  console.log("Mapa final de leis:", map);
   return map;
 }
 
@@ -646,9 +644,7 @@ export default async function DashboardPage({
   const leiSiglas: string[] =
     dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
   const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
-  console.log('dados: ',dados)
-   console.log('siglas: ', leiSiglas);
-   console.log('nomes: ', leiNomes);
+  
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">

@@ -11,7 +11,6 @@ export async function submitCadastroForm(formData: FormData) {
     // 1. Converter FormData em objeto normal
     //
     const rawFormData = Object.fromEntries(formData.entries());
-    console.log('rawFormdata: ',rawFormData)
     //
     // 2. Parse dos campos JSON
     //

@@ -206,7 +206,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
         <form
             className="flex flex-col justify-center items-center max-w-[1500px] w-[90vw] sm:w-[80vw] xl:w-[70vw] mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-lg"
             onSubmit={handleSubmit(async data => {
-                console.log("Formulário submetido", data); // Adicione este log
+                // console.log("Formulário submetido", data);
                 // Verificação do tam
 
                 // // 2. Soma o tamanho de todos os arquivos (em bytes)
@@ -244,8 +244,6 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                         const publicUrl = await uploadFileToVercel(file, "diario");
                         formData.append("diario", publicUrl);
                     }
-                    else    
-                        console.log("erro nao é File")
                 }
 
                 // envia para vercel
@@ -254,18 +252,14 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                         const publicUrl = await uploadFileToVercel(file, "apresentacao");
                         formData.append("apresentacao", publicUrl);
                     }
-                    else    
-                        console.log("erro nao é File")
                 }
 
-                                // envia para vercel
+                // envia para vercel
                 for(const file of data.compliance){
                     if(file instanceof File){
                         const publicUrl = await uploadFileToVercel(file, "compliance");
                         formData.append("compliance", publicUrl);
                     }
-                    else    
-                        console.log("erro nao é File")
                 }
 
                 // envia para vercel
@@ -274,8 +268,6 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                         const publicUrl = await uploadFileToVercel(file, "documentos");
                         formData.append("documentos", publicUrl);
                     }
-                    else    
-                        console.log("erro nao é File")
                 }
 
                 if (usuarioAtualID) {

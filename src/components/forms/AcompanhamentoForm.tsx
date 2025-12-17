@@ -115,12 +115,14 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                 formData.append(key, String(value));
             }
         });
-
-        // Adiciona os arquivos (cada item pode ser File ou URL string)
-        data.fotos.forEach((item: File | string) => {
-            if (item instanceof File) formData.append("fotos", item);
-            else formData.append("fotos", item);
-        });
+        
+        // envia para vercel
+        for(const file of data.fotos){
+            if(file instanceof File){
+                const publicUrl = await uploadFileToVercel(file, "fotos");
+                formData.append("fotos", publicUrl);
+            }
+        }
 
         // Adiciona IDs necessários para a action
         formData.append("projetoID", projetoID);
@@ -154,7 +156,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                 {/* Nome da instituição */}
                 <NormalInput
                     text="Nome da instituição:"
-                    isNotMandatory={false}
+                    isNotMandatory={true}
                     registration={register("instituicao")}
                     error={errors.instituicao}
                 />
@@ -164,7 +166,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     text="Breve descrição do projeto:"
                     registration={register("descricao")}
                     error={errors.descricao}
-                    isNotMandatory={false}
+                    isNotMandatory={true}
                 />
                 {/* Seg do Projeto */}
                 <Controller
@@ -229,7 +231,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                     render={({ field, fieldState: { error } }) => (
                         <HorizontalSelects
                             text="Âmbito de desenvolvimento do projeto:"
-                            isNotMandatory={false}
+                            isNotMandatory={true}
                             list={ambitoList.map(s => s.nome)}
                             value={field.value}
                             onChange={field.onChange}
@@ -464,19 +466,9 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                                 text={"Cinco fotos das atividades do projeto:"}
                                 isNotMandatory={false}
                                 value={value || []}
-                                onChange={async files => {
-                                    const processed: (File | string)[] = [];
-                                    for (const f of files) {
-                                        if (typeof f === "string") processed.push(f);
-                                        else {
-                                            try {
-                                                processed.push(await uploadFileToVercel(f, "fotos"));
-                                            } catch {
-                                                toast.error("Falha ao enviar foto.");
-                                            }
-                                        }
-                                    }
-                                    onChange(processed as unknown as (File | string)[]);
+                                onChange={files => {
+                                // Agora simplesmente salva os arquivos no form
+                                onChange(files);
                                 }}
                                 error={error}
                                 acceptedFileTypes={["image/jpeg", "image/png"]}
