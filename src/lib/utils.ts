@@ -2,6 +2,7 @@ import { db } from "@/firebase/firebase-config";
 import { odsList, publicoList } from "@/firebase/schema/entities";
 import { clsx, type ClassValue } from "clsx";
 import { collection, getDocs } from "firebase/firestore";
+import { FieldError } from "react-hook-form";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -38,7 +39,10 @@ export function getPublicoNomes(selectedPublico: boolean[], outroValue: string):
     return nomes;
 }
 
-export function getItemNome(selectedItem: number, ItemList: { id: number; nome: string }[]): string {
+export function getItemNome(selectedItem: number | undefined, ItemList: { id: number; nome: string }[]): string {
+    if(!selectedItem){
+        return ""
+    }
     const itemObj = ItemList.find(item => item.id === selectedItem);
     return itemObj ? itemObj.nome : "";
 }
@@ -146,57 +150,92 @@ export function filtraDigitos(value: string): string {
     return value.replace(/\D/g, ""); // Remove tudo que não for dígito
 }
 
-export async function getLeisFromDB() {
+export type Leis = {
+    id: string,
+    nome: string,
+    sigla:string
+}
+
+
+export type LeiSelectProps = {
+  text: string;
+  list: Leis[];
+  value: string | null; // id (que é string) da lei selecionada
+  onChange: (id: string) => void;
+  error?: FieldError | undefined;
+  isNotMandatory?: boolean;
+};
+
+
+export async function getLeisFromDB(): Promise<Leis[]> {
     const leisCollection = collection(db, "leis");
     const leisSnapshot = await getDocs(leisCollection);
-    const leisList = leisSnapshot.docs.map((doc, index) => ({
-        id: index,
+
+    const leisList: Leis[] = leisSnapshot.docs.map(doc => ({
+        id: doc.id,
         nome: doc.data().nome,
         sigla: doc.data().sigla,
     }));
+
     return leisList;
 }
+
 
 /**
  * Normalize a stored URL-like value into an absolute URL when possible.
  * Handles legacy shapes like JSON-stringified arrays (e.g. '["https://..."]')
  * and path-like values by prefixing with NEXT_PUBLIC_VERCEL_BLOB_BASE_URL or VERCEL_URL or window.origin.
  * Returns null when input is empty/invalid.
- */
-export function normalizeStoredUrl(u?: string | null): string | null {
+ */export function normalizeStoredUrl(u?: string | string[] | null): string | null {
     if (!u) return null;
-    let s = String(u).trim();
+    
+    // 1) Se já é array real → pegue o primeiro item
+    if (Array.isArray(u)) {
+        if (u.length > 0 && typeof u[0] === "string") {
+            return u[0];
+            
+        }
+        return null;
+    }
 
-    // Strip surrounding quotes
+    // A partir daqui u é string
+    let s = String(u).trim();
+    if (!s) return null;
+
+    // 2) Remove aspas externas
     if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
         s = s.slice(1, -1).trim();
     }
 
-    // Remove leading slash if followed by a JSON array like '/["https://..."]'
-    if (s.startsWith("/") && s.length > 1 && s[1] === "[") {
+    // 3) Remove uma barra inicial antes de um JSON array
+    if (s.startsWith("/") && s[1] === "[") {
         s = s.slice(1);
     }
 
-    // If JSON-stringified array, parse and take first string entry
+    // 4) Se for JSON → parse
     if (s.startsWith("[") && s.endsWith("]")) {
         try {
             const parsed = JSON.parse(s);
-            if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "string") {
-                s = parsed[0].trim();
+            if (Array.isArray(parsed) && parsed[0]) {
+                return parsed[0];
             }
         } catch {
-            // fallthrough and treat as raw
+            /* Se der erro, continua como string normal */
         }
     }
 
-    if (!s) return null;
-    if (s.startsWith("http://") || s.startsWith("https://")) return s;
+    // 5) Já é URL normal
+    if (s.startsWith("http://") || s.startsWith("https://")) {
+        return s;
+    }
 
+    // 6) Prefixo para paths relativos
     const base =
         typeof window !== "undefined" && process.env.NEXT_PUBLIC_VERCEL_BLOB_BASE_URL == null
             ? window.location.origin
             : (process.env.NEXT_PUBLIC_VERCEL_BLOB_BASE_URL ??
               (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined));
     if (!base) return s;
+
     return `${base.replace(/\/$/, "")}/${s.replace(/^\//, "")}`;
 }

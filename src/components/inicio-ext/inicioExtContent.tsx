@@ -51,6 +51,7 @@ const getStatusText = (status: string) => {
 
 const ProjectCard = ({ project }: { project: ProjetoExt }) => {
     const effectiveStatus = getEffectiveStatus(project);
+    const statusText = getStatusText(effectiveStatus);
 
     return (
         <div className="bg-white dark:bg-blue-fcsn3 rounded-lg shadow-md p-6 mb-4 hover:shadow-lg transition-shadow">
@@ -79,6 +80,8 @@ const ProjectCard = ({ project }: { project: ProjetoExt }) => {
               Ver detalhes
             </Link>
           </div>
+          {
+            statusText == "Aprovado" && (
             <div className="mt-4 p-3 bg-[#ede8f8] dark:bg-[#6c5d94] rounded-lg flex items-center">
               <FaExclamationCircle className="text-purple-700 dark:text-black mr-2" />
               <p className="text-sm text-black dark:text-white">
@@ -88,7 +91,7 @@ const ProjectCard = ({ project }: { project: ProjetoExt }) => {
                 </Link>
               </p>
             </div>
-
+          )}
         </div>
     );
 };

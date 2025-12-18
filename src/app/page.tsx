@@ -268,7 +268,6 @@ type IdEscolhido = {
 
           // CORREÇÃO: Subtrair valor total (assumindo que está em projetoData.valorAprovado)
           const valorProjeto = projetoData.valorAprovado ?? 0;
-          console.log(valorProjeto);
           dadosSomados.valorTotal -= valorProjeto * (info.vezes - 1);
           dadosSomados.qtdOrganizacoes -= projetoData.empresas.length * (info.vezes - 1)
 

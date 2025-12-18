@@ -3,7 +3,7 @@
 import { db } from "@/firebase/firebase-config";
 import { ambitoList, formsAcompanhamentoDados, segmentoList } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields, formsAcompanhamentoSchema } from "@/lib/schemas";
-import { getItemNome, getLeisFromDB, getOdsIds } from "@/lib/utils";
+import { getItemNome, getOdsIds } from "@/lib/utils";
 import { addDoc, collection, doc, updateDoc } from "firebase/firestore";
 import { uploadFileAndGetUrlAdmin } from "./adminActions";
 
@@ -47,7 +47,6 @@ export async function submitAcompanhamentoForm(formData: FormData) {
                     : uploadFileAndGetUrlAdmin(file, "forms-acompanhamento", projetoID)
             )
         );
-        const leiList = await getLeisFromDB();
 
         const uploadFirestore: formsAcompanhamentoDados = {
             projetoID: projetoID,
@@ -56,7 +55,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
             instituicao: data.instituicao,
             descricao: data.descricao,
             segmento: getItemNome(data.segmento, segmentoList),
-            lei: getItemNome(data.lei, leiList),
+            lei: data.lei,
             pontosPositivos: data.positivos,
             pontosNegativos: data.negativos,
             pontosAtencao: data.atencao,
@@ -91,7 +90,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
             links: data.links,
             contrapartidasExecutadas: data.contrapartidasExecutadas,
         };
-
+        console.log('acompanhamento: ' , uploadFirestore)
         const formsAcompanhamentoRef = await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
 
         const projetoDocRef = doc(db, "projetos", projetoID);
@@ -99,7 +98,7 @@ export async function submitAcompanhamentoForm(formData: FormData) {
             instituicao: data.instituicao,
             estados: data.estados, // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
             municipios: data.municipios,
-            lei: getItemNome(data.lei, leiList),
+            lei: data.lei,
             ultimoFormulario: formsAcompanhamentoRef.id,
         });
 

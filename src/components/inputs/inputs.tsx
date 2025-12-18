@@ -1,4 +1,5 @@
 "use client";
+import { LeiSelectProps } from "@/lib/utils";
 import { City, State } from "country-state-city";
 import { Upload } from "lucide-react";
 import React, { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
@@ -143,7 +144,7 @@ export const LongInput: React.FC<HookFormInputProps> = ({ text, isNotMandatory, 
 interface ControlledSelectProps<T> {
     text: string;
     list: string[];
-    value: T; // Valor atual vindo do react-hook-form
+    value: T | undefined; // Valor atual vindo do react-hook-form
     onChange: (value: T) => void; // Função para atualizar o valor no react-hook-form
     error?: FieldError;
     isNotMandatory: boolean;
@@ -194,30 +195,37 @@ export const HorizontalSelects: React.FC<ControlledSelectProps<number>> = ({
     );
 };
 
-export const LeiSelect: React.FC<ControlledSelectProps<number>> = ({
+
+export const LeiSelect: React.FC<LeiSelectProps> = ({
     text,
     list,
     value,
     onChange,
     error,
-    isNotMandatory,
+    isNotMandatory
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const caixaRef = useRef<HTMLDivElement>(null);
     const [search, setSearch] = useState("");
-    const filtrados = list.filter(string => string.toLowerCase().includes(search.toLowerCase())); // Se nada for digitado (search === ""), o startsWith("") (ou includes como usamos aqui) é sempre true para qualquer string, então filtrados = list. Isso significa que a lista completa é exibida quando a pesquisa está vazia.
 
+    // // Lei selecionada (objeto) - o valor que sera armazenado no banco vai ser o id
+    const selectedLei = list.find(lei => lei.nome === value);
+    // Filtro por nome OU sigla
+    const filtrados = list.filter(lei =>
+        lei.nome.toLowerCase().includes(search.toLowerCase()) ||
+        lei.sigla.toLowerCase().includes(search.toLowerCase())
+    );
+
+    // Fechar dropdown ao clicar fora
     useEffect(() => {
         if (!isOpen) return;
-        function handleCliqueFora(event: MouseEvent) {
+        function handleClick(event: MouseEvent) {
             if (caixaRef.current && !caixaRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
             }
         }
-        document.addEventListener("mousedown", handleCliqueFora);
-        return () => {
-            document.removeEventListener("mousedown", handleCliqueFora);
-        };
+        document.addEventListener("mousedown", handleClick);
+        return () => document.removeEventListener("mousedown", handleClick);
     }, [isOpen]);
 
     return (
@@ -227,18 +235,16 @@ export const LeiSelect: React.FC<ControlledSelectProps<number>> = ({
             </h2>
 
             <div className="relative z-10" ref={caixaRef}>
-                {/* Botão que abre/fecha */}
+                {/* Botão que abre o select */}
                 <div
                     onClick={() => setIsOpen(!isOpen)}
-                    className="bg-white dark:bg-blue-fcsn2 border-1 p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center justify-between"
+                    className="bg-white dark:bg-blue-fcsn2 p-2 px-4 rounded-lg shadow-md text-lg cursor-pointer flex items-center justify-between"
                 >
                     <div className="flex flex-row justify-between items-center w-full">
-                        {value !== undefined && value !== null && list[value] !== undefined
-                            ? list[value]
+                        {selectedLei
+                            ? `${selectedLei.nome} `
                             : "Clique para exibir as leis"}
-                        <div>
-                            <RiArrowDropDownLine size={45} />
-                        </div>
+                        <RiArrowDropDownLine size={45} />
                     </div>
                 </div>
 
@@ -247,28 +253,26 @@ export const LeiSelect: React.FC<ControlledSelectProps<number>> = ({
                     <div className="absolute top-full left-0 mt-2 bg-white dark:bg-blue-fcsn2 rounded shadow-md w-full max-h-[300px] overflow-y-auto">
                         <input
                             type="text"
-                            placeholder="Pesquisar lei ..."
-                            className="w-full text-left p-2 border-b rounded-t bg-white dark:bg-blue-fcsn"
+                            placeholder="Pesquisar lei..."
+                            className="w-full p-2 border-b rounded-t bg-white dark:bg-blue-fcsn"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
 
-                        {filtrados.length > 0 ? ( // Se algo foi encontrado (alguma lei começa com a palavra digitada)
-                            filtrados.map((string, index) => (
+                        {filtrados.length > 0 ? (
+                            filtrados.map((lei) => (
                                 <button
-                                    key={index}
+                                    key={lei.id}
                                     type="button"
                                     onClick={() => {
-                                        onChange(list.indexOf(string));
-                                        setIsOpen(false); // Fecha o dropdown
+                                        onChange(lei.nome); // devolve o ID da lei
+                                        setIsOpen(false);
                                     }}
                                     className={`w-full text-left p-2 hover:bg-gray-100 dark:hover:bg-blue-fcsn ${
-                                        value === list.indexOf(string)
-                                            ? "bg-blue-100 dark:bg-blue-fcsn text-blue-fcsn font-bold"
-                                            : ""
+                                        value === lei.id ? "bg-blue-100 dark:bg-blue-fcsn font-bold" : ""
                                     }`}
                                 >
-                                    {string}
+                                    {lei.nome}
                                 </button>
                             ))
                         ) : (
@@ -278,11 +282,11 @@ export const LeiSelect: React.FC<ControlledSelectProps<number>> = ({
                 )}
             </div>
 
-            {/* Exibe erro */}
             {error && <p className="text-red-500 mt-1 text-sm">{error.message}</p>}
         </div>
     );
 };
+
 
 export const NumeroEndInput: React.FC<HookFormInputProps> = ({ text, isNotMandatory, registration, error }) => {
     return (

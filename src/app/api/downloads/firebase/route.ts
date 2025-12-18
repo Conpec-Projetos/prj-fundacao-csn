@@ -5,10 +5,27 @@ import { NextResponse } from "next/server";
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const filePath = searchParams.get("filePath"); // Extrai o parâmetro filePath da URL da requisição. Esse parâmetro indica o caminho do arquivo dentro do Firebase Storage.
-
-    if (!filePath) {
+    const rawPath = searchParams.get("filePath"); // Extrai o parâmetro filePath da URL da requisição. Esse parâmetro indica o caminho do arquivo dentro do Firebase Storage.
+    console.log("file path: ", rawPath)
+    if (!rawPath) {
       return NextResponse.json({ error: "filePath obrigatório" }, { status: 400 });
+    }
+
+    let filePath = rawPath;
+
+    // Se vier uma URL do Firebase, extrai o path real
+    if (filePath.startsWith("http")) {
+    try {
+        const url = new URL(filePath);
+        const encodedPath = url.pathname.split("/o/")[1];
+        if (!encodedPath) {
+        throw new Error("Path inválido");
+        }
+
+        filePath = decodeURIComponent(encodedPath);
+    } catch {
+        return NextResponse.json({ error: "URL do Firebase inválida" }, { status: 400 });
+    }
     }
 
     const bucket = storageAdmin.bucket();

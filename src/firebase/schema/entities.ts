@@ -86,14 +86,14 @@ export interface formsAcompanhamentoDados {
   projetoID: string;
   dataResposta: string;
   usuarioID: string;
-  instituicao: string;
-  descricao: string;
+  instituicao?: string;
+  descricao?: string;
   segmento: string;
   lei: string;
   pontosPositivos?: string;
   pontosNegativos?: string;
   pontosAtencao? : string;
-  ambito: string;
+  ambito?: string;
   qtdEstados: number;
   estados: string[];
   qtdMunicipios: number;
@@ -175,11 +175,6 @@ export const segmentoList: Segmento[] = [
   { id: 3, nome: "Criança e Adolescente" },
   { id: 4, nome: "Saúde" },
 ];
-
-export interface Lei {
-  nome: string;
-  sigla: string;
-}
 
 export interface Publico {
   id: number;

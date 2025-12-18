@@ -20,7 +20,7 @@ export default function BrazilMap({ data }: BrazilMapProps) {
     const populations = Object.values(data);
 
     // Generate gradient colors using the imported function
-    const colors = generateGradientColors(populations, '#b37b97'); // Base color is pink (#b37b97)
+    const colors = generateGradientColors(populations, '#be7ba8'); // Base color is pink (#b37b97)
 
     states.forEach((state) => {
       const stateCode = state.id; // Ensure this matches the keys in `data`
@@ -44,6 +44,10 @@ export default function BrazilMap({ data }: BrazilMapProps) {
           setHoveredState(null);
           state.style.fill = fillColor; // Revert to original color
         });
+      }else {
+        // 🔹 ESTADOS SEM DADOS
+        state.classList.add('transition-colors', 'duration-200');
+        state.style.fill = '#FFFFFF'; 
       }
     });
 

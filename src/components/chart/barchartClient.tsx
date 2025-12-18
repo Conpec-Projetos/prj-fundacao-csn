@@ -21,13 +21,13 @@ import { useEhCelular } from '@/context/ehCelular';
 // Gradiente com base na quantidade de projetos
 // gera cores em gradiente baseado nos valores
 // data: array de nums
-export function generateGradientColors(data: number[], baseColor: string = '#b37b97'): string[] {
+export function generateGradientColors(data: number[], baseColor: string = '#be7ba8'): string[] {
   const max = Math.max(...data);
   const min = Math.min(...data);
 
   return data.map(value => {
     const ratio = (value - min) / (max - min || 1);
-    const lightness = 90 - ratio * 50;
+    const lightness = 75 - ratio * 50;
     return hslFromHex(baseColor, lightness);
   });
 }
@@ -139,7 +139,6 @@ export default function BarChart({
 
       if (!xAxis || !yAxis || !iconsRef.current.length) return;
 
-      console.log(data)
       data.labels?.forEach((label: unknown, filteredIndex: number) => { // para cada label
         if (!label) return;
 
@@ -151,7 +150,7 @@ export default function BarChart({
              
 
         const icon = iconsRef.current[iconIndex]; // encontra a ods no array iconsRef
-         console.log(`Label: ${label}, ODS: ${odsNumber}, IconIndex: ${iconIndex}, HasIcon: ${!!icon}`)
+        //  console.log(`Label: ${label}, ODS: ${odsNumber}, IconIndex: ${iconIndex}, HasIcon: ${!!icon}`)
         if (!icon) return;
 
         // Posicionamento

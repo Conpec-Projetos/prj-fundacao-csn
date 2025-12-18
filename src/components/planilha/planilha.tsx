@@ -290,6 +290,7 @@ useEffect(() => {
       data.map(async (element) => {
         const latestFormId = element.ultimoFormulario;
         let odsAcompanhamento: number[] | null = null;
+        let beneficiariosAcompanhamento: number | null = null;
 
         // Se existir um ultimoFormulario, tenta buscar no forms-acompanhamento
         if (latestFormId) {
@@ -297,6 +298,7 @@ useEffect(() => {
           const acompanhamentoSnap = await getDoc(acompanhamentoRef);
           if (acompanhamentoSnap.exists()) {
             odsAcompanhamento = (acompanhamentoSnap.data() as formsAcompanhamentoDados).ods;
+            beneficiariosAcompanhamento = (acompanhamentoSnap.data() as formsAcompanhamentoDados).beneficiariosDiretos;
           }
         }
 
@@ -310,6 +312,7 @@ useEffect(() => {
         if (!cadastroSnap.empty) {
           const dados = cadastroSnap.docs[0].data();
 
+          
           // Decide qual ODS usar
           const odsOrigem = odsAcompanhamento ?? dados.ods;
           const odsArray = Array.isArray(odsOrigem)
@@ -319,7 +322,7 @@ useEffect(() => {
           return {
             ...element,
             valorApto: dados.valorApto ?? 0,
-            beneficiariosDiretos: dados.beneficiariosDiretos ?? 0,
+            beneficiariosDiretos: beneficiariosAcompanhamento ?? dados.beneficiariosDiretos ?? 0,
             odsArray,
           };
         } else {

@@ -63,19 +63,24 @@ const estadosSiglas: { [key: string]: string } = {
   "Tocantins": "TO",
 };
 
+
 async function getLeisSiglas(): Promise<{ [key: string]: string }> {
   const snapshot = await getDocs(collection(db, "leis"));
   const map: { [nome: string]: string } = {};
 
   snapshot.forEach((doc) => {
-    const data = doc.data() as { nome: string; sigla: string }; // mudar para tipo lei
-    if (data.nome && data.sigla) {
-      map[data.nome] = data.sigla;
-    }
-  });
+    const data = doc.data() as { nome: string; sigla?: string };
 
+    if (!data.sigla) {
+      console.warn("Lei sem sigla detectada:", data.nome);
+      return;
+    }
+
+    map[data.nome] = data.sigla;
+  });
   return map;
 }
+
 
 export default async function DashboardPage({
   searchParams,
@@ -146,8 +151,14 @@ export default async function DashboardPage({
           projRepetidos.set(id, { id, repetiu: false, vezes: 1 });
         }
       }
-      // Soma dos valores escalares
+        // Set para garantir unicidade
+      const uniqueMunicipios = new Set<string>(acc.municipios ?? []);
 
+      // adiciona os municípios do estado atual
+      for (const municipio of curr.municipios ?? []) {
+        uniqueMunicipios.add(municipio);
+      }
+      // Soma dos valores escalares
       const novoAcc = {
         nomeEstado: "Todos",
         valorTotal: (acc.valorTotal ?? 0) + (curr.valorTotal ?? 0),
@@ -159,7 +170,7 @@ export default async function DashboardPage({
           (acc.beneficiariosIndireto ?? 0) + (curr.beneficiariosIndireto ?? 0),
         qtdOrganizacoes:
           (acc.qtdOrganizacoes ?? 0) + (curr.qtdOrganizacoes ?? 0),
-        qtdMunicipios: (acc.qtdMunicipios ?? 0) + (curr.qtdMunicipios ?? 0),
+        qtdMunicipios: uniqueMunicipios.size,
         projetosODS: acc.projetosODS
           ? acc.projetosODS.map((v, i) => v + (curr.projetosODS?.[i] ?? 0))
           : (curr.projetosODS ?? []),
@@ -395,7 +406,7 @@ export default async function DashboardPage({
               (valor, index) => {
                 // Se este ODS está no projeto, subtrai 1 para cada repetição
                 const shouldSubtract =
-                  correcao.ods.includes(index + 1) ||
+                  correcao.ods.includes(index - 1) ||
                   correcao.ods.includes(index);
                 return shouldSubtract
                   ? Math.max(0, valor - (info.vezes - 1))
@@ -438,8 +449,8 @@ export default async function DashboardPage({
 
     // ✅ Correto
     array.forEach((d) => {
-      segmentosAgrupados[d.segmento.nome] =
-        (segmentosAgrupados[d.segmento.nome] ?? 0) + d.segmento.qtdProjetos;
+      leisAgrupadas[d.lei.nome] =
+        (leisAgrupadas[d.lei.nome] ?? 0) + d.lei.qtdProjetos;
     });
 
     const resultLeis = Object.entries(leisAgrupadas).map(
@@ -453,7 +464,7 @@ export default async function DashboardPage({
 
     array.forEach((d) => {
       segmentosAgrupados[d.segmento.nome] =
-        (leisAgrupadas[d.segmento.nome] ?? 0) + d.segmento.qtdProjetos;
+        (segmentosAgrupados[d.segmento.nome] ?? 0) + d.segmento.qtdProjetos;
     });
 
     const resultSegmentos = Object.entries(segmentosAgrupados).map(
@@ -519,7 +530,8 @@ export default async function DashboardPage({
     for (const municipio of municipios) {
       const consulta = query(
         collection(db, "projetos"),
-        where("municipios", "array-contains", municipio)
+        where("municipios", "array-contains", municipio),
+        where("status", "==", "aprovado")
       );
       const consultaSnapshot = await getDocs(consulta);
 
@@ -639,8 +651,7 @@ export default async function DashboardPage({
   const leiSiglas: string[] =
     dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
   const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
-
-  // console.log(dados);
+  
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">

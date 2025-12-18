@@ -1,4 +1,5 @@
 "use client";
+import { upload as vercelUpload } from "@vercel/blob/client";
 import Footer from "@/components/footer/footer";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -14,16 +15,15 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { FaPencilAlt, FaArrowLeft, FaArrowRight} from "react-icons/fa";
+import { FaPencilAlt, FaArrowLeft, FaArrowRight, FaFileAlt, FaSpinner} from "react-icons/fa";
 import { writeBatch, arrayUnion } from "firebase/firestore";
 import { doc, getDoc, query, collection, where, getDocs, Timestamp, orderBy, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import Image from "next/image";
 import { useParams, useRouter } from 'next/navigation';
-import { ref, uploadBytes, getDownloadURL, listAll, StorageReference } from "firebase/storage";
-import { storage } from "@/firebase/firebase-config";
 import { saveAs } from "file-saver";
-import { FaFolderOpen, FaRegFileLines } from "react-icons/fa6";
+import { normalizeStoredUrl } from "@/lib/utils";
+import { Arquivo } from "@/app/api/downloads/[identifier]/route";
 
 interface ProjectData {
   nome?: string;
@@ -378,140 +378,257 @@ export default function ProjectDetailsPage() {
 
   // Função para upload dos arquivos e atualização do campo "documentos" em forms-cadastro
   // Pri: No storage esta: forms-cadastro/id/documentos
-  const handleUploadDocuments = async () => {
-    if (!formCadastroId || documentFiles.length === 0) {
-      toast.error("Selecione ao menos um arquivo para enviar.");
-      return;
-    }
-    setIsUploadingDocuments(true);
-    try {
-      const uploadedUrls: string[] = [];
-      for (const file of documentFiles) {
-        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/documentos/${file.name}_${Date.now()}`);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        uploadedUrls.push(url);
-      }
+  // const handleUploadDocuments = async () => {
+  //   if (!formCadastroId || documentFiles.length === 0) {
+  //     toast.error("Selecione ao menos um arquivo para enviar.");
+  //     return;
+  //   }
+  //   setIsUploadingDocuments(true);
+  //   try {
+  //     const uploadedUrls: string[] = [];
+  //     for (const file of documentFiles) {
+  //       const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/documentos/${file.name}_${Date.now()}`);
+  //       await uploadBytes(storageRef, file);
+  //       const url = await getDownloadURL(storageRef);
+  //       uploadedUrls.push(url);
+  //     }
 
-      // Adiciona os novos arquivos ao array existente usando arrayUnion
-      const formDocRef = doc(db, "forms-cadastro", formCadastroId);
-      await updateDoc(formDocRef, {
-        documentos: arrayUnion(...uploadedUrls), // Para documentos temos o array documentos
+  //     // Adiciona os novos arquivos ao array existente usando arrayUnion
+  //     const formDocRef = doc(db, "forms-cadastro", formCadastroId);
+  //     await updateDoc(formDocRef, {
+  //       documentos: arrayUnion(...uploadedUrls), // Para documentos temos o array documentos
+  //     });
+
+  //     toast.success("Documentos enviados com sucesso!");
+  //     setShowDocumentModal(false);
+  //     setDocumentFiles([]);
+  //   } catch (error) {
+  //     console.error("Erro ao enviar documentos:", error);
+  //     toast.error("Falha ao enviar documentos.");
+  //   } finally {
+  //     setIsUploadingDocuments(false);
+  //   }
+  // };
+    // helper: upload a single file via Vercel Blob client upload
+  const uploadFileToVercel = async (fieldName: string) => {
+  if (!formCadastroId || documentFiles.length === 0) {
+    toast.error("Selecione ao menos um arquivo para enviar.");
+    return;
+  }
+
+  setIsUploadingDocuments(true);
+
+  try {
+    const uploadedUrls: string[] = [];
+
+    for (const file of documentFiles) {
+      const clientPayload = JSON.stringify({
+        size: file.size,
+        type: file.type,
       });
 
-      toast.success("Documentos enviados com sucesso!");
-      setShowDocumentModal(false);
-      setDocumentFiles([]);
-    } catch (error) {
-      console.error("Erro ao enviar documentos:", error);
-      toast.error("Falha ao enviar documentos.");
-    } finally {
-      setIsUploadingDocuments(false);
-    }
-  };
+      const pathname = `${fieldName}/${Date.now()}-${file.name}`;
 
+      const result = await vercelUpload(pathname, file, {
+        access: "public",
+        handleUploadUrl: "/api/upload",
+        clientPayload,
+        multipart: true,
+      });
+
+      type VercelResult = {
+        url?: string;
+        downloadUrl?: string;
+        pathname?: string;
+        key?: string;
+      };
+
+      const vr = result as VercelResult;
+
+      const publicUrl =
+        vr.url ??
+        vr.downloadUrl ??
+        (() => {
+          const pathnameFromResult = vr.pathname ?? vr.key ?? null;
+          if (!pathnameFromResult) return null;
+          const base =
+            process.env.NEXT_PUBLIC_VERCEL_BLOB_BASE_URL ??
+            window.location.origin;
+          return `${base.replace(/\/$/, "")}/${String(
+            pathnameFromResult
+          ).replace(/^\//, "")}`;
+        })();
+
+      if (!publicUrl) {
+        throw new Error(
+          "Upload ok, mas nenhuma URL pública foi retornada"
+        );
+      }
+
+      // ✅ agora sim salvamos
+      uploadedUrls.push(publicUrl);
+    }
+
+    // ✅ atualiza o Firestore UMA vez
+    const formDocRef = doc(db, "forms-cadastro", formCadastroId);
+    await updateDoc(formDocRef, {
+      [fieldName]: arrayUnion(...uploadedUrls), // recibosProponente ou docsAdmin (será array)
+    });
+
+    toast.success("Documentos enviados com sucesso!");
+    setShowDocumentModal(false);
+  } catch (err) {
+    console.error("Upload failed", err);
+    toast.error("Erro ao enviar documentos");
+  } finally {
+    setIsUploadingDocuments(false);
+  }
+};
   // Função para upload dos recibos pelo proponente
   // Pri: No storage esta: forms-cadastro/id/recibos
-  const handleUploadReceipts = async () => {
-    if (!formCadastroId || documentFiles.length === 0) {
-      toast.error("Selecione ao menos um arquivo para enviar.");
-      return;
-    }
-    setIsUploadingDocuments(true);
-    try {
-      const uploadedUrls: string[] = [];
-      for (const file of documentFiles) {
-        const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/recibos/${file.name}_${Date.now()}`);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        uploadedUrls.push(url);
-      }
+  // const handleUploadReceipts = async () => {
+  //   if (!formCadastroId || documentFiles.length === 0) {
+  //     toast.error("Selecione ao menos um arquivo para enviar.");
+  //     return;
+  //   }
+  //   setIsUploadingDocuments(true);
+  //   try {
+  //     const uploadedUrls: string[] = [];
+  //     for (const file of documentFiles) {
+  //       const storageRef = ref(storage, `forms-cadastro/${formCadastroId}/recibos/${file.name}_${Date.now()}`);
+  //       await uploadBytes(storageRef, file);
+  //       const url = await getDownloadURL(storageRef);
+  //       uploadedUrls.push(url);
+  //     }
 
-      // Adiciona os novos arquivos ao array recibos que será criado pela primeira vez aqui
-      const formDocRef = doc(db, "forms-cadastro", formCadastroId);
-      await updateDoc(formDocRef, {
-        recibos: arrayUnion(...uploadedUrls),
-      });
+  //     // Adiciona os novos arquivos ao array recibos que será criado pela primeira vez aqui
+  //     const formDocRef = doc(db, "forms-cadastro", formCadastroId);
+  //     await updateDoc(formDocRef, {
+  //       recibos: arrayUnion(...uploadedUrls),
+  //     });
 
-      toast.success("Recibos enviados com sucesso!");
-      setShowDocumentModal(false);
-      setDocumentFiles([]);
-    } catch (error) {
-      console.error("Erro ao enviar recibos:", error);
-      toast.error("Falha ao enviar recibos.");
-    } finally {
-      setIsUploadingDocuments(false);
-    }
-  };
+  //     toast.success("Recibos enviados com sucesso!");
+  //     setShowDocumentModal(false);
+  //     setDocumentFiles([]);
+  //   } catch (error) {
+  //     console.error("Erro ao enviar recibos:", error);
+  //     toast.error("Falha ao enviar recibos.");
+  //   } finally {
+  //     setIsUploadingDocuments(false);
+  //   }
+  // };
 
 // -------------------------------------------------------------------------//
-  const [currentPath, setCurrentPath] = useState("");
-  const [folders, setFolders] = useState<StorageReference[]>([]);
-  const [files, setFiles] = useState<StorageReference[]>([]);
-    
-  const ROOT_PATH = adm
-    ? `forms-cadastro/${formCadastroId}/`
-    : `forms-cadastro/${formCadastroId}/recibos/`;
 
-  // Mostra apenas o trecho depois do ROOT_PATH
-  const displayPath = currentPath.replace(ROOT_PATH, "") || "./";
+const [arquivos, setArquivos] = useState<Arquivo[]>([]);
+const [loading, setLoading] = useState<boolean>(false);
 
-    // Carrega conteúdo da pasta atual
-    const loadFolder = async (path: string) => {
-      const folderRef = ref(storage, path);
-      const res = await listAll(folderRef); // Pegamos tudo que esta dentro desta pasta (arquivos e outras pastas)
+async function buscarArquivos() {
+  if (!identifier) {
+    console.log("ID ainda não carregou");
+    return;
+  }
 
-      setFolders(res.prefixes); // subpastas
-      setFiles(res.items); // arquivos que estao dentro desta pasta
+  const res = await fetch(`/api/downloads/${identifier}`);
+  const data = await res.json();
+
+  const listaBase: Arquivo[] = adm
+    ? data.arquivos
+    : data.arquivos.filter((arq: Arquivo) => arq.campo === "recibosProponente");
+
+  // ---- NORMALIZAÇÃO DOS CAMPOS REPETIDOS ----
+  const contador: Record<string, number> = {};
+
+  const listaNumerada = listaBase.map((arq) => {
+    const base = arq.campo;
+
+    // já apareceu antes?
+    if (contador[base] == null) {
+      contador[base] = 0; // primeira vez
+    } else {
+      contador[base] += 1; // incrementa
+    }
+
+    // se for o primeiro (0), usa o nome original sem número
+    const novoNome = contador[base] === 0 ? base : `${base}${contador[base]}`;
+
+    return {
+      ...arq,
+      campo: novoNome,
     };
+  });
+  setLoading(false)
+  setArquivos(listaNumerada);
+}
 
-    useEffect(() => {
-      if (formCadastroId) { // Definimos o path de acordo com o id
-        const rootPath = adm
-          ? `forms-cadastro/${formCadastroId}/`
-          : `forms-cadastro/${formCadastroId}/recibos/`;
-        
-        setCurrentPath(rootPath);
-        loadFolder(rootPath);
-      }
-    }, [formCadastroId]);
+//   function extrairPastaDaUrl(url: string): string {
+//   try {
+//     const path = new URL(url).pathname; // "/diario/arquivo.pdf"
+//     const parts = path.split("/").filter(Boolean); // ["diario", "arquivo.pdf"]
+//     return parts[0] || ""; // "diario"
+//   } catch {
+//     return "";
+//   }
+// }
 
 
-    const handleDownload = async (filePath: string, fileName: string) => {
-      try {
-        const res = await fetch(`/api/downloads/download?filePath=${encodeURIComponent(filePath)}`);
+  const handleOpenFile = (arquivo: string) => {
+    const url = normalizeStoredUrl(arquivo);
+    if (!url) {
+      console.error("URL inválida:", arquivo);
+      return;
+    }
 
-        if (!res.ok) {
-          // Tenta pegar mensagem de erro como texto, não JSON
-          const errorText = await res.text();
-          throw new Error(`Erro no servidor: ${errorText}`);
-        }
-
-        const blob = await res.blob(); // Aqui está o arquivo real (objeto do tipo arquivo)
-        saveAs(blob, fileName); // Baixamos o arquivo no computador do client
-      } catch (err) {
-        console.error("Erro ao baixar arquivo:", err);
-      }
-    };
-
-    const handleOpenFolder = (subFolderRef:  StorageReference) => {
-      // segurança: só deixa abrir se estiver dentro do ROOT_PATH
-      if (!subFolderRef.fullPath.startsWith(ROOT_PATH)) return;
-      const newPath = `${subFolderRef.fullPath}/`;
-      setCurrentPath(newPath);
-      loadFolder(newPath);
-    };
-
-    // Voltar para pasta anterior
-    const handleGoBack = () => {
-    if (currentPath === ROOT_PATH) return; // não volta além da raiz
-    
-    const parts = currentPath.split("/").filter(Boolean);
-    parts.pop(); // remove a última parte (pasta atual)
-    const newPath = parts.join("/") + "/";
-    setCurrentPath(newPath);
-    loadFolder(newPath);
+    window.open(url, "_blank");
   };
+
+
+const handleDownloadFile = async (arquivo: string) => {
+  const url = normalizeStoredUrl(arquivo);
+
+  if (!url) {
+    console.error("URL inválida:", arquivo);
+    return;
+  }
+
+  try {
+    let response: Response;
+
+    const BLOB_BASE =
+      "https://dcnpruvgeemnaxr5.public.blob.vercel-storage.com/";
+
+    // Se for Blob, extraí SOMENTE o path
+    if (url.startsWith(BLOB_BASE)) {
+      const filePath = url.slice(BLOB_BASE.length);
+
+      response = await fetch(
+        `/api/downloads/especifico?path=${encodeURIComponent(filePath)}`
+      );
+    } else {
+      // Caso contrário, tenta Firebase
+      response = await fetch(
+        `/api/downloads/firebase?filePath=${encodeURIComponent(url)}`
+      );
+    }
+
+    if (!response.ok) {
+      const message = await response.text();
+      toast.error(message || "Erro ao buscar arquivo");
+      return;
+    }
+
+    const blob = await response.blob();
+
+    const fileName =
+      url.split("/").pop()?.split("?")[0] || "arquivo";
+
+    saveAs(blob, fileName);
+  } catch (error) {
+    console.error("Erro ao baixar arquivo:", error);
+    toast.error("Erro inesperado ao baixar arquivo");
+  }
+};
+
 
 //-------------------------------------------------------------------------//
 
@@ -1059,7 +1176,13 @@ export default function ProjectDetailsPage() {
                   ADICIONAR DOCUMENTOS
                 </button>
                 <button 
-                  onClick={() => setShowDownloadingModal(true)} 
+                  onClick={() =>
+                    { 
+                    setShowDownloadingModal(true)
+                    setLoading(true)
+                    buscarArquivos();
+                  }
+                  } 
                   className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-pink-light2 transition-colors"
                   >
                   VISUALIZAR DOCUMENTOS
@@ -1090,7 +1213,11 @@ export default function ProjectDetailsPage() {
                   ADICIONAR RECIBOS
                 </button>
                 <button 
-                  onClick={() => setShowDownloadingModal(true)} 
+                 onClick={() => {
+                  setShowDownloadingModal(true);
+                  setLoading(true)
+                  buscarArquivos();
+                }} 
                   className="bg-pink-fcsn text-white text-sm font-bold px-4 py-2 rounded-md hover:bg-pink-light2 transition-colors"
                   >
                   VISUALIZAR RECIBOS
@@ -1214,7 +1341,7 @@ export default function ProjectDetailsPage() {
                   Cancelar
                 </button>
                 <button
-                  onClick={adm ? handleUploadDocuments : handleUploadReceipts}
+                  onClick={() => adm ? uploadFileToVercel("docsAdmin") : uploadFileToVercel("recibosProponente")}
                   className="bg-blue-fcsn text-white px-4 py-2 rounded-md hover:bg-blue-fcsn3"
                   disabled={isUploadingDocuments}
                 >
@@ -1228,68 +1355,53 @@ export default function ProjectDetailsPage() {
 
         {/* Modal para baixar arquivos*/}
         {showDownloadingModal && (
-          adm ? (
+          
           <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded-lg text-center  mx-4 w-4xl h-3/4">
               <h2 className="text-xl font-bold text-black mb-4">BAIXAR DOCUMENTOS</h2>
               
               <div className="flex flex-col gap-6 pt-6">
 
-                 <div className="p-4 border rounded-md overflow-y-auto">
+                 <div className="p-4 border rounded-md overflow-y-auto max-h-[50vh]">
 
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
-                      <h2 className="font-bold mb-2 text-black"> {displayPath}</h2>
-                      
+                  {loading && (
+                    <div className="flex justify-center items-center">
+                      <FaSpinner className="animate-spin text-4xl text-blue-fcsn dark:text-blue-fcsn"  />
                     </div>
-                    
+                  )}
 
-                      {currentPath !== `forms-cadastro/${formCadastroId}/` && (
-                        <button
-                          onClick={handleGoBack}
-                          className="mb-4 px-3 py-1 bg-gray-300 text-black rounded-md hover:bg-gray-300"
-                        >
-                          Voltar
-                        </button>
-                      )}
 
-                      <div className="space-y-4">
-                        {/* Subpastas */}
-                        {folders.map((sub) => (
-                          <div key={sub.fullPath} className="flex items-center justify-between">
-                            <div className="flex flex-row items-center gap-2">
-                              <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
-                              <span className="text-black">{sub.name}</span>
-                            </div>
-                            <button
-                              onClick={() => handleOpenFolder(sub)}
-                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
-                            >
-                              Abrir
-                            </button>
-                          </div>
-                        ))}
-
-                        {/* Arquivos */}
-                        {files.map((file) => (
-                          <div key={file.fullPath} className="flex items-center justify-between">
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              <FaRegFileLines size={20} color="#b37b97" />
-                              <span className="text-black">{file.name}</span>
-                            </div>                            <button
-                              onClick={() => handleDownload(file.fullPath, file.name)}
-                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
-                            >
-                              Baixar
-                            </button>
-                          </div>
-                        ))}
-
-                        {folders.length === 0 && files.length === 0 && (
-                          <p className="text-gray-600 py-4">Nenhum arquivo ou pasta aqui.</p>
-                        )}
-                      </div>
+              <div className="space-y-4">
+                {/* Arquivos */}
+                {arquivos.map((arq, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex flex-row items-center gap-2">
+                      <FaFileAlt size={20} color="rgb(156, 163, 175)" />
+                      <span className="text-black">{arq.campo}</span>
                     </div>
+
+                    <div className="flex flex-row space-x-2.5">
+                    <button
+                      onClick={() => handleOpenFile(arq.url)}
+                      className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
+                    >
+                      Abrir
+                    </button>
+                    <button
+                      onClick={() => handleDownloadFile(arq.url)}
+                      className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
+                    >
+                      Baixar
+                    </button>
+                    </div>
+                  </div>
+                ))}
+
+                {(arquivos.length === 0 && !loading)&& (
+                  <p className="text-gray-600 py-4">Nenhum arquivo aqui.</p>
+                )}
+              </div>
+              </div>
               {/* Botão cancelar */}
             <div>
               <button
@@ -1302,71 +1414,6 @@ export default function ProjectDetailsPage() {
           </div>
           </div>
         </div>
-          ) : (
-          <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
-            <div className="bg-white p-6 rounded-lg text-center mx-4 w-4xl h-3/4">
-              <h2 className="text-xl font-bold text-black mb-4">BAIXAR RECIBOS</h2>
-              
-              <div className="flex flex-col gap-6 pt-6">
-
-                 <div className="p-4 border rounded-md">
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
-                      <h2 className="font-bold mb-2 text-black"> {displayPath}</h2>
-                      
-                    </div>
-
-                      <div className="space-y-4">
-                        {/* Subpastas */}
-                        {folders.map((sub) => (
-                          <div key={sub.fullPath} className="flex items-center justify-between">
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              <FaFolderOpen  size={20} color="rgb(255, 200, 0)"/>
-                              <span className="text-black">{sub.name}</span>
-                            </div>
-                            <button
-                              onClick={() => handleOpenFolder(sub)}
-                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
-                            >
-                              Abrir
-                            </button>
-                          </div>
-                        ))}
-
-                        {/* Arquivos */}
-                        {files.map((file) => (
-                          <div key={file.fullPath} className="flex items-center justify-between">
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              <FaRegFileLines size={20} color="#b37b97" />
-                              <span className="text-black">{file.name}</span>
-                            </div>
-                            <button
-                              onClick={() => handleDownload(file.fullPath, file.name)}
-                              className="px-3 py-1 bg-pink-fcsn text-white rounded-md hover:opacity-70"
-                            >
-                              Baixar
-                            </button>
-                          </div>
-                        ))}
-
-                        {folders.length === 0 && files.length === 0 && (
-                          <p className="text-gray-600 py-4">Nenhum arquivo ou pasta aqui.</p>
-                        )}
-                      </div>
-                    </div>
-
-                  <div>
-                    <button
-                      onClick={() => setShowDownloadingModal(false)}
-                      className="bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400 mt-4"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-            </div>
-          </div>
-        </div>
-        )
       )}
     </main>
   );

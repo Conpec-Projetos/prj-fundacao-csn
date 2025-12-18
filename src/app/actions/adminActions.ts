@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/firebase/firebase-config';
-import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc, query, where, writeBatch, getDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { storageAdmin } from '@/firebase/firebase-admin-config';
 import { v4 as uuidv4 } from 'uuid';
@@ -66,14 +66,54 @@ export async function createLaw(nome: string, sigla: string): Promise<{ success:
   }
 }
 
-export async function updateLaw(lawId: string, nome: string, sigla: string): Promise<{ success: boolean }> {
+export async function updateLaw(
+  lawId: string,
+  nome: string,
+  sigla: string
+) {
   try {
-    const lawDocRef = doc(db, 'leis', lawId);
-    await updateDoc(lawDocRef, { nome, sigla });
-    revalidatePath('/admin/gerenciamento');
+
+    const lawRef = doc(db, "leis", lawId);
+    const lawSnap = await getDoc(lawRef);
+
+    if (!lawSnap.exists()) {
+      console.log("Lei não encontrada");
+      return { success: false };
+    }
+
+    const oldNome = lawSnap.data().nome;
+
+    await updateDoc(lawRef, { nome, sigla });
+
+    const collections = [
+      "projetos",
+      "forms-cadastro",
+      "forms-acompanhamento",
+    ];
+
+    for (const col of collections) {
+
+      const q = query(
+        collection(db, col),
+        where("lei", "==", oldNome)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) continue;
+
+      const batch = writeBatch(db);
+
+      snapshot.forEach((d) => {
+        batch.update(d.ref, { lei: nome });
+      });
+
+      await batch.commit();
+    }
+
     return { success: true };
-  } catch (error) {
-    console.error("Erro ao atualizar lei:", error);
+  } catch (e) {
+    console.error("ERRO:", e);
     return { success: false };
   }
 }
