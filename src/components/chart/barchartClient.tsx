@@ -21,13 +21,13 @@ import { useEhCelular } from '@/context/ehCelular';
 // Gradiente com base na quantidade de projetos
 // gera cores em gradiente baseado nos valores
 // data: array de nums
-export function generateGradientColors(data: number[], baseColor: string = '#ff2377'): string[] {
+export function generateGradientColors(data: number[], baseColor: string = '#be7ba8'): string[] {
   const max = Math.max(...data);
   const min = Math.min(...data);
 
   return data.map(value => {
     const ratio = (value - min) / (max - min || 1);
-    const lightness = 90 - ratio * 50;
+    const lightness = 75 - ratio * 50;
     return hslFromHex(baseColor, lightness);
   });
 }

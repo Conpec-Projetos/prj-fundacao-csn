@@ -20,7 +20,7 @@ export default function BrazilMap({ data }: BrazilMapProps) {
     const populations = Object.values(data);
 
     // Generate gradient colors using the imported function
-    const colors = generateGradientColors(populations, '#ff2377'); // Base color is pink (#b37b97)
+    const colors = generateGradientColors(populations, '#be7ba8'); // Base color is pink (#b37b97)
 
     states.forEach((state) => {
       const stateCode = state.id; // Ensure this matches the keys in `data`

@@ -1,6 +1,6 @@
 import Footer from "@/components/footer/footer";
 import { Toaster } from "sonner";
-import { collection, query, where, getDocs, orderBy, limit} from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc} from "firebase/firestore";
 import { db } from "@/firebase/firebase-config";
 import { formsAcompanhamentoDados, formsCadastroDados, odsList, segmentoList, ambitoList, Associacao} from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields } from "@/lib/schemas";
@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import AcompanhamentoForm from "@/components/forms/AcompanhamentoForm";
 import ProjetoInfoBloco from "@/components/forms/projetoInfoBloco";
+import { Projetos } from "functions/src/tipos/entities";
 
 
 interface ProjetoInfo {
@@ -40,61 +41,94 @@ async function getProjetoData(projetoID: string): Promise<{ initialData: Partial
         emailLegal: cadastroData.emailLegal,
     };
 
-    // 2. Busca o último formulário de acompanhamento para pré-preenchimento
-    const acompanhamentoQuery = query(
-        collection(db, "forms-acompanhamento"),
-        where("projetoID", "==", projetoID),
-        orderBy("dataResposta", "asc"), // ordenando pela data da resposta e nao pelo ultimo forms, acredito que funciona
-        limit(1)
-    );
-    const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
+    const projetoRef = doc(db, "projetos", projetoID);
+    const projetoSnap = await getDoc(projetoRef);
 
-    if (!acompanhamentoSnapshot.empty) {
-        // const leiList: Leis[] = await getLeisFromDB();
-        // Se já existe um acompanhamento, usa seus dados
-        const data = acompanhamentoSnapshot.docs[0].data() as formsAcompanhamentoDados;
-        const odsBooleans = new Array(odsList.length).fill(false);
-        data.ods.forEach(id => {
-            if (id >= 0 && id < odsList.length) odsBooleans[id] = true;
-        });
+    if (projetoSnap.exists()) {
 
-        initialData = {
-            instituicao: data.instituicao,
-            descricao: data.descricao,
-            segmento: segmentoList.findIndex(s => s.nome === data.segmento),
-            lei: data.lei,
-            positivos: data.pontosPositivos,
-            negativos: data.pontosNegativos,
-            atencao: data.pontosAtencao,
-            ambito: ambitoList.findIndex(a => a.nome === data.ambito),
-            estados: data.estados,
-            municipios: data.municipios,
-            especificacoes: data.especificacoes,
-            dataComeco: data.dataInicial,
-            dataFim: data.dataFinal,
-            contrapartidasProjeto: data.contrapartidasProjeto,
-            beneficiariosDiretos: data.beneficiariosDiretos,
-            beneficiariosIndiretos: data.beneficiariosIndiretos,
-            diversidade: String(data.diversidade) as "true" | "false",
-            qtdAmarelas: data.qtdAmarelas,
-            qtdBrancas: data.qtdBrancas,
-            qtdIndigenas: data.qtdIndigenas,
-            qtdPardas: data.qtdPardas,
-            qtdPretas: data.qtdPretas,
-            qtdMulherCis: data.qtdMulherCis,
-            qtdMulherTrans: data.qtdMulherTrans,
-            qtdHomemCis: data.qtdHomemCis,
-            qtdHomemTrans: data.qtdHomemTrans,
-            qtdNaoBinarios: data.qtdNaoBinarios,
-            qtdPCD: data.qtdPCD,
-            qtdLGBT: data.qtdLGBT,
-            ods: odsBooleans,
-            relato: data.relato,
-            website: data.website,
-            links: data.links,
-            contrapartidasExecutadas: data.contrapartidasExecutadas,
-            fotos: [],
+        const projeto = {
+            id: projetoSnap.id, // ID do Firebase
+            ...projetoSnap.data() as Projetos,
         };
+
+    // 2. Busca o último formulário de acompanhamento para pré-preenchimento
+        if(projeto.ultimoFormulario){
+        const acompanhamento = doc(db, "forms-acompanhamento", projeto.ultimoFormulario);
+        const acompanhamentoSnapshot = await getDoc(acompanhamento);
+
+            if(acompanhamentoSnapshot.exists()){
+                const data = {
+                    id: acompanhamentoSnapshot .id, // ID do Firebase
+                    ...acompanhamentoSnapshot .data() as formsAcompanhamentoDados,
+                };
+                const odsBooleans = new Array(odsList.length).fill(false);
+                data.ods.forEach(id => {
+                    if (id >= 0 && id < odsList.length) odsBooleans[id] = true;
+                });
+
+                initialData = {
+                    instituicao: data.instituicao,
+                    descricao: data.descricao,
+                    segmento: segmentoList.findIndex(s => s.nome === data.segmento),
+                    lei: data.lei,
+                    positivos: data.pontosPositivos,
+                    negativos: data.pontosNegativos,
+                    atencao: data.pontosAtencao,
+                    ambito: ambitoList.findIndex(a => a.nome === data.ambito),
+                    estados: data.estados,
+                    municipios: data.municipios,
+                    especificacoes: data.especificacoes,
+                    dataComeco: data.dataInicial,
+                    dataFim: data.dataFinal,
+                    contrapartidasProjeto: data.contrapartidasProjeto,
+                    beneficiariosDiretos: data.beneficiariosDiretos,
+                    beneficiariosIndiretos: data.beneficiariosIndiretos,
+                    diversidade: String(data.diversidade) as "true" | "false",
+                    qtdAmarelas: data.qtdAmarelas,
+                    qtdBrancas: data.qtdBrancas,
+                    qtdIndigenas: data.qtdIndigenas,
+                    qtdPardas: data.qtdPardas,
+                    qtdPretas: data.qtdPretas,
+                    qtdMulherCis: data.qtdMulherCis,
+                    qtdMulherTrans: data.qtdMulherTrans,
+                    qtdHomemCis: data.qtdHomemCis,
+                    qtdHomemTrans: data.qtdHomemTrans,
+                    qtdNaoBinarios: data.qtdNaoBinarios,
+                    qtdPCD: data.qtdPCD,
+                    qtdLGBT: data.qtdLGBT,
+                    ods: odsBooleans,
+                    relato: data.relato,
+                    website: data.website,
+                    links: data.links,
+                    contrapartidasExecutadas: data.contrapartidasExecutadas,
+                    fotos: [],
+                }
+            }
+        } else {
+            // Se não, usa os dados do cadastro original para pré-preenchimento
+            const odsBooleans = new Array(odsList.length).fill(false);
+            cadastroData.ods.forEach(id => {
+                if (id >= 0 && id < odsList.length) odsBooleans[id] = true;
+            });
+            
+            initialData = {
+                instituicao: cadastroData.instituicao,
+                descricao: cadastroData.descricao,
+                segmento: segmentoList.findIndex(s => s.nome === cadastroData.segmento),
+                lei: cadastroData.lei,
+                estados: cadastroData.estados,
+                municipios: cadastroData.municipios,
+                dataComeco: cadastroData.dataInicial,
+                dataFim: cadastroData.dataFinal,
+                contrapartidasProjeto: cadastroData.contrapartidasProjeto,
+                beneficiariosDiretos: cadastroData.beneficiariosDiretos,
+                ods: odsBooleans,
+                website: cadastroData.website,
+                diversidade: "",
+                fotos: [],
+            };
+        }
+    
     } else {
         // Se não, usa os dados do cadastro original para pré-preenchimento
         const odsBooleans = new Array(odsList.length).fill(false);
