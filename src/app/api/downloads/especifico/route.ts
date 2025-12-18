@@ -1,4 +1,5 @@
 // app/api/downloads/especifico/route.ts
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const fileUrl = searchParams.get("url");
@@ -14,30 +15,37 @@ export async function GET(req: Request) {
     return new Response("URL inválida", { status: 400 });
   }
 
-  // ✅ Segurança SSRF — domínio do Vercel Blob
+  // Segurança SSRF — domínio e protocolo
   if (
-    !parsedUrl.hostname.endsWith(".public.blob.vercel-storage.com") ||
-    parsedUrl.protocol !== "https:"
+    parsedUrl.protocol !== "https:" ||
+    !parsedUrl.hostname.endsWith(".public.blob.vercel-storage.com")
   ) {
     return new Response("URL não permitida", { status: 400 });
   }
 
-  // ✅ (Opcional) valida pasta
+  // Allow-list de pastas
   const ALLOWED_FOLDERS = [
     "apresentacao",
     "compliance",
     "diario",
     "docsAdmin",
     "documentos",
-    "recibosProponente"
+    "recibosProponente",
   ];
 
-  const folder = parsedUrl.pathname.split("/").filter(Boolean)[0];
-  if (!ALLOWED_FOLDERS.includes(folder)) {
+  const pathnameParts = parsedUrl.pathname.split("/").filter(Boolean);
+  const folder = pathnameParts[0];
+
+  if (!folder || !ALLOWED_FOLDERS.includes(folder)) {
     return new Response("Pasta não permitida", { status: 400 });
   }
 
-  const res = await fetch(fileUrl);
+
+  // Reconstrução da URL SOMENTE com partes validadas.
+
+  const safeUrl = `https://${parsedUrl.hostname}${parsedUrl.pathname}`;
+
+  const res = await fetch(safeUrl);
 
   if (!res.ok) {
     return new Response("Erro ao buscar arquivo", { status: 500 });
