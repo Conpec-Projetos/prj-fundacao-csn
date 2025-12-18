@@ -2,25 +2,19 @@
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const fileUrl = searchParams.get("url");
+  const path = searchParams.get("path"); // passando apenas a pasta e o arquivo
 
-  if (!fileUrl) {
-    return new Response("URL não informada", { status: 400 });
+  if (!path) {
+    return new Response("Path não informado", { status: 400 });
   }
 
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(fileUrl);
-  } catch {
-    return new Response("URL inválida", { status: 400 });
-  }
-
-  // Segurança SSRF — domínio e protocolo
+  // Proteções básicas de path 
   if (
-    parsedUrl.protocol !== "https:" ||
-    !parsedUrl.hostname.endsWith(".public.blob.vercel-storage.com")
+    path.includes("..") ||
+    path.startsWith("/") ||
+    path.includes("//")
   ) {
-    return new Response("URL não permitida", { status: 400 });
+    return new Response("Path inválido", { status: 400 });
   }
 
   // Allow-list de pastas
@@ -33,17 +27,17 @@ export async function GET(req: Request) {
     "recibosProponente",
   ];
 
-  const pathnameParts = parsedUrl.pathname.split("/").filter(Boolean);
-  const folder = pathnameParts[0];
+  const folder = path.split("/")[0];
 
-  if (!folder || !ALLOWED_FOLDERS.includes(folder)) {
+  if (!ALLOWED_FOLDERS.includes(folder)) {
     return new Response("Pasta não permitida", { status: 400 });
   }
 
+  // DOMÍNIO FIXO 
+  const BLOB_HOST = "https://dcnpruvgeemnaxr5.public.blob.vercel-storage.com";
 
-  // Reconstrução da URL SOMENTE com partes validadas.
-
-  const safeUrl = `https://${parsedUrl.hostname}${parsedUrl.pathname}`;
+  // URL FINAL SEGURA
+  const safeUrl = `${BLOB_HOST}/${path}`;
 
   const res = await fetch(safeUrl);
 
@@ -51,9 +45,7 @@ export async function GET(req: Request) {
     return new Response("Erro ao buscar arquivo", { status: 500 });
   }
 
-  const blob = await res.blob();
-
-  return new Response(blob, {
+  return new Response(res.body, {
     headers: {
       "Content-Type": "application/octet-stream",
       "Content-Disposition": 'attachment; filename="arquivo"',

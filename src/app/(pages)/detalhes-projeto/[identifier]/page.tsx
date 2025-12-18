@@ -592,28 +592,31 @@ const handleDownloadFile = async (arquivo: string) => {
   }
 
   try {
-    let response: Response | null = null;
+    let response: Response;
 
-    // tenta Vercel Blob
-    response = await fetch(
-      `/api/downloads/especifico?url=${encodeURIComponent(url)}`
-    );
+    const BLOB_BASE =
+      "https://dcnpruvgeemnaxr5.public.blob.vercel-storage.com/";
 
-    // se falhar, tenta Firebase
-    if (!response.ok) {
+    // Se for Blob, extraí SOMENTE o path
+    if (url.startsWith(BLOB_BASE)) {
+      const filePath = url.slice(BLOB_BASE.length);
 
+      response = await fetch(
+        `/api/downloads/especifico?path=${encodeURIComponent(filePath)}`
+      );
+    } else {
+      // Caso contrário, tenta Firebase
       response = await fetch(
         `/api/downloads/firebase?filePath=${encodeURIComponent(url)}`
       );
-
-      if (!response.ok) {
-        const message = await response.text();
-        toast.error(message || "Erro ao buscar arquivo");
-        return; // para tudo
-      }
     }
 
-    // só chega aqui se alguma das duas deu certo
+    if (!response.ok) {
+      const message = await response.text();
+      toast.error(message || "Erro ao buscar arquivo");
+      return;
+    }
+
     const blob = await response.blob();
 
     const fileName =
@@ -625,6 +628,7 @@ const handleDownloadFile = async (arquivo: string) => {
     toast.error("Erro inesperado ao baixar arquivo");
   }
 };
+
 
 //-------------------------------------------------------------------------//
 
