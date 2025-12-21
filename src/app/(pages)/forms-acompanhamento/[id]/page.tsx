@@ -103,6 +103,29 @@ async function getProjetoData(projetoID: string): Promise<{ initialData: Partial
                     contrapartidasExecutadas: data.contrapartidasExecutadas,
                     fotos: [],
                 }
+            } else {
+                 // Se não, usa os dados do cadastro original para pré-preenchimento
+            const odsBooleans = new Array(odsList.length).fill(false);
+            cadastroData.ods.forEach(id => {
+                if (id >= 0 && id < odsList.length) odsBooleans[id] = true;
+            });
+            
+            initialData = {
+                instituicao: cadastroData.instituicao,
+                descricao: cadastroData.descricao,
+                segmento: segmentoList.findIndex(s => s.nome === cadastroData.segmento),
+                lei: cadastroData.lei,
+                estados: cadastroData.estados,
+                municipios: cadastroData.municipios,
+                dataComeco: cadastroData.dataInicial,
+                dataFim: cadastroData.dataFinal,
+                contrapartidasProjeto: cadastroData.contrapartidasProjeto,
+                beneficiariosDiretos: cadastroData.beneficiariosDiretos,
+                ods: odsBooleans,
+                website: cadastroData.website,
+                diversidade: "",
+                fotos: [],
+            };
             }
         } else {
             // Se não, usa os dados do cadastro original para pré-preenchimento
