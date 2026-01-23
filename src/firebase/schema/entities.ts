@@ -80,6 +80,7 @@ export interface formsCadastroDados {
   apresentacao: string[];
   compliance: string[];
   documentos: string[];
+  // Temos os campos docsAdmin e recibosProponente que adiciono eles no banco no detalhes-projeto
 }
 
 export interface formsAcompanhamentoDados {

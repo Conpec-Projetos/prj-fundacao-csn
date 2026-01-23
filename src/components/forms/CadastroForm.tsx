@@ -27,7 +27,7 @@ import { City, State } from "country-state-city";
 import { getDownloadURL, ref } from "firebase/storage";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Controller, FieldError, useForm } from "react-hook-form";
+import { Controller, FieldError, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: string | null }) {
@@ -92,6 +92,58 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             termosPrivacidade: false,
         },
     });
+const [isHydrated, setIsHydrated] = useState(false);
+
+    // Para observar mudancas em todos os campos
+    const watchedForm = useWatch({control});
+const PREFIX = "cadastroForm_";
+    // Pois File nao da para salvar no localstorage
+    const camposIgnorados = [
+        "diario",
+        "apresentacao",
+        "compliance",
+        "documentos", //adicionais
+    ];
+
+    // Salvar no localstorage
+useEffect(() => {
+  if (!isHydrated || !watchedForm) return;
+
+  Object.entries(watchedForm).forEach(([key, value]) => {
+    if (camposIgnorados.includes(key)) return;
+
+    localStorage.setItem(
+      `${PREFIX}${key}`,
+      typeof value === "string" ? value : JSON.stringify(value)
+    );
+  });
+}, [watchedForm, isHydrated]);
+
+
+
+    // Usar dados salvos no localstorage
+useEffect(() => {
+  const data: Partial<FormsCadastroFormFields> = {};
+
+  Object.keys(localStorage).forEach((key) => {
+    if (!key.startsWith(PREFIX)) return;
+
+    const fieldKey = key.replace(PREFIX, "") as keyof FormsCadastroFormFields;
+    const value = localStorage.getItem(key);
+    if (!value) return;
+
+    try {
+      data[fieldKey] = JSON.parse(value);
+    } catch {
+      data[fieldKey] = value as any;
+    }
+  });
+
+  reset(data);
+  setIsHydrated(true); // 🔥 só depois disso libera o autosave
+}, [reset]);
+
+
 
     // upload progress state keyed by field name
     const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
@@ -281,6 +333,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
 
                     if (result.success) {
                         toast.success("Formulário enviado com sucesso!");
+                        
                         if (usuarioAtualID) {
                             router.push("/inicio-externo");
                         } else {
@@ -296,6 +349,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
                     toast.error("Ocorreu um erro inesperado ao enviar o formulário.");
                     console.error(error);
                 }
+                localStorage.clear()
             })}
             noValidate
         >
