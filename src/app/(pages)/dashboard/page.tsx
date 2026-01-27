@@ -651,15 +651,25 @@ export default async function DashboardPage({
 
  // fazer um if pois so vai buscar dessa forma se nao houver proj repetidos 
   const leisSiglas = await getLeisSiglas();
-  const segmentoNomes: string[] =
-    dados?.segmento.map((item) => item.nome) ?? [];
-  const segmentoValores: number[] =
-    dados?.segmento.map((item) => item.qtdProjetos) ?? [];
-  const leiNomes: string[] = dados?.lei.map((item) => item.nome) ?? [];
-  const leiSiglas: string[] =
-    dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
-  const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
-  
+  const segmentoArray =
+  Array.isArray(dados?.segmento) ? dados.segmento : [];
+
+const segmentoNomes = segmentoArray.map((i) => i.nome);
+const segmentoValores = segmentoArray.map((i) => i.qtdProjetos);
+ const leiArray =
+  Array.isArray(dados?.lei) ? dados.lei : [];
+
+const leiNomes: string[] =
+  leiArray.map((item) => item.nome);
+
+const leiSiglas: string[] =
+  leiArray.map((item) => leisSiglas[item.nome] ?? "");
+
+const leiValores: number[] =
+  leiArray.map((item) => item.qtdProjetos);
+
+  console.log("lei:", dados?.lei, typeof dados?.lei);
+
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">

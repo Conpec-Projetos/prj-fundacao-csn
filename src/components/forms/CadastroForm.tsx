@@ -122,26 +122,26 @@ useEffect(() => {
 
 
     // Usar dados salvos no localstorage
-useEffect(() => {
-  const data: Partial<FormsCadastroFormFields> = {};
+    useEffect(() => {
+    const data: Partial<FormsCadastroFormFields> = {};
 
-  Object.keys(localStorage).forEach((key) => {
-    if (!key.startsWith(PREFIX)) return;
+    Object.keys(localStorage).forEach((key) => {
+        if (!key.startsWith(PREFIX)) return;
 
-    const fieldKey = key.replace(PREFIX, "") as keyof FormsCadastroFormFields;
-    const value = localStorage.getItem(key);
-    if (!value) return;
+        const fieldKey = key.replace(PREFIX, "") as keyof FormsCadastroFormFields;
+        const value = localStorage.getItem(key);
+        if (!value) return;
 
-    try {
-      data[fieldKey] = JSON.parse(value);
-    } catch {
-      data[fieldKey] = value as any;
-    }
-  });
+        try {
+        data[fieldKey] = JSON.parse(value);
+        } catch {
+        data[fieldKey] = value as any;
+        }
+    });
 
-  reset(data);
-  setIsHydrated(true); // 🔥 só depois disso libera o autosave
-}, [reset]);
+    reset(data);
+    setIsHydrated(true); // só depois disso libera o autosave
+    }, [reset]);
 
 
 
@@ -226,6 +226,7 @@ useEffect(() => {
     }, []);
 
     useEffect(() => {
+        if (!isHydrated) return;
         const fetchAddress = async (cep: string) => {
             const cepFormatado = cep.replace(/\D/g, "");
             if (cepFormatado.length !== 8) return;

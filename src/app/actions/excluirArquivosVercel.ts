@@ -12,8 +12,7 @@ export async function deleteVercel(urls: string[]) {
             }),
         });
         const data = await res.json();
-        console.log("erro api delete", data.error);
-        console.log("data inteiro delete", data)
+        console.log("data delete", data)
     }
 
 }
