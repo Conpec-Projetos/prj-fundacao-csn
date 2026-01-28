@@ -24,7 +24,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { saveAs } from "file-saver";
 import { normalizeStoredUrl } from "@/lib/utils";
 import { Arquivo } from "@/app/api/downloads/[identifier]/route";
-import { formsAcompanhamentoDados, formsCadastroDados } from "@/firebase/schema/entities";
+import { formsAcompanhamentoDados } from "@/firebase/schema/entities";
 import { deleteVercel } from "@/app/actions/excluirArquivosVercel";
 
 interface ProjectData {

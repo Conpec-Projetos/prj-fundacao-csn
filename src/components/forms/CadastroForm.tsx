@@ -114,7 +114,7 @@ useEffect(() => {
 
     localStorage.setItem(
       `${PREFIX}${key}`,
-      typeof value === "string" ? value : JSON.stringify(value)
+      JSON.stringify(value)
     );
   });
 }, [watchedForm, isHydrated]);
@@ -135,7 +135,7 @@ useEffect(() => {
         try {
         data[fieldKey] = JSON.parse(value);
         } catch {
-        data[fieldKey] = value as any;
+        // data[fieldKey] = value as any; // Deixarei sem o catch pois aparentemente não está fazendo falta e dá problema de npm run build com as any
         }
     });
 
