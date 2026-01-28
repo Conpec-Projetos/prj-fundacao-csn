@@ -13,7 +13,7 @@ export async function GET(
   try {
     const { identifier } = await context.params; // <-- precisa do await
 
-    console.log("Recebido pela API:", identifier);
+    // console.log("Recebido pela API:", identifier);
 
     const snapshot = await dbAdmin
       .collection("forms-cadastro")

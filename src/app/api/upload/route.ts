@@ -2,6 +2,8 @@ import { authAdmin, dbAdmin } from "@/firebase/firebase-admin-config";
 import type { HandleUploadBody } from "@vercel/blob/client";
 import { handleUpload } from "@vercel/blob/client";
 import { NextRequest, NextResponse } from "next/server";
+import { del } from "@vercel/blob";
+
 
 // This route acts as the secure authorization endpoint used by the
 // @vercel/blob client upload flow. It must run in a Node runtime so the
@@ -118,5 +120,28 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("Erro ao listar arquivos:", error);
     return NextResponse.json({ error: "Erro ao listar arquivos" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { url } = await req.json();
+
+    if (!url) {
+      return NextResponse.json(
+        { error: "URL do arquivo não informada" },
+        { status: 400 }
+      );
+    }
+
+    await del(url);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error(error); 
+    return NextResponse.json(
+      { error: "Erro ao remover arquivo" },
+      { status: 500 }
+    );
   }
 }

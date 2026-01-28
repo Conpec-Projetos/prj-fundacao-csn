@@ -521,6 +521,7 @@ export default async function DashboardPage({
   async function buscarDadosMunicipios(
     municipios: string[]
   ): Promise<dadosEstados> {
+    console.log("entrou")
     const idsUltimosForms: string[] = [];
     const valoresAportados: Record<string, number> = {};
     const nomesProjetos: Record<string, string> = {};
@@ -531,11 +532,15 @@ export default async function DashboardPage({
       const consulta = query(
         collection(db, "projetos"),
         where("municipios", "array-contains", municipio),
-        where("status", "==", "aprovado")
+        where("status", "==", "aprovado"),
+        where("ativo", "==", true)
       );
       const consultaSnapshot = await getDocs(consulta);
 
       consultaSnapshot.forEach((doc) => {
+        console.log(doc.data())
+        if (!doc.data().ultimoFormulario) return;
+        console.log(doc.data().nome)
         idsUltimosForms.push(doc.data().ultimoFormulario);
         valoresAportados[doc.data().ultimoFormulario] =
           doc.data().valorAprovado;
@@ -544,7 +549,8 @@ export default async function DashboardPage({
     }
     //Evito ids repetidos
     const idsUltimosFormsUnicos = Array.from(new Set(idsUltimosForms));
-
+    console.log(idsUltimosForms)
+    console.log(idsUltimosFormsUnicos)
     //Pego os dados do forms de acompanhamento e armazeno em um array com todos os dados
     for (const id of idsUltimosFormsUnicos) {
       const refForms = doc(db, "forms-acompanhamento", id);
@@ -573,6 +579,8 @@ export default async function DashboardPage({
 
         if (formsCadastroSnapshot.exists()) {
           const dado = formsCadastroSnapshot.data();
+            console.log(dado.instituicao)
+
           const dadoFiltrado: dadosProjeto = {
             instituicao: dado.instituicao,
             qtdProjetos: dado.qtdProjetos,
@@ -643,15 +651,25 @@ export default async function DashboardPage({
 
  // fazer um if pois so vai buscar dessa forma se nao houver proj repetidos 
   const leisSiglas = await getLeisSiglas();
-  const segmentoNomes: string[] =
-    dados?.segmento.map((item) => item.nome) ?? [];
-  const segmentoValores: number[] =
-    dados?.segmento.map((item) => item.qtdProjetos) ?? [];
-  const leiNomes: string[] = dados?.lei.map((item) => item.nome) ?? [];
-  const leiSiglas: string[] =
-    dados?.lei.map((item) => leisSiglas[item.nome]) ?? [];
-  const leiValores: number[] = dados?.lei.map((item) => item.qtdProjetos) ?? [];
-  
+  const segmentoArray =
+  Array.isArray(dados?.segmento) ? dados.segmento : [];
+
+const segmentoNomes = segmentoArray.map((i) => i.nome);
+const segmentoValores = segmentoArray.map((i) => i.qtdProjetos);
+ const leiArray =
+  Array.isArray(dados?.lei) ? dados.lei : [];
+
+const leiNomes: string[] =
+  leiArray.map((item) => item.nome);
+
+const leiSiglas: string[] =
+  leiArray.map((item) => leisSiglas[item.nome] ?? "");
+
+const leiValores: number[] =
+  leiArray.map((item) => item.qtdProjetos);
+
+  console.log("lei:", dados?.lei, typeof dados?.lei);
+
   //começo do código em si
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-blue-fcsn text-blue-fcsn dark:text-white-off">

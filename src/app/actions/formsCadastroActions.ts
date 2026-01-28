@@ -52,7 +52,7 @@ export async function submitCadastroForm(formData: FormData) {
     };
 
     const validationResult = formsCadastroSchema.safeParse(dataToValidate);
-    console.log("validationResult: ", validationResult)
+    // console.log("validationResult: ", validationResult)
     if (!validationResult.success) {
         console.error(
             "Erro de validação no servidor:",

@@ -24,6 +24,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { saveAs } from "file-saver";
 import { normalizeStoredUrl } from "@/lib/utils";
 import { Arquivo } from "@/app/api/downloads/[identifier]/route";
+import { formsAcompanhamentoDados } from "@/firebase/schema/entities";
+import { deleteVercel } from "@/app/actions/excluirArquivosVercel";
 
 interface ProjectData {
   nome?: string;
@@ -317,15 +319,37 @@ export default function ProjectDetailsPage() {
         const formCadastroRef = doc(db, "forms-cadastro", formId);
         const formSnap = await getDoc(formCadastroRef);
         if (formSnap.exists()) {
+          // vamos excluir os arquivos da vercel
+          const data = formSnap.data() 
+          await deleteVercel(data.compliance)
+          await deleteVercel(data.apresentacao)
+          await deleteVercel(data.diario)
+          await deleteVercel(data.documentos)
+          if(data.recibosProponente){
+            await deleteVercel(data.recibosProponente) // Esse campo pode nao existir
+          } 
+          if(data.docsAdmin){
+            await deleteVercel(data.docsAdmin) // Esse campo pode nao existir
+          }
+          
+
           batch.delete(formCadastroRef);
         }
       }
 
       const acompanhamentoQuery = query(collection(db, "forms-acompanhamento"), where("projetoID", "==", projetoId));
       const acompanhamentoSnapshot = await getDocs(acompanhamentoQuery);
-      acompanhamentoSnapshot.forEach(doc => {
-        batch.delete(doc.ref);
-      });
+     
+      
+      for (const docSnap of acompanhamentoSnapshot.docs) {
+        const data = docSnap.data() as formsAcompanhamentoDados;
+
+        if (data?.fotos) {
+          await deleteVercel(data.fotos);
+        }
+
+        batch.delete(docSnap.ref);
+      }
 
       await batch.commit();
 
