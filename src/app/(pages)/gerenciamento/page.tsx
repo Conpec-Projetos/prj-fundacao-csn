@@ -98,28 +98,30 @@ const UserManagement = () => {
     });
   };
 
-  const filteredUsers = useMemo(() =>
-    users.filter(user =>
-      user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    ), [users, searchTerm]);
+  const filteredUsers = useMemo(() => {
+    const safeSearchTerm = (searchTerm.trim() || "").toLowerCase();
+    return users.filter(user =>
+      user.nome.toLowerCase().includes(safeSearchTerm) ||
+      user.email.toLowerCase().includes(safeSearchTerm)
+    )
+  }, [users, searchTerm]);
 
   if (loading) return <div className="flex justify-center items-center h-full"><FaSpinner className="animate-spin text-4xl" /></div>;
 
   return (
     <div className="min-w-[400px]">
       <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold">Colaboradores</h2>
-          <div className="relative">
-              <input
-                  type="text"
-                  placeholder="Buscar por nome ou email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full md:w-64 p-2 pl-10 rounded-lg border bg-white border-gray-300 dark:border-blue-fcsn dark:bg-blue-fcsn3 focus:outline-none focus:ring-2 focus:ring-blue-fcsn"
-              />
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
+        <h2 className="text-3xl font-bold">Colaboradores</h2>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Buscar por nome ou email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full md:w-64 p-2 pl-10 rounded-lg border bg-white border-gray-300 dark:border-blue-fcsn dark:bg-blue-fcsn3 focus:outline-none focus:ring-2 focus:ring-blue-fcsn"
+          />
+          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        </div>
       </div>
       <div className="space-y-4">
         {filteredUsers.map(user => (
@@ -193,15 +195,17 @@ const LawManagement = () => {
   //   }
   // };
 
-  const filteredLaws = useMemo(() =>
+  const filteredLaws = useMemo(() => {
+    const safeSearchTerm = (searchTerm.trim() || "").toLowerCase();
     laws
       .filter(law =>
-        law.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        law.sigla.toLowerCase().includes(searchTerm.toLowerCase())
+        law.nome.toLowerCase().includes(safeSearchTerm.toLowerCase()) ||
+        law.sigla.toLowerCase().includes(safeSearchTerm.toLowerCase())
       )
       .slice() // cria uma cópia para não mutar laws
       .sort((a, b) => a.nome.localeCompare(b.nome))
-  , [laws, searchTerm]);
+  }
+    , [laws, searchTerm]);
 
   if (loading) return <div className="flex justify-center items-center h-full"><FaSpinner className="animate-spin text-4xl" /></div>;
 
@@ -210,19 +214,19 @@ const LawManagement = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Leis de Incentivo</h2>
         <div className="flex items-center gap-4">
-            <div className="relative">
-                <input
-                    type="text"
-                    placeholder="Buscar por nome ou sigla..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full md:w-64 p-2 pl-10 rounded-lg border bg-white border-gray-300 dark:border-blue-fcsn dark:bg-blue-fcsn3 focus:outline-none focus:ring-2 focus:ring-blue-fcsn"
-                />
-                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            </div>
-            <button onClick={() => { setEditingLaw(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-blue-fcsn dark:bg-blue-fcsn3 text-white py-2 px-4 rounded-lg hover:bg-blue-fcsn2 cursor-pointer">
-              <FaPlus /> Nova Lei
-            </button>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar por nome ou sigla..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full md:w-64 p-2 pl-10 rounded-lg border bg-white border-gray-300 dark:border-blue-fcsn dark:bg-blue-fcsn3 focus:outline-none focus:ring-2 focus:ring-blue-fcsn"
+            />
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          </div>
+          <button onClick={() => { setEditingLaw(null); setIsModalOpen(true); }} className="flex items-center gap-2 bg-blue-fcsn dark:bg-blue-fcsn3 text-white py-2 px-4 rounded-lg hover:bg-blue-fcsn2 cursor-pointer">
+            <FaPlus /> Nova Lei
+          </button>
         </div>
       </div>
       <div className="space-y-4">
@@ -250,23 +254,22 @@ const LawManagement = () => {
 
 const DisableManagement = () => {
   const { paginaDesabilitada, setPaginaDesabilitada } = useAppContext();
-  
+
   return (
     <div className="p-6">
       <h2 className="text-3xl font-bold mb-10">Gerenciamento da Inscrição de projetos</h2>
 
       <div className="bg-white dark:bg-blue-fcsn3 p-8 rounded-lg shadow flex justify-between items-center mb-5">
-        
+
         <div className="font-bold text-2xl">
           {paginaDesabilitada ? "Habilitar Inscrição de Projetos" : "Desabilitar Inscrição de Projetos"}
         </div>
-          
+
         <button
-          className={`px-6 py-2 rounded transition-all dark:text-black ${
-            paginaDesabilitada 
+          className={`px-6 py-2 rounded transition-all dark:text-black ${paginaDesabilitada
               ? "bg-green-300 hover:bg-green-400 active:scale-95 "
               : "bg-red-400 hover:bg-red-500 active:scale-95"
-          }`}
+            }`}
           onClick={() => setPaginaDesabilitada(!paginaDesabilitada)}
         >
           {paginaDesabilitada ? "Habilitar" : "Desabilitar"}
