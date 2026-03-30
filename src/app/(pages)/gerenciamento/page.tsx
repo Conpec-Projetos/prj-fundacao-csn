@@ -197,7 +197,7 @@ const LawManagement = () => {
 
   const filteredLaws = useMemo(() => {
     const safeSearchTerm = (searchTerm.trim() || "").toLowerCase();
-    laws
+    return laws
       .filter(law =>
         law.nome.toLowerCase().includes(safeSearchTerm.toLowerCase()) ||
         law.sigla.toLowerCase().includes(safeSearchTerm.toLowerCase())
