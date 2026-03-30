@@ -103,7 +103,7 @@ const UserManagement = () => {
     return users.filter(user =>
       user.nome.toLowerCase().includes(safeSearchTerm) ||
       user.email.toLowerCase().includes(safeSearchTerm)
-    )
+    ) || "";
   }, [users, searchTerm]);
 
   if (loading) return <div className="flex justify-center items-center h-full"><FaSpinner className="animate-spin text-4xl" /></div>;
