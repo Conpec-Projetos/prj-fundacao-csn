@@ -100,6 +100,7 @@ const UserManagement = () => {
 
   const filteredUsers = useMemo(() => {
     const safeSearchTerm = (searchTerm.trim() || "").toLowerCase();
+    users.map(user => console.log(user.nome.toLowerCase()))
     return users.filter(user =>
       user.nome.toLowerCase().includes(safeSearchTerm) ||
       user.email.toLowerCase().includes(safeSearchTerm)
