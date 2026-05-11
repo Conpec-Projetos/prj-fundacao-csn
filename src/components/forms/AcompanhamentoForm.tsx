@@ -115,20 +115,20 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                 formData.append(key, String(value));
             }
         });
-        
-        // envia para vercel
-        for(const file of data.fotos){
-            if(file instanceof File){
-                const publicUrl = await uploadFileToVercel(file, "fotos");
-                formData.append("fotos", publicUrl);
-            }
-        }
 
         // Adiciona IDs necessários para a action
         formData.append("projetoID", projetoID);
         formData.append("usuarioAtualID", usuarioAtualID);
 
         try {
+            // envia para vercel
+            for(const file of data.fotos){
+                if(file instanceof File){
+                    const publicUrl = await uploadFileToVercel(file, "fotos");
+                    formData.append("fotos", publicUrl);
+                }
+            }
+
             const result = await submitAcompanhamentoForm(formData);
             toast.dismiss(loadingToastId);
             if (result.success) {
@@ -142,7 +142,8 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
             }
         } catch (error) {
             toast.dismiss(loadingToastId);
-            toast.error(`Ocorreu um erro inesperado: ${error}`);
+            toast.error("Ocorreu um erro inesperado ao enviar o formulário.");
+            console.error(error);
         }
     };
 

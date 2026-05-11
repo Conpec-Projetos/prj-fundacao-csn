@@ -1,10 +1,10 @@
 "use server";
 
-import { db } from "@/firebase/firebase-config";
+import admin from "firebase-admin";
+import { dbAdmin } from "@/firebase/firebase-admin-config";
 import { Projetos, formsCadastroDados, segmentoList } from "@/firebase/schema/entities";
 import { formsCadastroSchema } from "@/lib/schemas";
 import { getItemNome, getOdsIds, getPublicoNomes} from "@/lib/utils";
-import { addDoc, arrayUnion, collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 
 export async function submitCadastroForm(formData: FormData) {
     //
@@ -52,7 +52,6 @@ export async function submitCadastroForm(formData: FormData) {
     };
 
     const validationResult = formsCadastroSchema.safeParse(dataToValidate);
-    // console.log("validationResult: ", validationResult)
     if (!validationResult.success) {
         console.error(
             "Erro de validação no servidor:",
@@ -73,7 +72,7 @@ export async function submitCadastroForm(formData: FormData) {
             instituicao: data.instituicao,
             estados: data.estados,
             municipios: data.municipios,
-            lei: data.lei, // verificar aqui a lei pq sempre exibira so o nome será que nao era melhor passar o id?
+            lei: data.lei,
             status: "pendente",
             ativo: true,
             compliance: false,
@@ -83,7 +82,7 @@ export async function submitCadastroForm(formData: FormData) {
             valorAprovado: 0,
         };
 
-        const docProjetoRef = await addDoc(collection(db, "projetos"), projetoData);
+        const docProjetoRef = await dbAdmin.collection("projetos").add(projetoData);
         const projetoID = docProjetoRef.id;
 
         //
@@ -148,12 +147,9 @@ export async function submitCadastroForm(formData: FormData) {
         //
         // 8. Salvar documento do formulário
         //
-        const docCadastroRef = await addDoc(
-            collection(db, "forms-cadastro"),
-            firestoreData
-        );
+        const docCadastroRef = await dbAdmin.collection("forms-cadastro").add(firestoreData);
 
-        await updateDoc(doc(db, "projetos", projetoID), {
+        await dbAdmin.collection("projetos").doc(projetoID).update({
             ultimoFormulario: docCadastroRef.id,
         });
 
@@ -161,19 +157,17 @@ export async function submitCadastroForm(formData: FormData) {
         // 9. Vincular ao usuário autenticado (se existir)
         //
         if (usuarioAtualID) {
-            const q = query(
-                collection(db, "associacao"),
-                where("usuarioID", "==", usuarioAtualID)
-            );
-
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await dbAdmin
+                .collection("associacao")
+                .where("usuarioID", "==", usuarioAtualID)
+                .get();
 
             if (!querySnapshot.empty) {
-                await updateDoc(querySnapshot.docs[0].ref, {
-                    projetosIDs: arrayUnion(projetoID),
+                await querySnapshot.docs[0].ref.update({
+                    projetosIDs: admin.firestore.FieldValue.arrayUnion(projetoID),
                 });
             } else {
-                await addDoc(collection(db, "associacao"), {
+                await dbAdmin.collection("associacao").add({
                     usuarioID: usuarioAtualID,
                     projetosIDs: [projetoID],
                 });

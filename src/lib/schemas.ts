@@ -115,7 +115,7 @@ export const formsAcompanhamentoSchema = z
         beneficiariosIndiretos: z.coerce
             .number({ invalid_type_error: "Número inválido" })
             .min(0, "O valor deve ser zero ou maior."),
-        diversidade: z.string({ required_error: "A seleção é obrigatória." }),
+        diversidade: z.string({ required_error: "A seleção é obrigatória." }).min(1, "A seleção é obrigatória."),
         qtdAmarelas: z.coerce.number().min(0),
         qtdBrancas: z.coerce.number().min(0),
         qtdIndigenas: z.coerce.number().min(0),

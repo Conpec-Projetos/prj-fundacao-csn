@@ -44,6 +44,7 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
         setValue,
         watch,
         reset,
+        trigger,
         formState: { errors, isSubmitting },
     } = useForm<FormsCadastroFormFields>({
         resolver: zodResolver(formsCadastroSchema),
@@ -259,24 +260,6 @@ useEffect(() => {
         <form
             className="flex flex-col justify-center items-center max-w-[1500px] w-[90vw] sm:w-[80vw] xl:w-[70vw] mb-20 bg-white-off dark:bg-blue-fcsn2 rounded-lg shadow-lg"
             onSubmit={handleSubmit(async data => {
-                // console.log("Formulário submetido", data);
-                // Verificação do tam
-
-                // // 2. Soma o tamanho de todos os arquivos (em bytes)
-                // const totalSizeInBytes = allFiles.reduce((acc, file) => acc + file.size, 0);
-
-                // // 3. Define o limite. O do Firebase é 100MB.
-                // const limitInBytes = 100 * 1024 * 1024; // 100 MB
-
-                // // 4. Compara o tamanho total com o limite
-                // if (totalSizeInBytes > limitInBytes) {
-                //     toast.error("Envio cancelado: Arquivos muito grandes.", {
-                //         description: `O tamanho total dos seus anexos (${(totalSizeInBytes / 1024 / 1024).toFixed(2)} MB) excede o nosso limite de 100 MB. Por favor, reduza o tamanho dos arquivos.`,
-                //         duration: 10000,
-                //     });
-                //     return;
-                // }
-
                 const loadingToastId = toast.loading("Enviando formulário...");
 
                 const formData = new FormData();
@@ -291,50 +274,50 @@ useEffect(() => {
                     }
                 });
 
-                // envia para vercel
-                for(const file of data.diario){
-                    if(file instanceof File){
-                        const publicUrl = await uploadFileToVercel(file, "diario");
-                        formData.append("diario", publicUrl);
-                    }
-                }
-
-                // envia para vercel
-                for(const file of data.apresentacao){
-                    if(file instanceof File){
-                        const publicUrl = await uploadFileToVercel(file, "apresentacao");
-                        formData.append("apresentacao", publicUrl);
-                    }
-                }
-
-                // envia para vercel
-                for(const file of data.compliance){
-                    if(file instanceof File){
-                        const publicUrl = await uploadFileToVercel(file, "compliance");
-                        formData.append("compliance", publicUrl);
-                    }
-                }
-
-                // envia para vercel
-                for(const file of data.documentos){
-                    if(file instanceof File){
-                        const publicUrl = await uploadFileToVercel(file, "documentos");
-                        formData.append("documentos", publicUrl);
-                    }
-                }
-
-                if (usuarioAtualID) {
-                    formData.append("usuarioAtualID", usuarioAtualID);
-                }
-
                 try {
+                    // envia para vercel
+                    for(const file of data.diario){
+                        if(file instanceof File){
+                            const publicUrl = await uploadFileToVercel(file, "diario");
+                            formData.append("diario", publicUrl);
+                        }
+                    }
+
+                    // envia para vercel
+                    for(const file of data.apresentacao){
+                        if(file instanceof File){
+                            const publicUrl = await uploadFileToVercel(file, "apresentacao");
+                            formData.append("apresentacao", publicUrl);
+                        }
+                    }
+
+                    // envia para vercel
+                    for(const file of data.compliance){
+                        if(file instanceof File){
+                            const publicUrl = await uploadFileToVercel(file, "compliance");
+                            formData.append("compliance", publicUrl);
+                        }
+                    }
+
+                    // envia para vercel
+                    for(const file of data.documentos){
+                        if(file instanceof File){
+                            const publicUrl = await uploadFileToVercel(file, "documentos");
+                            formData.append("documentos", publicUrl);
+                        }
+                    }
+
+                    if (usuarioAtualID) {
+                        formData.append("usuarioAtualID", usuarioAtualID);
+                    }
+
                     const result = await submitCadastroForm(formData);
 
                     toast.dismiss(loadingToastId);
 
                     if (result.success) {
                         toast.success("Formulário enviado com sucesso!");
-                        
+                        localStorage.clear();
                         if (usuarioAtualID) {
                             router.push("/inicio-externo");
                         } else {
@@ -350,7 +333,10 @@ useEffect(() => {
                     toast.error("Ocorreu um erro inesperado ao enviar o formulário.");
                     console.error(error);
                 }
-                localStorage.clear()
+            }, () => {
+                // Campos inválidos estão na página 1 — leva o usuário de volta para vê-los
+                setCurrentPage(1);
+                window.scrollTo(0, 0);
             })}
             noValidate
         >
@@ -935,7 +921,17 @@ useEffect(() => {
                             <button
                                 type="button"
                                 className="w-[110px] md:w-[150px] h-[50px] md:h-[60px] bg-blue-fcsn hover:bg-blue-fcsn3 rounded-[7px] text-md md:text-lg font-bold text-white cursor-pointer shadow-md mb-10"
-                                onClick={() => setCurrentPage(2)}
+                                onClick={async () => {
+                                    const page1Fields: (keyof FormsCadastroFormFields)[] = [
+                                        "instituicao", "cnpj", "representanteLegal", "telefone", "emailRepLegal",
+                                        "responsavel", "emailResponsavel", "cep", "endereco", "cidade", "estado",
+                                        "nomeProjeto", "valorAprovado", "valorApto", "dataComeco", "dataFim",
+                                        "diario", "apresentacao", "segmento", "descricao", "publico", "ods",
+                                        "beneficiariosDiretos", "estados", "municipios", "lei", "contrapartidasProjeto",
+                                    ];
+                                    const valid = await trigger(page1Fields);
+                                    if (valid) setCurrentPage(2);
+                                }}
                             >
                                 Próxima página
                             </button>
