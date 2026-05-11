@@ -140,7 +140,21 @@ useEffect(() => {
         }
     });
 
-    reset(data);
+    // Garante que campos de array nunca sejam undefined após o reset — reset(partialObj)
+    // em RHF v7 define campos ausentes como undefined em vez de usar os defaultValues.
+    const safeData: Partial<FormsCadastroFormFields> = {
+        estados: [],
+        municipios: [],
+        ods: new Array(odsList.length).fill(false),
+        publico: new Array(publicoList.length).fill(false),
+        diario: [],
+        apresentacao: [],
+        compliance: [],
+        documentos: [],
+        ...data,
+    };
+
+    reset(safeData);
     setIsHydrated(true); // só depois disso libera o autosave
     }, [reset]);
 
@@ -857,7 +871,7 @@ useEffect(() => {
                                         <EstadoInput
                                             text="Estados onde o projeto atua:"
                                             isNotMandatory={false}
-                                            value={field.value}
+                                            value={field.value || []}
                                             onChange={field.onChange}
                                             onStateRemove={handleStateRemoval}
                                             error={error as FieldError}
@@ -873,9 +887,9 @@ useEffect(() => {
                                     <CidadeInput
                                         text="Municípios onde o projeto atua:"
                                         isNotMandatory={false}
-                                        value={field.value}
+                                        value={field.value || []}
                                         onChange={field.onChange}
-                                        selectedStates={watchedEstados}
+                                        selectedStates={watchedEstados || []}
                                         error={error as FieldError}
                                     />
                                 )}

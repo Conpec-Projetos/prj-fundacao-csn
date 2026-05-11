@@ -261,7 +261,7 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                             <EstadoInput
                                 text="Estados onde o projeto atua:"
                                 isNotMandatory={false}
-                                value={field.value}
+                                value={field.value || []}
                                 onChange={field.onChange}
                                 onStateRemove={handleStateRemoval}
                                 error={error as FieldError}
@@ -278,9 +278,9 @@ export default function AcompanhamentoForm({ projetoID, usuarioAtualID, initialD
                         <CidadeInput
                             text="Municípios onde o projeto atua:"
                             isNotMandatory={false}
-                            value={field.value}
+                            value={field.value || []}
                             onChange={field.onChange}
-                            selectedStates={watchedEstados}
+                            selectedStates={watchedEstados || []}
                             error={error as FieldError}
                         />
                     )}
