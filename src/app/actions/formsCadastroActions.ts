@@ -37,7 +37,10 @@ export async function submitCadastroForm(formData: FormData) {
     const diarioFiles = formData.getAll("diario") as string[];
     const apresentacaoFiles = formData.getAll("apresentacao") as string[];
     const complianceFiles = formData.getAll("compliance") as string[];
-    const documentosFiles = formData.getAll("documentos") as string[];
+    const estatutoFiles = formData.getAll("estatuto") as string[];
+    const ataFiles = formData.getAll("ata") as string[];
+    const contratoFiles = formData.getAll("contrato") as string[];
+    const documentosAdicionaisFiles = formData.getAll("documentosAdicionais") as string[];
     const usuarioAtualID = formData.get("usuarioAtualID") as string | null;
 
     //
@@ -48,7 +51,10 @@ export async function submitCadastroForm(formData: FormData) {
         diario: diarioFiles,
         apresentacao: apresentacaoFiles,
         compliance: complianceFiles,
-        documentos: documentosFiles,
+        estatuto: estatutoFiles,
+        ata: ataFiles,
+        contrato: contratoFiles,
+        documentosAdicionais: documentosAdicionaisFiles,
     };
 
     const validationResult = formsCadastroSchema.safeParse(dataToValidate);
@@ -93,7 +99,9 @@ export async function submitCadastroForm(formData: FormData) {
         const diarioUrl = diarioFiles;
         const apresentacaoUrl = apresentacaoFiles;
         const complianceUrl = complianceFiles;
-        const documentosUrl = documentosFiles;
+        // Estatuto, ata, contrato e documentos adicionais continuam sendo salvos juntos
+        // no mesmo campo "documentos" no banco
+        const documentosUrl = [...estatutoFiles, ...ataFiles, ...contratoFiles, ...documentosAdicionaisFiles];
 
         //
         // 7. Montar dados do forms-cadastro

@@ -88,7 +88,10 @@ export default function CadastroForm({ usuarioAtualID }: { usuarioAtualID: strin
             diario: [],
             apresentacao: [],
             compliance: [],
-            documentos: [],
+            estatuto: [],
+            ata: [],
+            contrato: [],
+            documentosAdicionais: [],
             termosPrivacidade: false,
         },
     });
@@ -102,7 +105,10 @@ const PREFIX = "cadastroForm_";
         "diario",
         "apresentacao",
         "compliance",
-        "documentos", //adicionais
+        "estatuto",
+        "ata",
+        "contrato",
+        "documentosAdicionais",
     ];
 
     // Salvar no localstorage
@@ -316,10 +322,34 @@ useEffect(() => {
                 }
 
                 // envia para vercel
-                for(const file of data.documentos){
+                for(const file of data.estatuto){
                     if(file instanceof File){
-                        const publicUrl = await uploadFileToVercel(file, "documentos");
-                        formData.append("documentos", publicUrl);
+                        const publicUrl = await uploadFileToVercel(file, "estatuto");
+                        formData.append("estatuto", publicUrl);
+                    }
+                }
+
+                // envia para vercel
+                for(const file of data.ata){
+                    if(file instanceof File){
+                        const publicUrl = await uploadFileToVercel(file, "ata");
+                        formData.append("ata", publicUrl);
+                    }
+                }
+
+                // envia para vercel
+                for(const file of data.contrato){
+                    if(file instanceof File){
+                        const publicUrl = await uploadFileToVercel(file, "contrato");
+                        formData.append("contrato", publicUrl);
+                    }
+                }
+
+                // envia para vercel
+                for(const file of data.documentosAdicionais){
+                    if(file instanceof File){
+                        const publicUrl = await uploadFileToVercel(file, "documentosAdicionais");
+                        formData.append("documentosAdicionais", publicUrl);
                     }
                 }
 
@@ -993,12 +1023,12 @@ useEffect(() => {
                             />
 
                             <Controller
-                                name="documentos"
+                                name="estatuto"
                                 control={control}
                                 render={({ field: { onChange, value }, fieldState: { error } }) => (
                                     <div>
                                         <FileInput
-                                            text={"Documentos adicionais:"}
+                                            text={"Estatuto:"}
                                             isNotMandatory={false}
                                             value={value || []}
                                             onChange={files => {
@@ -1007,9 +1037,72 @@ useEffect(() => {
                                             }}
                                             error={error as FieldError}
                                             acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
-                                            progress={uploadProgress["documentos"] ?? null}
+                                            progress={uploadProgress["estatuto"] ?? null}
                                         />
-                                        
+                                    </div>
+                                )}
+                            />
+
+                            <Controller
+                                name="ata"
+                                control={control}
+                                render={({ field: { onChange, value }, fieldState: { error } }) => (
+                                    <div>
+                                        <FileInput
+                                            text={"Ata:"}
+                                            isNotMandatory={false}
+                                            value={value || []}
+                                            onChange={files => {
+                                            // Agora simplesmente salva os arquivos no form
+                                            onChange(files);
+                                            }}
+                                            error={error as FieldError}
+                                            acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                            progress={uploadProgress["ata"] ?? null}
+                                        />
+                                    </div>
+                                )}
+                            />
+
+                            <Controller
+                                name="contrato"
+                                control={control}
+                                render={({ field: { onChange, value }, fieldState: { error } }) => (
+                                    <div>
+                                        <FileInput
+                                            text={"Contrato:"}
+                                            isNotMandatory={false}
+                                            value={value || []}
+                                            onChange={files => {
+                                            // Agora simplesmente salva os arquivos no form
+                                            onChange(files);
+                                            }}
+                                            error={error as FieldError}
+                                            acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                            progress={uploadProgress["contrato"] ?? null}
+                                        />
+                                    </div>
+                                )}
+                            />
+
+                            <Controller
+                                name="documentosAdicionais"
+                                control={control}
+                                render={({ field: { onChange, value }, fieldState: { error } }) => (
+                                    <div>
+                                        <FileInput
+                                            text={"Documentos adicionais:"}
+                                            isNotMandatory={true}
+                                            value={value || []}
+                                            onChange={files => {
+                                            // Agora simplesmente salva os arquivos no form
+                                            onChange(files);
+                                            }}
+                                            error={error as FieldError}
+                                            acceptedFileTypes={["application/pdf", "image/jpeg", "image/png"]}
+                                            progress={uploadProgress["documentosAdicionais"] ?? null}
+                                        />
+
                                     </div>
                                 )}
                             />

@@ -28,13 +28,13 @@ export const signinSchema = z
         path: ["confirmPassword"],
     });
 
-const fileArraySchema = (acceptedTypes: string[], typeName: string, maxFileSize: number) =>
+const fileArraySchema = (acceptedTypes: string[], typeName: string, maxFileSize: number, isNotMandatory = false) => {
     // Accept either File instances (when running in the browser) or string URLs/paths
-    z
-        .array(z.union([z.instanceof(File), z.string()]), {
-            required_error: "O envio de arquivos é obrigatório.",
-        })
-        .min(1, "É necessário enviar pelo menos um arquivo.")
+    const base = z.array(z.union([z.instanceof(File), z.string()]), {
+        required_error: "O envio de arquivos é obrigatório.",
+    });
+
+    return (isNotMandatory ? base : base.min(1, "É necessário enviar pelo menos um arquivo."))
         // Allow string entries that are either valid URLs or simple path-like values
         .refine(
             files =>
@@ -66,6 +66,7 @@ const fileArraySchema = (acceptedTypes: string[], typeName: string, maxFileSize:
                 }),
             `Tipo de arquivo inválido. Apenas ${typeName} são aceitos.`
         );
+};
 
 export const formsAcompanhamentoSchema = z
     .object({
@@ -257,7 +258,10 @@ export const formsCadastroSchema = z
         diario: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
         apresentacao: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
         compliance: fileArraySchema(["application/pdf"], "PDF", 10),
-        documentos: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
+        estatuto: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
+        ata: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
+        contrato: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10),
+        documentosAdicionais: fileArraySchema(["application/pdf", "image/jpeg", "image/png"], "PDF ou Imagens", 10, true),
         termosPrivacidade: z.coerce.boolean().refine(val => val === true, {
             message: "Você deve aceitar os termos de privacidade para continuar.",
         }),
