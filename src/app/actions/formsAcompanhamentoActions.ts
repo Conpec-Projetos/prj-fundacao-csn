@@ -1,10 +1,9 @@
 "use server";
 
-import { db } from "@/firebase/firebase-config";
+import { dbAdmin } from "@/firebase/firebase-admin-config";
 import { ambitoList, formsAcompanhamentoDados, segmentoList } from "@/firebase/schema/entities";
 import { FormsAcompanhamentoFormFields, formsAcompanhamentoSchema } from "@/lib/schemas";
 import { getItemNome, getOdsIds } from "@/lib/utils";
-import { addDoc, collection, doc, updateDoc } from "firebase/firestore";
 import { uploadFileAndGetUrlAdmin } from "./adminActions";
 
 export async function submitAcompanhamentoForm(formData: FormData) {
@@ -15,9 +14,8 @@ export async function submitAcompanhamentoForm(formData: FormData) {
 
     const dataToValidate = {
         ...rawFormData,
-        fotos, // Adiciona o array de arquivos
+        fotos,
 
-        // Converte os campos que foram stringificados de volta para arrays
         ods: typeof rawFormData.ods === "string" ? JSON.parse(rawFormData.ods) : [],
         estados: typeof rawFormData.estados === "string" ? JSON.parse(rawFormData.estados) : [],
         municipios: typeof rawFormData.municipios === "string" ? JSON.parse(rawFormData.municipios) : [],
@@ -26,22 +24,19 @@ export async function submitAcompanhamentoForm(formData: FormData) {
     const validationResult = formsAcompanhamentoSchema.safeParse(dataToValidate);
 
     if (!validationResult.success) {
-        // Log detalhado do erro no servidor para ajudar na depuração
         console.error("Erro de validação no servidor:", validationResult.error.flatten().fieldErrors);
 
-        // Retorna uma mensagem de erro genérica e clara para o cliente
         return {
             success: false,
             error: "Dados inválidos. Por favor, verifique os campos e tente novamente.",
         };
     }
 
-    // Se a validação passar, 'data' conterá os dados limpos e tipados
     const data: FormsAcompanhamentoFormFields = validationResult.data;
 
     try {
         const fotoURLs = await Promise.all(
-            data.fotos.map(file =>
+            data.fotos.map((file: File | string) =>
                 typeof file === "string"
                     ? Promise.resolve(file)
                     : uploadFileAndGetUrlAdmin(file, "forms-acompanhamento", projetoID)
@@ -90,13 +85,12 @@ export async function submitAcompanhamentoForm(formData: FormData) {
             links: data.links,
             contrapartidasExecutadas: data.contrapartidasExecutadas,
         };
-        console.log('acompanhamento: ' , uploadFirestore)
-        const formsAcompanhamentoRef = await addDoc(collection(db, "forms-acompanhamento"), uploadFirestore);
 
-        const projetoDocRef = doc(db, "projetos", projetoID);
-        await updateDoc(projetoDocRef, {
+        const formsAcompanhamentoRef = await dbAdmin.collection("forms-acompanhamento").add(uploadFirestore);
+
+        await dbAdmin.collection("projetos").doc(projetoID).update({
             instituicao: data.instituicao,
-            estados: data.estados, // Se algum dia precisar de adicionar os estados na coleção de projetos é só descomentar.
+            estados: data.estados,
             municipios: data.municipios,
             lei: data.lei,
             ultimoFormulario: formsAcompanhamentoRef.id,
