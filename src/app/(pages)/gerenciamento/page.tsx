@@ -5,8 +5,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast, Toaster } from "sonner";
-import { FaUsers, FaBalanceScale, FaPlus, FaEdit, FaSpinner, FaUserShield, FaUser, FaSearch } from "react-icons/fa";
-import { getInternalUsers, updateUserAdminStatus, getLaws, createLaw, updateLaw } from "@/app/actions/adminActions";
+import { FaUsers, FaBalanceScale, FaPlus, FaEdit, FaTrash, FaSpinner, FaUserShield, FaUser, FaSearch } from "react-icons/fa";
+import { getInternalUsers, updateUserAdminStatus, getLaws, createLaw, updateLaw, deleteLaw } from "@/app/actions/adminActions";
 import { useAppContext } from "@/context/AppContext";
 
 // Tipos
@@ -31,8 +31,8 @@ const leiSchema = z.object({
 type LeiForm = z.infer<typeof leiSchema>;
 
 // Componente do Modal para Leis
-const LawModal = ({ isOpen, onClose, onSave, law }: { isOpen: boolean; onClose: () => void; onSave: (data: LeiForm, id?: string) => void; law?: Law | null; }) => {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<LeiForm>({
+const LawModal = ({ isOpen, onClose, onSave, law }: { isOpen: boolean; onClose: () => void; onSave: (data: LeiForm, id?: string) => Promise<{ success: boolean; error?: string }>; law?: Law | null; }) => {
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, setError } = useForm<LeiForm>({
     resolver: zodResolver(leiSchema),
     defaultValues: law || { nome: "", sigla: "" }
   });
@@ -43,8 +43,17 @@ const LawModal = ({ isOpen, onClose, onSave, law }: { isOpen: boolean; onClose: 
 
   if (!isOpen) return null;
 
-  const onSubmit = (data: LeiForm) => {
-    onSave(data, law?.id);
+  const onSubmit = async (data: LeiForm) => {
+    const result = await onSave(data, law?.id);
+    if (!result.success) {
+      if (result.error === 'duplicate_nome') {
+        setError('nome', { message: 'Já existe uma lei cadastrada com este nome.' });
+      } else if (result.error === 'duplicate_sigla') {
+        setError('sigla', { message: 'Já existe uma lei cadastrada com esta sigla.' });
+      } else {
+        toast.error('Falha ao salvar a lei.');
+      }
+    }
   };
 
   return (
@@ -64,9 +73,46 @@ const LawModal = ({ isOpen, onClose, onSave, law }: { isOpen: boolean; onClose: 
           </div>
           <div className="flex justify-end gap-4">
             <button type="button" onClick={onClose} className="py-2 px-4 rounded-lg bg-gray-200 dark:bg-blue-fcsn hover:bg-gray-300 dark:hover:bg-blue-fcsn2 cursor-pointer">Cancelar</button>
-            <button type="submit" className="py-2 px-4 rounded-lg bg-blue-fcsn text-white hover:bg-blue-fcsn2 cursor-pointer">Salvar</button>
+            <button type="submit" disabled={isSubmitting} className="py-2 px-4 rounded-lg bg-blue-fcsn text-white hover:bg-blue-fcsn2 cursor-pointer disabled:opacity-50">Salvar</button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// Componente do Modal para escolher a lei substituta ao excluir uma lei em uso
+const ReplaceLawModal = ({ law, laws, onCancel, onConfirm }: { law: Law; laws: Law[]; onCancel: () => void; onConfirm: (replacementLawId: string) => void; }) => {
+  const candidates = laws.filter(l => l.id !== law.id);
+  const [selectedId, setSelectedId] = useState(candidates[0]?.id ?? "");
+
+  return (
+    <div className="fixed inset-0 bg-white-off dark:bg-blue-fcsn flex justify-center items-center z-50">
+      <div className="bg-white dark:bg-blue-fcsn3 backdrop-opacity-100 p-6 rounded-lg shadow-xl w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-4 text-blue-fcsn dark:text-white-off">Excluir lei em uso</h2>
+        <p className="mb-4 text-gray-700 dark:text-white-off">
+          A lei <strong>{law.nome}</strong> está associada a projetos e formulários existentes. Selecione a lei que vai substituí-la:
+        </p>
+        <select
+          value={selectedId}
+          onChange={(e) => setSelectedId(e.target.value)}
+          className="w-full p-2 rounded border bg-white border-gray-300 dark:border-blue-fcsn dark:bg-blue-fcsn3 focus:outline-none focus:ring-2 focus:ring-blue-fcsn mb-4"
+        >
+          {candidates.map(l => (
+            <option key={l.id} value={l.id}>{l.nome} ({l.sigla})</option>
+          ))}
+        </select>
+        <div className="flex justify-end gap-4">
+          <button type="button" onClick={onCancel} className="py-2 px-4 rounded-lg bg-gray-200 dark:bg-blue-fcsn hover:bg-gray-300 dark:hover:bg-blue-fcsn2 cursor-pointer">Cancelar</button>
+          <button
+            type="button"
+            onClick={() => selectedId && onConfirm(selectedId)}
+            disabled={!selectedId}
+            className="py-2 px-4 rounded-lg bg-blue-fcsn text-white hover:bg-blue-fcsn2 cursor-pointer disabled:opacity-50"
+          >
+            Excluir e substituir
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -162,6 +208,7 @@ const LawManagement = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLaw, setEditingLaw] = useState<Law | null>(null);
+  const [lawPendingDeletion, setLawPendingDeletion] = useState<Law | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [, startTransition] = useTransition();
 
@@ -172,33 +219,53 @@ const LawManagement = () => {
     });
   }, []);
 
-  const handleSaveLaw = (data: LeiForm, id?: string) => {
+  const handleSaveLaw = async (data: LeiForm, id?: string): Promise<{ success: boolean; error?: string }> => {
+    const result = id ? await updateLaw(id, data.nome, data.sigla) : await createLaw(data.nome, data.sigla);
+    if (result.success) {
+      const updatedLaws = await getLaws();
+      setLaws(updatedLaws);
+      toast.success(`Lei ${id ? 'atualizada' : 'criada'} com sucesso!`);
+      setIsModalOpen(false);
+    }
+    return result;
+  };
+
+  const handleDeleteLaw = (law: Law) => {
+    if (!window.confirm("Tem certeza que deseja excluir esta lei?")) return;
+
     startTransition(async () => {
-      const result = id ? await updateLaw(id, data.nome, data.sigla) : await createLaw(data.nome, data.sigla);
+      const result = await deleteLaw(law.id);
       if (result.success) {
-        const updatedLaws = await getLaws();
-        setLaws(updatedLaws);
-        toast.success(`Lei ${id ? 'atualizada' : 'criada'} com sucesso!`);
-        setIsModalOpen(false);
+        setLaws(prev => prev.filter(l => l.id !== law.id));
+        toast.success("Lei excluída com sucesso!");
+      } else if (result.error === 'in_use_needs_replacement') {
+        const hasCandidates = laws.some(l => l.id !== law.id);
+        if (hasCandidates) {
+          setLawPendingDeletion(law);
+        } else {
+          toast.error("Esta lei está em uso e não há outra lei cadastrada para substituí-la. Cadastre outra lei antes de excluir.");
+        }
       } else {
-        toast.error("Falha ao salvar a lei.");
+        toast.error("Falha ao excluir a lei.");
       }
     });
   };
 
-  // const handleDeleteLaw = (id: string) => {
-  //   if (window.confirm("Tem certeza que deseja excluir esta lei?")) {
-  //     startTransition(async () => {
-  //       const result = await deleteLaw(id);
-  //       if (result.success) {
-  //         setLaws(laws.filter(l => l.id !== id));
-  //         toast.success("Lei excluída com sucesso!");
-  //       } else {
-  //         toast.error("Falha ao excluir a lei.");
-  //       }
-  //     });
-  //   }
-  // };
+  const handleConfirmReplacement = (replacementLawId: string) => {
+    if (!lawPendingDeletion) return;
+    const law = lawPendingDeletion;
+
+    startTransition(async () => {
+      const result = await deleteLaw(law.id, replacementLawId);
+      if (result.success) {
+        setLaws(prev => prev.filter(l => l.id !== law.id));
+        toast.success("Lei excluída e projetos/formulários associados atualizados com sucesso!");
+        setLawPendingDeletion(null);
+      } else {
+        toast.error("Falha ao excluir a lei.");
+      }
+    });
+  };
 
   const filteredLaws = useMemo(() => {
     const safeSearchTerm = (searchTerm.trim() || "").toLowerCase();
@@ -245,14 +312,22 @@ const LawManagement = () => {
               <button onClick={() => { setEditingLaw(law); setIsModalOpen(true); }} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 cursor-pointer">
                 <FaEdit />
               </button>
-              {/* <button onClick={() => handleDeleteLaw(law.id)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 cursor-pointer">
+              <button onClick={() => handleDeleteLaw(law)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-blue-fcsn2 cursor-pointer">
                 <FaTrash />
-              </button> */}
+              </button>
             </div>
           </div>
         ))}
       </div>
       <LawModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveLaw} law={editingLaw} />
+      {lawPendingDeletion && (
+        <ReplaceLawModal
+          law={lawPendingDeletion}
+          laws={laws}
+          onCancel={() => setLawPendingDeletion(null)}
+          onConfirm={handleConfirmReplacement}
+        />
+      )}
     </div>
   );
 };
